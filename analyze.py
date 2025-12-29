@@ -182,9 +182,13 @@ def analyze_holes(directory):
     print(f"  Max:  {ratio_stats['max']:.4f}")
 
 
-if __name__ == "__main__":
+def main():
     if len(sys.argv) < 2:
         print("Usage: python analyze.py <directory_of_json_files>")
         sys.exit(1)
 
     analyze_holes(sys.argv[1])
+
+
+if __name__ == "__main__":
+    main()

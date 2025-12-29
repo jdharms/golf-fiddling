@@ -8,7 +8,7 @@ Extracts course data from ROM and saves as human-readable JSON files.
 import sys
 from pathlib import Path
 from typing import List
-import compact_json as json
+from editor.utils import compact_json as json
 
 # ROM layout constants
 INES_HEADER_SIZE = 0x10
