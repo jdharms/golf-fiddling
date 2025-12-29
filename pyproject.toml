@@ -9,3 +9,16 @@ dependencies = [
     "pillow>=12.0.0",
     "pygame>=2.6.1",
 ]
+
+[project.scripts]
+golf-editor = "editor.main:main"
+golf-dump = "dump:main"
+golf-analyze = "analyze:main"
+golf-visualize = "visualize:main"
+golf-hex2bin = "hex_to_bin:main"
+
+[tool.uv]
+package = true
+
+[tool.setuptools]
+packages = ["editor"]
