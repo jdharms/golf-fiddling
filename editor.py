@@ -1019,8 +1019,8 @@ class Editor:
         screen_x = canvas_rect.x + flag_x * self.canvas_scale - self.canvas_offset_x
         screen_y = canvas_rect.y + flag_y * self.canvas_scale - self.canvas_offset_y
 
-        self.sprites["green-flag"].render(self.screen, screen_x, screen_y, self.canvas_scale)
         self.sprites["green-cup"].render(self.screen, screen_x, screen_y, self.canvas_scale)
+        self.sprites["green-flag"].render(self.screen, screen_x, screen_y, self.canvas_scale)
 
     def _render_terrain_sprites(self, canvas_rect: Rect):
         """Render flag, tee, and ball sprites on terrain view."""
