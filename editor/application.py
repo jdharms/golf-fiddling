@@ -30,7 +30,7 @@ class EditorApplication:
         pygame.init()
 
         self.screen_width = 1200
-        self.screen_height = 800
+        self.screen_height = 1200
         self.screen = pygame.display.set_mode(
             (self.screen_width, self.screen_height),
             pygame.RESIZABLE
@@ -281,8 +281,15 @@ class EditorApplication:
         """Render the editor."""
         self.screen.fill(COLOR_BG)
 
-        # Toolbar
-        self._render_toolbar()
+        # Update shift-hover highlight state
+        shift_held = pygame.key.get_mods() & pygame.KMOD_SHIFT
+        if shift_held:
+            if self.state.mode == "greens":
+                self.state.shift_hover_tile = self.greens_picker.get_hovered_tile()
+            else:
+                self.state.shift_hover_tile = self.terrain_picker.get_hovered_tile()
+        else:
+            self.state.shift_hover_tile = None
 
         # Tile picker
         if self.state.mode == "greens":
@@ -293,6 +300,10 @@ class EditorApplication:
 
         # Canvas
         self._render_canvas()
+
+        # Toolbar after Canvas so scrolling the Canvas
+        # won't cause it to clip into the Toolbar
+        self._render_toolbar()
 
         # Status bar
         self._render_status()
@@ -329,6 +340,7 @@ class EditorApplication:
                 self.state.show_sprites,
                 self.state.selected_flag_index,
                 self.state.transform_state,
+                self.state.shift_hover_tile,
             )
         else:
             TerrainRenderer.render(
@@ -344,6 +356,7 @@ class EditorApplication:
                 self.state.show_sprites,
                 self.state.selected_flag_index,
                 self.state.transform_state,
+                self.state.shift_hover_tile,
             )
 
     def _render_status(self):

@@ -36,6 +36,9 @@ class EditorState:
         # Transform drag state
         self.transform_state: TransformDragState = TransformDragState()
 
+        # Shift-hover highlight state
+        self.shift_hover_tile: Optional[int] = None
+
     def set_mode(self, mode: str):
         """Set the editing mode."""
         if mode in ("terrain", "palette", "greens"):

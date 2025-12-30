@@ -4,8 +4,9 @@ NES Open Tournament Golf - Greens Renderer
 Renders greens editing canvas view.
 """
 
-from typing import Dict
+from typing import Dict, Optional
 
+import pygame
 from pygame import Surface, Rect
 
 from editor.core.pygame_rendering import Tileset, Sprite
@@ -13,6 +14,7 @@ from golf.formats.hole_data import HoleData
 from editor.core.constants import TILE_SIZE, GREENS_WIDTH, GREENS_HEIGHT
 from .sprite_renderer import SpriteRenderer
 from .grid_renderer import GridRenderer
+from .highlight_utils import draw_tile_border
 
 
 class GreensRenderer:
@@ -32,6 +34,7 @@ class GreensRenderer:
         show_sprites: bool,
         selected_flag_index: int,
         transform_state,
+        shift_hover_tile: Optional[int],
     ):
         """
         Render greens editing view.
@@ -49,6 +52,7 @@ class GreensRenderer:
             show_sprites: Whether to show sprite overlays
             selected_flag_index: Which flag position to render (0-3)
             transform_state: Transform drag state for preview rendering
+            shift_hover_tile: Tile value to highlight (None if not highlighting)
         """
         if not hole_data.greens:
             return
@@ -68,6 +72,13 @@ class GreensRenderer:
 
                 tile_surf = tileset.render_tile_greens(tile_idx, canvas_scale)
                 screen.blit(tile_surf, (x, y))
+
+        # Render shift-hover highlights (AFTER base tiles, BEFORE transform preview)
+        if shift_hover_tile is not None:
+            GreensRenderer._render_shift_hover_highlights(
+                screen, canvas_rect, hole_data,
+                shift_hover_tile, canvas_scale, canvas_offset_x, canvas_offset_y
+            )
 
         # Render transform preview with gold borders (ON TOP of tiles)
         if transform_state.is_active:
@@ -98,10 +109,7 @@ class GreensRenderer:
         preview_changes, origin_tile, canvas_scale, canvas_offset_x, canvas_offset_y
     ):
         """Render preview tiles with their transformed values and gold borders."""
-        import pygame
         tile_size = TILE_SIZE * canvas_scale
-        gold_color = (255, 215, 0)  # Gold color
-        border_width = 2
 
         # Render preview tiles with their transformed values
         for (row, col), transformed_tile_idx in preview_changes.items():
@@ -119,13 +127,7 @@ class GreensRenderer:
             screen.blit(tile_surf, (x, y))
 
             # Draw gold border around tile
-            border_rect = pygame.Rect(
-                x - border_width,
-                y - border_width,
-                tile_size + border_width * 2,
-                tile_size + border_width * 2
-            )
-            pygame.draw.rect(screen, gold_color, border_rect, border_width)
+            draw_tile_border(screen, x, y, tile_size)
 
         # Render border around origin tile
         if origin_tile:
@@ -136,10 +138,33 @@ class GreensRenderer:
             # Only render if on-screen
             if not (x + tile_size < canvas_rect.x or x > canvas_rect.right or
                     y + tile_size < canvas_rect.y or y > canvas_rect.bottom):
-                border_rect = pygame.Rect(
-                    x - border_width,
-                    y - border_width,
-                    tile_size + border_width * 2,
-                    tile_size + border_width * 2
-                )
-                pygame.draw.rect(screen, gold_color, border_rect, border_width)
+                draw_tile_border(screen, x, y, tile_size)
+
+    @staticmethod
+    def _render_shift_hover_highlights(
+        screen, canvas_rect, hole_data, highlight_tile_value,
+        canvas_scale, canvas_offset_x, canvas_offset_y
+    ):
+        """Render gold borders around all tiles matching the shift-hovered tile value."""
+        if not hole_data.greens:
+            return
+
+        tile_size = TILE_SIZE * canvas_scale
+
+        for row_idx, row in enumerate(hole_data.greens):
+            for col_idx, tile_idx in enumerate(row):
+                # Only highlight if tile matches the hovered value
+                if tile_idx != highlight_tile_value:
+                    continue
+
+                x = canvas_rect.x + col_idx * tile_size - canvas_offset_x
+                y = canvas_rect.y + row_idx * tile_size - canvas_offset_y
+
+                # Cull off-screen tiles
+                if x + tile_size < canvas_rect.x or x > canvas_rect.right:
+                    continue
+                if y + tile_size < canvas_rect.y or y > canvas_rect.bottom:
+                    continue
+
+                # Draw gold border
+                draw_tile_border(screen, x, y, tile_size)
