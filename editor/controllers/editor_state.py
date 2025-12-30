@@ -7,6 +7,7 @@ Manages application state including editing mode, view settings, and canvas posi
 from typing import Optional, Tuple
 
 from .transform_drag_state import TransformDragState
+from .undo_manager import UndoManager
 
 
 class EditorState:
@@ -38,6 +39,12 @@ class EditorState:
 
         # Shift-hover highlight state
         self.shift_hover_tile: Optional[int] = None
+
+        # Undo/redo support
+        self.undo_manager: UndoManager = UndoManager(max_undo_levels=50)
+
+        # Paint stroke grouping
+        self.painting: bool = False
 
     def set_mode(self, mode: str):
         """Set the editing mode."""
