@@ -36,7 +36,7 @@ class TilePicker:
         # Build list of tile indices to show (skip empty tiles at start)
         # self.tile_indices = list(range(0x25, 0xE0))
         self.tile_indices = (
-            [0x25, 0x27] + _range_to_list(0x35, 0x3D) + _range_to_list(0x3E, 0xC0)
+            [0x25, 0x27] + _range_to_list(0x35, 0x3D) + _range_to_list(0x3E, 0xC0) + [0xDF]
         )
 
         # Track tile currently under mouse
@@ -128,7 +128,7 @@ class GreensTilePicker(TilePicker):
     def __init__(self, tileset: Tileset, rect: Rect):
         super().__init__(tileset, rect)
         # Greens use different tile range
-        self.tile_indices = [0x29] + [0x2B, 0x2C] + _range_to_list(0x30, 0xA0) + [0xB0]
+        self.tile_indices = [0x29, 0x2C] + _range_to_list(0x30, 0xA0) + [0xB0]
         self.selected_tile = 0x30
 
     def render(self, screen: Surface, palette_idx: int = 1):

@@ -18,10 +18,10 @@ uv sync
 ```
 
 ### Running Tools
-The project provides several command-line tools via entry points:
+The project provides several command-line tools via entry points (defined in `pyproject.toml`):
 
 ```bash
-# Extract all course data from ROM to JSON files
+# Extract all course data from ROM to JSON files with compression statistics
 golf-dump <rom_file.nes> <output_dir>
 
 # Analyze ROM structure and show technical details
@@ -35,6 +35,9 @@ golf-visualize <tileset.bin> <course_dir> [output_dir]
 
 # Convert hex string to binary file
 golf-hex2bin
+
+# Expand dictionary codes into their complete horizontal transition sequences
+golf-expand-dict <meta.json> [terrain|greens]
 
 # Launch the course editor (requires CHR binary files)
 golf-editor <terrain_chr.bin> <greens_chr.bin> [hole.json]
@@ -122,6 +125,17 @@ Separate decompression tables exist for terrain (in fixed bank) and greens (in s
 - **Attributes**: Packed as 4 2-bit values per byte covering 4x4 tile areas
 - **BCD encoding**: Distances stored as Binary-Coded Decimal
 - **Bank numbers**: Course data bank determined by `TABLE_COURSE_BANK_TERRAIN`
+
+## Development Notes
+
+### Adding New Tools
+
+To add a new command-line tool:
+1. Create the tool as a Python module in `tools/` with a `main()` function
+2. Add an entry point in `pyproject.toml` under `[project.scripts]`
+3. Tools become available as `golf-<tool-name>` after running `uv sync`
+
+Example: `golf-expand-dict = "tools.expand_dict:main"` makes `golf-expand-dict` available as a command.
 
 ## Testing
 

@@ -7,6 +7,7 @@ Extracts course data from ROM and saves as human-readable JSON files.
 
 import sys
 from pathlib import Path
+from typing import Tuple
 
 from golf.core.rom_reader import (
     RomReader,
@@ -34,6 +35,7 @@ from golf.core.rom_reader import (
 from golf.core.decompressor import (
     TerrainDecompressor,
     GreensDecompressor,
+    DecompressionStats,
     unpack_attributes,
     bcd_to_int,
 )
@@ -45,8 +47,8 @@ from golf.formats import compact_json as json
 from golf.formats.hex_utils import format_hex_rows
 
 
-def dump_course(rom: RomReader, course_idx: int, output_dir: Path):
-    """Dump all holes for a single course."""
+def dump_course(rom: RomReader, course_idx: int, output_dir: Path) -> Tuple[DecompressionStats, DecompressionStats]:
+    """Dump all holes for a single course. Returns (terrain_stats, greens_stats)."""
     course = COURSES[course_idx]
     course_dir = output_dir / course["name"]
     course_dir.mkdir(parents=True, exist_ok=True)
@@ -75,10 +77,18 @@ def dump_course(rom: RomReader, course_idx: int, output_dir: Path):
     terrain_decomp = TerrainDecompressor(rom)
     greens_decomp = GreensDecompressor(rom, greens_bank)
 
+    # Create statistics collectors
+    terrain_stats = DecompressionStats()
+    greens_stats = DecompressionStats()
+
     # Dump each hole
     for hole_in_course in range(HOLES_PER_COURSE):
         hole_idx = hole_offset + hole_in_course  # Absolute hole index 0-53
         hole_num = hole_in_course + 1  # Display number 1-18
+
+        # Set stats context
+        terrain_stats.set_hole_context(course["name"], hole_num)
+        greens_stats.set_hole_context(course["name"], hole_num)
 
         print(f"  Hole {hole_num}...", end=" ")
 
@@ -121,7 +131,7 @@ def dump_course(rom: RomReader, course_idx: int, output_dir: Path):
         attr_bytes = rom.read_prg(attr_prg, ATTR_TOTAL_BYTES)
 
         # Decompress terrain
-        terrain_rows = terrain_decomp.decompress(terrain_compressed)
+        terrain_rows = terrain_decomp.decompress(terrain_compressed, stats=terrain_stats)
         terrain_height = len(terrain_rows)
 
         # Unpack attributes
@@ -145,7 +155,7 @@ def dump_course(rom: RomReader, course_idx: int, output_dir: Path):
         greens_compressed = rom.read_prg(greens_prg, greens_size)
 
         try:
-            greens_rows = greens_decomp.decompress(greens_compressed)
+            greens_rows = greens_decomp.decompress(greens_compressed, stats=greens_stats)
         except Exception as e:
             print(f"(greens decompress error: {e})")
             greens_rows = []
@@ -196,6 +206,8 @@ def dump_course(rom: RomReader, course_idx: int, output_dir: Path):
 
         print(f"OK ({terrain_height} rows, {terrain_compressed_size} bytes compressed)")
 
+    return terrain_stats, greens_stats
+
 
 def main():
     if len(sys.argv) < 2:
@@ -212,10 +224,33 @@ def main():
     print(f"Output directory: {output_dir}")
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Create global stats collectors
+    global_terrain_stats = DecompressionStats()
+    global_greens_stats = DecompressionStats()
+
     # Dump all three courses
     for course_idx in range(len(COURSES)):
-        dump_course(rom, course_idx, output_dir)
+        terrain_stats, greens_stats = dump_course(rom, course_idx, output_dir)
 
+        # Merge into global stats
+        global_terrain_stats.merge(terrain_stats)
+        global_greens_stats.merge(greens_stats)
+
+    # Write global metadata
+    global_meta = {
+        "rom": rom_path,
+        "total_courses": len(COURSES),
+        "total_holes": TOTAL_HOLES,
+        "statistics": {
+            "terrain": global_terrain_stats.to_dict(),
+            "greens": global_greens_stats.to_dict()
+        }
+    }
+
+    with open(output_dir / "meta.json", 'w') as f:
+        json.dump(global_meta, f, indent=2)
+
+    print(f"\nWrote statistics to {output_dir}/meta.json")
     print("\nDone!")
 
 
