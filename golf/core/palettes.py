@@ -28,6 +28,9 @@ GREEN_OVERLAY_COLOR: RGBColor = (0x00, 0x52, 0x00)
 # Greens tile threshold - tiles >= this value are considered "on the putting green"
 GREEN_TILE_THRESHOLD = 0x30
 
+# NES sprite rendering offset (scanline delay)
+SPRITE_OFFSET_Y = 1
+
 # Course dimensions
 TERRAIN_WIDTH = 22        # Width of terrain in 8x8 tiles
 TERRAIN_ROW_WIDTH = 22    # Alias for compatibility

@@ -5,7 +5,6 @@ Manages hole data including terrain, attributes, greens, and metadata.
 Handles loading from and saving to JSON files.
 """
 
-from pathlib import Path
 from typing import List, Dict, Any, Optional
 
 from . import compact_json as json
