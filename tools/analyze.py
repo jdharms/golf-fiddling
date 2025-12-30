@@ -3,7 +3,10 @@
 NES Open Tournament Golf - Hole Data Analyzer
 
 Analyzes hole data to find patterns and relationships.
-Usage: python analyze.py <directory_of_json_files>
+Usage: python analyze.py <directory_of_json_files> [additional_directories...]
+Examples:
+    python analyze.py courses/japan/
+    python analyze.py courses/japan/ courses/us/ courses/uk/
 """
 
 import json
@@ -49,15 +52,24 @@ def load_hole_data(filepath):
         return json.load(f)
 
 
-def analyze_holes(directory):
-    """Analyze all hole JSON files in the given directory."""
-    dir_path = Path(directory)
-    json_files = sorted(dir_path.glob("hole*.json"))
+def analyze_holes(directories):
+    """Analyze all hole JSON files in the given directory or directories."""
+    # Ensure directories is a list
+    if isinstance(directories, str):
+        directories = [directories]
+
+    # Collect all JSON files from all directories
+    json_files = []
+    for directory in directories:
+        dir_path = Path(directory)
+        files = sorted(dir_path.glob("hole*.json"))
+        json_files.extend(files)
 
     if not json_files:
-        print(f"No JSON files found in {directory}")
+        print(f"No JSON files found in {', '.join(directories)}")
         sys.exit(1)
 
+    print(f"Analyzing {len(directories)} director{'y' if len(directories) == 1 else 'ies'}: {', '.join(directories)}")
     print(f"Found {len(json_files)} hole files\n")
 
     # Data collectors
@@ -68,6 +80,8 @@ def analyze_holes(directory):
     on_green_counts = []
     compression_ratios = []
     all_holes = []
+    terrain_tiles = set()
+    greens_tiles = set()
 
     for filepath in json_files:
         data = load_hole_data(filepath)
@@ -91,6 +105,14 @@ def analyze_holes(directory):
         # On-green tile count
         on_green = count_on_green_tiles(data["greens"])
         on_green_counts.append(on_green)
+
+        # Collect unique terrain tiles
+        for row_str in data["terrain"]["rows"]:
+            terrain_tiles.update(parse_hex_row(row_str))
+
+        # Collect unique greens tiles
+        for row_str in data["greens"]["rows"]:
+            greens_tiles.update(parse_hex_row(row_str))
 
         # Compression ratio
         terrain_width = data["terrain"]["width"]
@@ -186,13 +208,33 @@ def analyze_holes(directory):
     print(f"  75th: {ratio_stats['75th']:.4f}")
     print(f"  Max:  {ratio_stats['max']:.4f}")
 
+    print("\n" + "=" * 60)
+    print("UNIQUE TERRAIN TILES")
+    print("=" * 60)
+    sorted_terrain = sorted(terrain_tiles)
+    print(f"\nTotal unique tiles: {len(sorted_terrain)}")
+    print("\nTiles (in hex):")
+    for i in range(0, len(sorted_terrain), 16):
+        row = sorted_terrain[i:i+16]
+        print("  " + " ".join(f"{tile:02X}" for tile in row))
+
+    print("\n" + "=" * 60)
+    print("UNIQUE GREENS TILES")
+    print("=" * 60)
+    sorted_greens = sorted(greens_tiles)
+    print(f"\nTotal unique tiles: {len(sorted_greens)}")
+    print("\nTiles (in hex):")
+    for i in range(0, len(sorted_greens), 16):
+        row = sorted_greens[i:i+16]
+        print("  " + " ".join(f"{tile:02X}" for tile in row))
+
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python analyze.py <directory_of_json_files>")
+        print("Usage: python analyze.py <directory_of_json_files> [additional_directories...]")
         sys.exit(1)
 
-    analyze_holes(sys.argv[1])
+    analyze_holes(sys.argv[1:])
 
 
 if __name__ == "__main__":

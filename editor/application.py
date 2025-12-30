@@ -72,6 +72,7 @@ class EditorApplication:
         self.btn_palette: Optional[Button] = None
         self.btn_greens: Optional[Button] = None
         self.btn_sprites: Optional[Button] = None
+        self.palette_buttons: List[Button] = []
         self.flag_buttons: List[Button] = []
         self.terrain_picker: Optional[TilePicker] = None
         self.greens_picker: Optional[GreensTilePicker] = None
@@ -151,6 +152,20 @@ class EditorApplication:
 
         x += 150
 
+        # Palette selector buttons (only visible in palette mode)
+        self.palette_buttons = []
+        for i in range(1, 4):
+            btn = Button(
+                Rect(x + ((i-1) * 30), 8, 24, 24),
+                str(i),
+                lambda idx=i: self._set_palette(idx),
+                background_color=PALETTES[i][3]
+            )
+            self.buttons.append(btn)
+            self.palette_buttons.append(btn)
+
+        x += 100
+
         # Sprite toggle
         self.btn_sprites = Button(Rect(x, 5, 70, 30), "Sprites", self.state.toggle_sprites)
         self.buttons.append(self.btn_sprites)
@@ -168,6 +183,7 @@ class EditorApplication:
         self.btn_palette.active = (self.state.mode == "palette")
         self.btn_greens.active = (self.state.mode == "greens")
         self._update_flag_buttons()
+        self._update_palette_buttons()
 
     def _select_flag(self, index: int):
         """Select which flag position to display."""
@@ -178,6 +194,16 @@ class EditorApplication:
         """Update flag button active states."""
         for i, btn in enumerate(self.flag_buttons):
             btn.active = (i == self.state.selected_flag_index)
+
+    def _set_palette(self, palette: int):
+        """Set the selected palette."""
+        self.state.selected_palette = palette
+        self._update_palette_buttons()
+
+    def _update_palette_buttons(self):
+        """Update palette button active states."""
+        for i, btn in enumerate(self.palette_buttons, start=1):
+            btn.active = (i == self.state.selected_palette)
 
     def _on_load(self):
         """Load a hole file."""
@@ -270,21 +296,7 @@ class EditorApplication:
         """Render toolbar with buttons and palette selector."""
         pygame.draw.rect(self.screen, COLOR_TOOLBAR, (0, 0, self.screen_width, TOOLBAR_HEIGHT))
         for button in self.buttons:
-            button.render(self.screen, self.font)
-
-        # Palette selector in toolbar (for palette mode)
-        if self.state.mode == "palette":
-            x = 900
-            text = self.font.render("Palette:", True, COLOR_TEXT)
-            self.screen.blit(text, (x, 12))
-            x += 70
-            for i in range(1, 4):
-                rect = Rect(x, 8, 24, 24)
-                pygame.draw.rect(self.screen, PALETTES[i][3], rect)
-                pygame.draw.rect(self.screen, COLOR_SELECTION if self.state.selected_palette == i else COLOR_GRID, rect, 2)
-                num = self.font_small.render(str(i), True, COLOR_TEXT)
-                self.screen.blit(num, (x + 8, 12))
-                x += 30
+            button.render(self.screen, self.font_small if button in self.palette_buttons else self.font)
 
     def _render_canvas(self):
         """Render the main editing canvas."""
@@ -332,7 +344,6 @@ class EditorApplication:
 
         # Mouse position
         mouse_pos = pygame.mouse.get_pos()
-        tile = self._screen_to_tile(mouse_pos)
 
         status_parts = [f"Mode: {self.state.mode.title()}"]
 
@@ -341,19 +352,33 @@ class EditorApplication:
             if self.state.show_sprites and self.hole_data.metadata:
                 status_parts.append(f"Flag: {self.state.selected_flag_index + 1}/4")
 
-        if tile:
-            row, col = tile
-            status_parts.append(f"Tile: ({col}, {row})")
+        # Check picker hover first (priority over canvas)
+        picker_hover_tile = None
+        if self.state.mode == "greens":
+            picker_hover_tile = self.greens_picker.get_hovered_tile()
+        else:
+            picker_hover_tile = self.terrain_picker.get_hovered_tile()
 
-            if self.state.mode == "terrain" and 0 <= row < len(self.hole_data.terrain) and 0 <= col < TERRAIN_WIDTH:
-                tile_val = self.hole_data.terrain[row][col]
-                attr_val = self.hole_data.get_attribute(row, col)
-                status_parts.append(f"Value: ${tile_val:02X}")
-                status_parts.append(f"Palette: {attr_val}")
+        if picker_hover_tile is not None:
+            # Show picker tile value
+            status_parts.append(f"Picker Tile: ${picker_hover_tile:02X}")
+        else:
+            # Existing canvas hover logic
+            tile = self._screen_to_tile(mouse_pos)
 
-            elif self.state.mode == "greens" and 0 <= row < len(self.hole_data.greens) and 0 <= col < GREENS_WIDTH:
-                tile_val = self.hole_data.greens[row][col]
-                status_parts.append(f"Value: ${tile_val:02X}")
+            if tile:
+                row, col = tile
+                status_parts.append(f"Tile: ({col}, {row})")
+
+                if self.state.mode == "terrain" and 0 <= row < len(self.hole_data.terrain) and 0 <= col < TERRAIN_WIDTH:
+                    tile_val = self.hole_data.terrain[row][col]
+                    attr_val = self.hole_data.get_attribute(row, col)
+                    status_parts.append(f"Value: ${tile_val:02X}")
+                    status_parts.append(f"Palette: {attr_val}")
+
+                elif self.state.mode == "greens" and 0 <= row < len(self.hole_data.greens) and 0 <= col < GREENS_WIDTH:
+                    tile_val = self.hole_data.greens[row][col]
+                    status_parts.append(f"Value: ${tile_val:02X}")
 
         if self.hole_data.filepath:
             name = Path(self.hole_data.filepath).name

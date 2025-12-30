@@ -4,7 +4,7 @@ NES Open Tournament Golf - Tile Pickers
 Tile selection panels for terrain and greens editing.
 """
 
-from typing import Tuple
+from typing import Tuple, List
 
 import pygame
 from pygame import Surface, Rect
@@ -15,6 +15,10 @@ from editor.core.constants import (
     COLOR_PICKER_BG,
     COLOR_SELECTION,
 )
+
+
+def _range_to_list(min: int, max: int) -> List[int]:
+    return list(range(min, max))
 
 
 class TilePicker:
@@ -30,10 +34,24 @@ class TilePicker:
         self.tile_spacing = 2
 
         # Build list of tile indices to show (skip empty tiles at start)
-        self.tile_indices = list(range(0x25, 0xE0))
+        # self.tile_indices = list(range(0x25, 0xE0))
+        self.tile_indices = (
+            [0x25, 0x27] + _range_to_list(0x35, 0x3D) + _range_to_list(0x3E, 0xC0)
+        )
+
+        # Track tile currently under mouse
+        self.hovered_tile = None
 
     def handle_event(self, event: pygame.event.Event) -> bool:
         """Handle input events. Returns True if handled."""
+        if event.type == pygame.MOUSEMOTION:
+            # Update hovered tile (doesn't consume event)
+            if self.rect.collidepoint(event.pos):
+                self.hovered_tile = self._tile_at_position(event.pos)
+            else:
+                self.hovered_tile = None
+            # Don't return True - let event propagate to buttons
+
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.rect.collidepoint(event.pos):
                 if event.button == 1:  # Left click
@@ -49,6 +67,12 @@ class TilePicker:
 
     def _select_at(self, pos: Tuple[int, int]):
         """Select tile at screen position."""
+        tile = self._tile_at_position(pos)
+        if tile is not None:
+            self.selected_tile = tile
+
+    def _tile_at_position(self, pos: Tuple[int, int]) -> int | None:
+        """Get tile index at screen position, or None if invalid."""
         local_x = pos[0] - self.rect.x - 10
         local_y = pos[1] - self.rect.y - 10 + self.scroll_y
 
@@ -58,7 +82,12 @@ class TilePicker:
 
         idx = row * self.tiles_per_row + col
         if 0 <= idx < len(self.tile_indices):
-            self.selected_tile = self.tile_indices[idx]
+            return self.tile_indices[idx]
+        return None
+
+    def get_hovered_tile(self) -> int | None:
+        """Get the tile value currently under mouse, or None."""
+        return self.hovered_tile
 
     def render(self, screen: Surface, palette_idx: int = 1):
         """Render the tile picker."""
@@ -99,7 +128,7 @@ class GreensTilePicker(TilePicker):
     def __init__(self, tileset: Tileset, rect: Rect):
         super().__init__(tileset, rect)
         # Greens use different tile range
-        self.tile_indices = list(range(0x00, 0x9f))
+        self.tile_indices = [0x29] + [0x2B, 0x2C] + _range_to_list(0x30, 0x9F)
         self.selected_tile = 0x30
 
     def render(self, screen: Surface, palette_idx: int = 1):

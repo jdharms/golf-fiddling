@@ -12,6 +12,7 @@ from editor.core.constants import (
     COLOR_BUTTON_HOVER,
     COLOR_BUTTON_ACTIVE,
     COLOR_GRID,
+    COLOR_SELECTION,
     COLOR_TEXT,
 )
 
@@ -19,10 +20,11 @@ from editor.core.constants import (
 class Button:
     """Simple button widget."""
 
-    def __init__(self, rect: Rect, text: str, callback):
+    def __init__(self, rect: Rect, text: str, callback, background_color=None):
         self.rect = rect
         self.text = text
         self.callback = callback
+        self.background_color = background_color
         self.hovered = False
         self.active = False
 
@@ -36,9 +38,17 @@ class Button:
         return False
 
     def render(self, screen: Surface, font: pygame.font.Font):
-        color = COLOR_BUTTON_ACTIVE if self.active else (COLOR_BUTTON_HOVER if self.hovered else COLOR_BUTTON)
-        pygame.draw.rect(screen, color, self.rect)
-        pygame.draw.rect(screen, COLOR_GRID, self.rect, 1)
+        # Use background_color if provided, otherwise use standard button colors
+        if self.background_color:
+            pygame.draw.rect(screen, self.background_color, self.rect)
+        else:
+            color = COLOR_BUTTON_ACTIVE if self.active else (COLOR_BUTTON_HOVER if self.hovered else COLOR_BUTTON)
+            pygame.draw.rect(screen, color, self.rect)
+
+        # Draw selection border (thicker if active)
+        border_color = COLOR_SELECTION if self.active else COLOR_GRID
+        border_width = 2 if self.active else 1
+        pygame.draw.rect(screen, border_color, self.rect, border_width)
 
         text_surf = font.render(self.text, True, COLOR_TEXT)
         text_rect = text_surf.get_rect(center=self.rect.center)
