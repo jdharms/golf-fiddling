@@ -6,6 +6,8 @@ Manages application state including editing mode, view settings, and canvas posi
 
 from typing import Optional, Tuple
 
+from .transform_drag_state import TransformDragState
+
 
 class EditorState:
     """Manages editor application state."""
@@ -21,7 +23,7 @@ class EditorState:
         # Canvas position and zoom
         self.canvas_offset_x: int = 0
         self.canvas_offset_y: int = 0
-        self.canvas_scale: int = 2
+        self.canvas_scale: int = 4
 
         # Tool settings
         self.selected_palette: int = 1  # For palette mode
@@ -30,6 +32,9 @@ class EditorState:
         # Mouse state
         self.mouse_down: bool = False
         self.last_paint_pos: Optional[Tuple[int, int]] = None
+
+        # Transform drag state
+        self.transform_state: TransformDragState = TransformDragState()
 
     def set_mode(self, mode: str):
         """Set the editing mode."""

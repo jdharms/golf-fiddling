@@ -1,6 +1,5 @@
 * rows must be even
 * scroll limit is calculable
 * edit metadata
-* Palettes should be clickable
 * Grid lines should be supertiles when in palette mode
-* Bug in dumper for uk 18?
+* undo/redo is an absolute must

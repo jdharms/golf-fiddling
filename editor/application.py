@@ -12,11 +12,13 @@ from pygame import Rect
 from .core.constants import *
 from .core.pygame_rendering import Tileset, Sprite
 from golf.formats.hole_data import HoleData
+from golf.core.compressor import load_compression_tables
 from .ui.widgets import Button
 from .ui.pickers import TilePicker, GreensTilePicker
 from .ui.dialogs import open_file_dialog, save_file_dialog
 from .controllers.editor_state import EditorState
 from .controllers.event_handler import EventHandler
+from .controllers.transform_logic import TransformLogic
 from .rendering.terrain_renderer import TerrainRenderer
 from .rendering.greens_renderer import GreensRenderer
 
@@ -62,6 +64,10 @@ class EditorApplication:
                 print(f"Warning: Failed to load sprite {sprite_name}: {e}")
                 self.sprites[sprite_name] = None
 
+        # Load compression tables for transform drag feature
+        self.compression_tables = load_compression_tables()
+        self.transform_logic = TransformLogic(self.compression_tables)
+
         # Create application state
         self.state = EditorState()
         self.hole_data = HoleData()
@@ -92,6 +98,7 @@ class EditorApplication:
             on_mode_change=self._update_mode_buttons,
             on_flag_change=self._update_flag_buttons,
             on_resize=self._on_resize,
+            transform_logic=self.transform_logic,
         )
 
         self.running = True
@@ -321,6 +328,7 @@ class EditorApplication:
                 self.state.show_grid,
                 self.state.show_sprites,
                 self.state.selected_flag_index,
+                self.state.transform_state,
             )
         else:
             TerrainRenderer.render(
@@ -335,6 +343,7 @@ class EditorApplication:
                 self.state.show_grid,
                 self.state.show_sprites,
                 self.state.selected_flag_index,
+                self.state.transform_state,
             )
 
     def _render_status(self):

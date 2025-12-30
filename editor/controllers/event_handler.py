@@ -10,6 +10,7 @@ import pygame
 from pygame import Rect
 
 from .editor_state import EditorState
+from .transform_logic import TransformLogic
 from golf.formats.hole_data import HoleData
 from editor.ui.pickers import TilePicker, GreensTilePicker
 from editor.ui.widgets import Button
@@ -41,6 +42,7 @@ class EventHandler:
         on_mode_change: Callable[[], None],
         on_flag_change: Callable[[], None],
         on_resize: Callable[[int, int], None],
+        transform_logic: TransformLogic,
     ):
         """
         Initialize event handler.
@@ -58,6 +60,7 @@ class EventHandler:
             on_mode_change: Callback when mode changes
             on_flag_change: Callback when flag selection changes
             on_resize: Callback for window resize (width, height)
+            transform_logic: Transform logic for compression tables
         """
         self.state = state
         self.hole_data = hole_data
@@ -71,6 +74,7 @@ class EventHandler:
         self.on_mode_change = on_mode_change
         self.on_flag_change = on_flag_change
         self.on_resize = on_resize
+        self.transform_logic = transform_logic
 
     def update_screen_size(self, width: int, height: int):
         """Update screen dimensions."""
@@ -107,8 +111,17 @@ class EventHandler:
             # Handle canvas events
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  # Left click
-                    self.state.mouse_down = True
-                    self._paint_at(event.pos)
+                    shift_held = pygame.key.get_mods() & pygame.KMOD_SHIFT
+                    if shift_held and self.state.mode in ("terrain", "greens"):
+                        # Start transform drag
+                        tile = self._screen_to_tile(event.pos)
+                        if tile:
+                            self.state.transform_state.start(event.pos, tile)
+                            self.state.mouse_down = True
+                    else:
+                        # Normal paint mode
+                        self.state.mouse_down = True
+                        self._paint_at(event.pos)
                 elif event.button == 3:  # Right click - eyedropper
                     self._eyedropper(event.pos)
                 elif event.button == 4:  # Scroll up
@@ -118,15 +131,29 @@ class EventHandler:
 
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
+                    if self.state.transform_state.is_active:
+                        self._commit_transform()
+                        self.state.transform_state.reset()
                     self.state.mouse_down = False
                     self.state.last_paint_pos = None
 
             elif event.type == pygame.MOUSEMOTION:
                 if self.state.mouse_down:
-                    self._paint_at(event.pos)
+                    if self.state.transform_state.is_active:
+                        self._transform_at(event.pos)
+                    else:
+                        self._paint_at(event.pos)
 
             elif event.type == pygame.VIDEORESIZE:
                 self.on_resize(event.w, event.h)
+
+            elif event.type == pygame.KEYUP:
+                if event.key in (pygame.K_LSHIFT, pygame.K_RSHIFT):
+                    if self.state.transform_state.is_active:
+                        # Cancel transform on Shift release
+                        self.state.transform_state.reset()
+                        self.state.mouse_down = False
+                        self.state.last_paint_pos = None
 
         return True
 
@@ -258,3 +285,98 @@ class EventHandler:
                 row, col = tile
                 if 0 <= row < len(self.hole_data.greens) and 0 <= col < GREENS_WIDTH:
                     self.greens_picker.selected_tile = self.hole_data.greens[row][col]
+
+    def _transform_at(self, pos: Tuple[int, int]):
+        """Apply transform preview along drag path."""
+        state = self.state.transform_state
+
+        # Calculate drag vector from origin
+        dx = pos[0] - state.drag_start_pos[0]
+        dy = pos[1] - state.drag_start_pos[1]
+
+        # Determine direction (lock on first determination)
+        if state.direction is None and (abs(dx) > 5 or abs(dy) > 5):
+            # Block if initial movement is LEFT or UP
+            if dx < -2 or dy < -2:
+                state.blocked = True
+                return
+            state.direction = "horizontal" if abs(dx) > abs(dy) else "vertical"
+
+        if state.direction is None:
+            return  # Not enough movement yet
+
+        # Get source tile value from origin
+        origin_row, origin_col = state.origin_tile
+        if self.state.mode == "terrain":
+            source_value = self.hole_data.terrain[origin_row][origin_col]
+        else:
+            source_value = self.hole_data.greens[origin_row][origin_col]
+
+        # Calculate transformation steps along locked axis only
+        tile_size = TILE_SIZE * self.state.canvas_scale
+        if state.direction == "horizontal":
+            # Only allow rightward movement (dx >= 0)
+            if dx < 0:
+                state.preview_changes.clear()
+                return
+
+            # Only use horizontal component, ignore vertical
+            # Use ceiling division so any movement >= 1 tile shows preview
+            steps = max(0, (dx + tile_size - 1) // tile_size)
+            if steps == 0:
+                # Clear preview if no movement
+                state.preview_changes.clear()
+                return
+
+            # Build preview for all tiles from origin to target (going right)
+            state.preview_changes.clear()
+            current_value = source_value
+            max_col = TERRAIN_WIDTH if self.state.mode == "terrain" else GREENS_WIDTH
+            for step in range(1, steps + 1):
+                current_value = self.transform_logic.apply_horizontal(
+                    current_value, self.state.mode
+                )
+                tile_col = origin_col + step
+                # Validate bounds
+                if 0 <= tile_col < max_col:
+                    state.preview_changes[(origin_row, tile_col)] = current_value
+
+        else:  # vertical
+            # Only allow downward movement (dy >= 0)
+            if dy < 0:
+                state.preview_changes.clear()
+                return
+
+            # Only use vertical component, ignore horizontal
+            # Use ceiling division so any movement >= 1 tile shows preview
+            steps = max(0, (dy + tile_size - 1) // tile_size)
+            if steps == 0:
+                # Clear preview if no movement
+                state.preview_changes.clear()
+                return
+
+            # Build preview for all tiles from origin to target (going down)
+            state.preview_changes.clear()
+            current_value = source_value
+            max_row = len(self.hole_data.terrain) if self.state.mode == "terrain" else GREENS_HEIGHT
+            for step in range(1, steps + 1):
+                current_value = self.transform_logic.apply_vertical(
+                    current_value, self.state.mode
+                )
+                tile_row = origin_row + step
+                # Validate bounds
+                if 0 <= tile_row < max_row:
+                    state.preview_changes[(tile_row, origin_col)] = current_value
+
+    def _commit_transform(self):
+        """Apply preview changes to hole_data."""
+        state = self.state.transform_state
+
+        if state.blocked:
+            return  # Don't apply if blocked
+
+        for (row, col), tile_value in state.preview_changes.items():
+            if self.state.mode == "terrain":
+                self.hole_data.set_terrain_tile(row, col, tile_value)
+            else:
+                self.hole_data.set_greens_tile(row, col, tile_value)
