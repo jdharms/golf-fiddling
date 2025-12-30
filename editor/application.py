@@ -301,7 +301,7 @@ class EditorApplication:
         if self.state.mode == "greens":
             self.greens_picker.render(self.screen)
         else:
-            palette_for_picker = self.state.selected_palette if self.state.mode == "palette" else 1
+            palette_for_picker = self.state.selected_palette if self.state.selected_palette > 0 else 1
             self.terrain_picker.render(self.screen, palette_for_picker)
 
         # Canvas
