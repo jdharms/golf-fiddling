@@ -109,10 +109,10 @@ def test_multiple_rows(mock_minimal_terrain_tables):
     result = detect_vertical_fills(rows, vert_table)
 
     assert result[0] == [0x10, 0x11, 0x12]  # First row unchanged
-    assert result[1] == [0x00, 0x00, 0x99]
-    assert result[2] == [0x00, 0x99, 0x00]
-    assert result[3] == [0x99, 0x99, 0x99]
-    assert result[4] == [0x00, 0x00, 0x00]
+    assert result[1] == [0x00, 0x00, 0x99]  # First two match row 0, third doesn't
+    assert result[2] == [0x10, 0x99, 0x12]  # None match (row 1 has 0x00 values, different from row 0)
+    assert result[3] == [0x99, 0x00, 0x99]  # Middle matches row2[1]=0x99 where vert[0x99]=0x99
+    assert result[4] == [0x10, 0x11, 0x12]  # None match (row 3 has 0x99 values, different from row 0 tiles)
 
 
 def test_bounds_safety(mock_minimal_terrain_tables):

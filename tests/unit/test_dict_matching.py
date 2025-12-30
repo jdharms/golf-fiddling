@@ -7,10 +7,10 @@ def test_exact_longest_match(mock_minimal_terrain_tables):
     """Stream contains exact dictionary sequence - greedy longest match wins."""
     from golf.core.compressor import match_dict_sequence
 
-    # Set up: we have a 4-byte sequence and a 6-byte sequence
+    # Set up: we have a 2-byte sequence and a 6-byte sequence
     reverse_lookup = {
-        "000000": ["0xE1"],  # 6-byte sequence
-        "0000": ["0xE0"],    # 4-byte sequence (would match first)
+        "000000000000": ["0xE1"],  # 6-byte sequence of 0x00
+        "0000": ["0xE0"],          # 2-byte sequence of 0x00
     }
 
     # Stream has 6 zeros starting at position 0
@@ -30,20 +30,20 @@ def test_shorter_match_when_longest_fails(mock_minimal_terrain_tables):
     from golf.core.compressor import match_dict_sequence
 
     reverse_lookup = {
-        "000000": ["0xE1"],  # 6-byte sequence
-        "0000": ["0xE0"],    # 4-byte sequence
+        "000000000000": ["0xE1"],  # 6-byte sequence
+        "0000": ["0xE0"],          # 2-byte sequence
     }
 
-    # Stream only has 4 zeros, then something else
-    byte_stream = [0x00, 0x00, 0x00, 0x00, 0x25, 0x27]
+    # Stream only has 2 zeros, then something else
+    byte_stream = [0x00, 0x00, 0x25, 0x27]
 
     result = match_dict_sequence(byte_stream, 0, reverse_lookup)
 
-    # Should match the shorter sequence since 6-byte won't work
+    # Should match the 2-byte sequence since 6-byte won't work
     assert result is not None
     code, length = result
     assert code == "0xE0"
-    assert length == 4
+    assert length == 2
 
 
 def test_no_match(mock_minimal_terrain_tables):
@@ -70,7 +70,7 @@ def test_multiple_codes_same_sequence(mock_minimal_terrain_tables):
 
     # Could theoretically have multiple codes producing same sequence
     reverse_lookup = {
-        "0000": ["0xE1", "0xE2"],  # Both produce same sequence
+        "00000000": ["0xE1", "0xE2"],  # Both produce same 4-byte sequence
     }
 
     byte_stream = [0x00, 0x00, 0x00, 0x00]
@@ -89,10 +89,10 @@ def test_end_of_stream(mock_minimal_terrain_tables):
     from golf.core.compressor import match_dict_sequence
 
     reverse_lookup = {
-        "0000": ["0xE0"],
+        "00000000": ["0xE0"],  # 4-byte sequence
     }
 
-    # Stream with match at very end
+    # Stream with match at end
     byte_stream = [0x25, 0x27, 0x3E, 0x00, 0x00, 0x00, 0x00]
 
     result = match_dict_sequence(byte_stream, 3, reverse_lookup)
@@ -108,21 +108,21 @@ def test_greedy_algorithm(mock_minimal_terrain_tables):
     """Confirms longest-first ordering matters."""
     from golf.core.compressor import match_dict_sequence
 
-    # Three overlapping matches: 2-byte, 4-byte, 6-byte
-    # Longest-first means we should try 6 first, then 4, then 2
+    # Three overlapping matches: 1-byte, 2-byte, 3-byte
+    # Longest-first means we should try 3 first, then 2, then 1
     reverse_lookup = {
-        "000000": ["0xE3"],  # 6 bytes
-        "0000": ["0xE2"],    # 4 bytes
-        "00": ["0xE1"],      # 2 bytes
+        "000000": ["0xE3"],      # 3 bytes
+        "0000": ["0xE2"],        # 2 bytes
+        "00": ["0xE1"],          # 1 byte
     }
 
-    # Stream with 8 zeros - should match the longest
-    byte_stream = [0x00] * 8
+    # Stream with 4 zeros - should match the longest (3 bytes)
+    byte_stream = [0x00] * 4
 
     result = match_dict_sequence(byte_stream, 0, reverse_lookup)
 
-    # Should match 6-byte sequence (longest), not 4 or 2
+    # Should match 3-byte sequence (longest), not 2 or 1
     assert result is not None
     code, length = result
     assert code == "0xE3"
-    assert length == 6
+    assert length == 3

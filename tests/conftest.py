@@ -92,7 +92,7 @@ def simple_greens_fixture():
 def terrain_decompressor(terrain_tables):
     """Create a terrain decompressor with real tables."""
     rom_reader = None  # Not needed for decompressor initialization
-    decompressor = TerrainDecompressor(rom_reader=rom_reader)
+    decompressor = TerrainDecompressor(rom=rom_reader)
     # Manually set tables since we're providing them
     decompressor.horiz_table = terrain_tables["horizontal_table"]
     decompressor.vert_table = terrain_tables["vertical_table"]
@@ -109,7 +109,7 @@ def terrain_decompressor(terrain_tables):
 def greens_decompressor(greens_tables):
     """Create a greens decompressor with real tables."""
     rom_reader = None  # Not needed for decompressor initialization
-    decompressor = GreensDecompressor(rom_reader=rom_reader)
+    decompressor = GreensDecompressor(rom=rom_reader)
     # Manually set tables since we're providing them
     decompressor.horiz_table = greens_tables["horizontal_table"]
     decompressor.vert_table = greens_tables["vertical_table"]

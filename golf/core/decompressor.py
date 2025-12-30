@@ -244,19 +244,25 @@ class TerrainDecompressor:
         Initialize terrain decompressor with decompression tables from ROM.
 
         Args:
-            rom: RomReader instance
+            rom: RomReader instance (can be None for testing with manually set tables)
         """
         self.rom = rom
 
-        # Load decompression tables from fixed bank
-        prg = rom.cpu_to_prg_fixed(TABLE_HORIZ_TRANSITION)
-        self.horiz_table = list(rom.read_prg(prg, 224))
+        # Load decompression tables from fixed bank (only if rom is provided)
+        if rom is not None:
+            prg = rom.cpu_to_prg_fixed(TABLE_HORIZ_TRANSITION)
+            self.horiz_table = list(rom.read_prg(prg, 224))
 
-        prg = rom.cpu_to_prg_fixed(TABLE_VERT_CONTINUATION)
-        self.vert_table = list(rom.read_prg(prg, 224))
+            prg = rom.cpu_to_prg_fixed(TABLE_VERT_CONTINUATION)
+            self.vert_table = list(rom.read_prg(prg, 224))
 
-        prg = rom.cpu_to_prg_fixed(TABLE_DICTIONARY)
-        self.dict_table = list(rom.read_prg(prg, 64))
+            prg = rom.cpu_to_prg_fixed(TABLE_DICTIONARY)
+            self.dict_table = list(rom.read_prg(prg, 64))
+        else:
+            # Initialize empty tables for testing (will be populated manually)
+            self.horiz_table = []
+            self.vert_table = []
+            self.dict_table = []
 
     def decompress(self, compressed: bytes, row_width: int = TERRAIN_ROW_WIDTH, stats: Optional[DecompressionStats] = None) -> List[List[int]]:
         """
@@ -357,26 +363,32 @@ class TerrainDecompressor:
 class GreensDecompressor:
     """Decompresses greens data - similar algorithm but different tables in switched bank."""
 
-    def __init__(self, rom: RomReader, bank: int):
+    def __init__(self, rom: RomReader, bank: int = 3):
         """
         Initialize greens decompressor with decompression tables from ROM.
 
         Args:
-            rom: RomReader instance
-            bank: Bank number containing greens decompression tables
+            rom: RomReader instance (can be None for testing with manually set tables)
+            bank: Bank number containing greens decompression tables (default: 3)
         """
         self.rom = rom
         self.bank = bank
 
         # Greens decompression tables are at $8000, $80C0, $8180 in the switched bank
-        prg = rom.cpu_to_prg_switched(0x8000, bank)
-        self.horiz_table = list(rom.read_prg(prg, 192))
+        if rom is not None:
+            prg = rom.cpu_to_prg_switched(0x8000, bank)
+            self.horiz_table = list(rom.read_prg(prg, 192))
 
-        prg = rom.cpu_to_prg_switched(0x80C0, bank)
-        self.vert_table = list(rom.read_prg(prg, 192))
+            prg = rom.cpu_to_prg_switched(0x80C0, bank)
+            self.vert_table = list(rom.read_prg(prg, 192))
 
-        prg = rom.cpu_to_prg_switched(0x8180, bank)
-        self.dict_table = list(rom.read_prg(prg, 64))
+            prg = rom.cpu_to_prg_switched(0x8180, bank)
+            self.dict_table = list(rom.read_prg(prg, 64))
+        else:
+            # Initialize empty tables for testing (will be populated manually)
+            self.horiz_table = []
+            self.vert_table = []
+            self.dict_table = []
 
     def decompress(self, compressed: bytes, stats: Optional[DecompressionStats] = None) -> List[List[int]]:
         """
