@@ -105,7 +105,7 @@ Example:
 - Longest dictionary sequence: 22 bytes
 
 ### Greens:
-- Fixed size: 24×24 = 576 tiles total
+- Fixed size: 24*24 = 576 tiles total
 - Horizontal table: 192 bytes
 - Vertical table: 192 bytes
 - Dictionary codes: 32 (0xE0-0xFF)

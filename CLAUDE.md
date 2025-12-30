@@ -58,6 +58,10 @@ golf-visualize data/chr-ram.bin courses/japan/ renders/japan/
 golf-editor data/chr-ram.bin data/green-ram.bin courses/japan/hole_01.json
 ```
 
+### JSON Inspection
+
+The various JSON files (in courses/ and data/) can be efficiently inspected using `jq`. Useful `jq` commands should be added to this section as they are discovered during development.
+
 ## Code Architecture
 
 ### Package Structure
