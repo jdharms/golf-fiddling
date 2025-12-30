@@ -3,8 +3,6 @@ NES Open Tournament Golf - Editor Application
 
 Main application class that orchestrates all editor components.
 """
-
-import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -31,7 +29,10 @@ class EditorApplication:
 
         self.screen_width = 1200
         self.screen_height = 800
-        self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE)
+        self.screen = pygame.display.set_mode(
+            (self.screen_width, self.screen_height),
+            pygame.RESIZABLE
+        )
         pygame.display.set_caption("NES Open Golf Course Editor")
 
         self.font = pygame.font.SysFont("monospace", 14)
@@ -273,7 +274,7 @@ class EditorApplication:
 
         # Palette selector in toolbar (for palette mode)
         if self.state.mode == "palette":
-            x = 700
+            x = 900
             text = self.font.render("Palette:", True, COLOR_TEXT)
             self.screen.blit(text, (x, 12))
             x += 70
