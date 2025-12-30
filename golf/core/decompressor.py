@@ -12,7 +12,7 @@ from .rom_reader import (
     TABLE_VERT_CONTINUATION,
     TABLE_DICTIONARY,
 )
-from .palettes import TERRAIN_ROW_WIDTH, ATTR_TOTAL_BYTES
+from .palettes import TERRAIN_ROW_WIDTH, GREENS_TOTAL_TILES
 
 
 class TerrainDecompressor:
@@ -155,7 +155,7 @@ class GreensDecompressor:
         output = []
         src_idx = 0
 
-        while src_idx < len(compressed):
+        while src_idx < len(compressed) and len(output) < GREENS_TOTAL_TILES:
             byte = compressed[src_idx]
             src_idx += 1
 
@@ -190,6 +190,9 @@ class GreensDecompressor:
 
             else:
                 output.append(byte)
+
+        # Truncate output to exactly 576 tiles if we overshot during decompression
+        output = output[:GREENS_TOTAL_TILES]
 
         # Convert to rows
         rows = []

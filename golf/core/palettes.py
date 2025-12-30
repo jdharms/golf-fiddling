@@ -37,5 +37,6 @@ TERRAIN_ROW_WIDTH = 22    # Alias for compatibility
 ATTR_ROW_WIDTH = 11       # Width of attribute data (TERRAIN_WIDTH / 2)
 ATTR_TOTAL_BYTES = 72     # Total attribute bytes per hole
 
-GREENS_WIDTH = 24         # Width of greens data in pixels
-GREENS_HEIGHT = 24        # Height of greens data in pixels
+GREENS_WIDTH = 24         # Width of greens data in tiles
+GREENS_HEIGHT = 24        # Height of greens data in tiles
+GREENS_TOTAL_TILES = GREENS_WIDTH * GREENS_HEIGHT  # 576 tiles (24x24 grid)

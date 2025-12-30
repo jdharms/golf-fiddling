@@ -128,17 +128,18 @@ def dump_course(rom: RomReader, course_idx: int, output_dir: Path):
         attr_height = (terrain_height + 1) // 2  # Supertile rows
         attr_rows = unpack_attributes(attr_bytes, attr_height)
 
-        # Read and decompress greens (need to find size first)
-        # Greens end is the start of next hole's greens, or end of data
+        # Read and decompress greens
+        # In the game itself this routine runs until the *output* buffer is filled.
+        # So we'll grab a generous buffer to pass to the decompress function.
         if hole_idx < TOTAL_HOLES - 1:
             next_greens_ptr = rom.read_fixed_word(TABLE_GREENS_PTR + ((hole_idx + 1) * 2))
             # Handle course boundaries where pointer table wraps
             if next_greens_ptr > greens_ptr:
                 greens_size = next_greens_ptr - greens_ptr
             else:
-                greens_size = 256  # Fallback estimate
+                greens_size = 576  # (worst case: 1 byte = 1 tile)
         else:
-            greens_size = 256  # Last hole, estimate
+            greens_size = 576  # Conservative fallback for last hole
 
         greens_prg = rom.cpu_to_prg_switched(greens_ptr, greens_bank)
         greens_compressed = rom.read_prg(greens_prg, greens_size)

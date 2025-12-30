@@ -126,3 +126,7 @@ Separate decompression tables exist for terrain (in fixed bank) and greens (in s
 ## Testing
 
 Currently no automated test suite exists.
+
+## Claude Code Preferences
+
+- **Commit messages**: Please do not author commit messages. I prefer to write them myself to capture the specific context and rationale.
