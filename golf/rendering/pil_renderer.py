@@ -5,7 +5,7 @@ PIL-based rendering for generating PNG images of golf course holes.
 Used by the visualize tool to create static images.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 try:
     from PIL import Image
@@ -14,11 +14,15 @@ except ImportError:
 
 from ..core.chr_tile import TilesetData, TILE_SIZE
 from ..core.palettes import PALETTES, GREEN_OVERLAY_COLOR, GREEN_TILE_THRESHOLD
+from .pil_sprite import PILSprite
 
 
 def render_hole_to_image(
     hole_data: Dict[str, Any],
-    tileset: TilesetData
+    tileset: TilesetData,
+    sprites: Optional[Dict[str, PILSprite]] = None,
+    render_sprites: bool = True,
+    selected_flag_index: int = 0
 ) -> Image.Image:
     """
     Render a hole to a PIL Image.
@@ -26,6 +30,9 @@ def render_hole_to_image(
     Args:
         hole_data: Hole data dictionary (from JSON)
         tileset: TilesetData instance with CHR tile data
+        sprites: Dictionary of loaded PILSprite instances (optional)
+        render_sprites: Whether to render sprites on the image (default: True)
+        selected_flag_index: Which flag position to render (0-3, default: 0)
 
     Returns:
         PIL Image object
@@ -115,4 +122,63 @@ def render_hole_to_image(
                     if 0 <= px < img_width and 0 <= py < img_height:
                         pixels[px, py] = GREEN_OVERLAY_COLOR
 
+    # Render sprites if requested
+    if render_sprites and sprites:
+        _render_terrain_sprites(img, sprites, hole_data, selected_flag_index)
+
     return img
+
+
+def _render_terrain_sprites(
+    img: Image.Image,
+    sprites: Dict[str, PILSprite],
+    hole_data: Dict[str, Any],
+    selected_flag_index: int
+):
+    """
+    Render flag, tee, and ball sprites on terrain view.
+
+    Args:
+        img: PIL Image to render onto (modified in-place)
+        sprites: Dictionary of loaded PILSprite instances
+        hole_data: Hole data dictionary (from JSON or HoleData)
+        selected_flag_index: Which flag position to render (0-3)
+    """
+    # Support both raw JSON (top-level keys) and HoleData format (metadata dict)
+    metadata = hole_data.get("metadata", hole_data)
+
+    # Render tee sprite
+    if sprites.get("tee"):
+        tee = metadata.get("tee", {})
+        if tee:
+            tee_x = tee.get("x", 0)
+            tee_y = tee.get("y", 0)
+            sprites["tee"].render_to_image(img, tee_x, tee_y)
+
+    # Render ball sprite at tee position
+    if sprites.get("ball"):
+        tee = metadata.get("tee", {})
+        if tee:
+            tee_x = tee.get("x", 0)
+            tee_y = tee.get("y", 0)
+            sprites["ball"].render_to_image(img, tee_x, tee_y)
+
+    # Render flag sprite
+    if sprites.get("flag"):
+        flag_positions = metadata.get("flag_positions", [])
+        if flag_positions and 0 <= selected_flag_index < len(flag_positions):
+            flag_pos = flag_positions[selected_flag_index]
+            green_flag_x = flag_pos.get("x_offset", 0)
+            green_flag_y = flag_pos.get("y_offset", 0)
+
+            # Get green position (from top-level green key)
+            green = hole_data.get("green", {})
+            green_x = green.get("x", 0)
+            green_y = green.get("y", 0)
+
+            # Calculate flag position (green position + flag offset in tiles)
+            # Flag offsets are in 1/8th pixel units, so divide by 8 to convert to pixels
+            flag_x = green_x + (green_flag_x // 8)
+            flag_y = green_y + (green_flag_y // 8)
+
+            sprites["flag"].render_to_image(img, flag_x, flag_y)

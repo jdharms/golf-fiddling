@@ -7,7 +7,6 @@ Extracts course data from ROM and saves as human-readable JSON files.
 
 import sys
 from pathlib import Path
-from typing import List
 
 from golf.core.rom_reader import (
     RomReader,
