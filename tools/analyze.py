@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-Analyze NES Open Tournament Golf hole data.
+NES Open Tournament Golf - Hole Data Analyzer
+
+Analyzes hole data to find patterns and relationships.
 Usage: python analyze.py <directory_of_json_files>
 """
 
@@ -9,6 +11,9 @@ import sys
 from pathlib import Path
 from collections import defaultdict
 import numpy as np
+
+from golf.core.palettes import GREEN_TILE_THRESHOLD
+from golf.formats.hex_utils import parse_hex_row
 
 
 def percentile_stats(values):
@@ -27,13 +32,13 @@ def percentile_stats(values):
 
 
 def count_on_green_tiles(greens_data):
-    """Count tiles with value >= 0x30 in the greens rows."""
+    """Count tiles with value >= GREEN_TILE_THRESHOLD in the greens rows."""
     count = 0
-    for row in greens_data["rows"]:
+    for row_str in greens_data["rows"]:
         # Each row is a space-separated string of hex values
-        hex_values = row.split()
-        for hv in hex_values:
-            if int(hv, 16) >= 0x30:
+        hex_values = parse_hex_row(row_str)
+        for value in hex_values:
+            if value >= GREEN_TILE_THRESHOLD:
                 count += 1
     return count
 
@@ -136,7 +141,7 @@ def analyze_holes(directory):
         pairs.sort()
         # Check if linear relationship exists
         if len(pairs) >= 2:
-            diffs = [(pairs[i+1][0] - pairs[i][0], pairs[i+1][1] - pairs[i][1]) 
+            diffs = [(pairs[i+1][0] - pairs[i][0], pairs[i+1][1] - pairs[i][1])
                      for i in range(len(pairs)-1)]
             print(f"  Data points: {pairs}")
             # Try to find pattern
@@ -160,7 +165,7 @@ def analyze_holes(directory):
     print("ON-GREEN TILE COUNT STATISTICS")
     print("=" * 60)
     stats = percentile_stats(on_green_counts)
-    print(f"\nTiles on green (value >= 0x30) across all holes (n={stats['count']}):")
+    print(f"\nTiles on green (value >= {GREEN_TILE_THRESHOLD:#04x}) across all holes (n={stats['count']}):")
     print(f"  Min:  {stats['min']:.0f}")
     print(f"  25th: {stats['25th']:.1f}")
     print(f"  50th: {stats['50th']:.1f}")

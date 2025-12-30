@@ -9,8 +9,8 @@ from typing import Dict, Tuple
 import pygame
 from pygame import Surface, Rect
 
-from editor.core.chr_rendering import Sprite
-from editor.core.data_model import HoleData
+from editor.core.pygame_rendering import Sprite
+from golf.formats.hole_data import HoleData
 from editor.core.constants import GREEN_OVERLAY_COLOR
 
 

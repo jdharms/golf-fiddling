@@ -12,8 +12,8 @@ import pygame
 from pygame import Rect
 
 from .core.constants import *
-from .core.chr_rendering import Tileset, Sprite
-from .core.data_model import HoleData
+from .core.pygame_rendering import Tileset, Sprite
+from golf.formats.hole_data import HoleData
 from .ui.widgets import Button
 from .ui.pickers import TilePicker, GreensTilePicker
 from .ui.dialogs import open_file_dialog, save_file_dialog

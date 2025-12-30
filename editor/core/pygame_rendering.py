@@ -1,8 +1,8 @@
 """
-NES Open Tournament Golf - CHR Rendering
+NES Open Tournament Golf - Pygame Rendering
 
-Handles NES CHR format tile decoding and rendering for both tileset
-backgrounds and sprites.
+Handles NES CHR format tile decoding and pygame-based rendering for both
+tileset backgrounds and sprites. Uses shared tile decoding from golf.core.
 """
 
 import json
@@ -11,18 +11,17 @@ from typing import List, Dict, Tuple
 import pygame
 from pygame import Surface
 
+from golf.core.chr_tile import decode_tile, TILE_SIZE, BYTES_PER_TILE
+from golf.core.palettes import PALETTES, GREENS_PALETTE
+
 from .constants import (
-    BYTES_PER_TILE,
-    TILE_SIZE,
-    PALETTES,
-    GREENS_PALETTE,
     GREENS_PALETTE_NUM,
     SPRITE_OFFSET_Y,
 )
 
 
 class Tileset:
-    """Loads and renders NES CHR tile data."""
+    """Loads and renders NES CHR tile data using pygame."""
 
     def __init__(self, chr_path: str):
         with open(chr_path, 'rb') as f:
@@ -32,26 +31,12 @@ class Tileset:
         self._cache: Dict[Tuple[int, int, int], Surface] = {}
 
     def decode_tile(self, tile_idx: int) -> List[List[int]]:
-        """Decode a single 8x8 tile into 2-bit pixel values."""
-        if tile_idx >= self.num_tiles:
-            return [[0] * 8 for _ in range(8)]
+        """
+        Decode a single 8x8 tile into 2-bit pixel values.
 
-        offset = tile_idx * BYTES_PER_TILE
-        plane0 = self.data[offset:offset + 8]
-        plane1 = self.data[offset + 8:offset + 16]
-
-        pixels = []
-        for row in range(8):
-            row_pixels = []
-            for col in range(8):
-                bit_mask = 0x80 >> col
-                low_bit = 1 if (plane0[row] & bit_mask) else 0
-                high_bit = 1 if (plane1[row] & bit_mask) else 0
-                pixel = low_bit | (high_bit << 1)
-                row_pixels.append(pixel)
-            pixels.append(row_pixels)
-
-        return pixels
+        Uses shared decode_tile function from golf.core.chr_tile.
+        """
+        return decode_tile(self.data, tile_idx)
 
     def render_tile(self, tile_idx: int, palette_idx: int, scale: int = 1) -> Surface:
         """Render a tile to a Pygame surface with given palette."""
@@ -126,26 +111,15 @@ class Sprite:
         self._cache: Dict[Tuple[int, int], Surface] = {}
 
     def decode_tile(self, tile_idx: int) -> List[List[int]]:
-        """Decode a single 8x8 tile into 2-bit pixel values."""
+        """
+        Decode a single 8x8 tile into 2-bit pixel values.
+
+        Uses shared decode_tile function from golf.core.chr_tile.
+        """
         if tile_idx >= len(self.tiles):
             return [[0] * 8 for _ in range(8)]
 
-        tile_data = self.tiles[tile_idx]
-        plane0 = tile_data[0:8]
-        plane1 = tile_data[8:16]
-
-        pixels = []
-        for row in range(8):
-            row_pixels = []
-            for col in range(8):
-                bit_mask = 0x80 >> col
-                low_bit = 1 if (plane0[row] & bit_mask) else 0
-                high_bit = 1 if (plane1[row] & bit_mask) else 0
-                pixel = low_bit | (high_bit << 1)
-                row_pixels.append(pixel)
-            pixels.append(row_pixels)
-
-        return pixels
+        return decode_tile(self.tiles[tile_idx], 0)
 
     def render_tile(self, tile_idx: int, scale: int = 1) -> Surface:
         """Render a sprite tile to a Pygame surface."""

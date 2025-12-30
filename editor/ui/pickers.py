@@ -9,7 +9,7 @@ from typing import Tuple
 import pygame
 from pygame import Surface, Rect
 
-from editor.core.chr_rendering import Tileset
+from editor.core.pygame_rendering import Tileset
 from editor.core.constants import (
     TILE_SIZE,
     COLOR_PICKER_BG,

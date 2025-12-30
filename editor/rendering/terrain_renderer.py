@@ -8,8 +8,8 @@ from typing import Dict
 
 from pygame import Surface, Rect
 
-from editor.core.chr_rendering import Tileset, Sprite
-from editor.core.data_model import HoleData
+from editor.core.pygame_rendering import Tileset, Sprite
+from golf.formats.hole_data import HoleData
 from editor.core.constants import TILE_SIZE, TERRAIN_WIDTH
 from .sprite_renderer import SpriteRenderer
 from .grid_renderer import GridRenderer

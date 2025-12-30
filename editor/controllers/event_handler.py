@@ -10,7 +10,7 @@ import pygame
 from pygame import Rect
 
 from .editor_state import EditorState
-from editor.core.data_model import HoleData
+from golf.formats.hole_data import HoleData
 from editor.ui.pickers import TilePicker, GreensTilePicker
 from editor.ui.widgets import Button
 from editor.core.constants import (

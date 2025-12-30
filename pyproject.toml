@@ -12,13 +12,17 @@ dependencies = [
 
 [project.scripts]
 golf-editor = "editor.main:main"
-golf-dump = "dump:main"
-golf-analyze = "analyze:main"
-golf-visualize = "visualize:main"
-golf-hex2bin = "hex_to_bin:main"
+golf-dump = "tools.dump:main"
+golf-analyze = "tools.analyze:main"
+golf-visualize = "tools.visualize:main"
+golf-hex2bin = "tools.hex2bin:main"
 
 [tool.uv]
 package = true
 
-[tool.setuptools]
-packages = ["editor"]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["golf", "editor", "tools"]

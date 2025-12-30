@@ -1,14 +1,16 @@
 """
-NES Open Tournament Golf - Data Model
+NES Open Tournament Golf - Hole Data Model
 
 Manages hole data including terrain, attributes, greens, and metadata.
+Handles loading from and saving to JSON files.
 """
 
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-from editor.utils import compact_json as json
-from .constants import TERRAIN_WIDTH, GREENS_WIDTH
+from . import compact_json as json
+from . import hex_utils
+from ..core.palettes import TERRAIN_WIDTH, GREENS_WIDTH
 
 
 class HoleData:
@@ -29,19 +31,19 @@ class HoleData:
         with open(path, 'r') as f:
             data = json.load(f)
 
-        # Parse terrain
+        # Parse terrain using shared hex utility
         self.terrain = []
         for row_str in data["terrain"]["rows"]:
-            row = [int(x, 16) for x in row_str.split()]
+            row = hex_utils.parse_hex_row(row_str)
             self.terrain.append(row)
 
         # Parse attributes
         self.attributes = data["attributes"]["rows"]
 
-        # Parse greens
+        # Parse greens using shared hex utility
         self.greens = []
         for row_str in data["greens"]["rows"]:
-            row = [int(x, 16) for x in row_str.split()]
+            row = hex_utils.parse_hex_row(row_str)
             self.greens.append(row)
 
         # Green position
@@ -70,16 +72,16 @@ class HoleData:
         if path is None:
             raise ValueError("No save path specified")
 
-        # Convert terrain to hex strings
+        # Convert terrain to hex strings using shared utility
         terrain_rows = []
         for row in self.terrain:
-            row_str = ' '.join(f'{b:02X}' for b in row)
+            row_str = hex_utils.format_hex_row(row)
             terrain_rows.append(row_str)
 
-        # Convert greens to hex strings
+        # Convert greens to hex strings using shared utility
         greens_rows = []
         for row in self.greens:
-            row_str = ' '.join(f'{b:02X}' for b in row)
+            row_str = hex_utils.format_hex_row(row)
             greens_rows.append(row_str)
 
         data = {
