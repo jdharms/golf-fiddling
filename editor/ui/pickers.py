@@ -128,7 +128,7 @@ class GreensTilePicker(TilePicker):
     def __init__(self, tileset: Tileset, rect: Rect):
         super().__init__(tileset, rect)
         # Greens use different tile range
-        self.tile_indices = [0x29] + [0x2B, 0x2C] + _range_to_list(0x30, 0x9F)
+        self.tile_indices = [0x29] + [0x2B, 0x2C] + _range_to_list(0x30, 0xA0) + [0xB0]
         self.selected_tile = 0x30
 
     def render(self, screen: Surface, palette_idx: int = 1):
