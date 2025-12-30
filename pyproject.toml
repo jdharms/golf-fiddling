@@ -17,6 +17,7 @@ golf-analyze = "tools.analyze:main"
 golf-visualize = "tools.visualize:main"
 golf-hex2bin = "tools.hex2bin:main"
 golf-expand-dict = "tools.expand_dict:main"
+golf-extract-tables = "tools.extract_tables:main"
 
 [tool.uv]
 package = true
