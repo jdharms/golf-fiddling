@@ -143,7 +143,47 @@ Example: `golf-expand-dict = "tools.expand_dict:main"` makes `golf-expand-dict` 
 
 ## Testing
 
-Currently no automated test suite exists.
+### Running Tests
+
+A comprehensive test suite for the compression system is located in the `tests/` directory. Tests are written using pytest and cover both unit and integration testing.
+
+```bash
+# Run all tests with coverage
+pytest
+
+# Run only unit tests (tests individual compression functions)
+pytest tests/unit/
+
+# Run only integration tests (round-trip compression/decompression)
+pytest tests/integration/
+
+# Run specific test file
+pytest tests/unit/test_vertical_fill.py -v
+
+# Run with verbose output and see print statements
+pytest -v -s
+
+# Generate coverage report
+pytest --cov=golf --cov-report=html
+```
+
+### Test Structure
+
+- **Unit Tests** (`tests/unit/`): 23 tests validating individual compression functions
+  - `test_vertical_fill.py` - Vertical fill detection (7 tests)
+  - `test_dict_matching.py` - Dictionary sequence matching (6 tests)
+  - `test_repeat_codes.py` - Repeat code generation (6 tests)
+  - `test_table_loading.py` - Compression table validation (4 tests)
+
+- **Integration Tests** (`tests/integration/`): 11 tests for round-trip validation
+  - `test_terrain_roundtrip.py` - Terrain compress/decompress (6 tests)
+  - `test_greens_roundtrip.py` - Greens compress/decompress (5 tests)
+
+- **Test Fixtures** (`tests/fixtures/` and `tests/conftest.py`):
+  - Real compression tables from `data/tables/compression_tables.json`
+  - Mock minimal tables for unit testing
+  - Real hole data from `courses/japan/`
+  - Hand-crafted test fixtures (simple terrain/greens)
 
 ## Claude Code Preferences
 

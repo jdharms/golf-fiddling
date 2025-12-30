@@ -10,6 +10,12 @@ dependencies = [
     "pygame>=2.6.1",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+]
+
 [project.scripts]
 golf-editor = "editor.main:main"
 golf-dump = "tools.dump:main"
@@ -21,6 +27,19 @@ golf-extract-tables = "tools.extract_tables:main"
 
 [tool.uv]
 package = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+    "--cov=golf",
+    "--cov-report=term-missing",
+]
 
 [build-system]
 requires = ["hatchling"]

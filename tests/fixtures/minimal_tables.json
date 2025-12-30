@@ -1,0 +1,57 @@
+{
+  "terrain": {
+    "horizontal_table": [0, 0, 0, 0, 0, 162, 163, 160, 161, 162, 163, 160, 161, 162, 163, 160, 161, 162, 163, 160],
+    "vertical_table": [0, 0, 162, 163, 160, 161, 162, 163, 160, 161, 162, 163, 160, 161, 162, 163, 160, 161, 162, 163],
+    "dictionary_codes": {
+      "0xE0": {
+        "first_byte": 0,
+        "repeat_count": 1,
+        "sequence": [0, 0],
+        "length": 2
+      },
+      "0xE1": {
+        "first_byte": 0,
+        "repeat_count": 5,
+        "sequence": [0, 0, 0, 0, 0, 0],
+        "length": 6
+      }
+    },
+    "reverse_dict_lookup": {
+      "000000": ["0xE1"],
+      "0000": ["0xE0"]
+    },
+    "_metadata": {
+      "table_addresses": {
+        "horiz": "0xE1AC (fixed bank)",
+        "vert": "0xE28C (fixed bank)",
+        "dict": "0xE36C (fixed bank)"
+      },
+      "max_dict_sequence_length": 6,
+      "total_dict_codes": 2
+    }
+  },
+  "greens": {
+    "horizontal_table": [0, 0, 0, 0, 0, 48, 49, 50, 51, 48, 49, 50, 51, 48, 49, 50, 51, 48, 49, 50],
+    "vertical_table": [0, 0, 48, 49, 50, 51, 48, 49, 50, 51, 48, 49, 50, 51, 48, 49, 50, 51, 48, 49],
+    "dictionary_codes": {
+      "0xE0": {
+        "first_byte": 0,
+        "repeat_count": 1,
+        "sequence": [0, 0],
+        "length": 2
+      }
+    },
+    "reverse_dict_lookup": {
+      "0000": ["0xE0"]
+    },
+    "_metadata": {
+      "table_addresses": {
+        "horiz": "0x8000 (bank 3)",
+        "vert": "0x80C0 (bank 3)",
+        "dict": "0x8180 (bank 3)"
+      },
+      "max_dict_sequence_length": 2,
+      "total_dict_codes": 1
+    }
+  }
+}
