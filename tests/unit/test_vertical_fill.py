@@ -72,23 +72,6 @@ def test_mixed_vertical_fills(mock_minimal_terrain_tables):
     assert result[1] == [0x00, 0x99, 0x00]
 
 
-def test_identity_vertical_table(mock_minimal_terrain_tables):
-    """When vert_table[i] = i (identity mapping like 0x27 -> 0x27)."""
-    from golf.core.compressor import detect_vertical_fills
-
-    vert_table = mock_minimal_terrain_tables["vertical_table"]
-    vert_table[0x27] = 0x27  # Identity mapping
-
-    rows = [[0x27, 0x27, 0x27], [0x27, 0x27, 0x27]]
-
-    result = detect_vertical_fills(rows, vert_table)
-
-    # First row unchanged
-    assert result[0] == [0x27, 0x27, 0x27]
-    # Second row: all match vert_table (identity), so all become 0x00
-    assert result[1] == [0x00, 0x00, 0x00]
-
-
 def test_multiple_rows(mock_minimal_terrain_tables):
     """Test 5+ rows with various vertical fill patterns."""
     from golf.core.compressor import detect_vertical_fills

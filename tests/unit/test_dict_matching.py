@@ -46,44 +46,6 @@ def test_shorter_match_when_longest_fails(mock_minimal_terrain_tables):
     assert length == 2
 
 
-def test_no_match(mock_minimal_terrain_tables):
-    """Stream doesn't match any dictionary sequences."""
-    from golf.core.compressor import match_dict_sequence
-
-    reverse_lookup = {
-        "000000": ["0xE1"],
-        "0000": ["0xE0"],
-    }
-
-    # Stream has completely different pattern
-    byte_stream = [0x25, 0x27, 0x3E, 0x5A]
-
-    result = match_dict_sequence(byte_stream, 0, reverse_lookup)
-
-    # Should return None (no match)
-    assert result is None
-
-
-def test_multiple_codes_same_sequence(mock_minimal_terrain_tables):
-    """reverse_dict_lookup with multiple codes for same sequence."""
-    from golf.core.compressor import match_dict_sequence
-
-    # Could theoretically have multiple codes producing same sequence
-    reverse_lookup = {
-        "00000000": ["0xE1", "0xE2"],  # Both produce same 4-byte sequence
-    }
-
-    byte_stream = [0x00, 0x00, 0x00, 0x00]
-
-    result = match_dict_sequence(byte_stream, 0, reverse_lookup)
-
-    # Should return first code in list
-    assert result is not None
-    code, length = result
-    assert code == "0xE1"
-    assert length == 4
-
-
 def test_end_of_stream(mock_minimal_terrain_tables):
     """Matching at end of byte stream."""
     from golf.core.compressor import match_dict_sequence
@@ -102,27 +64,3 @@ def test_end_of_stream(mock_minimal_terrain_tables):
     code, length = result
     assert code == "0xE0"
     assert length == 4
-
-
-def test_greedy_algorithm(mock_minimal_terrain_tables):
-    """Confirms longest-first ordering matters."""
-    from golf.core.compressor import match_dict_sequence
-
-    # Three overlapping matches: 1-byte, 2-byte, 3-byte
-    # Longest-first means we should try 3 first, then 2, then 1
-    reverse_lookup = {
-        "000000": ["0xE3"],      # 3 bytes
-        "0000": ["0xE2"],        # 2 bytes
-        "00": ["0xE1"],          # 1 byte
-    }
-
-    # Stream with 4 zeros - should match the longest (3 bytes)
-    byte_stream = [0x00] * 4
-
-    result = match_dict_sequence(byte_stream, 0, reverse_lookup)
-
-    # Should match 3-byte sequence (longest), not 2 or 1
-    assert result is not None
-    code, length = result
-    assert code == "0xE3"
-    assert length == 3

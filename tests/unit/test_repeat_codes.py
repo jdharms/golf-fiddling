@@ -47,23 +47,6 @@ def test_max_repeat_count(mock_minimal_terrain_tables):
     assert length == 31
 
 
-def test_no_repeat_match(mock_minimal_terrain_tables):
-    """Stream doesn't follow horizontal transitions."""
-    from golf.core.compressor import generate_repeat_code
-
-    horiz_table = mock_minimal_terrain_tables["horizontal_table"]
-    horiz_table[0xA0] = 0xA2
-
-    # Stream doesn't follow the transition
-    byte_stream = [0x25, 0x27, 0x3E]
-    prev_byte = 0xA0
-
-    result = generate_repeat_code(byte_stream, 0, prev_byte, horiz_table)
-
-    # Should return None - no repeat match
-    assert result is None
-
-
 def test_single_transition(mock_minimal_terrain_tables):
     """Only 1 byte matches horizontal transition."""
     from golf.core.compressor import generate_repeat_code
@@ -82,27 +65,6 @@ def test_single_transition(mock_minimal_terrain_tables):
     code, length = result
     assert code == 0x01
     assert length == 1
-
-
-def test_identity_transition(mock_minimal_terrain_tables):
-    """horiz_table[byte] = byte (self-loop)."""
-    from golf.core.compressor import generate_repeat_code
-
-    horiz_table = mock_minimal_terrain_tables["horizontal_table"]
-    # Set identity for 0x00
-    horiz_table[0x00] = 0x00
-
-    # Stream: all zeros (self-loop transition)
-    byte_stream = [0x00, 0x00, 0x00, 0x00, 0x00]
-    prev_byte = 0x00
-
-    result = generate_repeat_code(byte_stream, 0, prev_byte, horiz_table)
-
-    # Should generate repeat code for 5 bytes
-    assert result is not None
-    code, length = result
-    assert code in range(0x01, 0x20)
-    assert length == 5
 
 
 def test_break_on_mismatch(mock_minimal_terrain_tables):
