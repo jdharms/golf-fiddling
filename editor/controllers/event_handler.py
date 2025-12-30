@@ -119,7 +119,10 @@ class EventHandler:
                             self.state.transform_state.start(event.pos, tile)
                             self.state.mouse_down = True
                     else:
-                        # Normal paint mode
+                        # Normal paint mode - push undo state at start of stroke
+                        if not self.state.painting:
+                            self.state.undo_manager.push_state(self.hole_data)
+                            self.state.painting = True
                         self.state.mouse_down = True
                         self._paint_at(event.pos)
                 elif event.button == 3:  # Right click - eyedropper
@@ -132,8 +135,13 @@ class EventHandler:
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
                     if self.state.transform_state.is_active:
+                        # Transform commits atomically - push undo before commit
+                        self.state.undo_manager.push_state(self.hole_data)
                         self._commit_transform()
                         self.state.transform_state.reset()
+                    else:
+                        # End paint stroke
+                        self.state.painting = False
                     self.state.mouse_down = False
                     self.state.last_paint_pos = None
 
@@ -180,6 +188,16 @@ class EventHandler:
             self.on_save()
         elif event.key == pygame.K_o and pygame.key.get_mods() & pygame.KMOD_CTRL:
             self.on_load()
+        elif event.key == pygame.K_z and pygame.key.get_mods() & pygame.KMOD_CTRL:
+            if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                # Ctrl+Shift+Z = Redo (alternative to Ctrl+Y)
+                self._redo()
+            else:
+                # Ctrl+Z = Undo
+                self._undo()
+        elif event.key == pygame.K_y and pygame.key.get_mods() & pygame.KMOD_CTRL:
+            # Ctrl+Y = Redo
+            self._redo()
 
         elif event.key == pygame.K_LEFT:
             self.state.canvas_offset_x = max(0, self.state.canvas_offset_x - 20)
@@ -380,3 +398,37 @@ class EventHandler:
                 self.hole_data.set_terrain_tile(row, col, tile_value)
             else:
                 self.hole_data.set_greens_tile(row, col, tile_value)
+
+    def _undo(self):
+        """Undo last action."""
+        if self.state.undo_manager.can_undo():
+            previous_state = self.state.undo_manager.undo(self.hole_data)
+            if previous_state:
+                self._restore_hole_data(previous_state)
+
+    def _redo(self):
+        """Redo last undone action."""
+        if self.state.undo_manager.can_redo():
+            next_state = self.state.undo_manager.redo(self.hole_data)
+            if next_state:
+                self._restore_hole_data(next_state)
+
+    def _restore_hole_data(self, snapshot: HoleData):
+        """Restore hole data from snapshot."""
+        self.hole_data.terrain = snapshot.terrain
+        self.hole_data.attributes = snapshot.attributes
+        self.hole_data.greens = snapshot.greens
+        self.hole_data.green_x = snapshot.green_x
+        self.hole_data.green_y = snapshot.green_y
+        self.hole_data.metadata = snapshot.metadata
+        self.hole_data.modified = True  # Restoring counts as modification
+
+    def add_row(self, at_top: bool = False):
+        """Add terrain row with undo support."""
+        self.state.undo_manager.push_state(self.hole_data)
+        self.hole_data.add_terrain_row(at_top)
+
+    def remove_row(self, from_top: bool = False):
+        """Remove terrain row with undo support."""
+        self.state.undo_manager.push_state(self.hole_data)
+        self.hole_data.remove_terrain_row(from_top)

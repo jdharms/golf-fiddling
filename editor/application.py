@@ -72,25 +72,18 @@ class EditorApplication:
         self.state = EditorState()
         self.hole_data = HoleData()
 
-        # Create UI elements
-        self.buttons: List[Button] = []
-        self.btn_terrain: Optional[Button] = None
-        self.btn_palette: Optional[Button] = None
-        self.btn_greens: Optional[Button] = None
-        self.btn_sprites: Optional[Button] = None
-        self.palette_buttons: List[Button] = []
-        self.flag_buttons: List[Button] = []
-        self.terrain_picker: Optional[TilePicker] = None
-        self.greens_picker: Optional[GreensTilePicker] = None
-        self._create_ui()
+        # Create pickers first (needed by event handler)
+        picker_rect = Rect(0, TOOLBAR_HEIGHT, PICKER_WIDTH, self.screen_height - TOOLBAR_HEIGHT - STATUS_HEIGHT)
+        self.terrain_picker = TilePicker(self.terrain_tileset, picker_rect)
+        self.greens_picker = GreensTilePicker(self.greens_tileset, picker_rect)
 
-        # Create event handler
+        # Create event handler early (buttons will reference its methods)
         self.event_handler = EventHandler(
             self.state,
             self.hole_data,
             self.terrain_picker,
             self.greens_picker,
-            self.buttons,
+            [],  # Empty buttons list initially
             self.screen_width,
             self.screen_height,
             on_load=self._on_load,
@@ -101,14 +94,25 @@ class EditorApplication:
             transform_logic=self.transform_logic,
         )
 
+        # Create UI elements (can now reference event_handler methods)
+        self.buttons: List[Button] = []
+        self.btn_terrain: Optional[Button] = None
+        self.btn_palette: Optional[Button] = None
+        self.btn_greens: Optional[Button] = None
+        self.btn_sprites: Optional[Button] = None
+        self.palette_buttons: List[Button] = []
+        self.flag_buttons: List[Button] = []
+        self._create_ui()
+
+        # Update event handler with created buttons
+        self.event_handler.buttons = self.buttons
+
         self.running = True
         self.clock = pygame.time.Clock()
 
     def _create_ui(self):
         """Create UI elements."""
-        picker_rect = Rect(0, TOOLBAR_HEIGHT, PICKER_WIDTH, self.screen_height - TOOLBAR_HEIGHT - STATUS_HEIGHT)
-        self.terrain_picker = TilePicker(self.terrain_tileset, picker_rect)
-        self.greens_picker = GreensTilePicker(self.greens_tileset, picker_rect)
+        # Pickers now created in __init__
 
         # Toolbar buttons
         self.buttons = []
@@ -138,11 +142,11 @@ class EditorApplication:
         self.buttons.append(btn_grid)
         x += 60
 
-        btn_add_row = Button(Rect(x, 5, 70, 30), "+Row", lambda: self.hole_data.add_terrain_row(False))
+        btn_add_row = Button(Rect(x, 5, 70, 30), "+Row", lambda: self.event_handler.add_row(False))
         self.buttons.append(btn_add_row)
         x += 80
 
-        btn_del_row = Button(Rect(x, 5, 70, 30), "-Row", lambda: self.hole_data.remove_terrain_row(False))
+        btn_del_row = Button(Rect(x, 5, 70, 30), "-Row", lambda: self.event_handler.remove_row(False))
         self.buttons.append(btn_del_row)
         x += 100
 
@@ -221,6 +225,8 @@ class EditorApplication:
         if path:
             self.hole_data.load(path)
             self.state.reset_canvas_position()
+            # Clear undo history when loading new file
+            self.state.undo_manager.set_initial_state(self.hole_data)
 
     def _on_save(self):
         """Save the current hole."""
@@ -407,6 +413,12 @@ class EditorApplication:
             modified = "*" if self.hole_data.modified else ""
             status_parts.append(f"File: {name}{modified}")
 
+        # Show undo/redo availability
+        if self.state.undo_manager.can_undo():
+            status_parts.append("Undo:Ctrl+Z")
+        if self.state.undo_manager.can_redo():
+            status_parts.append("Redo:Ctrl+Y")
+
         status_text = "  |  ".join(status_parts)
         text_surf = self.font.render(status_text, True, COLOR_TEXT)
         self.screen.blit(text_surf, (10, self.screen_height - STATUS_HEIGHT + 8))
@@ -415,3 +427,5 @@ class EditorApplication:
         """Load a hole from file path."""
         self.hole_data.load(path)
         self.state.reset_canvas_position()
+        # Clear undo history when loading new file
+        self.state.undo_manager.set_initial_state(self.hole_data)
