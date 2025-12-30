@@ -14,7 +14,7 @@ from golf.formats.hole_data import HoleData
 from editor.core.constants import TILE_SIZE, TERRAIN_WIDTH
 from .sprite_renderer import SpriteRenderer
 from .grid_renderer import GridRenderer
-from .highlight_utils import draw_tile_border
+from .highlight_utils import draw_tile_border, INVALID_NEIGHBOR_COLOR
 
 
 class TerrainRenderer:
@@ -35,6 +35,7 @@ class TerrainRenderer:
         selected_flag_index: int,
         transform_state,
         shift_hover_tile: Optional[int],
+        invalid_terrain_tiles: Optional[set] = None,
     ):
         """
         Render terrain canvas view.
@@ -53,6 +54,7 @@ class TerrainRenderer:
             selected_flag_index: Which flag position to render (0-3)
             transform_state: Transform drag state for preview rendering
             shift_hover_tile: Tile value to highlight (None if not highlighting)
+            invalid_terrain_tiles: Set of (row, col) tuples with invalid neighbors (None if none)
         """
         tile_size = TILE_SIZE * canvas_scale
 
@@ -76,6 +78,13 @@ class TerrainRenderer:
             TerrainRenderer._render_shift_hover_highlights(
                 screen, canvas_rect, hole_data,
                 shift_hover_tile, canvas_scale, canvas_offset_x, canvas_offset_y
+            )
+
+        # Render invalid neighbor highlights (red borders)
+        if invalid_terrain_tiles:
+            TerrainRenderer._render_invalid_neighbor_highlights(
+                screen, canvas_rect, hole_data, invalid_terrain_tiles,
+                canvas_scale, canvas_offset_x, canvas_offset_y
             )
 
         # Render transform preview with gold borders (ON TOP of tiles)
@@ -169,3 +178,24 @@ class TerrainRenderer:
 
                 # Draw gold border
                 draw_tile_border(screen, x, y, tile_size)
+
+    @staticmethod
+    def _render_invalid_neighbor_highlights(
+        screen, canvas_rect, hole_data, invalid_tiles,
+        canvas_scale, canvas_offset_x, canvas_offset_y
+    ):
+        """Render red borders around tiles with invalid neighbor relationships."""
+        tile_size = TILE_SIZE * canvas_scale
+
+        for row_idx, col_idx in invalid_tiles:
+            x = canvas_rect.x + col_idx * tile_size - canvas_offset_x
+            y = canvas_rect.y + row_idx * tile_size - canvas_offset_y
+
+            # Cull off-screen tiles
+            if x + tile_size < canvas_rect.x or x > canvas_rect.right:
+                continue
+            if y + tile_size < canvas_rect.y or y > canvas_rect.bottom:
+                continue
+
+            # Draw red border
+            draw_tile_border(screen, x, y, tile_size, color=INVALID_NEIGHBOR_COLOR)

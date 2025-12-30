@@ -9,8 +9,9 @@ from typing import Tuple
 import pygame
 
 
-# Gold highlighting constants
+# Highlighting constants
 HIGHLIGHT_COLOR = (255, 215, 0)  # Gold color
+INVALID_NEIGHBOR_COLOR = (255, 0, 0)  # Red color
 HIGHLIGHT_BORDER_WIDTH = 2
 
 
