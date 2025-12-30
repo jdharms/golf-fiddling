@@ -43,6 +43,7 @@ class EventHandler:
         on_flag_change: Callable[[], None],
         on_resize: Callable[[int, int], None],
         transform_logic: TransformLogic,
+        on_terrain_modified: Optional[Callable[[], None]] = None,
     ):
         """
         Initialize event handler.
@@ -75,6 +76,7 @@ class EventHandler:
         self.on_flag_change = on_flag_change
         self.on_resize = on_resize
         self.transform_logic = transform_logic
+        self.on_terrain_modified = on_terrain_modified
 
     def update_screen_size(self, width: int, height: int):
         """Update screen dimensions."""
@@ -265,6 +267,9 @@ class EventHandler:
                 if 0 <= row < len(self.hole_data.terrain) and 0 <= col < TERRAIN_WIDTH:
                     self.hole_data.set_terrain_tile(row, col, self.terrain_picker.selected_tile)
                     self.state.last_paint_pos = tile
+                    # Invalidate terrain validation cache
+                    if self.on_terrain_modified:
+                        self.on_terrain_modified()
 
         elif self.state.mode == "palette":
             supertile = self._screen_to_supertile(pos)
@@ -399,12 +404,19 @@ class EventHandler:
             else:
                 self.hole_data.set_greens_tile(row, col, tile_value)
 
+        # Invalidate terrain validation cache for terrain mode
+        if self.state.mode == "terrain" and self.on_terrain_modified:
+            self.on_terrain_modified()
+
     def _undo(self):
         """Undo last action."""
         if self.state.undo_manager.can_undo():
             previous_state = self.state.undo_manager.undo(self.hole_data)
             if previous_state:
                 self._restore_hole_data(previous_state)
+                # Invalidate terrain validation cache
+                if self.on_terrain_modified:
+                    self.on_terrain_modified()
 
     def _redo(self):
         """Redo last undone action."""
@@ -412,6 +424,9 @@ class EventHandler:
             next_state = self.state.undo_manager.redo(self.hole_data)
             if next_state:
                 self._restore_hole_data(next_state)
+                # Invalidate terrain validation cache
+                if self.on_terrain_modified:
+                    self.on_terrain_modified()
 
     def _restore_hole_data(self, snapshot: HoleData):
         """Restore hole data from snapshot."""
@@ -427,8 +442,14 @@ class EventHandler:
         """Add terrain row with undo support."""
         self.state.undo_manager.push_state(self.hole_data)
         self.hole_data.add_terrain_row(at_top)
+        # Invalidate terrain validation cache
+        if self.on_terrain_modified:
+            self.on_terrain_modified()
 
     def remove_row(self, from_top: bool = False):
         """Remove terrain row with undo support."""
         self.state.undo_manager.push_state(self.hole_data)
         self.hole_data.remove_terrain_row(from_top)
+        # Invalidate terrain validation cache
+        if self.on_terrain_modified:
+            self.on_terrain_modified()

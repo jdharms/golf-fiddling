@@ -68,6 +68,20 @@ class EditorApplication:
         self.compression_tables = load_compression_tables()
         self.transform_logic = TransformLogic(self.compression_tables)
 
+        # Load terrain neighbor validator
+        try:
+            from golf.core.neighbor_validator import TerrainNeighborValidator
+            self.terrain_neighbor_validator = TerrainNeighborValidator()
+        except FileNotFoundError:
+            print("Warning: terrain_neighbors.json not found, neighbor validation disabled")
+            self.terrain_neighbor_validator = None
+        except Exception as e:
+            print(f"Warning: Failed to load neighbor validator: {e}")
+            self.terrain_neighbor_validator = None
+
+        # Cache for invalid tiles (performance optimization)
+        self.cached_invalid_terrain_tiles = None
+
         # Create application state
         self.state = EditorState()
         self.hole_data = HoleData()
@@ -92,6 +106,7 @@ class EditorApplication:
             on_flag_change=self._update_flag_buttons,
             on_resize=self._on_resize,
             transform_logic=self.transform_logic,
+            on_terrain_modified=self.invalidate_terrain_validation_cache,
         )
 
         # Create UI elements (can now reference event_handler methods)
@@ -216,6 +231,23 @@ class EditorApplication:
         for i, btn in enumerate(self.palette_buttons, start=1):
             btn.active = (i == self.state.selected_palette)
 
+    def invalidate_terrain_validation_cache(self):
+        """Invalidate cached invalid tiles (call when terrain is modified)."""
+        self.cached_invalid_terrain_tiles = None
+
+    def get_invalid_terrain_tiles(self):
+        """Get invalid terrain tiles (cached, recomputes only when needed)."""
+        if self.terrain_neighbor_validator is None:
+            return set()
+
+        if self.cached_invalid_terrain_tiles is None:
+            # Cache miss - recompute
+            self.cached_invalid_terrain_tiles = (
+                self.terrain_neighbor_validator.get_invalid_tiles(self.hole_data.terrain)
+            )
+
+        return self.cached_invalid_terrain_tiles
+
     def _on_load(self):
         """Load a hole file."""
         path = open_file_dialog(
@@ -227,6 +259,8 @@ class EditorApplication:
             self.state.reset_canvas_position()
             # Clear undo history when loading new file
             self.state.undo_manager.set_initial_state(self.hole_data)
+            # Invalidate cache when loading new hole
+            self.invalidate_terrain_validation_cache()
 
     def _on_save(self):
         """Save the current hole."""
@@ -363,6 +397,7 @@ class EditorApplication:
                 self.state.selected_flag_index,
                 self.state.transform_state,
                 self.state.shift_hover_tile,
+                self.get_invalid_terrain_tiles(),
             )
 
     def _render_status(self):
