@@ -43,6 +43,7 @@ class EventHandler:
         on_flag_change: Callable[[], None],
         on_resize: Callable[[int, int], None],
         transform_logic: TransformLogic,
+        forest_filler=None,
         on_terrain_modified: Optional[Callable[[], None]] = None,
     ):
         """
@@ -76,6 +77,7 @@ class EventHandler:
         self.on_flag_change = on_flag_change
         self.on_resize = on_resize
         self.transform_logic = transform_logic
+        self.forest_filler = forest_filler
         self.on_terrain_modified = on_terrain_modified
 
     def update_screen_size(self, width: int, height: int):
@@ -200,6 +202,9 @@ class EventHandler:
         elif event.key == pygame.K_y and pygame.key.get_mods() & pygame.KMOD_CTRL:
             # Ctrl+Y = Redo
             self._redo()
+        elif event.key == pygame.K_f and pygame.key.get_mods() & pygame.KMOD_CTRL:
+            # Ctrl+F = Forest Fill
+            self._trigger_forest_fill()
 
         elif event.key == pygame.K_LEFT:
             self.state.canvas_offset_x = max(0, self.state.canvas_offset_x - 20)
@@ -453,3 +458,46 @@ class EventHandler:
         # Invalidate terrain validation cache
         if self.on_terrain_modified:
             self.on_terrain_modified()
+
+    def _trigger_forest_fill(self):
+        """Trigger intelligent forest fill for all detected placeholder regions."""
+        # Guard: must be in terrain mode
+        if self.state.mode != "terrain":
+            print("Forest Fill: Only available in terrain mode")
+            return
+
+        # Guard: forest filler must be available
+        if not self.forest_filler:
+            print("Warning: Forest fill not available (neighbor data missing)")
+            return
+
+        # Detect regions of placeholder tiles
+        regions = self.forest_filler.detect_regions(self.hole_data.terrain)
+
+        if not regions:
+            print("Forest Fill: No placeholder regions detected. Paint placeholder tiles (0x100) first.")
+            return
+
+        # Fill all regions
+        all_changes = {}
+        for region in regions:
+            changes = self.forest_filler.fill_region(self.hole_data.terrain, region)
+            all_changes.update(changes)
+
+        if not all_changes:
+            print("Forest Fill: No fillable cells found.")
+            return
+
+        # Push undo state before applying changes
+        self.state.undo_manager.push_state(self.hole_data)
+
+        # Apply all changes atomically
+        for (row, col), tile in all_changes.items():
+            self.hole_data.set_terrain_tile(row, col, tile)
+
+        # Invalidate validation cache
+        if self.on_terrain_modified:
+            self.on_terrain_modified()
+
+        # Status feedback
+        print(f"Forest Fill: Complete! Filled {len(all_changes)} tiles in {len(regions)} region(s).")

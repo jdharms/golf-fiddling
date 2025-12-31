@@ -17,6 +17,23 @@ from .grid_renderer import GridRenderer
 from .highlight_utils import draw_tile_border, INVALID_NEIGHBOR_COLOR
 
 
+def _render_placeholder_tile(size: int) -> Surface:
+    """Render the placeholder tile (0x100) with a distinctive pattern."""
+    surf = Surface((size, size))
+    # Gray checkerboard pattern to indicate meta/placeholder tile
+    gray1 = (100, 100, 100)
+    gray2 = (140, 140, 140)
+    checker_size = size // 4
+
+    for row in range(4):
+        for col in range(4):
+            color = gray1 if (row + col) % 2 == 0 else gray2
+            rect = (col * checker_size, row * checker_size, checker_size, checker_size)
+            pygame.draw.rect(surf, color, rect)
+
+    return surf
+
+
 class TerrainRenderer:
     """Renders terrain canvas view."""
 
@@ -69,8 +86,12 @@ class TerrainRenderer:
                 if y + tile_size < canvas_rect.y or y > canvas_rect.bottom:
                     continue
 
-                palette_idx = hole_data.get_attribute(row_idx, col_idx)
-                tile_surf = tileset.render_tile(tile_idx, palette_idx, canvas_scale)
+                # Render tile - use special rendering for placeholder (0x100)
+                if tile_idx == 0x100:
+                    tile_surf = _render_placeholder_tile(tile_size)
+                else:
+                    palette_idx = hole_data.get_attribute(row_idx, col_idx)
+                    tile_surf = tileset.render_tile(tile_idx, palette_idx, canvas_scale)
                 screen.blit(tile_surf, (x, y))
 
         # Render shift-hover highlights (AFTER base tiles, BEFORE transform preview)
@@ -134,9 +155,12 @@ class TerrainRenderer:
             if y + tile_size < canvas_rect.y or y > canvas_rect.bottom:
                 continue
 
-            # Render the transformed tile
-            palette_idx = hole_data.get_attribute(row, col)
-            tile_surf = tileset.render_tile(transformed_tile_idx, palette_idx, canvas_scale)
+            # Render the transformed tile - use special rendering for placeholder (0x100)
+            if transformed_tile_idx == 0x100:
+                tile_surf = _render_placeholder_tile(tile_size)
+            else:
+                palette_idx = hole_data.get_attribute(row, col)
+                tile_surf = tileset.render_tile(transformed_tile_idx, palette_idx, canvas_scale)
             screen.blit(tile_surf, (x, y))
 
             # Draw gold border around tile
