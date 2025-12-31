@@ -128,6 +128,18 @@ class PatternTracker:
         return 0xA0 + phase
 
 
+class Decision:
+    """Represents a WFC decision that can be backtracked."""
+    def __init__(self, cell: Tuple[int, int], chosen_tile: int, alternatives: List[int],
+                 superposition_snapshot: Dict[Tuple[int, int], Set[int]],
+                 collapsed_snapshot: Dict[Tuple[int, int], int]):
+        self.cell = cell
+        self.chosen_tile = chosen_tile
+        self.alternatives = alternatives  # Remaining tiles to try (sorted by score)
+        self.superposition_snapshot = superposition_snapshot
+        self.collapsed_snapshot = collapsed_snapshot
+
+
 class ForestFiller:
     """Intelligent forest fill algorithm using Wave Function Collapse."""
 
@@ -198,14 +210,22 @@ class ForestFiller:
 
         return region_cells
 
-    def fill_region(self, terrain: List[List[int]], region: ForestFillRegion) -> Dict[Tuple[int, int], int]:
-        """Fill a placeholder region using two-phase WFC: border layer first, then interior fill."""
-        # Initialize superposition for each cell, constrained by distance
-        superposition: Dict[Tuple[int, int], Set[int]] = {}
+    def fill_region(self, terrain: List[List[int]], region: ForestFillRegion,
+                    max_backtracks: int = 0) -> Dict[Tuple[int, int], int]:
+        """Fill a placeholder region using two-phase WFC with optional backtracking.
 
+        Args:
+            terrain: The terrain grid
+            region: The region to fill
+            max_backtracks: Maximum number of backtracks before giving up (default 0 = disabled)
+                          Set to > 0 to enable backtracking (try 50-100 for small regions)
+
+        Returns:
+            Dict mapping (row, col) to tile values for filled cells
+        """
+        # Initialize superposition for each cell
+        superposition: Dict[Tuple[int, int], Set[int]] = {}
         for cell in region.cells:
-            # Start with all forest tiles as possibilities
-            # (We'll use strong scoring bias instead of hard constraints)
             superposition[cell] = FOREST_FILL | FOREST_BORDER
 
         # Initial constraint propagation from existing terrain
@@ -218,70 +238,235 @@ class ForestFiller:
         # Two-phase WFC collapse
         collapsed: Dict[Tuple[int, int], int] = {}
 
-        # PHASE 1: Collapse border layer (distance = 1 from OOB)
-        border_cells = {cell for cell in region.cells
-                       if region.distance_field.get(cell, 999) <= BORDER_DISTANCE_THRESHOLD}
+        if max_backtracks > 0:
+            # Use backtracking version
+            decision_stack: List[Decision] = []
+            backtrack_count = 0
 
-        while border_cells:
-            # Find border cell with minimum entropy
-            min_entropy_cell = self._find_min_entropy_cell_in_set(
-                border_cells, superposition, collapsed
+            # PHASE 1: Collapse border layer (distance = 1 from OOB)
+            border_cells = {cell for cell in region.cells
+                           if region.distance_field.get(cell, 999) <= BORDER_DISTANCE_THRESHOLD}
+
+            collapsed, backtrack_count = self._collapse_phase_with_backtracking(
+                border_cells, superposition, collapsed, terrain, region,
+                pattern_trackers, decision_stack, backtrack_count, max_backtracks,
+                use_border=True
             )
 
-            if min_entropy_cell is None:
-                # No more valid border cells to collapse
-                break
+            # PHASE 2: Collapse interior (distance > 1) with aggressive fill bias
+            interior_cells = {cell for cell in region.cells if cell not in collapsed}
 
-            row, col = min_entropy_cell
-
-            # Collapse this border cell using WFC with lookahead
-            tile = self._collapse_cell(
-                min_entropy_cell, superposition, collapsed, terrain, region,
-                use_border=True, pattern_phase=0
+            collapsed, backtrack_count = self._collapse_phase_with_backtracking(
+                interior_cells, superposition, collapsed, terrain, region,
+                pattern_trackers, decision_stack, backtrack_count, max_backtracks,
+                use_border=False
             )
 
-            collapsed[min_entropy_cell] = tile
-            superposition[min_entropy_cell] = {tile}
-            border_cells.discard(min_entropy_cell)
+            if backtrack_count > 0:
+                print(f"  Backtracked {backtrack_count} times to resolve contradictions")
+        else:
+            # Original non-backtracking version (faster, usually better results)
+            # PHASE 1: Collapse border layer (distance = 1 from OOB)
+            border_cells = {cell for cell in region.cells
+                           if region.distance_field.get(cell, 999) <= BORDER_DISTANCE_THRESHOLD}
 
-            # Propagate constraints
-            self._propagate_constraints(min_entropy_cell, terrain, region, superposition, collapsed)
+            while border_cells:
+                # Find border cell with minimum entropy
+                min_entropy_cell = self._find_min_entropy_cell_in_set(
+                    border_cells, superposition, collapsed
+                )
 
-        # PHASE 2: Collapse interior (distance > 1) with aggressive fill bias
-        interior_cells = {cell for cell in region.cells if cell not in collapsed}
+                if min_entropy_cell is None:
+                    # No more valid border cells to collapse
+                    break
 
-        while interior_cells:
-            # Find interior cell with minimum entropy
-            min_entropy_cell = self._find_min_entropy_cell_in_set(
-                interior_cells, superposition, collapsed
-            )
+                row, col = min_entropy_cell
 
-            if min_entropy_cell is None:
-                # No more valid interior cells to collapse
-                break
+                # Collapse this border cell using WFC with lookahead
+                tile = self._collapse_cell(
+                    min_entropy_cell, superposition, collapsed, terrain, region,
+                    use_border=True, pattern_phase=0
+                )
 
-            row, col = min_entropy_cell
+                collapsed[min_entropy_cell] = tile
+                superposition[min_entropy_cell] = {tile}
+                border_cells.discard(min_entropy_cell)
 
-            # Initialize pattern tracker for this row if needed
-            if row not in pattern_trackers:
-                pattern_trackers[row] = PatternTracker()
+                # Propagate constraints
+                self._propagate_constraints(min_entropy_cell, terrain, region, superposition, collapsed)
 
-            pattern_phase = pattern_trackers[row].get_phase(col)
+            # PHASE 2: Collapse interior (distance > 1) with aggressive fill bias
+            interior_cells = {cell for cell in region.cells if cell not in collapsed}
 
-            # Collapse this interior cell with aggressive fill preference
-            tile = self._collapse_cell(
-                min_entropy_cell, superposition, collapsed, terrain, region,
-                use_border=False, pattern_phase=pattern_phase
-            )
+            while interior_cells:
+                # Find interior cell with minimum entropy
+                min_entropy_cell = self._find_min_entropy_cell_in_set(
+                    interior_cells, superposition, collapsed
+                )
 
-            collapsed[min_entropy_cell] = tile
-            superposition[min_entropy_cell] = {tile}
-            interior_cells.discard(min_entropy_cell)
+                if min_entropy_cell is None:
+                    # No more valid interior cells to collapse
+                    break
 
-            # Propagate constraints
-            self._propagate_constraints(min_entropy_cell, terrain, region, superposition, collapsed)
+                row, col = min_entropy_cell
+
+                # Initialize pattern tracker for this row if needed
+                if row not in pattern_trackers:
+                    pattern_trackers[row] = PatternTracker()
+
+                pattern_phase = pattern_trackers[row].get_phase(col)
+
+                # Collapse this interior cell with aggressive fill preference
+                tile = self._collapse_cell(
+                    min_entropy_cell, superposition, collapsed, terrain, region,
+                    use_border=False, pattern_phase=pattern_phase
+                )
+
+                collapsed[min_entropy_cell] = tile
+                superposition[min_entropy_cell] = {tile}
+                interior_cells.discard(min_entropy_cell)
+
+                # Propagate constraints
+                self._propagate_constraints(min_entropy_cell, terrain, region, superposition, collapsed)
 
         return collapsed
+
+    def _collapse_phase_with_backtracking(
+            self,
+            cells_to_collapse: Set[Tuple[int, int]],
+            superposition: Dict[Tuple[int, int], Set[int]],
+            collapsed: Dict[Tuple[int, int], int],
+            terrain: List[List[int]],
+            region: ForestFillRegion,
+            pattern_trackers: Dict[int, PatternTracker],
+            decision_stack: List[Decision],
+            backtrack_count: int,
+            max_backtracks: int,
+            use_border: bool
+    ) -> Tuple[Dict[Tuple[int, int], int], int]:
+        """Collapse a phase (border or interior) with backtracking on contradictions."""
+
+        while cells_to_collapse:
+            # Find cell with minimum entropy
+            min_entropy_cell = self._find_min_entropy_cell_in_set(
+                cells_to_collapse, superposition, collapsed
+            )
+
+            if min_entropy_cell is None:
+                # Contradiction detected - try backtracking
+                if not decision_stack or backtrack_count >= max_backtracks:
+                    # Can't backtrack or hit limit - give up on this phase
+                    print(f"  Warning: {len(cells_to_collapse)} cells remain uncollapsed")
+                    break
+
+                # Backtrack to previous decision
+                backtrack_count += 1
+                while decision_stack:
+                    last_decision = decision_stack[-1]
+
+                    if not last_decision.alternatives:
+                        # No more alternatives for this decision - pop and continue backtracking
+                        decision_stack.pop()
+                        continue
+
+                    # Try next alternative
+                    next_tile = last_decision.alternatives.pop(0)
+
+                    # Restore state from snapshot (in-place to preserve references)
+                    superposition.clear()
+                    for cell, poss in last_decision.superposition_snapshot.items():
+                        superposition[cell] = poss.copy()
+
+                    collapsed.clear()
+                    collapsed.update(last_decision.collapsed_snapshot)
+
+                    # Recalculate cells_to_collapse
+                    cells_to_collapse.clear()
+                    if use_border:
+                        cells_to_collapse.update({cell for cell in region.cells
+                                                 if region.distance_field.get(cell, 999) <= BORDER_DISTANCE_THRESHOLD
+                                                 and cell not in collapsed})
+                    else:
+                        cells_to_collapse.update({cell for cell in region.cells if cell not in collapsed})
+
+                    # Apply alternative choice
+                    collapsed[last_decision.cell] = next_tile
+                    superposition[last_decision.cell] = {next_tile}
+                    cells_to_collapse.discard(last_decision.cell)
+
+                    # Propagate constraints
+                    self._propagate_constraints(last_decision.cell, terrain, region, superposition, collapsed)
+
+                    # If still have alternatives, keep decision on stack
+                    if not last_decision.alternatives:
+                        decision_stack.pop()
+
+                    # Break out of backtracking loop to continue with restored state
+                    break
+                else:
+                    # Exhausted all decisions - give up
+                    print(f"  Warning: Exhausted backtrack stack, {len(cells_to_collapse)} cells remain")
+                    break
+
+                # Continue with next cell after backtracking
+                continue
+
+            # Normal collapse
+            row, col = min_entropy_cell
+
+            # Initialize pattern tracker for this row if needed (interior only)
+            if not use_border:
+                if row not in pattern_trackers:
+                    pattern_trackers[row] = PatternTracker()
+                pattern_phase = pattern_trackers[row].get_phase(col)
+            else:
+                pattern_phase = 0
+
+            # Get possibilities and score them
+            possibilities = list(superposition.get(min_entropy_cell, set()))
+
+            if not possibilities:
+                # Empty possibilities - trigger backtracking on next iteration
+                min_entropy_cell = None
+                continue
+
+            # Score all possibilities to get alternatives
+            scored = []
+            for tile in possibilities:
+                score = self._score_tile_with_context(
+                    tile, min_entropy_cell, terrain, collapsed,
+                    region.distance_field.get(min_entropy_cell, 999),
+                    pattern_phase, use_border
+                )
+                scored.append((score, tile))
+
+            # Sort by score descending
+            scored.sort(reverse=True)
+            sorted_tiles = [tile for score, tile in scored]
+
+            chosen_tile = sorted_tiles[0]
+            alternatives = sorted_tiles[1:] if len(sorted_tiles) > 1 else []
+
+            # Save decision if we have alternatives (for potential backtracking)
+            if alternatives:
+                decision = Decision(
+                    cell=min_entropy_cell,
+                    chosen_tile=chosen_tile,
+                    alternatives=alternatives,
+                    superposition_snapshot={cell: poss.copy() for cell, poss in superposition.items()},
+                    collapsed_snapshot=collapsed.copy()
+                )
+                decision_stack.append(decision)
+
+            # Collapse
+            collapsed[min_entropy_cell] = chosen_tile
+            superposition[min_entropy_cell] = {chosen_tile}
+            cells_to_collapse.discard(min_entropy_cell)
+
+            # Propagate constraints
+            self._propagate_constraints(min_entropy_cell, terrain, region, superposition, collapsed)
+
+        return collapsed, backtrack_count
 
     def _collapse_cell(self, cell: Tuple[int, int], superposition: Dict[Tuple[int, int], Set[int]],
                        collapsed: Dict[Tuple[int, int], int], terrain: List[List[int]],
