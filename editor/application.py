@@ -79,6 +79,17 @@ class EditorApplication:
             print(f"Warning: Failed to load neighbor validator: {e}")
             self.terrain_neighbor_validator = None
 
+        # Initialize forest filler (requires neighbor validator)
+        if self.terrain_neighbor_validator:
+            try:
+                from editor.controllers.forest_fill import ForestFiller
+                self.forest_filler = ForestFiller(self.terrain_neighbor_validator)
+            except Exception as e:
+                print(f"Warning: Failed to initialize forest filler: {e}")
+                self.forest_filler = None
+        else:
+            self.forest_filler = None
+
         # Cache for invalid tiles (performance optimization)
         self.cached_invalid_terrain_tiles = None
 
@@ -106,6 +117,7 @@ class EditorApplication:
             on_flag_change=self._update_flag_buttons,
             on_resize=self._on_resize,
             transform_logic=self.transform_logic,
+            forest_filler=self.forest_filler,
             on_terrain_modified=self.invalidate_terrain_validation_cache,
         )
 

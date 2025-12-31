@@ -17,6 +17,23 @@ from editor.core.constants import (
 )
 
 
+def _render_placeholder_tile(size: int) -> Surface:
+    """Render the placeholder tile (0x100) with a distinctive pattern."""
+    surf = Surface((size, size))
+    # Gray checkerboard pattern to indicate meta/placeholder tile
+    gray1 = (100, 100, 100)
+    gray2 = (140, 140, 140)
+    checker_size = size // 4
+
+    for row in range(4):
+        for col in range(4):
+            color = gray1 if (row + col) % 2 == 0 else gray2
+            rect = (col * checker_size, row * checker_size, checker_size, checker_size)
+            pygame.draw.rect(surf, color, rect)
+
+    return surf
+
+
 def _range_to_list(min: int, max: int) -> List[int]:
     return list(range(min, max))
 
@@ -35,8 +52,9 @@ class TilePicker:
 
         # Build list of tile indices to show (skip empty tiles at start)
         # self.tile_indices = list(range(0x25, 0xE0))
+        # 0x100 is the placeholder tile for forest fill (meta tile, not a real NES tile)
         self.tile_indices = (
-            [0x25, 0x27] + _range_to_list(0x35, 0x3D) + _range_to_list(0x3E, 0xC0) + [0xDF]
+            [0x100] + [0x25, 0x27] + _range_to_list(0x35, 0x3D) + _range_to_list(0x3E, 0xC0) + [0xDF]
         )
 
         # Track tile currently under mouse
@@ -112,8 +130,11 @@ class TilePicker:
             if y + tile_size < clip_rect.y or y > clip_rect.bottom:
                 continue
 
-            # Render tile
-            tile_surf = self.tileset.render_tile(tile_idx, palette_idx, self.tile_scale)
+            # Render tile - use special rendering for placeholder (0x100)
+            if tile_idx == 0x100:
+                tile_surf = _render_placeholder_tile(TILE_SIZE * self.tile_scale)
+            else:
+                tile_surf = self.tileset.render_tile(tile_idx, palette_idx, self.tile_scale)
             screen.blit(tile_surf, (x, y))
 
             # Selection highlight
