@@ -270,23 +270,18 @@ class ForestFiller:
         valid_sets = []
 
         for direction, neighbor_tile in neighbors.items():
-            # Query neighbor validator for valid tiles in this direction
-            neighbor_hex = f"0x{neighbor_tile:02X}"
-
             # Get tiles that can have this neighbor in this direction
             valid_in_direction = set()
 
             # Check all forest tiles to see which can have this neighbor
             for candidate in FOREST_FILL | FOREST_BORDER:
-                candidate_hex = f"0x{candidate:02X}"
-
                 # Check if candidate can have neighbor_tile in this direction
-                if candidate_hex not in self.validator.neighbors:
+                if candidate not in self.validator.neighbors:
                     continue
 
-                valid_neighbors = self.validator.neighbors[candidate_hex].get(direction, [])
+                valid_neighbors = self.validator.neighbors[candidate].get(direction, set())
 
-                if neighbor_hex in valid_neighbors:
+                if neighbor_tile in valid_neighbors:
                     valid_in_direction.add(candidate)
 
             valid_sets.append(valid_in_direction)
