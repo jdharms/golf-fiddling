@@ -2,4 +2,5 @@
 * scroll limit is calculable
 * edit metadata
 * Grid lines should be supertiles when in palette mode
-* undo/redo is an absolute must
+* ~~drag to transform up/left?~~
+*
