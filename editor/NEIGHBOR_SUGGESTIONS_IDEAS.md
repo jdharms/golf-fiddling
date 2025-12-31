@@ -178,7 +178,8 @@ Forest Fill ($A0-$A3) - 4-tile horizontal repeating pattern
 **Concept**: Specialized smart fill specifically for forests, using "meta-tiles" (forest regions) rather than individual tiles.
 
 **Details**:
-- User draws the boundary (Inner Border $3F tiles) to define forest region
+- User draws the boundary (Out of Bounds Border $80-$9B tiles) to define
+  forest region
 - User triggers forest fill (e.g., keyboard shortcut, context menu)
 - System analyzes the bounded region and fills it intelligently:
   - **Constraint solving**: Uses `terrain_neighbors.json` to ensure all tiles have valid neighbors
