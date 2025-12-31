@@ -52,6 +52,7 @@ class TerrainRenderer:
         selected_flag_index: int,
         transform_state,
         shift_hover_tile: Optional[int],
+        show_invalid_tiles: bool,
         invalid_terrain_tiles: Optional[set] = None,
     ):
         """
@@ -71,6 +72,7 @@ class TerrainRenderer:
             selected_flag_index: Which flag position to render (0-3)
             transform_state: Transform drag state for preview rendering
             shift_hover_tile: Tile value to highlight (None if not highlighting)
+            show_invalid_tiles: Whether to show invalid tile highlighting
             invalid_terrain_tiles: Set of (row, col) tuples with invalid neighbors (None if none)
         """
         tile_size = TILE_SIZE * canvas_scale
@@ -102,7 +104,7 @@ class TerrainRenderer:
             )
 
         # Render invalid neighbor highlights (red borders)
-        if invalid_terrain_tiles:
+        if show_invalid_tiles and invalid_terrain_tiles:
             TerrainRenderer._render_invalid_neighbor_highlights(
                 screen, canvas_rect, hole_data, invalid_terrain_tiles,
                 canvas_scale, canvas_offset_x, canvas_offset_y

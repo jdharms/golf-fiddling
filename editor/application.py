@@ -409,6 +409,7 @@ class EditorApplication:
                 self.state.selected_flag_index,
                 self.state.transform_state,
                 self.state.shift_hover_tile,
+                self.state.show_invalid_tiles,
                 self.get_invalid_terrain_tiles(),
             )
 

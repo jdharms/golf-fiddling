@@ -19,7 +19,7 @@ from golf.core.palettes import (
 )
 
 # UI Layout
-PICKER_WIDTH = 200
+PICKER_WIDTH = 400
 TOOLBAR_HEIGHT = 40
 STATUS_HEIGHT = 30
 CANVAS_OFFSET_X = PICKER_WIDTH

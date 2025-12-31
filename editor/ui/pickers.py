@@ -46,8 +46,9 @@ class TilePicker:
         self.rect = rect
         self.scroll_y = 0
         self.selected_tile = 0x25  # Default to rough
-        self.tiles_per_row = (rect.width - 20) // (TILE_SIZE * 2 + 2)
-        self.tile_scale = 2
+        self.tile_scale = 4
+        self.tiles_per_row = (rect.width - 20) // (TILE_SIZE * self.tile_scale + 2)
+
         self.tile_spacing = 2
 
         # Build list of tile indices to show (skip empty tiles at start)

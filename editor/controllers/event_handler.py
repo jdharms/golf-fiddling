@@ -205,6 +205,9 @@ class EventHandler:
         elif event.key == pygame.K_f and pygame.key.get_mods() & pygame.KMOD_CTRL:
             # Ctrl+F = Forest Fill
             self._trigger_forest_fill()
+        elif event.key == pygame.K_x and pygame.key.get_mods() & pygame.KMOD_CTRL:
+            # Ctrl+X = Toggle invalid tile highlighting
+            self.state.toggle_invalid_tiles()
 
         elif event.key == pygame.K_LEFT:
             self.state.canvas_offset_x = max(0, self.state.canvas_offset_x - 20)

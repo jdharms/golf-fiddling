@@ -3,4 +3,4 @@
 * edit metadata
 * Grid lines should be supertiles when in palette mode
 * ~~drag to transform up/left?~~
-*
+* WFC border analysis should be direction specific but tile agnostic?

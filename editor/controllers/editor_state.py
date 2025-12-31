@@ -20,6 +20,7 @@ class EditorState:
         # View settings
         self.show_grid: bool = True
         self.show_sprites: bool = True
+        self.show_invalid_tiles: bool = False
 
         # Canvas position and zoom
         self.canvas_offset_x: int = 0
@@ -58,6 +59,10 @@ class EditorState:
     def toggle_sprites(self):
         """Toggle sprite visibility."""
         self.show_sprites = not self.show_sprites
+
+    def toggle_invalid_tiles(self):
+        """Toggle invalid tile highlighting."""
+        self.show_invalid_tiles = not self.show_invalid_tiles
 
     def select_flag(self, index: int):
         """Select which flag position to display (0-3)."""
