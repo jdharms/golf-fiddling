@@ -28,8 +28,8 @@ def analyze_neighbors() -> Dict:
             }
         }
     """
-    neighbors: Dict[int, Dict[str, Set[int]]] = defaultdict(
-        lambda: {"up": set(), "down": set(), "left": set(), "right": set()}
+    neighbors: Dict[int, Dict[str, Dict[int, int]]] = defaultdict(
+        lambda: {"up": {}, "down": {}, "left": {}, "right": {}}
     )
 
     courses_dir = Path(__file__).parent.parent / "courses"
@@ -58,22 +58,22 @@ def analyze_neighbors() -> Dict:
                         # Check up
                         if row_idx > 0:
                             neighbor = hole_data.terrain[row_idx - 1][col_idx]
-                            neighbors[tile]["up"].add(neighbor)
+                            neighbors[tile]["up"][neighbor] = neighbors[tile]["up"].get(neighbor, 0) + 1
 
                         # Check down
                         if row_idx < len(hole_data.terrain) - 1:
                             neighbor = hole_data.terrain[row_idx + 1][col_idx]
-                            neighbors[tile]["down"].add(neighbor)
+                            neighbors[tile]["down"][neighbor] = neighbors[tile]["down"].get(neighbor, 0) + 1
 
                         # Check left
                         if col_idx > 0:
                             neighbor = hole_data.terrain[row_idx][col_idx - 1]
-                            neighbors[tile]["left"].add(neighbor)
+                            neighbors[tile]["left"][neighbor] = neighbors[tile]["left"].get(neighbor, 0) + 1
 
                         # Check right
                         if col_idx < len(row) - 1:
                             neighbor = hole_data.terrain[row_idx][col_idx + 1]
-                            neighbors[tile]["right"].add(neighbor)
+                            neighbors[tile]["right"][neighbor] = neighbors[tile]["right"].get(neighbor, 0) + 1
 
                 total_holes += 1
                 print(f"  Hole {hole_num:2d}: OK")
@@ -83,15 +83,15 @@ def analyze_neighbors() -> Dict:
 
     print(f"\nAnalyzed {total_holes} holes successfully")
 
-    # Convert sets to sorted lists for JSON serialization
+    # Convert frequency dicts to JSON format with hex keys
     neighbors_json = {}
     for tile_idx in sorted(neighbors.keys()):
         tile_hex = f"0x{tile_idx:02X}"
         neighbors_json[tile_hex] = {
-            "up": sorted([f"0x{n:02X}" for n in neighbors[tile_idx]["up"]]),
-            "down": sorted([f"0x{n:02X}" for n in neighbors[tile_idx]["down"]]),
-            "left": sorted([f"0x{n:02X}" for n in neighbors[tile_idx]["left"]]),
-            "right": sorted([f"0x{n:02X}" for n in neighbors[tile_idx]["right"]]),
+            "up": {f"0x{n:02X}": count for n, count in neighbors[tile_idx]["up"].items()},
+            "down": {f"0x{n:02X}": count for n, count in neighbors[tile_idx]["down"].items()},
+            "left": {f"0x{n:02X}": count for n, count in neighbors[tile_idx]["left"].items()},
+            "right": {f"0x{n:02X}": count for n, count in neighbors[tile_idx]["right"].items()},
         }
 
     # Calculate statistics

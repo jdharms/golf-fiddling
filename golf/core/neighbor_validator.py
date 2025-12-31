@@ -45,14 +45,36 @@ class TerrainNeighborValidator:
 
         # Convert hex string keys to integers for fast lookup
         self.neighbors: Dict[int, Dict[str, Set[int]]] = {}
+        self.neighbor_frequencies: Dict[int, Dict[str, Dict[int, int]]] = {}
         for tile_hex, directions in data["neighbors"].items():
             tile_idx = int(tile_hex, 16)
-            self.neighbors[tile_idx] = {
-                "up": set(int(n, 16) for n in directions.get("up", [])),
-                "down": set(int(n, 16) for n in directions.get("down", [])),
-                "left": set(int(n, 16) for n in directions.get("left", [])),
-                "right": set(int(n, 16) for n in directions.get("right", [])),
-            }
+
+            # Auto-detect format (old: arrays, new: objects with counts)
+            if isinstance(directions.get("up", []), list):
+                # Old format: arrays
+                self.neighbors[tile_idx] = {
+                    "up": set(int(n, 16) for n in directions.get("up", [])),
+                    "down": set(int(n, 16) for n in directions.get("down", [])),
+                    "left": set(int(n, 16) for n in directions.get("left", [])),
+                    "right": set(int(n, 16) for n in directions.get("right", [])),
+                }
+                self.neighbor_frequencies[tile_idx] = {
+                    "up": {}, "down": {}, "left": {}, "right": {}
+                }
+            else:
+                # New format: objects with counts
+                self.neighbors[tile_idx] = {
+                    "up": set(int(n, 16) for n in directions.get("up", {}).keys()),
+                    "down": set(int(n, 16) for n in directions.get("down", {}).keys()),
+                    "left": set(int(n, 16) for n in directions.get("left", {}).keys()),
+                    "right": set(int(n, 16) for n in directions.get("right", {}).keys()),
+                }
+                self.neighbor_frequencies[tile_idx] = {
+                    "up": {int(n, 16): count for n, count in directions.get("up", {}).items()},
+                    "down": {int(n, 16): count for n, count in directions.get("down", {}).items()},
+                    "left": {int(n, 16): count for n, count in directions.get("left", {}).items()},
+                    "right": {int(n, 16): count for n, count in directions.get("right", {}).items()},
+                }
 
     def is_valid_neighbor(self, tile: int, neighbor: int, direction: str) -> bool:
         """
@@ -73,6 +95,22 @@ class TerrainNeighborValidator:
 
         # Check if neighbor exists in valid set for this direction
         return neighbor in self.neighbors[tile][direction]
+
+    def get_neighbor_frequency(self, tile: int, neighbor: int, direction: str) -> int:
+        """
+        Get occurrence frequency of a neighbor relationship.
+
+        Args:
+            tile: The tile index
+            neighbor: The neighbor tile index
+            direction: One of "up", "down", "left", "right"
+
+        Returns:
+            Occurrence count, or 0 if relationship not observed
+        """
+        if tile not in self.neighbor_frequencies:
+            return 0
+        return self.neighbor_frequencies[tile][direction].get(neighbor, 0)
 
     def get_invalid_tiles(self, terrain: List[List[int]]) -> Set[Tuple[int, int]]:
         """
