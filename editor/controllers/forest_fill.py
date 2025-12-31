@@ -235,77 +235,33 @@ class ForestFiller:
         # Track pattern for each row
         pattern_trackers: Dict[int, PatternTracker] = {}
 
-        # Two-phase WFC collapse
+        # Single-pass WFC collapse (no border/interior separation)
         collapsed: Dict[Tuple[int, int], int] = {}
+        cells_to_collapse = region.cells.copy()
 
         if max_backtracks > 0:
             # Use backtracking version
             decision_stack: List[Decision] = []
             backtrack_count = 0
 
-            # PHASE 1: Collapse border layer (distance = 1 from OOB)
-            border_cells = {cell for cell in region.cells
-                           if region.distance_field.get(cell, 999) <= BORDER_DISTANCE_THRESHOLD}
-
             collapsed, backtrack_count = self._collapse_phase_with_backtracking(
-                border_cells, superposition, collapsed, terrain, region,
+                cells_to_collapse, superposition, collapsed, terrain, region,
                 pattern_trackers, decision_stack, backtrack_count, max_backtracks,
-                use_border=True
-            )
-
-            # PHASE 2: Collapse interior (distance > 1) with aggressive fill bias
-            interior_cells = {cell for cell in region.cells if cell not in collapsed}
-
-            collapsed, backtrack_count = self._collapse_phase_with_backtracking(
-                interior_cells, superposition, collapsed, terrain, region,
-                pattern_trackers, decision_stack, backtrack_count, max_backtracks,
-                use_border=False
+                use_border=False  # Single pass, no border distinction
             )
 
             if backtrack_count > 0:
                 print(f"  Backtracked {backtrack_count} times to resolve contradictions")
         else:
-            # Original non-backtracking version (faster, usually better results)
-            # PHASE 1: Collapse border layer (distance = 1 from OOB)
-            border_cells = {cell for cell in region.cells
-                           if region.distance_field.get(cell, 999) <= BORDER_DISTANCE_THRESHOLD}
-
-            while border_cells:
-                # Find border cell with minimum entropy
+            # Single-pass non-backtracking version
+            while cells_to_collapse:
+                # Find cell with minimum entropy across entire region
                 min_entropy_cell = self._find_min_entropy_cell_in_set(
-                    border_cells, superposition, collapsed
+                    cells_to_collapse, superposition, collapsed
                 )
 
                 if min_entropy_cell is None:
-                    # No more valid border cells to collapse
-                    break
-
-                row, col = min_entropy_cell
-
-                # Collapse this border cell using WFC with lookahead
-                tile = self._collapse_cell(
-                    min_entropy_cell, superposition, collapsed, terrain, region,
-                    use_border=True, pattern_phase=0
-                )
-
-                collapsed[min_entropy_cell] = tile
-                superposition[min_entropy_cell] = {tile}
-                border_cells.discard(min_entropy_cell)
-
-                # Propagate constraints
-                self._propagate_constraints(min_entropy_cell, terrain, region, superposition, collapsed)
-
-            # PHASE 2: Collapse interior (distance > 1) with aggressive fill bias
-            interior_cells = {cell for cell in region.cells if cell not in collapsed}
-
-            while interior_cells:
-                # Find interior cell with minimum entropy
-                min_entropy_cell = self._find_min_entropy_cell_in_set(
-                    interior_cells, superposition, collapsed
-                )
-
-                if min_entropy_cell is None:
-                    # No more valid interior cells to collapse
+                    # No more valid cells to collapse
                     break
 
                 row, col = min_entropy_cell
@@ -315,16 +271,20 @@ class ForestFiller:
                     pattern_trackers[row] = PatternTracker()
 
                 pattern_phase = pattern_trackers[row].get_phase(col)
+                distance = region.distance_field.get(min_entropy_cell, 999)
 
-                # Collapse this interior cell with aggressive fill preference
+                # Determine if this should be border based on distance
+                use_border = distance <= BORDER_DISTANCE_THRESHOLD
+
+                # Collapse with frequency-weighted scoring
                 tile = self._collapse_cell(
                     min_entropy_cell, superposition, collapsed, terrain, region,
-                    use_border=False, pattern_phase=pattern_phase
+                    use_border=use_border, pattern_phase=pattern_phase
                 )
 
                 collapsed[min_entropy_cell] = tile
                 superposition[min_entropy_cell] = {tile}
-                interior_cells.discard(min_entropy_cell)
+                cells_to_collapse.discard(min_entropy_cell)
 
                 # Propagate constraints
                 self._propagate_constraints(min_entropy_cell, terrain, region, superposition, collapsed)
@@ -380,14 +340,9 @@ class ForestFiller:
                     collapsed.clear()
                     collapsed.update(last_decision.collapsed_snapshot)
 
-                    # Recalculate cells_to_collapse
+                    # Recalculate cells_to_collapse (all uncollapsed cells in single pass)
                     cells_to_collapse.clear()
-                    if use_border:
-                        cells_to_collapse.update({cell for cell in region.cells
-                                                 if region.distance_field.get(cell, 999) <= BORDER_DISTANCE_THRESHOLD
-                                                 and cell not in collapsed})
-                    else:
-                        cells_to_collapse.update({cell for cell in region.cells if cell not in collapsed})
+                    cells_to_collapse.update({cell for cell in region.cells if cell not in collapsed})
 
                     # Apply alternative choice
                     collapsed[last_decision.cell] = next_tile
@@ -414,13 +369,14 @@ class ForestFiller:
             # Normal collapse
             row, col = min_entropy_cell
 
-            # Initialize pattern tracker for this row if needed (interior only)
-            if not use_border:
-                if row not in pattern_trackers:
-                    pattern_trackers[row] = PatternTracker()
-                pattern_phase = pattern_trackers[row].get_phase(col)
-            else:
-                pattern_phase = 0
+            # Initialize pattern tracker for this row if needed
+            if row not in pattern_trackers:
+                pattern_trackers[row] = PatternTracker()
+            pattern_phase = pattern_trackers[row].get_phase(col)
+
+            # Determine if this should be border based on distance
+            distance = region.distance_field.get(min_entropy_cell, 999)
+            use_border_for_cell = distance <= BORDER_DISTANCE_THRESHOLD
 
             # Get possibilities and score them
             possibilities = list(superposition.get(min_entropy_cell, set()))
@@ -435,8 +391,7 @@ class ForestFiller:
             for tile in possibilities:
                 score = self._score_tile_with_context(
                     tile, min_entropy_cell, terrain, collapsed,
-                    region.distance_field.get(min_entropy_cell, 999),
-                    pattern_phase, use_border
+                    distance, pattern_phase, use_border_for_cell
                 )
                 scored.append((score, tile))
 
@@ -638,10 +593,11 @@ class ForestFiller:
 
     def _find_min_entropy_cell_in_set(self, cell_set: Set[Tuple[int, int]],
                                       superposition: Dict[Tuple[int, int], Set[int]],
-                                      collapsed: Dict[Tuple[int, int], int]) -> Optional[Tuple[int, int]]:
-        """Find uncollapsed cell with minimum entropy within a specific set."""
+                                      collapsed: Dict[Tuple[int, int], int]):
+        """Returns (cell, has_contradiction) tuple."""
         min_entropy = float('inf')
         min_cell = None
+        has_contradiction = False
 
         for cell in cell_set:
             if cell in collapsed:
@@ -649,14 +605,14 @@ class ForestFiller:
 
             entropy = len(superposition.get(cell, set()))
             if entropy == 0:
-                # Skip contradictions
+                has_contradiction = True
                 continue
 
             if entropy < min_entropy:
                 min_entropy = entropy
                 min_cell = cell
 
-        return min_cell
+        return min_cell, has_contradiction
 
     def _propagate_constraints(self, cell: Tuple[int, int], terrain: List[List[int]],
                                region: ForestFillRegion,
@@ -815,9 +771,15 @@ class ForestFiller:
                 freq = self.validator.get_neighbor_frequency(tile, neighbor_tile, direction)
                 if freq > 0:
                     # Logarithmic scoring: log2(1 + count) to prevent extremes
-                    # Weight: 25 points per neighbor (between category 100, pattern 50)
-                    frequency_score += 25 * math.log2(1 + freq)
+                    frequency_score += 50 * math.log2(1 + freq)
                     neighbor_count += 1
+
+                    # Bonus for fill-to-fill connections to encourage continuation
+                    is_tile_fill = tile in FOREST_FILL
+                    is_neighbor_fill = neighbor_tile in FOREST_FILL
+                    if is_tile_fill and is_neighbor_fill:
+                        # Extra bonus for continuing fill patterns
+                        frequency_score += 30
 
         # Normalize by number of neighbors checked (average contribution)
         if neighbor_count > 0:
