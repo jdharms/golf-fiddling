@@ -107,13 +107,14 @@ class EventHandler:
                 button.handle_event(event)
 
             # Handle picker events
+            picker_handled = False
             if self.state.mode == "greens":
-                self.greens_picker.handle_event(event)
+                picker_handled = self.greens_picker.handle_event(event)
             else:
-                self.terrain_picker.handle_event(event)
+                picker_handled = self.terrain_picker.handle_event(event)
 
-            # Handle canvas events
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            # Handle canvas events (only if picker didn't handle)
+            if event.type == pygame.MOUSEBUTTONDOWN and not picker_handled:
                 if event.button == 1:  # Left click
                     shift_held = pygame.key.get_mods() & pygame.KMOD_SHIFT
                     if shift_held and self.state.mode in ("terrain", "greens"):
@@ -131,9 +132,9 @@ class EventHandler:
                         self._paint_at(event.pos)
                 elif event.button == 3:  # Right click - eyedropper
                     self._eyedropper(event.pos)
-                elif event.button == 4:  # Scroll up
+                elif event.button == 4 and not picker_handled:  # Scroll up (only if picker didn't handle)
                     self.state.canvas_offset_y = max(0, self.state.canvas_offset_y - 20)
-                elif event.button == 5:  # Scroll down
+                elif event.button == 5 and not picker_handled:  # Scroll down (only if picker didn't handle)
                     self.state.canvas_offset_y += 20
 
             elif event.type == pygame.MOUSEBUTTONUP:
