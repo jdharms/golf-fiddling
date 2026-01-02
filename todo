@@ -3,4 +3,6 @@
 * edit metadata
 * Grid lines should be supertiles when in palette mode
 * ~~drag to transform up/left?~~
-* WFC border analysis should be direction specific but tile agnostic?
+* Invalid neighbor indicator should be a single border per pairing
+* Investigate different green slopes, especially unused.
+* Distance measurement!
