@@ -19,6 +19,9 @@ from .ui.dialogs import open_file_dialog, save_file_dialog
 from .controllers.editor_state import EditorState
 from .controllers.event_handler import EventHandler
 from .controllers.transform_logic import TransformLogic
+from .controllers.view_state import ViewState
+from .controllers.highlight_state import HighlightState
+from .rendering.render_context import RenderContext
 from .rendering.terrain_renderer import TerrainRenderer
 from .rendering.greens_renderer import GreensRenderer
 
@@ -96,6 +99,9 @@ class EditorApplication:
         # Create application state
         self.state = EditorState()
         self.hole_data = HoleData()
+
+        # Create highlight state (for visual feedback)
+        self.highlight_state = HighlightState()
 
         # Create pickers first (needed by event handler)
         picker_rect = Rect(0, TOOLBAR_HEIGHT, PICKER_WIDTH, self.screen_height - TOOLBAR_HEIGHT - STATUS_HEIGHT)
@@ -378,39 +384,56 @@ class EditorApplication:
             self.screen.blit(text, (canvas_rect.centerx - text.get_width() // 2, canvas_rect.centery))
             return
 
+        # Create view state
+        view_state = ViewState(
+            canvas_rect,
+            self.state.canvas_offset_x,
+            self.state.canvas_offset_y,
+            self.state.canvas_scale
+        )
+
+        # Update highlight state
+        self.highlight_state.show_invalid_tiles = self.state.show_invalid_tiles
+        if self.state.mode == "terrain":
+            self.highlight_state.invalid_terrain_tiles = self.get_invalid_terrain_tiles()
+        else:
+            self.highlight_state.invalid_terrain_tiles = None
+
+        # Get transform state from EditorState (will move to tool in Phase 4)
+        self.highlight_state.transform_state = self.state.transform_state
+
+        # Render based on mode
         if self.state.mode == "greens":
-            GreensRenderer.render(
-                self.screen,
-                canvas_rect,
-                self.hole_data,
+            render_ctx = RenderContext(
                 self.greens_tileset,
                 self.sprites,
-                self.state.canvas_offset_x,
-                self.state.canvas_offset_y,
-                self.state.canvas_scale,
+                self.state.mode,
                 self.state.show_grid,
                 self.state.show_sprites,
                 self.state.selected_flag_index,
-                self.state.transform_state,
-                self.state.shift_hover_tile,
+            )
+            GreensRenderer.render(
+                self.screen,
+                view_state,
+                self.hole_data,
+                render_ctx,
+                self.highlight_state,
             )
         else:
-            TerrainRenderer.render(
-                self.screen,
-                canvas_rect,
-                self.hole_data,
+            render_ctx = RenderContext(
                 self.terrain_tileset,
                 self.sprites,
-                self.state.canvas_offset_x,
-                self.state.canvas_offset_y,
-                self.state.canvas_scale,
+                self.state.mode,
                 self.state.show_grid,
                 self.state.show_sprites,
                 self.state.selected_flag_index,
-                self.state.transform_state,
-                self.state.shift_hover_tile,
-                self.state.show_invalid_tiles,
-                self.get_invalid_terrain_tiles(),
+            )
+            TerrainRenderer.render(
+                self.screen,
+                view_state,
+                self.hole_data,
+                render_ctx,
+                self.highlight_state,
             )
 
     def _render_status(self):

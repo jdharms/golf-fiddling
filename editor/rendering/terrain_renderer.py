@@ -12,6 +12,9 @@ from pygame import Surface, Rect
 from editor.core.pygame_rendering import Tileset, Sprite
 from golf.formats.hole_data import HoleData
 from editor.core.constants import TILE_SIZE, TERRAIN_WIDTH
+from editor.controllers.view_state import ViewState
+from editor.controllers.highlight_state import HighlightState
+from .render_context import RenderContext
 from .sprite_renderer import SpriteRenderer
 from .grid_renderer import GridRenderer
 from .highlight_utils import draw_tile_border, INVALID_NEIGHBOR_COLOR
@@ -40,42 +43,35 @@ class TerrainRenderer:
     @staticmethod
     def render(
         screen: Surface,
-        canvas_rect: Rect,
+        view_state: ViewState,
         hole_data: HoleData,
-        tileset: Tileset,
-        sprites: Dict[str, Sprite],
-        canvas_offset_x: int,
-        canvas_offset_y: int,
-        canvas_scale: int,
-        show_grid: bool,
-        show_sprites: bool,
-        selected_flag_index: int,
-        transform_state,
-        shift_hover_tile: Optional[int],
-        show_invalid_tiles: bool,
-        invalid_terrain_tiles: Optional[set] = None,
+        render_ctx: RenderContext,
+        highlight_state: HighlightState,
     ):
         """
         Render terrain canvas view.
 
         Args:
             screen: Pygame surface to draw on
-            canvas_rect: Canvas area rectangle
+            view_state: Viewport camera and coordinate transformations
             hole_data: Hole data to render
-            tileset: Terrain tileset
-            sprites: Dictionary of loaded sprites
-            canvas_offset_x: Horizontal scroll offset
-            canvas_offset_y: Vertical scroll offset
-            canvas_scale: Current zoom scale
-            show_grid: Whether to show grid overlay
-            show_sprites: Whether to show sprite overlays
-            selected_flag_index: Which flag position to render (0-3)
-            transform_state: Transform drag state for preview rendering
-            shift_hover_tile: Tile value to highlight (None if not highlighting)
-            show_invalid_tiles: Whether to show invalid tile highlighting
-            invalid_terrain_tiles: Set of (row, col) tuples with invalid neighbors (None if none)
+            render_ctx: Rendering resources and settings
+            highlight_state: Visual highlights and preview state
         """
-        tile_size = TILE_SIZE * canvas_scale
+        canvas_rect = view_state.canvas_rect
+        canvas_offset_x = view_state.offset_x
+        canvas_offset_y = view_state.offset_y
+        canvas_scale = view_state.scale
+        tile_size = view_state.tile_size
+        tileset = render_ctx.tileset
+        sprites = render_ctx.sprites
+        show_grid = render_ctx.show_grid
+        show_sprites = render_ctx.show_sprites
+        selected_flag_index = render_ctx.selected_flag_index
+        transform_state = highlight_state.transform_state
+        shift_hover_tile = highlight_state.shift_hover_tile
+        show_invalid_tiles = highlight_state.show_invalid_tiles
+        invalid_terrain_tiles = highlight_state.invalid_terrain_tiles
 
         # Render terrain tiles
         for row_idx, row in enumerate(hole_data.terrain):
@@ -120,22 +116,18 @@ class TerrainRenderer:
             )
 
         # Render green overlay
-        SpriteRenderer.render_green_overlay(
-            screen, canvas_rect, hole_data, canvas_scale, canvas_offset_x, canvas_offset_y
-        )
+        SpriteRenderer.render_green_overlay(screen, view_state, hole_data)
 
         # Render sprites
         if show_sprites:
             SpriteRenderer.render_terrain_sprites(
-                screen, canvas_rect, sprites, hole_data, selected_flag_index,
-                canvas_scale, canvas_offset_x, canvas_offset_y
+                screen, view_state, sprites, hole_data, selected_flag_index
             )
 
         # Render grid
         if show_grid:
             GridRenderer.render(
-                screen, canvas_rect, TERRAIN_WIDTH, hole_data.get_terrain_height(),
-                tile_size, canvas_offset_x, canvas_offset_y
+                screen, view_state, TERRAIN_WIDTH, hole_data.get_terrain_height()
             )
 
     @staticmethod

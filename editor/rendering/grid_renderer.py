@@ -8,6 +8,7 @@ import pygame
 from pygame import Surface, Rect
 
 from editor.core.constants import COLOR_GRID, COLOR_GRID_SUPER
+from editor.controllers.view_state import ViewState
 
 
 class GridRenderer:
@@ -16,25 +17,24 @@ class GridRenderer:
     @staticmethod
     def render(
         screen: Surface,
-        canvas_rect: Rect,
+        view_state: ViewState,
         width: int,
         height: int,
-        tile_size: int,
-        offset_x: int,
-        offset_y: int,
     ):
         """
         Render grid overlay.
 
         Args:
             screen: Pygame surface to draw on
-            canvas_rect: Canvas area rectangle
+            view_state: Viewport camera and coordinate transformations
             width: Grid width in tiles
             height: Grid height in tiles
-            tile_size: Size of each tile in pixels
-            offset_x: Horizontal scroll offset
-            offset_y: Vertical scroll offset
         """
+        canvas_rect = view_state.canvas_rect
+        tile_size = view_state.tile_size
+        offset_x = view_state.offset_x
+        offset_y = view_state.offset_y
+
         # Vertical lines
         for col in range(width + 1):
             x = canvas_rect.x + col * tile_size - offset_x

@@ -12,6 +12,7 @@ from pygame import Surface, Rect
 from editor.core.pygame_rendering import Sprite
 from golf.formats.hole_data import HoleData
 from editor.core.constants import GREEN_OVERLAY_COLOR
+from editor.controllers.view_state import ViewState
 
 
 class SpriteRenderer:
@@ -20,25 +21,24 @@ class SpriteRenderer:
     @staticmethod
     def render_green_overlay(
         screen: Surface,
-        canvas_rect: Rect,
+        view_state: ViewState,
         hole_data: HoleData,
-        canvas_scale: int,
-        canvas_offset_x: int,
-        canvas_offset_y: int,
     ):
         """
         Render the putting green overlay on terrain view.
 
         Args:
             screen: Pygame surface to draw on
-            canvas_rect: Canvas area rectangle
+            view_state: Viewport camera and coordinate transformations
             hole_data: Hole data containing greens information
-            canvas_scale: Current zoom scale
-            canvas_offset_x: Horizontal scroll offset
-            canvas_offset_y: Vertical scroll offset
         """
         if not hole_data.greens:
             return
+
+        canvas_rect = view_state.canvas_rect
+        canvas_scale = view_state.scale
+        canvas_offset_x = view_state.offset_x
+        canvas_offset_y = view_state.offset_y
 
         green_x = hole_data.green_x
         green_y = hole_data.green_y
@@ -61,29 +61,28 @@ class SpriteRenderer:
     @staticmethod
     def render_terrain_sprites(
         screen: Surface,
-        canvas_rect: Rect,
+        view_state: ViewState,
         sprites: Dict[str, Sprite],
         hole_data: HoleData,
         selected_flag_index: int,
-        canvas_scale: int,
-        canvas_offset_x: int,
-        canvas_offset_y: int,
     ):
         """
         Render flag, tee, and ball sprites on terrain view.
 
         Args:
             screen: Pygame surface to draw on
-            canvas_rect: Canvas area rectangle
+            view_state: Viewport camera and coordinate transformations
             sprites: Dictionary of loaded sprites
             hole_data: Hole data containing metadata
             selected_flag_index: Which flag position to render (0-3)
-            canvas_scale: Current zoom scale
-            canvas_offset_x: Horizontal scroll offset
-            canvas_offset_y: Vertical scroll offset
         """
         if not hole_data.metadata:
             return
+
+        canvas_rect = view_state.canvas_rect
+        canvas_scale = view_state.scale
+        canvas_offset_x = view_state.offset_x
+        canvas_offset_y = view_state.offset_y
 
         def to_screen(px: int, py: int) -> Tuple[int, int]:
             """Convert game pixel coords to screen coords."""
@@ -124,29 +123,28 @@ class SpriteRenderer:
     @staticmethod
     def render_greens_sprites(
         screen: Surface,
-        canvas_rect: Rect,
+        view_state: ViewState,
         sprites: Dict[str, Sprite],
         hole_data: HoleData,
         selected_flag_index: int,
-        canvas_scale: int,
-        canvas_offset_x: int,
-        canvas_offset_y: int,
     ):
         """
         Render flag and cup on greens detail view.
 
         Args:
             screen: Pygame surface to draw on
-            canvas_rect: Canvas area rectangle
+            view_state: Viewport camera and coordinate transformations
             sprites: Dictionary of loaded sprites
             hole_data: Hole data containing metadata
             selected_flag_index: Which flag position to render (0-3)
-            canvas_scale: Current zoom scale
-            canvas_offset_x: Horizontal scroll offset
-            canvas_offset_y: Vertical scroll offset
         """
         if not sprites.get("green-cup") or not sprites.get("green-flag"):
             return
+
+        canvas_rect = view_state.canvas_rect
+        canvas_scale = view_state.scale
+        canvas_offset_x = view_state.offset_x
+        canvas_offset_y = view_state.offset_y
 
         flag_positions = hole_data.metadata.get("flag_positions", [])
         if not flag_positions or not (0 <= selected_flag_index < len(flag_positions)):
