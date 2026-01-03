@@ -7,6 +7,8 @@ from editor.controllers.editor_state import EditorState
 from editor.controllers.event_handler import EventHandler
 from editor.controllers.transform_logic import TransformLogic
 from editor.core.pygame_rendering import Tileset
+from editor.tools.tool_manager import ToolManager
+from editor.tools.row_operations_tool import RowOperationsTool
 from editor.ui.pickers import GreensTilePicker, TilePicker
 from golf.core.compressor import load_compression_tables
 from golf.formats.hole_data import HoleData
@@ -34,6 +36,11 @@ def editor_setup():
     terrain_picker = TilePicker(terrain_ts, picker_rect)
     greens_picker = GreensTilePicker(greens_ts, picker_rect)
 
+    # Create tool manager and register tools
+    tool_manager = ToolManager()
+    row_operations_tool = RowOperationsTool()
+    tool_manager.register_tool("row_operations", row_operations_tool)
+
     # Create event handler
     transform_logic = TransformLogic(load_compression_tables())
     event_handler = EventHandler(
@@ -44,13 +51,17 @@ def editor_setup():
         [],
         800,
         600,
+        tool_manager,
         on_load=lambda: None,
         on_save=lambda: None,
         on_mode_change=lambda: None,
         on_flag_change=lambda: None,
         on_resize=lambda w, h: None,
-        transform_logic=transform_logic,
     )
+
+    # Set transform_logic and forest_filler on tool_context
+    event_handler.tool_context.transform_logic = transform_logic
+    event_handler.tool_context.forest_filler = None
 
     return {
         "state": state,
@@ -58,6 +69,7 @@ def editor_setup():
         "event_handler": event_handler,
         "terrain_picker": terrain_picker,
         "greens_picker": greens_picker,
+        "row_operations_tool": row_operations_tool,
     }
 
 
@@ -115,27 +127,6 @@ class TestPaintStrokeUndo:
         restored1 = state.undo_manager.undo(hole_data)
         assert restored1.terrain[6][5] == 0xA6
         assert restored1.terrain[6][6] == 0xA6
-
-    def test_painting_flag_prevents_multiple_pushes(self, editor_setup):
-        """painting flag should prevent duplicate pushes on continued drag."""
-        state = editor_setup["state"]
-        hole_data = editor_setup["hole_data"]
-
-        # Start paint stroke
-        assert not state.painting
-        state.undo_manager.push_state(hole_data)
-        state.painting = True
-
-        initial_undo_length = len(state.undo_manager.undo_stack)
-
-        # Simulate continued drag (painting flag still True)
-        hole_data.set_terrain_tile(5, 5, 0xB0)
-        state.undo_manager.push_state(hole_data)  # This won't happen in real code
-        state.painting = True
-
-        # Paint flag should prevent this from adding multiple undo states
-        # (in real code, painting flag check prevents this call)
-        assert state.painting is True
 
     def test_terrain_mode_paint_undo(self, editor_setup):
         """Terrain mode painting should be undoable."""
@@ -199,11 +190,12 @@ class TestRowOperationUndo:
         state = editor_setup["state"]
         hole_data = editor_setup["hole_data"]
         event_handler = editor_setup["event_handler"]
+        row_operations_tool = editor_setup["row_operations_tool"]
 
         initial_height = len(hole_data.terrain)
 
         # Add row (this pushes undo state internally)
-        event_handler.add_row(False)
+        row_operations_tool.add_row(event_handler.tool_context, False)
 
         assert len(hole_data.terrain) == initial_height + 1
         assert state.undo_manager.can_undo()
@@ -217,11 +209,12 @@ class TestRowOperationUndo:
         state = editor_setup["state"]
         hole_data = editor_setup["hole_data"]
         event_handler = editor_setup["event_handler"]
+        row_operations_tool = editor_setup["row_operations_tool"]
 
         initial_height = len(hole_data.terrain)
 
         # Remove row
-        event_handler.remove_row(False)
+        row_operations_tool.remove_row(event_handler.tool_context, False)
 
         assert len(hole_data.terrain) == initial_height - 1
         assert state.undo_manager.can_undo()
@@ -235,13 +228,14 @@ class TestRowOperationUndo:
         state = editor_setup["state"]
         hole_data = editor_setup["hole_data"]
         event_handler = editor_setup["event_handler"]
+        row_operations_tool = editor_setup["row_operations_tool"]
 
         initial_height = len(hole_data.terrain)
 
         # Add 3 rows
-        event_handler.add_row(False)
-        event_handler.add_row(False)
-        event_handler.add_row(False)
+        row_operations_tool.add_row(event_handler.tool_context, False)
+        row_operations_tool.add_row(event_handler.tool_context, False)
+        row_operations_tool.add_row(event_handler.tool_context, False)
 
         assert len(hole_data.terrain) == initial_height + 3
         assert len(state.undo_manager.undo_stack) == 3
@@ -261,11 +255,12 @@ class TestRowOperationUndo:
         state = editor_setup["state"]
         hole_data = editor_setup["hole_data"]
         event_handler = editor_setup["event_handler"]
+        row_operations_tool = editor_setup["row_operations_tool"]
 
         initial_height = len(hole_data.terrain)
 
         # Add row
-        event_handler.add_row(False)
+        row_operations_tool.add_row(event_handler.tool_context, False)
         assert len(hole_data.terrain) == initial_height + 1
 
         # Undo
@@ -285,10 +280,11 @@ class TestFileLoadClearsUndoHistory:
         state = editor_setup["state"]
         hole_data = editor_setup["hole_data"]
         event_handler = editor_setup["event_handler"]
+        row_operations_tool = editor_setup["row_operations_tool"]
 
         # Build up undo stack
-        event_handler.add_row(False)
-        event_handler.add_row(False)
+        row_operations_tool.add_row(event_handler.tool_context, False)
+        row_operations_tool.add_row(event_handler.tool_context, False)
 
         assert len(state.undo_manager.undo_stack) == 2
 
@@ -304,9 +300,10 @@ class TestFileLoadClearsUndoHistory:
         state = editor_setup["state"]
         hole_data = editor_setup["hole_data"]
         event_handler = editor_setup["event_handler"]
+        row_operations_tool = editor_setup["row_operations_tool"]
 
         # Build up history
-        event_handler.add_row(False)
+        row_operations_tool.add_row(event_handler.tool_context, False)
 
         # Load new file
         new_hole = HoleData()
@@ -319,7 +316,8 @@ class TestFileLoadClearsUndoHistory:
 
         # New operations should work
         event_handler.hole_data = new_hole
-        event_handler.add_row(False)
+        event_handler.tool_context.hole_data = new_hole
+        row_operations_tool.add_row(event_handler.tool_context, False)
         assert state.undo_manager.can_undo()
 
 
@@ -331,6 +329,7 @@ class TestComplexUndoRedoSequences:
         state = editor_setup["state"]
         hole_data = editor_setup["hole_data"]
         event_handler = editor_setup["event_handler"]
+        row_operations_tool = editor_setup["row_operations_tool"]
 
         initial_height = len(hole_data.terrain)
 
@@ -341,7 +340,7 @@ class TestComplexUndoRedoSequences:
         state.painting = False
 
         # Add row
-        event_handler.add_row(False)
+        row_operations_tool.add_row(event_handler.tool_context, False)
 
         # Should have 2 undo states
         assert len(state.undo_manager.undo_stack) == 2
@@ -359,11 +358,12 @@ class TestComplexUndoRedoSequences:
         state = editor_setup["state"]
         hole_data = editor_setup["hole_data"]
         event_handler = editor_setup["event_handler"]
+        row_operations_tool = editor_setup["row_operations_tool"]
 
         initial_height = len(hole_data.terrain)
 
         # Add row
-        event_handler.add_row(False)
+        row_operations_tool.add_row(event_handler.tool_context, False)
 
         # Undo
         s1 = state.undo_manager.undo(hole_data)
