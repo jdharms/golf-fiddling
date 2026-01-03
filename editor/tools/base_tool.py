@@ -1,0 +1,150 @@
+"""
+Tool protocol and base definitions for editor tools.
+"""
+from typing import Protocol, Optional, Tuple
+import pygame
+
+
+class Tool(Protocol):
+    """Protocol defining the tool interface.
+
+    Tools don't need to inherit from this - they just need to implement these methods.
+    This provides duck typing with type checking support.
+    """
+
+    def handle_mouse_down(
+        self,
+        pos: Tuple[int, int],
+        button: int,
+        modifiers: int,
+        context: 'ToolContext'
+    ) -> 'ToolResult':
+        """Handle mouse button down event."""
+        ...
+
+    def handle_mouse_up(
+        self,
+        pos: Tuple[int, int],
+        button: int,
+        context: 'ToolContext'
+    ) -> 'ToolResult':
+        """Handle mouse button up event."""
+        ...
+
+    def handle_mouse_motion(
+        self,
+        pos: Tuple[int, int],
+        context: 'ToolContext'
+    ) -> 'ToolResult':
+        """Handle mouse motion event."""
+        ...
+
+    def handle_key_down(
+        self,
+        key: int,
+        modifiers: int,
+        context: 'ToolContext'
+    ) -> 'ToolResult':
+        """Handle key down event (for tool-specific shortcuts)."""
+        ...
+
+    def handle_key_up(
+        self,
+        key: int,
+        context: 'ToolContext'
+    ) -> 'ToolResult':
+        """Handle key up event."""
+        ...
+
+    def on_activated(self, context: 'ToolContext') -> None:
+        """Called when tool becomes active."""
+        ...
+
+    def on_deactivated(self, context: 'ToolContext') -> None:
+        """Called when tool is deactivated."""
+        ...
+
+    def reset(self) -> None:
+        """Reset tool state."""
+        ...
+
+
+class ToolContext:
+    """Context object providing tools access to application state.
+
+    This acts as a facade, limiting what tools can access and preventing
+    tight coupling to Application internals.
+    """
+
+    def __init__(
+        self,
+        hole_data,
+        state,
+        terrain_picker,
+        greens_picker,
+        transform_logic,
+        forest_filler,
+        screen_width: int,
+        screen_height: int,
+    ):
+        self.hole_data = hole_data
+        self.state = state
+        self.terrain_picker = terrain_picker
+        self.greens_picker = greens_picker
+        self.transform_logic = transform_logic
+        self.forest_filler = forest_filler
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+
+    def get_selected_tile(self) -> int:
+        """Get currently selected tile based on mode."""
+        if self.state.mode == "greens":
+            return self.greens_picker.selected_tile
+        else:
+            return self.terrain_picker.selected_tile
+
+    def set_selected_tile(self, tile: int) -> None:
+        """Set selected tile based on mode."""
+        if self.state.mode == "greens":
+            self.greens_picker.selected_tile = tile
+        else:
+            self.terrain_picker.selected_tile = tile
+
+
+class ToolResult:
+    """Result of a tool operation."""
+
+    def __init__(
+        self,
+        handled: bool = False,
+        needs_undo_push: bool = False,
+        needs_render: bool = False,
+        terrain_modified: bool = False,
+        message: Optional[str] = None,
+    ):
+        self.handled = handled
+        self.needs_undo_push = needs_undo_push
+        self.needs_render = needs_render
+        self.terrain_modified = terrain_modified
+        self.message = message
+
+    @staticmethod
+    def handled() -> 'ToolResult':
+        """Event handled but no action needed."""
+        return ToolResult(handled=True)
+
+    @staticmethod
+    def not_handled() -> 'ToolResult':
+        """Event not handled."""
+        return ToolResult(handled=False)
+
+    @staticmethod
+    def modified(terrain: bool = False, message: Optional[str] = None) -> 'ToolResult':
+        """Content was modified."""
+        return ToolResult(
+            handled=True,
+            needs_undo_push=False,  # Tool handles undo timing
+            needs_render=True,
+            terrain_modified=terrain,
+            message=message
+        )

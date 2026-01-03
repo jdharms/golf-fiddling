@@ -19,7 +19,7 @@ from .tile_banks import TileSubBank, GroupedTileBank, _range_to_list
 class TilePicker:
     """Tile selection panel."""
 
-    def __init__(self, tileset: Tileset, rect: Rect):
+    def __init__(self, tileset: Tileset, rect: Rect, on_hover_change=None):
         self.tileset = tileset
         self.rect = rect
         self.scroll_y = 0
@@ -28,6 +28,9 @@ class TilePicker:
         self.tiles_per_row = (rect.width - 20) // (TILE_SIZE * self.tile_scale + 2)
 
         self.tile_spacing = 2
+
+        # Callback for hover changes
+        self.on_hover_change = on_hover_change
 
         # Create banks with subbanks
         self.banks = [
@@ -120,9 +123,15 @@ class TilePicker:
         if event.type == pygame.MOUSEMOTION:
             # Update hovered tile (doesn't consume event)
             if self.rect.collidepoint(event.pos):
-                self.hovered_tile = self._tile_at_position(event.pos)
+                new_hover = self._tile_at_position(event.pos)
             else:
-                self.hovered_tile = None
+                new_hover = None
+
+            # Only notify if hover changed
+            if new_hover != self.hovered_tile:
+                self.hovered_tile = new_hover
+                if self.on_hover_change:
+                    self.on_hover_change(new_hover)
             # Don't return True - let event propagate to buttons
 
         if event.type == pygame.MOUSEBUTTONDOWN:

@@ -1,0 +1,116 @@
+"""
+Paint tool for terrain, palette, and greens editing.
+"""
+from typing import Optional, Tuple
+from .base_tool import Tool, ToolContext, ToolResult
+from editor.controllers.view_state import ViewState
+from editor.core.constants import TERRAIN_WIDTH, GREENS_WIDTH, GREENS_HEIGHT, CANVAS_OFFSET_X, CANVAS_OFFSET_Y, STATUS_HEIGHT
+from pygame import Rect
+
+
+class PaintTool:
+    """Paint tool - primary editing tool for all modes."""
+
+    def __init__(self):
+        self.is_painting = False
+        self.last_paint_pos: Optional[Tuple[int, int]] = None
+        self.undo_pushed = False
+
+    def handle_mouse_down(self, pos, button, modifiers, context):
+        if button != 1:  # Only left click
+            return ToolResult.not_handled()
+
+        # Start paint stroke - push undo state
+        if not self.is_painting:
+            context.state.undo_manager.push_state(context.hole_data)
+            self.undo_pushed = True
+            self.is_painting = True
+
+        return self._paint_at(pos, context)
+
+    def handle_mouse_up(self, pos, button, context):
+        if button == 1:
+            self.is_painting = False
+            self.last_paint_pos = None
+            self.undo_pushed = False
+        return ToolResult.handled()
+
+    def handle_mouse_motion(self, pos, context):
+        if self.is_painting:
+            return self._paint_at(pos, context)
+        return ToolResult.not_handled()
+
+    def handle_key_down(self, key, modifiers, context):
+        return ToolResult.not_handled()
+
+    def handle_key_up(self, key, context):
+        return ToolResult.not_handled()
+
+    def on_activated(self, context):
+        pass
+
+    def on_deactivated(self, context):
+        self.reset()
+
+    def reset(self):
+        self.is_painting = False
+        self.last_paint_pos = None
+        self.undo_pushed = False
+
+    def _paint_at(self, pos: Tuple[int, int], context: ToolContext) -> ToolResult:
+        """Paint at screen position based on current mode."""
+        # Create view state for coordinate conversion
+        canvas_rect = Rect(
+            CANVAS_OFFSET_X,
+            CANVAS_OFFSET_Y,
+            context.screen_width - CANVAS_OFFSET_X,
+            context.screen_height - CANVAS_OFFSET_Y - STATUS_HEIGHT
+        )
+        view_state = ViewState(
+            canvas_rect,
+            context.state.canvas_offset_x,
+            context.state.canvas_offset_y,
+            context.state.canvas_scale,
+        )
+
+        mode = context.state.mode
+
+        if mode == "terrain":
+            return self._paint_terrain(view_state, pos, context)
+        elif mode == "palette":
+            return self._paint_palette(view_state, pos, context)
+        elif mode == "greens":
+            return self._paint_greens(view_state, pos, context)
+
+        return ToolResult.not_handled()
+
+    def _paint_terrain(self, view_state, pos, context) -> ToolResult:
+        tile = view_state.screen_to_tile(pos)
+        if tile and tile != self.last_paint_pos:
+            row, col = tile
+            if 0 <= row < len(context.hole_data.terrain) and 0 <= col < TERRAIN_WIDTH:
+                selected_tile = context.terrain_picker.selected_tile
+                context.hole_data.set_terrain_tile(row, col, selected_tile)
+                self.last_paint_pos = tile
+                return ToolResult.modified(terrain=True)
+        return ToolResult.handled()
+
+    def _paint_palette(self, view_state, pos, context) -> ToolResult:
+        supertile = view_state.screen_to_supertile(pos)
+        if supertile and supertile != self.last_paint_pos:
+            row, col = supertile
+            context.hole_data.set_attribute(row, col, context.state.selected_palette)
+            self.last_paint_pos = supertile
+            return ToolResult.modified(terrain=False)
+        return ToolResult.handled()
+
+    def _paint_greens(self, view_state, pos, context) -> ToolResult:
+        tile = view_state.screen_to_tile(pos)
+        if tile and tile != self.last_paint_pos:
+            row, col = tile
+            if 0 <= row < GREENS_HEIGHT and 0 <= col < GREENS_WIDTH:
+                selected_tile = context.greens_picker.selected_tile
+                context.hole_data.set_greens_tile(row, col, selected_tile)
+                self.last_paint_pos = tile
+                return ToolResult.modified(terrain=False)
+        return ToolResult.handled()
