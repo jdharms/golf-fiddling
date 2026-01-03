@@ -20,10 +20,8 @@ class PaintTool:
         if button != 1:  # Only left click
             return ToolResult.not_handled()
 
-        # Start paint stroke - push undo state
+        # Start paint stroke (but don't push undo yet - wait for first actual modification)
         if not self.is_painting:
-            context.state.undo_manager.push_state(context.hole_data)
-            self.undo_pushed = True
             self.is_painting = True
 
         return self._paint_at(pos, context)
@@ -90,18 +88,42 @@ class PaintTool:
             row, col = tile
             if 0 <= row < len(context.hole_data.terrain) and 0 <= col < TERRAIN_WIDTH:
                 selected_tile = context.terrain_picker.selected_tile
-                context.hole_data.set_terrain_tile(row, col, selected_tile)
+                current_tile = context.hole_data.terrain[row][col]
+
+                # Only paint if the value is actually changing
+                if current_tile != selected_tile:
+                    # Push undo state only on first actual modification of this paint stroke
+                    if not self.undo_pushed:
+                        context.state.undo_manager.push_state(context.hole_data)
+                        self.undo_pushed = True
+
+                    context.hole_data.set_terrain_tile(row, col, selected_tile)
+                    self.last_paint_pos = tile
+                    return ToolResult.modified(terrain=True)
+
+                # Clicked on same value - update position but don't modify
                 self.last_paint_pos = tile
-                return ToolResult.modified(terrain=True)
         return ToolResult.handled()
 
     def _paint_palette(self, view_state, pos, context) -> ToolResult:
         supertile = view_state.screen_to_supertile(pos)
         if supertile and supertile != self.last_paint_pos:
             row, col = supertile
-            context.hole_data.set_attribute(row, col, context.state.selected_palette)
+            current_palette = context.hole_data.attributes[row][col]
+
+            # Only paint if the value is actually changing
+            if current_palette != context.state.selected_palette:
+                # Push undo state only on first actual modification of this paint stroke
+                if not self.undo_pushed:
+                    context.state.undo_manager.push_state(context.hole_data)
+                    self.undo_pushed = True
+
+                context.hole_data.set_attribute(row, col, context.state.selected_palette)
+                self.last_paint_pos = supertile
+                return ToolResult.modified(terrain=False)
+
+            # Clicked on same value - update position but don't modify
             self.last_paint_pos = supertile
-            return ToolResult.modified(terrain=False)
         return ToolResult.handled()
 
     def _paint_greens(self, view_state, pos, context) -> ToolResult:
@@ -110,7 +132,19 @@ class PaintTool:
             row, col = tile
             if 0 <= row < GREENS_HEIGHT and 0 <= col < GREENS_WIDTH:
                 selected_tile = context.greens_picker.selected_tile
-                context.hole_data.set_greens_tile(row, col, selected_tile)
+                current_tile = context.hole_data.greens[row][col]
+
+                # Only paint if the value is actually changing
+                if current_tile != selected_tile:
+                    # Push undo state only on first actual modification of this paint stroke
+                    if not self.undo_pushed:
+                        context.state.undo_manager.push_state(context.hole_data)
+                        self.undo_pushed = True
+
+                    context.hole_data.set_greens_tile(row, col, selected_tile)
+                    self.last_paint_pos = tile
+                    return ToolResult.modified(terrain=False)
+
+                # Clicked on same value - update position but don't modify
                 self.last_paint_pos = tile
-                return ToolResult.modified(terrain=False)
         return ToolResult.handled()
