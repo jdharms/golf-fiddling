@@ -1,6 +1,5 @@
 """Unit tests for vertical fill detection in compression."""
 
-import pytest
 
 
 def test_first_row_unchanged(mock_minimal_terrain_tables):

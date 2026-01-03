@@ -4,20 +4,19 @@ NES Open Tournament Golf - Terrain Renderer
 Renders terrain canvas view with tiles, sprites, and overlays.
 """
 
-from typing import Dict, Optional
 
 import pygame
-from pygame import Surface, Rect
+from pygame import Surface
 
-from editor.core.pygame_rendering import Tileset, Sprite
-from golf.formats.hole_data import HoleData
-from editor.core.constants import TILE_SIZE, TERRAIN_WIDTH
-from editor.controllers.view_state import ViewState
 from editor.controllers.highlight_state import HighlightState
+from editor.controllers.view_state import ViewState
+from editor.core.constants import TERRAIN_WIDTH, TILE_SIZE
+from golf.formats.hole_data import HoleData
+
+from .grid_renderer import GridRenderer
+from .highlight_utils import INVALID_NEIGHBOR_COLOR, draw_tile_border
 from .render_context import RenderContext
 from .sprite_renderer import SpriteRenderer
-from .grid_renderer import GridRenderer
-from .highlight_utils import draw_tile_border, INVALID_NEIGHBOR_COLOR
 
 
 def _render_placeholder_tile(size: int) -> Surface:

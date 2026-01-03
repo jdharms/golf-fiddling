@@ -5,12 +5,12 @@ Basic UI widget components for the editor.
 """
 
 import pygame
-from pygame import Surface, Rect
+from pygame import Rect, Surface
 
 from editor.core.constants import (
     COLOR_BUTTON,
-    COLOR_BUTTON_HOVER,
     COLOR_BUTTON_ACTIVE,
+    COLOR_BUTTON_HOVER,
     COLOR_GRID,
     COLOR_SELECTION,
     COLOR_TEXT,

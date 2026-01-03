@@ -3,7 +3,8 @@ Forest fill tool - intelligent WFC-based forest region filling.
 """
 
 import pygame
-from .base_tool import Tool, ToolContext, ToolResult
+
+from .base_tool import ToolResult
 
 
 class ForestFillTool:

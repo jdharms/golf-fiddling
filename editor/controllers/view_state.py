@@ -4,7 +4,7 @@ NES Open Tournament Golf - View State
 Manages viewport camera position, zoom, and coordinate transformations.
 """
 
-from typing import Optional, Tuple
+
 from pygame import Rect
 
 from editor.core.constants import TILE_SIZE
@@ -35,7 +35,7 @@ class ViewState:
         """Get the current tile size in pixels (based on scale)."""
         return TILE_SIZE * self.scale
 
-    def screen_to_tile(self, screen_pos: Tuple[int, int]) -> Optional[Tuple[int, int]]:
+    def screen_to_tile(self, screen_pos: tuple[int, int]) -> tuple[int, int] | None:
         """
         Convert screen position to tile coordinates.
 
@@ -57,8 +57,8 @@ class ViewState:
         return (tile_row, tile_col)
 
     def screen_to_supertile(
-        self, screen_pos: Tuple[int, int]
-    ) -> Optional[Tuple[int, int]]:
+        self, screen_pos: tuple[int, int]
+    ) -> tuple[int, int] | None:
         """
         Convert screen position to supertile (2x2) coordinates.
 
@@ -73,7 +73,7 @@ class ViewState:
             return None
         return (tile[0] // 2, tile[1] // 2)
 
-    def tile_to_screen(self, tile_pos: Tuple[int, int]) -> Tuple[int, int]:
+    def tile_to_screen(self, tile_pos: tuple[int, int]) -> tuple[int, int]:
         """
         Convert tile coordinates to screen position (top-left corner).
 
@@ -88,7 +88,7 @@ class ViewState:
         y = self.canvas_rect.y + row * self.tile_size - self.offset_y
         return (x, y)
 
-    def is_tile_visible(self, tile_pos: Tuple[int, int]) -> bool:
+    def is_tile_visible(self, tile_pos: tuple[int, int]) -> bool:
         """
         Check if a tile is visible in the current viewport.
 

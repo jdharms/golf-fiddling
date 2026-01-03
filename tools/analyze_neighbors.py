@@ -7,14 +7,13 @@ Produces a JSON file mapping each tile to its valid neighbors in each direction.
 """
 
 import json
-from pathlib import Path
-from typing import Dict, Set, Tuple
 from collections import defaultdict
+from pathlib import Path
 
 from golf.formats.hole_data import HoleData
 
 
-def analyze_neighbors() -> Dict:
+def analyze_neighbors() -> dict:
     """
     Analyze all 54 holes to extract valid terrain tile neighbor relationships.
 
@@ -28,7 +27,7 @@ def analyze_neighbors() -> Dict:
             }
         }
     """
-    neighbors: Dict[int, Dict[str, Dict[int, int]]] = defaultdict(
+    neighbors: dict[int, dict[str, dict[int, int]]] = defaultdict(
         lambda: {"up": {}, "down": {}, "left": {}, "right": {}}
     )
 
@@ -147,7 +146,7 @@ def main():
         json.dump(result, f, indent=2)
 
     print(f"\n✓ Saved neighbor data to: {output_file}")
-    print(f"\nStatistics:")
+    print("\nStatistics:")
     print(f"  Total holes analyzed: {result['metadata']['total_holes_analyzed']}")
     print(f"  Unique tiles: {result['metadata']['total_unique_tiles']}")
     print(

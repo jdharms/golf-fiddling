@@ -1,6 +1,5 @@
 """Unit tests for compression table loading."""
 
-import pytest
 
 
 def test_load_real_tables(compression_tables):

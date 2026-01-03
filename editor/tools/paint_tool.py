@@ -2,18 +2,20 @@
 Paint tool for terrain, palette, and greens editing.
 """
 
-from typing import Optional, Tuple
-from .base_tool import Tool, ToolContext, ToolResult
+
+from pygame import Rect
+
 from editor.controllers.view_state import ViewState
 from editor.core.constants import (
-    TERRAIN_WIDTH,
-    GREENS_WIDTH,
-    GREENS_HEIGHT,
     CANVAS_OFFSET_X,
     CANVAS_OFFSET_Y,
+    GREENS_HEIGHT,
+    GREENS_WIDTH,
     STATUS_HEIGHT,
+    TERRAIN_WIDTH,
 )
-from pygame import Rect
+
+from .base_tool import ToolContext, ToolResult
 
 
 class PaintTool:
@@ -21,7 +23,7 @@ class PaintTool:
 
     def __init__(self):
         self.is_painting = False
-        self.last_paint_pos: Optional[Tuple[int, int]] = None
+        self.last_paint_pos: tuple[int, int] | None = None
         self.undo_pushed = False
 
     def handle_mouse_down(self, pos, button, modifiers, context):
@@ -63,7 +65,7 @@ class PaintTool:
         self.last_paint_pos = None
         self.undo_pushed = False
 
-    def _paint_at(self, pos: Tuple[int, int], context: ToolContext) -> ToolResult:
+    def _paint_at(self, pos: tuple[int, int], context: ToolContext) -> ToolResult:
         """Paint at screen position based on current mode."""
         # Create view state for coordinate conversion
         canvas_rect = Rect(

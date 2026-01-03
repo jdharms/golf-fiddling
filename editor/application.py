@@ -5,33 +5,32 @@ Main application class that orchestrates all editor components.
 """
 
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 import pygame
 from pygame import Rect
 
-from .core.constants import *
-from .core.pygame_rendering import Tileset, Sprite
-from golf.formats.hole_data import HoleData
 from golf.core.compressor import load_compression_tables
-from .ui.widgets import Button
-from .ui.pickers import TilePicker, GreensTilePicker
-from .ui.dialogs import open_file_dialog, save_file_dialog
-from .ui.toolbar import Toolbar, ToolbarCallbacks
+from golf.formats.hole_data import HoleData
+
 from .controllers.editor_state import EditorState
 from .controllers.event_handler import EventHandler
+from .controllers.highlight_state import HighlightState
 from .controllers.transform_logic import TransformLogic
 from .controllers.view_state import ViewState
-from .controllers.highlight_state import HighlightState
+from .core.constants import *
+from .core.pygame_rendering import Sprite, Tileset
+from .rendering.greens_renderer import GreensRenderer
 from .rendering.render_context import RenderContext
 from .rendering.terrain_renderer import TerrainRenderer
-from .rendering.greens_renderer import GreensRenderer
-from .tools.tool_manager import ToolManager
-from .tools.paint_tool import PaintTool
-from .tools.transform_tool import TransformTool
 from .tools.eyedropper_tool import EyedropperTool
 from .tools.forest_fill_tool import ForestFillTool
+from .tools.paint_tool import PaintTool
 from .tools.row_operations_tool import RowOperationsTool
+from .tools.tool_manager import ToolManager
+from .tools.transform_tool import TransformTool
+from .ui.dialogs import open_file_dialog, save_file_dialog
+from .ui.pickers import GreensTilePicker, TilePicker
+from .ui.toolbar import Toolbar, ToolbarCallbacks
 
 
 class EditorApplication:
@@ -55,7 +54,7 @@ class EditorApplication:
         self.greens_tileset = Tileset(greens_chr)
 
         # Load sprites
-        self.sprites: Dict[str, Optional[Sprite]] = {}
+        self.sprites: dict[str, Sprite | None] = {}
         sprite_files = {
             "flag": "data/sprites/flag.json",
             "tee": "data/sprites/tee-block.json",
@@ -300,7 +299,7 @@ class EditorApplication:
         self.toolbar.resize(width)
         self.event_handler.update_screen_size(width, height)
 
-    def _on_terrain_hover_change(self, tile_value: Optional[int]):
+    def _on_terrain_hover_change(self, tile_value: int | None):
         """Called when terrain picker hover changes."""
         shift_held = pygame.key.get_mods() & pygame.KMOD_SHIFT
         if shift_held and self.state.mode in ("terrain", "palette"):
@@ -308,7 +307,7 @@ class EditorApplication:
         else:
             self.highlight_state.clear_picker_hover()
 
-    def _on_greens_hover_change(self, tile_value: Optional[int]):
+    def _on_greens_hover_change(self, tile_value: int | None):
         """Called when greens picker hover changes."""
         shift_held = pygame.key.get_mods() & pygame.KMOD_SHIFT
         if shift_held and self.state.mode == "greens":
@@ -325,7 +324,7 @@ class EditorApplication:
             self.screen_height - CANVAS_OFFSET_Y - STATUS_HEIGHT,
         )
 
-    def _screen_to_tile(self, screen_pos: Tuple[int, int]) -> Optional[Tuple[int, int]]:
+    def _screen_to_tile(self, screen_pos: tuple[int, int]) -> tuple[int, int] | None:
         """Convert screen position to tile coordinates."""
         canvas_rect = self._get_canvas_rect()
         if not canvas_rect.collidepoint(screen_pos):

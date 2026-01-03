@@ -7,41 +7,40 @@ Extracts course data from ROM and saves as human-readable JSON files.
 
 import sys
 from pathlib import Path
-from typing import Tuple
 
-from golf.core.rom_reader import (
-    RomReader,
-    COURSES,
-    HOLES_PER_COURSE,
-    TOTAL_HOLES,
-    TABLE_COURSE_HOLE_OFFSET,
-    TABLE_COURSE_BANK_TERRAIN,
-    TABLE_TERRAIN_START_PTR,
-    TABLE_TERRAIN_END_PTR,
-    TABLE_GREENS_PTR,
-    TABLE_PAR,
-    TABLE_HANDICAP,
-    TABLE_DISTANCE_100,
-    TABLE_DISTANCE_10,
-    TABLE_DISTANCE_1,
-    TABLE_SCROLL_LIMIT,
-    TABLE_GREEN_X,
-    TABLE_GREEN_Y,
-    TABLE_TEE_X,
-    TABLE_TEE_Y,
-    TABLE_FLAG_Y_OFFSET,
-    TABLE_FLAG_X_OFFSET,
-)
 from golf.core.decompressor import (
-    TerrainDecompressor,
-    GreensDecompressor,
     DecompressionStats,
-    unpack_attributes,
+    GreensDecompressor,
+    TerrainDecompressor,
     bcd_to_int,
+    unpack_attributes,
 )
 from golf.core.palettes import (
-    TERRAIN_ROW_WIDTH,
     ATTR_TOTAL_BYTES,
+    TERRAIN_ROW_WIDTH,
+)
+from golf.core.rom_reader import (
+    COURSES,
+    HOLES_PER_COURSE,
+    TABLE_COURSE_BANK_TERRAIN,
+    TABLE_COURSE_HOLE_OFFSET,
+    TABLE_DISTANCE_1,
+    TABLE_DISTANCE_10,
+    TABLE_DISTANCE_100,
+    TABLE_FLAG_X_OFFSET,
+    TABLE_FLAG_Y_OFFSET,
+    TABLE_GREEN_X,
+    TABLE_GREEN_Y,
+    TABLE_GREENS_PTR,
+    TABLE_HANDICAP,
+    TABLE_PAR,
+    TABLE_SCROLL_LIMIT,
+    TABLE_TEE_X,
+    TABLE_TEE_Y,
+    TABLE_TERRAIN_END_PTR,
+    TABLE_TERRAIN_START_PTR,
+    TOTAL_HOLES,
+    RomReader,
 )
 from golf.formats import compact_json as json
 from golf.formats.hex_utils import format_hex_rows
@@ -49,7 +48,7 @@ from golf.formats.hex_utils import format_hex_rows
 
 def dump_course(
     rom: RomReader, course_idx: int, output_dir: Path
-) -> Tuple[DecompressionStats, DecompressionStats]:
+) -> tuple[DecompressionStats, DecompressionStats]:
     """Dump all holes for a single course. Returns (terrain_stats, greens_stats)."""
     course = COURSES[course_idx]
     course_dir = output_dir / course["name"]

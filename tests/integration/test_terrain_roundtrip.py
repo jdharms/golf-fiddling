@@ -1,6 +1,5 @@
 """Integration tests for terrain compression round-trip validation."""
 
-import pytest
 
 
 def test_simple_terrain_roundtrip(simple_terrain_fixture, terrain_decompressor):

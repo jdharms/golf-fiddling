@@ -2,7 +2,7 @@
 Tool manager for registering and switching between editor tools.
 """
 
-from typing import Dict, Optional
+
 from .base_tool import Tool, ToolContext
 
 
@@ -10,15 +10,15 @@ class ToolManager:
     """Manages tool registration and activation."""
 
     def __init__(self):
-        self.tools: Dict[str, Tool] = {}
-        self.active_tool: Optional[Tool] = None
-        self.active_tool_name: Optional[str] = None
+        self.tools: dict[str, Tool] = {}
+        self.active_tool: Tool | None = None
+        self.active_tool_name: str | None = None
 
     def register_tool(self, name: str, tool: Tool):
         """Register a tool with a name."""
         self.tools[name] = tool
 
-    def get_tool(self, name: str) -> Optional[Tool]:
+    def get_tool(self, name: str) -> Tool | None:
         """Get a tool by name."""
         return self.tools.get(name)
 
@@ -36,10 +36,10 @@ class ToolManager:
 
         return True
 
-    def get_active_tool(self) -> Optional[Tool]:
+    def get_active_tool(self) -> Tool | None:
         """Get the currently active tool."""
         return self.active_tool
 
-    def get_active_tool_name(self) -> Optional[str]:
+    def get_active_tool_name(self) -> str | None:
         """Get the name of the currently active tool."""
         return self.active_tool_name

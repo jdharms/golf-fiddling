@@ -2,18 +2,17 @@
 Main tile picker panel for terrain tile selection.
 """
 
-from typing import Tuple
 
 import pygame
-from pygame import Surface, Rect
+from pygame import Rect, Surface
 
-from editor.core.pygame_rendering import Tileset
 from editor.core.constants import (
-    TILE_SIZE,
     COLOR_PICKER_BG,
+    TILE_SIZE,
 )
+from editor.core.pygame_rendering import Tileset
 
-from .tile_banks import TileSubBank, GroupedTileBank, _range_to_list
+from .tile_banks import GroupedTileBank, TileSubBank, _range_to_list
 
 
 class TilePicker:
@@ -147,13 +146,13 @@ class TilePicker:
                     return True
         return False
 
-    def _select_at(self, pos: Tuple[int, int]):
+    def _select_at(self, pos: tuple[int, int]):
         """Select tile at screen position."""
         tile = self._tile_at_position(pos)
         if tile is not None:
             self.selected_tile = tile
 
-    def _tile_at_position(self, pos: Tuple[int, int]) -> int | None:
+    def _tile_at_position(self, pos: tuple[int, int]) -> int | None:
         """Get tile index at screen position, or None if invalid."""
         local_x = pos[0] - self.rect.x - 10
         local_y = pos[1] - self.rect.y + self.scroll_y

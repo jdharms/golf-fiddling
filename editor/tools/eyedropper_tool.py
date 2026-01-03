@@ -2,16 +2,18 @@
 Eyedropper tool for sampling tiles from the canvas.
 """
 
-from .base_tool import Tool, ToolContext, ToolResult
+from pygame import Rect
+
 from editor.controllers.view_state import ViewState
 from editor.core.constants import (
-    TERRAIN_WIDTH,
-    GREENS_WIDTH,
     CANVAS_OFFSET_X,
     CANVAS_OFFSET_Y,
+    GREENS_WIDTH,
     STATUS_HEIGHT,
+    TERRAIN_WIDTH,
 )
-from pygame import Rect
+
+from .base_tool import ToolResult
 
 
 class EyedropperTool:

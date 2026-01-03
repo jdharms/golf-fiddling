@@ -9,12 +9,13 @@ The issue appears to be with neighbor constraint matching - many cells
 report "No valid tile found" even though valid forest tiles should exist.
 """
 
-import pytest
 from pathlib import Path
 
-from golf.formats.hole_data import HoleData
+import pytest
+
+from editor.controllers.forest_fill import PLACEHOLDER_TILE, ForestFiller
 from golf.core.neighbor_validator import TerrainNeighborValidator
-from editor.controllers.forest_fill import ForestFiller, PLACEHOLDER_TILE
+from golf.formats.hole_data import HoleData
 
 
 @pytest.fixture
@@ -122,7 +123,7 @@ def test_fill_placeholder_regions(forest_filler, hole_18_with_placeholders):
     print(f"  Remaining placeholders: {remaining_placeholders}")
 
     # Verify all filled tiles are valid forest tiles
-    from editor.controllers.forest_fill import FOREST_FILL, FOREST_BORDER
+    from editor.controllers.forest_fill import FOREST_BORDER, FOREST_FILL
 
     valid_forest_tiles = FOREST_FILL | FOREST_BORDER
 
@@ -132,7 +133,7 @@ def test_fill_placeholder_regions(forest_filler, hole_18_with_placeholders):
             invalid_tiles.append((row, col, tile))
 
     if invalid_tiles:
-        print(f"\nInvalid tiles filled (not forest tiles):")
+        print("\nInvalid tiles filled (not forest tiles):")
         for row, col, tile in invalid_tiles[:10]:  # Show first 10
             print(f"  ({row}, {col}): 0x{tile:02X}")
 

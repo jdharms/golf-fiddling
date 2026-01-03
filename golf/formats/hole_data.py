@@ -5,29 +5,29 @@ Manages hole data including terrain, attributes, greens, and metadata.
 Handles loading from and saving to JSON files.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any
 
+from ..core.palettes import GREENS_WIDTH, TERRAIN_WIDTH
 from . import compact_json as json
 from . import hex_utils
-from ..core.palettes import TERRAIN_WIDTH, GREENS_WIDTH
 
 
 class HoleData:
     """Manages hole data including terrain, attributes, and greens."""
 
     def __init__(self):
-        self.terrain: List[List[int]] = []
-        self.attributes: List[List[int]] = []
-        self.greens: List[List[int]] = []
+        self.terrain: list[list[int]] = []
+        self.attributes: list[list[int]] = []
+        self.greens: list[list[int]] = []
         self.green_x: int = 0
         self.green_y: int = 0
-        self.metadata: Dict[str, Any] = {}
-        self.filepath: Optional[str] = None
+        self.metadata: dict[str, Any] = {}
+        self.filepath: str | None = None
         self.modified: bool = False
 
     def load(self, path: str):
         """Load hole data from JSON file."""
-        with open(path, "r") as f:
+        with open(path) as f:
             data = json.load(f)
 
         # Parse terrain using shared hex utility
@@ -64,7 +64,7 @@ class HoleData:
         self.filepath = path
         self.modified = False
 
-    def save(self, path: Optional[str] = None):
+    def save(self, path: str | None = None):
         """Save hole data to JSON file."""
         if path is None:
             path = self.filepath

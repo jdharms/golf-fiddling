@@ -4,7 +4,6 @@ NES Open Tournament Golf - Editor State
 Manages application state including editing mode, view settings, and canvas position.
 """
 
-from typing import Optional, Tuple
 
 from .undo_manager import UndoManager
 

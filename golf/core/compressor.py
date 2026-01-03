@@ -5,7 +5,6 @@ Implements terrain and greens data compression using the reverse of the game's
 decompression algorithm. See golf/core/compression.md for algorithm details.
 """
 
-from typing import List, Dict, Tuple, Optional
 import json
 from pathlib import Path
 
@@ -20,7 +19,7 @@ def _get_default_tables_path() -> Path:
     )
 
 
-def load_compression_tables(tables_path: Optional[str] = None) -> Dict:
+def load_compression_tables(tables_path: str | None = None) -> dict:
     """Load pre-extracted compression tables from JSON.
 
     Args:
@@ -68,8 +67,8 @@ def load_compression_tables(tables_path: Optional[str] = None) -> Dict:
 
 
 def detect_vertical_fills(
-    rows: List[List[int]], vert_table: List[int]
-) -> List[List[int]]:
+    rows: list[list[int]], vert_table: list[int]
+) -> list[list[int]]:
     """First pass: detect and mark vertical fills with 0x00.
 
     Replaces tiles with their corresponding vert_table value from the row above.
@@ -103,8 +102,8 @@ def detect_vertical_fills(
 
 
 def match_dict_sequence(
-    byte_stream: List[int], position: int, reverse_lookup: Dict[str, List[str]]
-) -> Optional[Tuple[str, int]]:
+    byte_stream: list[int], position: int, reverse_lookup: dict[str, list[str]]
+) -> tuple[str, int] | None:
     """Try to match dictionary sequence at current position (greedy longest-match).
 
     Args:
@@ -136,8 +135,8 @@ def match_dict_sequence(
 
 
 def generate_repeat_code(
-    byte_stream: List[int], position: int, prev_byte: int, horiz_table: List[int]
-) -> Optional[Tuple[int, int]]:
+    byte_stream: list[int], position: int, prev_byte: int, horiz_table: list[int]
+) -> tuple[int, int] | None:
     """Generate repeat code by following horizontal transitions from prev_byte.
 
     Args:
@@ -179,7 +178,7 @@ def generate_repeat_code(
 class TerrainCompressor:
     """Compresses terrain data using greedy longest-match algorithm."""
 
-    def __init__(self, tables_path: Optional[str] = None):
+    def __init__(self, tables_path: str | None = None):
         """Initialize terrain compressor.
 
         Args:
@@ -194,7 +193,7 @@ class TerrainCompressor:
         self.reverse_lookup = terrain["reverse_dict_lookup"]
         self.row_width = 22
 
-    def compress(self, rows: List[List[int]]) -> bytes:
+    def compress(self, rows: list[list[int]]) -> bytes:
         """Compress terrain rows to bytes.
 
         Args:
@@ -282,7 +281,7 @@ class TerrainCompressor:
 class GreensCompressor:
     """Compresses greens data using greedy longest-match algorithm."""
 
-    def __init__(self, tables_path: Optional[str] = None):
+    def __init__(self, tables_path: str | None = None):
         """Initialize greens compressor.
 
         Args:
@@ -297,7 +296,7 @@ class GreensCompressor:
         self.reverse_lookup = greens["reverse_dict_lookup"]
         self.row_width = 24
 
-    def compress(self, rows: List[List[int]]) -> bytes:
+    def compress(self, rows: list[list[int]]) -> bytes:
         """Compress 24×24 greens grid to bytes.
 
         Args:

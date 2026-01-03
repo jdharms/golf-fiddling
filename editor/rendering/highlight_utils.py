@@ -4,10 +4,8 @@ NES Open Tournament Golf - Highlight Utilities
 Shared utilities for drawing tile highlighting borders in terrain and greens renderers.
 """
 
-from typing import Tuple
 
 import pygame
-
 
 # Highlighting constants
 HIGHLIGHT_COLOR = (255, 215, 0)  # Gold color
@@ -20,7 +18,7 @@ def draw_tile_border(
     x: int,
     y: int,
     tile_size: int,
-    color: Tuple[int, int, int] = HIGHLIGHT_COLOR,
+    color: tuple[int, int, int] = HIGHLIGHT_COLOR,
     border_width: int = HIGHLIGHT_BORDER_WIDTH,
 ):
     """

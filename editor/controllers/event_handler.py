@@ -4,20 +4,21 @@ NES Open Tournament Golf - Event Handler
 Handles user input events including mouse, keyboard, and window events.
 """
 
-from typing import Optional, List, Callable
+from collections.abc import Callable
 
 import pygame
 from pygame import Rect
 
-from .editor_state import EditorState
-from golf.formats.hole_data import HoleData
-from editor.ui.pickers import TilePicker, GreensTilePicker
-from editor.ui.widgets import Button
 from editor.core.constants import (
     CANVAS_OFFSET_X,
     CANVAS_OFFSET_Y,
     STATUS_HEIGHT,
 )
+from editor.ui.pickers import GreensTilePicker, TilePicker
+from editor.ui.widgets import Button
+from golf.formats.hole_data import HoleData
+
+from .editor_state import EditorState
 
 
 class EventHandler:
@@ -29,7 +30,7 @@ class EventHandler:
         hole_data: HoleData,
         terrain_picker: TilePicker,
         greens_picker: GreensTilePicker,
-        buttons: List[Button],
+        buttons: list[Button],
         screen_width: int,
         screen_height: int,
         tool_manager,
@@ -38,7 +39,7 @@ class EventHandler:
         on_mode_change: Callable[[], None],
         on_flag_change: Callable[[], None],
         on_resize: Callable[[int, int], None],
-        on_terrain_modified: Optional[Callable[[], None]] = None,
+        on_terrain_modified: Callable[[], None] | None = None,
     ):
         """
         Initialize event handler.
@@ -93,7 +94,7 @@ class EventHandler:
         self.screen_width = width
         self.screen_height = height
 
-    def handle_events(self, events: List[pygame.event.Event]) -> bool:
+    def handle_events(self, events: list[pygame.event.Event]) -> bool:
         """
         Handle all pygame events.
 

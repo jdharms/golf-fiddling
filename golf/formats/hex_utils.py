@@ -5,10 +5,9 @@ Utilities for parsing and formatting hex strings used in hole data files.
 Consolidates duplicate hex parsing/formatting code across all tools.
 """
 
-from typing import List
 
 
-def parse_hex_row(row_str: str) -> List[int]:
+def parse_hex_row(row_str: str) -> list[int]:
     """
     Parse space-separated hex string to list of integers.
 
@@ -25,7 +24,7 @@ def parse_hex_row(row_str: str) -> List[int]:
     return [int(x, 16) for x in row_str.split()]
 
 
-def format_hex_row(row: List[int]) -> str:
+def format_hex_row(row: list[int]) -> str:
     """
     Format list of integers as space-separated hex string.
 
@@ -42,7 +41,7 @@ def format_hex_row(row: List[int]) -> str:
     return " ".join(f"{b:02X}" for b in row)
 
 
-def parse_hex_rows(rows: List[str]) -> List[List[int]]:
+def parse_hex_rows(rows: list[str]) -> list[list[int]]:
     """
     Parse multiple hex rows.
 
@@ -55,7 +54,7 @@ def parse_hex_rows(rows: List[str]) -> List[List[int]]:
     return [parse_hex_row(row) for row in rows]
 
 
-def format_hex_rows(rows: List[List[int]]) -> List[str]:
+def format_hex_rows(rows: list[list[int]]) -> list[str]:
     """
     Format multiple rows as hex strings.
 

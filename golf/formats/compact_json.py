@@ -32,10 +32,7 @@ def dumps(obj, indent=2):
         pad = " " * (indent * level)
         child_pad = " " * (indent * (level + 1))
 
-        if is_primitive(v):
-            return json.dumps(v)
-
-        elif is_numeric_array(v):
+        if is_primitive(v) or is_numeric_array(v):
             return json.dumps(v)
 
         elif isinstance(v, list):

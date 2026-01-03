@@ -4,10 +4,9 @@ NES Open Tournament Golf - File Dialogs
 Tkinter-based file dialog utilities for loading and saving files.
 """
 
-from typing import Optional, List, Tuple
 
 
-def open_file_dialog(title: str, filetypes: List[Tuple[str, str]]) -> Optional[str]:
+def open_file_dialog(title: str, filetypes: list[tuple[str, str]]) -> str | None:
     """
     Display an 'Open File' dialog and return the selected path.
 
@@ -33,8 +32,8 @@ def open_file_dialog(title: str, filetypes: List[Tuple[str, str]]) -> Optional[s
 
 
 def save_file_dialog(
-    title: str, default_extension: str, filetypes: List[Tuple[str, str]]
-) -> Optional[str]:
+    title: str, default_extension: str, filetypes: list[tuple[str, str]]
+) -> str | None:
     """
     Display a 'Save File' dialog and return the selected path.
 

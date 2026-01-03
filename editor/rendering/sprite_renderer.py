@@ -4,15 +4,14 @@ NES Open Tournament Golf - Sprite Renderer
 Renders sprite overlays including green overlay, terrain sprites, and greens sprites.
 """
 
-from typing import Dict, Tuple
 
 import pygame
-from pygame import Surface, Rect
+from pygame import Surface
 
+from editor.controllers.view_state import ViewState
+from editor.core.constants import GREEN_OVERLAY_COLOR
 from editor.core.pygame_rendering import Sprite
 from golf.formats.hole_data import HoleData
-from editor.core.constants import GREEN_OVERLAY_COLOR
-from editor.controllers.view_state import ViewState
 
 
 class SpriteRenderer:
@@ -65,7 +64,7 @@ class SpriteRenderer:
     def render_terrain_sprites(
         screen: Surface,
         view_state: ViewState,
-        sprites: Dict[str, Sprite],
+        sprites: dict[str, Sprite],
         hole_data: HoleData,
         selected_flag_index: int,
     ):
@@ -87,7 +86,7 @@ class SpriteRenderer:
         canvas_offset_x = view_state.offset_x
         canvas_offset_y = view_state.offset_y
 
-        def to_screen(px: int, py: int) -> Tuple[int, int]:
+        def to_screen(px: int, py: int) -> tuple[int, int]:
             """Convert game pixel coords to screen coords."""
             sx = canvas_rect.x + px * canvas_scale - canvas_offset_x
             sy = canvas_rect.y + py * canvas_scale - canvas_offset_y
@@ -127,7 +126,7 @@ class SpriteRenderer:
     def render_greens_sprites(
         screen: Surface,
         view_state: ViewState,
-        sprites: Dict[str, Sprite],
+        sprites: dict[str, Sprite],
         hole_data: HoleData,
         selected_flag_index: int,
     ):

@@ -7,15 +7,14 @@ and "drag up" operations in the editor.
 """
 
 import json
-from typing import Dict, List, Set
 
 
-def get_valid_terrain_tiles() -> List[int]:
+def get_valid_terrain_tiles() -> list[int]:
     """Get the list of valid terrain tiles from the editor picker."""
     return [0x25, 0x27] + list(range(0x35, 0x3D)) + list(range(0x3E, 0xC0)) + [0xDF]
 
 
-def create_reverse_mapping(table: List[int]) -> Dict[int, List[int]]:
+def create_reverse_mapping(table: list[int]) -> dict[int, list[int]]:
     """Create a reverse mapping from output tiles to input tiles."""
     reverse = {}
     for input_tile, output_tile in enumerate(table):
@@ -25,7 +24,7 @@ def create_reverse_mapping(table: List[int]) -> Dict[int, List[int]]:
     return reverse
 
 
-def analyze_tile_set(tables: Dict, mode: str, valid_tiles: Set[int], title: str):
+def analyze_tile_set(tables: dict, mode: str, valid_tiles: set[int], title: str):
     """Analyze a single tileset (terrain or greens)."""
 
     horiz_table = tables[mode]["horizontal_table"]
@@ -73,7 +72,7 @@ def analyze_tile_set(tables: Dict, mode: str, valid_tiles: Set[int], title: str)
     print("=" * 70)
     print(f"Total valid tiles: {len(valid_tiles)}")
 
-    print(f"\n✓ Tiles with UNIQUE backward mappings (both directions):")
+    print("\n✓ Tiles with UNIQUE backward mappings (both directions):")
     print(f"  Count: {len(unique_both)}")
     if unique_both:
         for tile, h_src, v_src in unique_both[:10]:
@@ -81,17 +80,17 @@ def analyze_tile_set(tables: Dict, mode: str, valid_tiles: Set[int], title: str)
         if len(unique_both) > 10:
             print(f"    ... and {len(unique_both) - 10} more")
 
-    print(f"\n◐ Tiles with UNIQUE horizontal mapping only:")
+    print("\n◐ Tiles with UNIQUE horizontal mapping only:")
     print(f"  Count: {len(unique_horiz_only)}")
 
-    print(f"\n◑ Tiles with UNIQUE vertical mapping only:")
+    print("\n◑ Tiles with UNIQUE vertical mapping only:")
     print(f"  Count: {len(unique_vert_only)}")
 
-    print(f"\n✗ Tiles with MULTIPLE possible sources (ambiguous):")
+    print("\n✗ Tiles with MULTIPLE possible sources (ambiguous):")
     print(f"  Horizontal: {len(ambiguous_horiz)}")
     print(f"  Vertical: {len(ambiguous_vert)}")
 
-    print(f"\n⊘ Tiles with NO backward mapping (unreachable):")
+    print("\n⊘ Tiles with NO backward mapping (unreachable):")
     print(f"  Unreachable via horizontal: {len(unreachable_horiz)}")
     print(f"  Unreachable via vertical: {len(unreachable_vert)}")
 
@@ -110,7 +109,7 @@ def main(tables_path: str = "data/tables/compression_tables.json"):
     """Analyze the compression tables for backward mappings."""
 
     # Load compression tables
-    with open(tables_path, "r") as f:
+    with open(tables_path) as f:
         tables = json.load(f)
 
     # Analyze terrain
@@ -127,12 +126,12 @@ def main(tables_path: str = "data/tables/compression_tables.json"):
     print("\n" + "=" * 70)
     print("SUMMARY FOR 'DRAG LEFT/UP' IMPLEMENTATION")
     print("=" * 70)
-    print(f"\nTerrain:")
+    print("\nTerrain:")
     print(f"  Fully reversible (both directions): {terrain_results['unique_both']}")
     print(
         f"  Partially reversible: {terrain_results['unique_horiz'] + terrain_results['unique_vert']}"
     )
-    print(f"\nGreens:")
+    print("\nGreens:")
     print(f"  Fully reversible (both directions): {greens_results['unique_both']}")
     print(
         f"  Partially reversible: {greens_results['unique_horiz'] + greens_results['unique_vert']}"

@@ -4,8 +4,8 @@ NES Open Tournament Golf - Render Context
 Bundles rendering resources and settings for canvas rendering.
 """
 
-from typing import Dict, Optional
-from editor.core.pygame_rendering import Tileset, Sprite
+
+from editor.core.pygame_rendering import Sprite, Tileset
 
 
 class RenderContext:
@@ -14,7 +14,7 @@ class RenderContext:
     def __init__(
         self,
         tileset: Tileset,
-        sprites: Dict[str, Optional[Sprite]],
+        sprites: dict[str, Sprite | None],
         mode: str,
         show_grid: bool = True,
         show_sprites: bool = True,

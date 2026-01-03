@@ -5,14 +5,15 @@ Terrain and greens decompression algorithms, attribute unpacking,
 and BCD conversion utilities.
 """
 
-from typing import List, Dict, Any, Optional, Tuple, Set
+from typing import Any
+
+from .palettes import GREENS_TOTAL_TILES, TERRAIN_ROW_WIDTH
 from .rom_reader import (
-    RomReader,
+    TABLE_DICTIONARY,
     TABLE_HORIZ_TRANSITION,
     TABLE_VERT_CONTINUATION,
-    TABLE_DICTIONARY,
+    RomReader,
 )
-from .palettes import TERRAIN_ROW_WIDTH, GREENS_TOTAL_TILES
 
 
 class DecompressionStats:
@@ -29,22 +30,22 @@ class DecompressionStats:
     def __init__(self):
         # Dictionary code statistics
         # Key: code byte ($E0-$FF), Value: dict with first_byte, repeat_count, usage_count, holes
-        self.dict_codes: Dict[int, Dict[str, Any]] = {}
+        self.dict_codes: dict[int, dict[str, Any]] = {}
 
         # Repeat code statistics
         # Key: repeat_count (1-31), Value: dict with usage_count, transitions
-        self.repeat_codes: Dict[int, Dict[str, Any]] = {}
+        self.repeat_codes: dict[int, dict[str, Any]] = {}
 
         # Horizontal transition statistics
         # Key: (prev_byte, next_byte) tuple, Value: usage_count
-        self.horiz_transitions: Dict[Tuple[int, int], int] = {}
+        self.horiz_transitions: dict[tuple[int, int], int] = {}
 
         # Vertical fill statistics
         # Key: (byte_above, new_byte) tuple, Value: usage_count
-        self.vert_fills: Dict[Tuple[int, int], int] = {}
+        self.vert_fills: dict[tuple[int, int], int] = {}
 
         # Per-hole context tracking
-        self.current_hole: Optional[str] = None
+        self.current_hole: str | None = None
 
     def set_hole_context(self, course: str, hole_num: int):
         """Set the current hole being processed for tracking hole coverage."""
@@ -117,7 +118,7 @@ class DecompressionStats:
             self.vert_fills[fill] = 0
         self.vert_fills[fill] += 1
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert statistics to JSON-serializable dictionary.
 
@@ -260,8 +261,8 @@ class TerrainDecompressor:
         self,
         compressed: bytes,
         row_width: int = TERRAIN_ROW_WIDTH,
-        stats: Optional[DecompressionStats] = None,
-    ) -> List[List[int]]:
+        stats: DecompressionStats | None = None,
+    ) -> list[list[int]]:
         """
         Decompress terrain data.
 
@@ -388,8 +389,8 @@ class GreensDecompressor:
             self.dict_table = []
 
     def decompress(
-        self, compressed: bytes, stats: Optional[DecompressionStats] = None
-    ) -> List[List[int]]:
+        self, compressed: bytes, stats: DecompressionStats | None = None
+    ) -> list[list[int]]:
         """
         Decompress greens data.
 
@@ -485,7 +486,7 @@ class GreensDecompressor:
         return rows
 
 
-def unpack_attributes(attr_bytes: bytes, num_rows: int) -> List[List[int]]:
+def unpack_attributes(attr_bytes: bytes, num_rows: int) -> list[list[int]]:
     """
     Unpack NES attribute bytes into 2D palette index array.
 

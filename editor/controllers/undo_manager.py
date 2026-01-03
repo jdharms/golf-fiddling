@@ -4,7 +4,6 @@ NES Open Tournament Golf - Undo Manager
 Manages undo/redo history for hole data modifications.
 """
 
-from typing import Optional
 import copy
 
 from golf.formats.hole_data import HoleData
@@ -23,7 +22,7 @@ class UndoManager:
         self.undo_stack: list[HoleData] = []
         self.redo_stack: list[HoleData] = []
         self.max_undo_levels = max_undo_levels
-        self._current_data: Optional[HoleData] = None
+        self._current_data: HoleData | None = None
 
     def set_initial_state(self, hole_data: HoleData):
         """Set the initial state (called when loading a file)."""
@@ -60,7 +59,7 @@ class UndoManager:
         """Check if redo is available."""
         return len(self.redo_stack) > 0
 
-    def undo(self, current_data: HoleData) -> Optional[HoleData]:
+    def undo(self, current_data: HoleData) -> HoleData | None:
         """
         Undo last action.
 
@@ -81,7 +80,7 @@ class UndoManager:
         previous_state = self.undo_stack.pop()
         return previous_state
 
-    def redo(self, current_data: HoleData) -> Optional[HoleData]:
+    def redo(self, current_data: HoleData) -> HoleData | None:
         """
         Redo last undone action.
 

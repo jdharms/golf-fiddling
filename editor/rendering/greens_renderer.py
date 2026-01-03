@@ -4,20 +4,18 @@ NES Open Tournament Golf - Greens Renderer
 Renders greens editing canvas view.
 """
 
-from typing import Dict, Optional
 
-import pygame
-from pygame import Surface, Rect
+from pygame import Surface
 
-from editor.core.pygame_rendering import Tileset, Sprite
-from golf.formats.hole_data import HoleData
-from editor.core.constants import TILE_SIZE, GREENS_WIDTH, GREENS_HEIGHT
-from editor.controllers.view_state import ViewState
 from editor.controllers.highlight_state import HighlightState
-from .render_context import RenderContext
-from .sprite_renderer import SpriteRenderer
+from editor.controllers.view_state import ViewState
+from editor.core.constants import GREENS_HEIGHT, GREENS_WIDTH, TILE_SIZE
+from golf.formats.hole_data import HoleData
+
 from .grid_renderer import GridRenderer
 from .highlight_utils import draw_tile_border
+from .render_context import RenderContext
+from .sprite_renderer import SpriteRenderer
 
 
 class GreensRenderer:

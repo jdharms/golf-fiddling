@@ -2,11 +2,12 @@
 Toolbar for editor buttons.
 """
 
-from typing import List, Callable, Optional
 import pygame
 from pygame import Rect
+
+from editor.core.constants import COLOR_TOOLBAR, PALETTES, TOOLBAR_HEIGHT
+
 from .widgets import Button
-from editor.core.constants import COLOR_TOOLBAR, TOOLBAR_HEIGHT, PALETTES
 
 
 class ToolbarCallbacks:
@@ -25,11 +26,11 @@ class Toolbar:
         self.callbacks = callbacks
 
         # Button groups
-        self.file_buttons: List[Button] = []
-        self.mode_buttons: List[Button] = []
-        self.tool_buttons: List[Button] = []
-        self.flag_buttons: List[Button] = []
-        self.palette_buttons: List[Button] = []
+        self.file_buttons: list[Button] = []
+        self.mode_buttons: list[Button] = []
+        self.tool_buttons: list[Button] = []
+        self.flag_buttons: list[Button] = []
+        self.palette_buttons: list[Button] = []
 
         self._create_buttons()
 

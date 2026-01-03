@@ -5,14 +5,13 @@ Shared constants for NES color palettes and course dimensions used
 across all tools (editor, visualizer, analyzer).
 """
 
-from typing import List, Tuple
 
 # Type alias for RGB color
-RGBColor = Tuple[int, int, int]
+RGBColor = tuple[int, int, int]
 
 # NES color palettes (RGB tuples)
 # Each palette has 4 colors indexed 0-3
-PALETTES: List[List[RGBColor]] = [
+PALETTES: list[list[RGBColor]] = [
     [
         (0x00, 0x00, 0x00),
         (0x0C, 0x93, 0x00),
@@ -40,7 +39,7 @@ PALETTES: List[List[RGBColor]] = [
 ]
 
 # Greens palette (used for putting green rendering)
-GREENS_PALETTE: List[RGBColor] = [
+GREENS_PALETTE: list[RGBColor] = [
     (0x00, 0x00, 0x00),
     (0x0C, 0x93, 0x00),
     (0x00, 0x52, 0x00),
