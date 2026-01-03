@@ -4,8 +4,12 @@ NES Open Tournament Golf - Highlight State
 Manages temporary visual highlights (hover, transform preview, selection).
 """
 
+from __future__ import annotations
 
-from .transform_drag_state import TransformDragState
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from editor.tools.transform_tool import TransformToolState
 
 
 class HighlightState:
@@ -14,7 +18,7 @@ class HighlightState:
     def __init__(self):
         """Initialize with no highlights."""
         self.shift_hover_tile: int | None = None
-        self.transform_state: TransformDragState = TransformDragState()
+        self.transform_state: TransformToolState | None = None
         self.show_invalid_tiles: bool = False
         self.invalid_terrain_tiles: set | None = None
 
