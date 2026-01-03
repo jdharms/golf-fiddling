@@ -19,11 +19,14 @@ def dumps(obj, indent=2):
     Returns:
         A formatted JSON string
     """
+
     def is_primitive(v):
         return v is None or isinstance(v, (bool, int, float, str))
 
     def is_numeric_array(v):
-        return isinstance(v, list) and all(isinstance(x, (int, float)) and not isinstance(x, bool) for x in v)
+        return isinstance(v, list) and all(
+            isinstance(x, (int, float)) and not isinstance(x, bool) for x in v
+        )
 
     def format_value(v, level):
         pad = " " * (indent * level)
@@ -45,7 +48,10 @@ def dumps(obj, indent=2):
         elif isinstance(v, dict):
             if not v:
                 return "{}"
-            items = [f"{json.dumps(k)}: {format_value(val, level + 1)}" for k, val in v.items()]
+            items = [
+                f"{json.dumps(k)}: {format_value(val, level + 1)}"
+                for k, val in v.items()
+            ]
             inner = ",\n".join(child_pad + item for item in items)
             return "{\n" + inner + "\n" + pad + "}"
 
@@ -89,12 +95,6 @@ if __name__ == "__main__":
             [1, 2, 3, 4, 5],
             [6, 7, 8, 9, 10],
         ],
-        "nested": {
-            "values": [100, 200, 300],
-            "deep": [
-                [1, 1, 1],
-                [2, 2, 2]
-            ]
-        }
+        "nested": {"values": [100, 200, 300], "deep": [[1, 1, 1], [2, 2, 2]]},
     }
     print(dumps(test_data))

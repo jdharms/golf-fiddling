@@ -1,6 +1,7 @@
 """
 Tool manager for registering and switching between editor tools.
 """
+
 from typing import Dict, Optional
 from .base_tool import Tool, ToolContext
 

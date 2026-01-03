@@ -21,7 +21,7 @@ class PILSprite:
     """Loads and renders a sprite from JSON file with embedded CHR data."""
 
     def __init__(self, json_path: str):
-        with open(json_path, 'r') as f:
+        with open(json_path, "r") as f:
             data = json.load(f)
 
         self.name = data.get("name", "unknown")
@@ -68,7 +68,7 @@ class PILSprite:
         pixels = self.decode_tile(tile_idx)
 
         # Create RGBA image (with alpha channel for transparency)
-        img = Image.new('RGBA', (TILE_SIZE * scale, TILE_SIZE * scale), (0, 0, 0, 0))
+        img = Image.new("RGBA", (TILE_SIZE * scale, TILE_SIZE * scale), (0, 0, 0, 0))
         img_pixels = img.load()
         assert img_pixels is not None
 

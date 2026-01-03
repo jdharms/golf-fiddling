@@ -31,8 +31,10 @@ def build_transition_map(transitions_list):
             mapping[prev] = next_byte
         # If we see a different mapping for the same prev_byte, note it but keep the first
         elif mapping[prev] != next_byte:
-            print(f"Warning: Conflicting transitions for 0x{prev:02X}: 0x{mapping[prev]:02X} vs 0x{next_byte:02X}",
-                  file=sys.stderr)
+            print(
+                f"Warning: Conflicting transitions for 0x{prev:02X}: 0x{mapping[prev]:02X} vs 0x{next_byte:02X}",
+                file=sys.stderr,
+            )
 
     return mapping
 
@@ -68,7 +70,9 @@ def expand_dict_code(code_hex, first_byte_hex, repeat_count, transition_map):
 def main():
     if len(sys.argv) < 2:
         print("Usage: python expand_dict.py <meta.json> [terrain|greens]")
-        print("\nExpands all dictionary codes into their complete horizontal sequences.")
+        print(
+            "\nExpands all dictionary codes into their complete horizontal sequences."
+        )
         sys.exit(1)
 
     meta_path = Path(sys.argv[1])
@@ -88,11 +92,15 @@ def main():
     stats = meta["statistics"][data_type]
 
     # Build transition map from horizontal transitions
-    transition_map = build_transition_map(stats["horizontal_transitions"]["top_transitions"])
+    transition_map = build_transition_map(
+        stats["horizontal_transitions"]["top_transitions"]
+    )
 
     # Also add any transitions from greens if we have them
     if "horizontal_transitions" in stats:
-        transition_map.update(build_transition_map(stats["horizontal_transitions"]["top_transitions"]))
+        transition_map.update(
+            build_transition_map(stats["horizontal_transitions"]["top_transitions"])
+        )
 
     print(f"=== Dictionary Code Expansions ({data_type.upper()}) ===\n")
     print(f"Horizontal transition map has {len(transition_map)} unique transitions")
@@ -111,13 +119,17 @@ def main():
         holes_count = len(info["holes"])
 
         # Expand the sequence
-        sequence = expand_dict_code(code_hex, first_byte_hex, repeat_count, transition_map)
+        sequence = expand_dict_code(
+            code_hex, first_byte_hex, repeat_count, transition_map
+        )
 
         # Format output
         seq_hex = " ".join(f"{b:02X}" for b in sequence)
         seq_hex_compact = "".join(f"{b:02X}" for b in sequence)
 
-        print(f"{code_hex} (#{code_int - 0xE0:2d}): {seq_hex_compact:>20}  ({len(sequence):2d} bytes) | {usage_count:5d} uses in {holes_count:2d} holes")
+        print(
+            f"{code_hex} (#{code_int - 0xE0:2d}): {seq_hex_compact:>20}  ({len(sequence):2d} bytes) | {usage_count:5d} uses in {holes_count:2d} holes"
+        )
         print(f"         Bytes: {seq_hex}")
         print(f"         Expanded: {repeat_count} transitions from 0x{sequence[0]:02X}")
         print()

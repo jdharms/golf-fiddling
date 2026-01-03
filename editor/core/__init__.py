@@ -8,4 +8,4 @@ from .pygame_rendering import Tileset, Sprite
 from golf.formats.hole_data import HoleData
 from . import constants
 
-__all__ = ['Tileset', 'Sprite', 'HoleData', 'constants']
+__all__ = ["Tileset", "Sprite", "HoleData", "constants"]

@@ -90,7 +90,7 @@ class TileSubBank:
         tiles_per_row: int,
         tile_scale: int,
         tile_spacing: int,
-        clip_rect: Rect
+        clip_rect: Rect,
     ) -> int:
         """
         Render this subbank at the specified position.
@@ -146,8 +146,13 @@ class TileSubBank:
                 pygame.draw.rect(
                     screen,
                     COLOR_SELECTION,
-                    (tile_x - 1, tile_y - 1, TILE_SIZE * tile_scale + 2, TILE_SIZE * tile_scale + 2),
-                    2
+                    (
+                        tile_x - 1,
+                        tile_y - 1,
+                        TILE_SIZE * tile_scale + 2,
+                        TILE_SIZE * tile_scale + 2,
+                    ),
+                    2,
                 )
 
         return self.get_height(tiles_per_row, tile_scale, tile_spacing)
@@ -162,7 +167,7 @@ class SimpleTileBank:
         tile_indices: List[int],
         tiles_per_row: int,
         tile_scale: int,
-        tile_spacing: int = 2
+        tile_spacing: int = 2,
     ):
         """
         Args:
@@ -180,8 +185,8 @@ class SimpleTileBank:
 
         # Layout constants (same as GroupedTileBank for consistency)
         self.label_height = 20  # Height of label header
-        self.border_width = 1   # Border line thickness
-        self.padding = 4        # Internal padding around tiles
+        self.border_width = 1  # Border line thickness
+        self.padding = 4  # Internal padding around tiles
 
     def get_height(self) -> int:
         """
@@ -198,7 +203,13 @@ class SimpleTileBank:
         tiles_height = num_rows * tile_size
 
         # Total: label + top padding + tiles + bottom padding + bottom border
-        return self.label_height + self.padding + tiles_height + self.padding + self.border_width
+        return (
+            self.label_height
+            + self.padding
+            + tiles_height
+            + self.padding
+            + self.border_width
+        )
 
     def get_tile_count(self) -> int:
         """Return number of tiles in this bank."""
@@ -214,7 +225,7 @@ class SimpleTileBank:
         palette_idx: int,
         selected_tile: int | None,
         hovered_tile: int | None,
-        clip_rect: Rect
+        clip_rect: Rect,
     ):
         """
         Render this bank at the specified position.
@@ -271,8 +282,13 @@ class SimpleTileBank:
                 pygame.draw.rect(
                     screen,
                     COLOR_SELECTION,
-                    (tile_x - 1, tile_y - 1, TILE_SIZE * self.tile_scale + 2, TILE_SIZE * self.tile_scale + 2),
-                    2
+                    (
+                        tile_x - 1,
+                        tile_y - 1,
+                        TILE_SIZE * self.tile_scale + 2,
+                        TILE_SIZE * self.tile_scale + 2,
+                    ),
+                    2,
                 )
 
     def get_tile_at_position(
@@ -281,7 +297,7 @@ class SimpleTileBank:
         bank_content_y: int,
         tiles_per_row: int,
         tile_scale: int,
-        tile_spacing: int
+        tile_spacing: int,
     ) -> int | None:
         """
         Get tile index at position within bank content area, or None if invalid.
@@ -321,7 +337,7 @@ class GroupedTileBank:
         subbanks: List[TileSubBank],
         tiles_per_row: int,
         tile_scale: int,
-        tile_spacing: int = 2
+        tile_spacing: int = 2,
     ):
         """
         Args:
@@ -339,8 +355,8 @@ class GroupedTileBank:
 
         # Layout constants
         self.label_height = 20  # Height of label header
-        self.border_width = 1   # Border line thickness
-        self.padding = 4        # Internal padding around tiles
+        self.border_width = 1  # Border line thickness
+        self.padding = 4  # Internal padding around tiles
 
     def get_height(self) -> int:
         """
@@ -356,7 +372,13 @@ class GroupedTileBank:
         )
 
         # Total: label + top padding + subbanks + bottom padding + bottom border
-        return self.label_height + self.padding + subbanks_height + self.padding + self.border_width
+        return (
+            self.label_height
+            + self.padding
+            + subbanks_height
+            + self.padding
+            + self.border_width
+        )
 
     def get_tile_count(self) -> int:
         """Return number of tiles in this bank."""
@@ -372,7 +394,7 @@ class GroupedTileBank:
         palette_idx: int,
         selected_tile: int | None,
         hovered_tile: int | None,
-        clip_rect: Rect
+        clip_rect: Rect,
     ):
         """
         Render this bank at the specified position.
@@ -420,7 +442,7 @@ class GroupedTileBank:
                 self.tiles_per_row,
                 self.tile_scale,
                 self.tile_spacing,
-                clip_rect
+                clip_rect,
             )
             current_y += height_consumed
 
@@ -430,7 +452,7 @@ class GroupedTileBank:
         bank_content_y: int,
         tiles_per_row: int,
         tile_scale: int,
-        tile_spacing: int
+        tile_spacing: int,
     ) -> int | None:
         """
         Get tile index at position within bank content area, or None if invalid.
@@ -460,7 +482,9 @@ class GroupedTileBank:
                     return None  # Clicked on subbank label
 
                 # Position relative to subbank's tile grid
-                tile_area_y = subbank_local_y - (subbank.spacing_before + subbank.label_height)
+                tile_area_y = subbank_local_y - (
+                    subbank.spacing_before + subbank.label_height
+                )
 
                 tile_size = TILE_SIZE * tile_scale + tile_spacing
                 col = local_x // tile_size

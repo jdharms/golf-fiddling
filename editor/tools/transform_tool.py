@@ -1,11 +1,20 @@
 """
 Transform tool for applying compression table transformations via shift+drag.
 """
+
 import pygame
 from typing import Optional, Tuple, Dict
 from .base_tool import Tool, ToolContext, ToolResult
 from editor.controllers.view_state import ViewState
-from editor.core.constants import TILE_SIZE, TERRAIN_WIDTH, GREENS_WIDTH, GREENS_HEIGHT, CANVAS_OFFSET_X, CANVAS_OFFSET_Y, STATUS_HEIGHT
+from editor.core.constants import (
+    TILE_SIZE,
+    TERRAIN_WIDTH,
+    GREENS_WIDTH,
+    GREENS_HEIGHT,
+    CANVAS_OFFSET_X,
+    CANVAS_OFFSET_Y,
+    STATUS_HEIGHT,
+)
 from pygame import Rect
 
 
@@ -55,7 +64,7 @@ class TransformTool:
             CANVAS_OFFSET_X,
             CANVAS_OFFSET_Y,
             context.screen_width - CANVAS_OFFSET_X,
-            context.screen_height - CANVAS_OFFSET_Y - STATUS_HEIGHT
+            context.screen_height - CANVAS_OFFSET_Y - STATUS_HEIGHT,
         )
         view_state = ViewState(
             canvas_rect,

@@ -1,6 +1,7 @@
 """
 Toolbar for editor buttons.
 """
+
 from typing import List, Callable, Optional
 import pygame
 from pygame import Rect
@@ -10,6 +11,7 @@ from editor.core.constants import COLOR_TOOLBAR, TOOLBAR_HEIGHT, PALETTES
 
 class ToolbarCallbacks:
     """Container for toolbar callbacks."""
+
     def __init__(self, **callbacks):
         for name, callback in callbacks.items():
             setattr(self, name, callback)
@@ -33,11 +35,11 @@ class Toolbar:
 
         # All buttons
         self.buttons = (
-            self.file_buttons +
-            self.mode_buttons +
-            self.tool_buttons +
-            self.flag_buttons +
-            self.palette_buttons
+            self.file_buttons
+            + self.mode_buttons
+            + self.tool_buttons
+            + self.flag_buttons
+            + self.palette_buttons
         )
 
     def _create_buttons(self):
@@ -54,15 +56,21 @@ class Toolbar:
         x += 80
 
         # Mode buttons
-        btn_terrain = Button(Rect(x, 5, 70, 30), "Terrain", lambda: self.callbacks.on_set_mode("terrain"))
+        btn_terrain = Button(
+            Rect(x, 5, 70, 30), "Terrain", lambda: self.callbacks.on_set_mode("terrain")
+        )
         self.mode_buttons.append(btn_terrain)
         x += 80
 
-        btn_palette = Button(Rect(x, 5, 70, 30), "Palette", lambda: self.callbacks.on_set_mode("palette"))
+        btn_palette = Button(
+            Rect(x, 5, 70, 30), "Palette", lambda: self.callbacks.on_set_mode("palette")
+        )
         self.mode_buttons.append(btn_palette)
         x += 80
 
-        btn_greens = Button(Rect(x, 5, 70, 30), "Greens", lambda: self.callbacks.on_set_mode("greens"))
+        btn_greens = Button(
+            Rect(x, 5, 70, 30), "Greens", lambda: self.callbacks.on_set_mode("greens")
+        )
         self.mode_buttons.append(btn_greens)
         x += 90
 
@@ -71,11 +79,15 @@ class Toolbar:
         self.tool_buttons.append(btn_grid)
         x += 60
 
-        btn_add_row = Button(Rect(x, 5, 70, 30), "+Row", lambda: self.callbacks.on_add_row(False))
+        btn_add_row = Button(
+            Rect(x, 5, 70, 30), "+Row", lambda: self.callbacks.on_add_row(False)
+        )
         self.tool_buttons.append(btn_add_row)
         x += 80
 
-        btn_del_row = Button(Rect(x, 5, 70, 30), "-Row", lambda: self.callbacks.on_remove_row(False))
+        btn_del_row = Button(
+            Rect(x, 5, 70, 30), "-Row", lambda: self.callbacks.on_remove_row(False)
+        )
         self.tool_buttons.append(btn_del_row)
         x += 100
 
@@ -83,8 +95,8 @@ class Toolbar:
         for i in range(4):
             btn = Button(
                 Rect(x + (i * 35), 5, 30, 30),
-                f"F{i+1}",
-                lambda idx=i: self.callbacks.on_select_flag(idx)
+                f"F{i + 1}",
+                lambda idx=i: self.callbacks.on_select_flag(idx),
             )
             self.flag_buttons.append(btn)
         x += 150
@@ -92,16 +104,18 @@ class Toolbar:
         # Palette selector buttons
         for i in range(1, 4):
             btn = Button(
-                Rect(x + ((i-1) * 30), 8, 24, 24),
+                Rect(x + ((i - 1) * 30), 8, 24, 24),
                 str(i),
                 lambda idx=i: self.callbacks.on_set_palette(idx),
-                background_color=PALETTES[i][3]
+                background_color=PALETTES[i][3],
             )
             self.palette_buttons.append(btn)
         x += 100
 
         # Sprite toggle
-        btn_sprites = Button(Rect(x, 5, 70, 30), "Sprites", self.callbacks.on_toggle_sprites)
+        btn_sprites = Button(
+            Rect(x, 5, 70, 30), "Sprites", self.callbacks.on_toggle_sprites
+        )
         self.tool_buttons.append(btn_sprites)
 
     def handle_events(self, events):
@@ -112,9 +126,13 @@ class Toolbar:
 
     def render(self, screen, font, font_small):
         """Render toolbar background and all buttons."""
-        pygame.draw.rect(screen, COLOR_TOOLBAR, (0, 0, self.screen_width, TOOLBAR_HEIGHT))
+        pygame.draw.rect(
+            screen, COLOR_TOOLBAR, (0, 0, self.screen_width, TOOLBAR_HEIGHT)
+        )
         for button in self.buttons:
-            button.render(screen, font_small if button in self.palette_buttons else font)
+            button.render(
+                screen, font_small if button in self.palette_buttons else font
+            )
 
     def resize(self, screen_width: int):
         """Update button positions for new screen width without recreating."""

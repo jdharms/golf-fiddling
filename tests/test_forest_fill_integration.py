@@ -55,7 +55,7 @@ def test_detect_placeholder_regions(forest_filler, hole_18_with_placeholders):
 
     print(f"Number of regions detected: {len(regions)}")
     for i, region in enumerate(regions):
-        print(f"  Region {i+1}: {len(region.cells)} cells")
+        print(f"  Region {i + 1}: {len(region.cells)} cells")
         print(f"    Distance field entries: {len(region.distance_field)}")
         print(f"    OOB cells found: {len(region.oob_cells)}")
         if region.distance_field:
@@ -67,8 +67,9 @@ def test_detect_placeholder_regions(forest_filler, hole_18_with_placeholders):
 
     # Total cells across all regions should match placeholder count
     total_region_cells = sum(len(region.cells) for region in regions)
-    assert total_region_cells == placeholder_count, \
+    assert total_region_cells == placeholder_count, (
         f"Region cells ({total_region_cells}) should match placeholder count ({placeholder_count})"
+    )
 
 
 # @pytest.mark.xfail(reason="BUG: Only fills 77/199 tiles - neighbor validation issue")
@@ -91,7 +92,7 @@ def test_fill_placeholder_regions(forest_filler, hole_18_with_placeholders):
     # Fill all regions
     all_changes = {}
     for i, region in enumerate(regions):
-        print(f"\nFilling region {i+1} with {len(region.cells)} cells...")
+        print(f"\nFilling region {i + 1} with {len(region.cells)} cells...")
         changes = forest_filler.fill_region(terrain, region)
         print(f"  Generated {len(changes)} tile changes")
         all_changes.update(changes)
@@ -108,6 +109,7 @@ def test_fill_placeholder_regions(forest_filler, hole_18_with_placeholders):
 
     # Apply changes to a copy of terrain
     import copy
+
     filled_terrain = copy.deepcopy(terrain)
     for (row, col), tile in all_changes.items():
         filled_terrain[row][col] = tile
@@ -121,6 +123,7 @@ def test_fill_placeholder_regions(forest_filler, hole_18_with_placeholders):
 
     # Verify all filled tiles are valid forest tiles
     from editor.controllers.forest_fill import FOREST_FILL, FOREST_BORDER
+
     valid_forest_tiles = FOREST_FILL | FOREST_BORDER
 
     invalid_tiles = []
@@ -133,12 +136,15 @@ def test_fill_placeholder_regions(forest_filler, hole_18_with_placeholders):
         for row, col, tile in invalid_tiles[:10]:  # Show first 10
             print(f"  ({row}, {col}): 0x{tile:02X}")
 
-    assert len(invalid_tiles) == 0, \
+    assert len(invalid_tiles) == 0, (
         f"All filled tiles should be forest tiles, found {len(invalid_tiles)} invalid"
+    )
 
 
 # @pytest.mark.xfail(reason="Depends on test_fill_placeholder_regions which is failing")
-def test_neighbor_validation_after_fill(forest_filler, neighbor_validator, hole_18_with_placeholders):
+def test_neighbor_validation_after_fill(
+    forest_filler, neighbor_validator, hole_18_with_placeholders
+):
     """Test that filled regions have valid neighbor relationships.
 
     This test will fail until test_fill_placeholder_regions is fixed,
@@ -155,6 +161,7 @@ def test_neighbor_validation_after_fill(forest_filler, neighbor_validator, hole_
 
     # Apply changes
     import copy
+
     filled_terrain = copy.deepcopy(terrain)
     for (row, col), tile in all_changes.items():
         filled_terrain[row][col] = tile
@@ -169,8 +176,12 @@ def test_neighbor_validation_after_fill(forest_filler, neighbor_validator, hole_
             print(f"  ({row}, {col}): 0x{tile:02X}")
 
             # Check each neighbor
-            for direction, (dr, dc) in [("up", (-1, 0)), ("down", (1, 0)),
-                                        ("left", (0, -1)), ("right", (0, 1))]:
+            for direction, (dr, dc) in [
+                ("up", (-1, 0)),
+                ("down", (1, 0)),
+                ("left", (0, -1)),
+                ("right", (0, 1)),
+            ]:
                 nr, nc = row + dr, col + dc
                 if 0 <= nr < len(filled_terrain) and 0 <= nc < len(filled_terrain[0]):
                     neighbor = filled_terrain[nr][nc]
@@ -178,12 +189,15 @@ def test_neighbor_validation_after_fill(forest_filler, neighbor_validator, hole_
                     neighbor_hex = f"0x{neighbor:02X}"
 
                     if tile_hex in neighbor_validator.neighbors:
-                        valid_neighbors = neighbor_validator.neighbors[tile_hex].get(direction, [])
+                        valid_neighbors = neighbor_validator.neighbors[tile_hex].get(
+                            direction, []
+                        )
                         if neighbor_hex not in valid_neighbors:
                             print(f"    {direction}: {neighbor_hex} (invalid)")
 
-    assert len(invalid_tiles) == 0, \
+    assert len(invalid_tiles) == 0, (
         f"All filled tiles should have valid neighbors, found {len(invalid_tiles)} invalid"
+    )
 
 
 """

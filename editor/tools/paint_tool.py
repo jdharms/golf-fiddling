@@ -1,10 +1,18 @@
 """
 Paint tool for terrain, palette, and greens editing.
 """
+
 from typing import Optional, Tuple
 from .base_tool import Tool, ToolContext, ToolResult
 from editor.controllers.view_state import ViewState
-from editor.core.constants import TERRAIN_WIDTH, GREENS_WIDTH, GREENS_HEIGHT, CANVAS_OFFSET_X, CANVAS_OFFSET_Y, STATUS_HEIGHT
+from editor.core.constants import (
+    TERRAIN_WIDTH,
+    GREENS_WIDTH,
+    GREENS_HEIGHT,
+    CANVAS_OFFSET_X,
+    CANVAS_OFFSET_Y,
+    STATUS_HEIGHT,
+)
 from pygame import Rect
 
 
@@ -62,7 +70,7 @@ class PaintTool:
             CANVAS_OFFSET_X,
             CANVAS_OFFSET_Y,
             context.screen_width - CANVAS_OFFSET_X,
-            context.screen_height - CANVAS_OFFSET_Y - STATUS_HEIGHT
+            context.screen_height - CANVAS_OFFSET_Y - STATUS_HEIGHT,
         )
         view_state = ViewState(
             canvas_rect,
@@ -118,7 +126,9 @@ class PaintTool:
                     context.state.undo_manager.push_state(context.hole_data)
                     self.undo_pushed = True
 
-                context.hole_data.set_attribute(row, col, context.state.selected_palette)
+                context.hole_data.set_attribute(
+                    row, col, context.state.selected_palette
+                )
                 self.last_paint_pos = supertile
                 return ToolResult.modified(terrain=False)
 

@@ -46,7 +46,7 @@ def compute_dict_expansions(dict_table, horiz_table):
             "first_byte": first_byte,
             "repeat_count": repeat_count,
             "sequence": sequence,
-            "length": len(sequence)
+            "length": len(sequence),
         }
 
     return expansions
@@ -111,11 +111,13 @@ def extract_terrain_tables(rom):
             "table_addresses": {
                 "horiz": "0xE1AC (fixed bank)",
                 "vert": "0xE28C (fixed bank)",
-                "dict": "0xE36C (fixed bank)"
+                "dict": "0xE36C (fixed bank)",
             },
-            "max_dict_sequence_length": max(info["length"] for info in dict_codes.values()),
-            "total_dict_codes": len(dict_codes)
-        }
+            "max_dict_sequence_length": max(
+                info["length"] for info in dict_codes.values()
+            ),
+            "total_dict_codes": len(dict_codes),
+        },
     }
 
 
@@ -155,11 +157,13 @@ def extract_greens_tables(rom, bank=3):
             "table_addresses": {
                 "horiz": f"0x8000 (bank {bank})",
                 "vert": f"0x80C0 (bank {bank})",
-                "dict": f"0x8180 (bank {bank})"
+                "dict": f"0x8180 (bank {bank})",
             },
-            "max_dict_sequence_length": max(info["length"] for info in dict_codes.values()),
-            "total_dict_codes": len(dict_codes)
-        }
+            "max_dict_sequence_length": max(
+                info["length"] for info in dict_codes.values()
+            ),
+            "total_dict_codes": len(dict_codes),
+        },
     }
 
 
@@ -176,26 +180,27 @@ def extract_tables(rom_path, output_path):
 
     print("Extracting terrain tables...")
     terrain = extract_terrain_tables(rom)
-    print(f"  ✓ Terrain: {len(terrain['dictionary_codes'])} dict codes, "
-          f"max sequence length: {terrain['_metadata']['max_dict_sequence_length']}")
+    print(
+        f"  ✓ Terrain: {len(terrain['dictionary_codes'])} dict codes, "
+        f"max sequence length: {terrain['_metadata']['max_dict_sequence_length']}"
+    )
 
     print("Extracting greens tables...")
     greens = extract_greens_tables(rom)
-    print(f"  ✓ Greens: {len(greens['dictionary_codes'])} dict codes, "
-          f"max sequence length: {greens['_metadata']['max_dict_sequence_length']}")
+    print(
+        f"  ✓ Greens: {len(greens['dictionary_codes'])} dict codes, "
+        f"max sequence length: {greens['_metadata']['max_dict_sequence_length']}"
+    )
 
     # Build output structure
-    output = {
-        "terrain": terrain,
-        "greens": greens
-    }
+    output = {"terrain": terrain, "greens": greens}
 
     # Write to file
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     print(f"\nWriting to: {output_path}")
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump(output, f, indent=2)
 
     print(f"✓ Successfully extracted {len(output)} table sets")
@@ -209,7 +214,9 @@ def main():
         sys.exit(1)
 
     rom_path = sys.argv[1]
-    output_path = sys.argv[2] if len(sys.argv) > 2 else "data/tables/compression_tables.json"
+    output_path = (
+        sys.argv[2] if len(sys.argv) > 2 else "data/tables/compression_tables.json"
+    )
 
     extract_tables(rom_path, output_path)
 

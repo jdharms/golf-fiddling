@@ -1,9 +1,16 @@
 """
 Eyedropper tool for sampling tiles from the canvas.
 """
+
 from .base_tool import Tool, ToolContext, ToolResult
 from editor.controllers.view_state import ViewState
-from editor.core.constants import TERRAIN_WIDTH, GREENS_WIDTH, CANVAS_OFFSET_X, CANVAS_OFFSET_Y, STATUS_HEIGHT
+from editor.core.constants import (
+    TERRAIN_WIDTH,
+    GREENS_WIDTH,
+    CANVAS_OFFSET_X,
+    CANVAS_OFFSET_Y,
+    STATUS_HEIGHT,
+)
 from pygame import Rect
 
 
@@ -43,7 +50,7 @@ class EyedropperTool:
             CANVAS_OFFSET_X,
             CANVAS_OFFSET_Y,
             context.screen_width - CANVAS_OFFSET_X,
-            context.screen_height - CANVAS_OFFSET_Y - STATUS_HEIGHT
+            context.screen_height - CANVAS_OFFSET_Y - STATUS_HEIGHT,
         )
         view_state = ViewState(
             canvas_rect,
@@ -58,17 +65,25 @@ class EyedropperTool:
             tile = view_state.screen_to_tile(pos)
             if tile:
                 row, col = tile
-                if 0 <= row < len(context.hole_data.terrain) and 0 <= col < TERRAIN_WIDTH:
-                    context.terrain_picker.selected_tile = context.hole_data.terrain[row][col]
+                if (
+                    0 <= row < len(context.hole_data.terrain)
+                    and 0 <= col < TERRAIN_WIDTH
+                ):
+                    context.terrain_picker.selected_tile = context.hole_data.terrain[
+                        row
+                    ][col]
                     return ToolResult.handled()
 
         elif mode == "palette":
             supertile = view_state.screen_to_supertile(pos)
             if supertile:
                 row, col = supertile
-                if (0 <= row < len(context.hole_data.attributes) and
-                    0 <= col < len(context.hole_data.attributes[row])):
-                    context.state.selected_palette = context.hole_data.attributes[row][col]
+                if 0 <= row < len(context.hole_data.attributes) and 0 <= col < len(
+                    context.hole_data.attributes[row]
+                ):
+                    context.state.selected_palette = context.hole_data.attributes[row][
+                        col
+                    ]
                     return ToolResult.handled()
 
         elif mode == "greens":
@@ -76,7 +91,9 @@ class EyedropperTool:
             if tile:
                 row, col = tile
                 if 0 <= row < len(context.hole_data.greens) and 0 <= col < GREENS_WIDTH:
-                    context.greens_picker.selected_tile = context.hole_data.greens[row][col]
+                    context.greens_picker.selected_tile = context.hole_data.greens[row][
+                        col
+                    ]
                     return ToolResult.handled()
 
         return ToolResult.not_handled()

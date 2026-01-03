@@ -10,12 +10,6 @@ dependencies = [
     "pygame>=2.6.1",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.0.0",
-    "pytest-cov>=4.1.0",
-]
-
 [project.scripts]
 golf-editor = "editor.main:main"
 golf-dump = "tools.dump:main"
@@ -47,5 +41,35 @@ addopts = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pyright>=1.1.407",
+    "ruff>=0.14.10",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["golf", "editor", "tools"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E", # pycodestyle errors
+    "F", # pyflakes
+    "I", # import sorting
+    "N", # pep-8 naming
+    "UP", # pyupgrade
+    "B", # flake8-bugbear (common bugs)
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501", # line too long (let autoformatting handle)
+]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"

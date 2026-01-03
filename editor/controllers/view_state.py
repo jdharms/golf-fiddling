@@ -13,7 +13,9 @@ from editor.core.constants import TILE_SIZE
 class ViewState:
     """Manages viewport camera and coordinate transformations."""
 
-    def __init__(self, canvas_rect: Rect, offset_x: int = 0, offset_y: int = 0, scale: int = 4):
+    def __init__(
+        self, canvas_rect: Rect, offset_x: int = 0, offset_y: int = 0, scale: int = 4
+    ):
         """
         Initialize view state.
 
@@ -54,7 +56,9 @@ class ViewState:
 
         return (tile_row, tile_col)
 
-    def screen_to_supertile(self, screen_pos: Tuple[int, int]) -> Optional[Tuple[int, int]]:
+    def screen_to_supertile(
+        self, screen_pos: Tuple[int, int]
+    ) -> Optional[Tuple[int, int]]:
         """
         Convert screen position to supertile (2x2) coordinates.
 
@@ -98,6 +102,8 @@ class ViewState:
         tile_size = self.tile_size
 
         return not (
-            x + tile_size < self.canvas_rect.x or x > self.canvas_rect.right or
-            y + tile_size < self.canvas_rect.y or y > self.canvas_rect.bottom
+            x + tile_size < self.canvas_rect.x
+            or x > self.canvas_rect.right
+            or y + tile_size < self.canvas_rect.y
+            or y > self.canvas_rect.bottom
         )

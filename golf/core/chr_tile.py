@@ -8,8 +8,8 @@ This eliminates duplication between the editor, visualizer, and other tools.
 from typing import List
 
 # CHR format constants
-TILE_SIZE = 8           # 8x8 pixels per tile
-BYTES_PER_TILE = 16     # 16 bytes per tile (8 bytes per bitplane)
+TILE_SIZE = 8  # 8x8 pixels per tile
+BYTES_PER_TILE = 16  # 16 bytes per tile (8 bytes per bitplane)
 
 
 def decode_tile(tile_data: bytes, tile_idx: int = 0) -> List[List[int]]:
@@ -34,8 +34,8 @@ def decode_tile(tile_data: bytes, tile_idx: int = 0) -> List[List[int]]:
         return [[0] * 8 for _ in range(8)]
 
     # Extract the two bitplanes
-    plane0 = tile_data[offset:offset + 8]      # Low bit plane
-    plane1 = tile_data[offset + 8:offset + 16]  # High bit plane
+    plane0 = tile_data[offset : offset + 8]  # Low bit plane
+    plane1 = tile_data[offset + 8 : offset + 16]  # High bit plane
 
     # Decode pixel by pixel
     pixels = []
@@ -70,7 +70,7 @@ class TilesetData:
         Args:
             chr_path: Path to CHR binary file
         """
-        with open(chr_path, 'rb') as f:
+        with open(chr_path, "rb") as f:
             self.data = f.read()
 
         self.num_tiles = len(self.data) // BYTES_PER_TILE
@@ -101,4 +101,4 @@ class TilesetData:
             return bytes(16)
 
         offset = tile_idx * BYTES_PER_TILE
-        return self.data[offset:offset + BYTES_PER_TILE]
+        return self.data[offset : offset + BYTES_PER_TILE]

@@ -39,7 +39,7 @@ class TilePicker:
                 [TileSubBank("Placeholder", [0x100])],
                 self.tiles_per_row,
                 self.tile_scale,
-                self.tile_spacing
+                self.tile_spacing,
             ),
             GroupedTileBank(
                 "Fill",
@@ -50,7 +50,7 @@ class TilePicker:
                 ],
                 self.tiles_per_row,
                 self.tile_scale,
-                self.tile_spacing
+                self.tile_spacing,
             ),
             GroupedTileBank(
                 "Teebox",
@@ -60,7 +60,7 @@ class TilePicker:
                 ],
                 self.tiles_per_row,
                 self.tile_scale,
-                self.tile_spacing
+                self.tile_spacing,
             ),
             GroupedTileBank(
                 "Rough",
@@ -71,7 +71,7 @@ class TilePicker:
                 ],
                 self.tiles_per_row,
                 self.tile_scale,
-                self.tile_spacing
+                self.tile_spacing,
             ),
             GroupedTileBank(
                 "Features",
@@ -83,7 +83,7 @@ class TilePicker:
                 ],
                 self.tiles_per_row,
                 self.tile_scale,
-                self.tile_spacing
+                self.tile_spacing,
             ),
             GroupedTileBank(
                 "Out of bounds",
@@ -95,7 +95,7 @@ class TilePicker:
                 ],
                 self.tiles_per_row,
                 self.tile_scale,
-                self.tile_spacing
+                self.tile_spacing,
             ),
         ]
 
@@ -171,7 +171,9 @@ class TilePicker:
                     return None  # Clicked on bank label
 
                 # Position relative to bank's content area (after label + padding)
-                bank_content_y = local_y - (bank_y_start + bank.label_height + bank.padding)
+                bank_content_y = local_y - (
+                    bank_y_start + bank.label_height + bank.padding
+                )
 
                 # Delegate to bank's hit detection method
                 tile = bank.get_tile_at_position(
@@ -179,7 +181,7 @@ class TilePicker:
                     bank_content_y,
                     self.tiles_per_row,
                     self.tile_scale,
-                    self.tile_spacing
+                    self.tile_spacing,
                 )
                 if tile is not None:
                     return tile
@@ -221,5 +223,5 @@ class TilePicker:
                 palette_idx,
                 self.selected_tile,
                 self.hovered_tile,
-                clip_rect
+                clip_rect,
             )

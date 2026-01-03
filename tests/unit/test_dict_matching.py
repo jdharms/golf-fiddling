@@ -10,7 +10,7 @@ def test_exact_longest_match(mock_minimal_terrain_tables):
     # Set up: we have a 2-byte sequence and a 6-byte sequence
     reverse_lookup = {
         "000000000000": ["0xE1"],  # 6-byte sequence of 0x00
-        "0000": ["0xE0"],          # 2-byte sequence of 0x00
+        "0000": ["0xE0"],  # 2-byte sequence of 0x00
     }
 
     # Stream has 6 zeros starting at position 0
@@ -31,7 +31,7 @@ def test_shorter_match_when_longest_fails(mock_minimal_terrain_tables):
 
     reverse_lookup = {
         "000000000000": ["0xE1"],  # 6-byte sequence
-        "0000": ["0xE0"],          # 2-byte sequence
+        "0000": ["0xE0"],  # 2-byte sequence
     }
 
     # Stream only has 2 zeros, then something else

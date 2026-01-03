@@ -12,9 +12,7 @@ from typing import Dict, List, Set
 
 def get_valid_terrain_tiles() -> List[int]:
     """Get the list of valid terrain tiles from the editor picker."""
-    return (
-        [0x25, 0x27] + list(range(0x35, 0x3D)) + list(range(0x3E, 0xC0)) + [0xDF]
-    )
+    return [0x25, 0x27] + list(range(0x35, 0x3D)) + list(range(0x3E, 0xC0)) + [0xDF]
 
 
 def create_reverse_mapping(table: List[int]) -> Dict[int, List[int]]:
@@ -30,8 +28,8 @@ def create_reverse_mapping(table: List[int]) -> Dict[int, List[int]]:
 def analyze_tile_set(tables: Dict, mode: str, valid_tiles: Set[int], title: str):
     """Analyze a single tileset (terrain or greens)."""
 
-    horiz_table = tables[mode]['horizontal_table']
-    vert_table = tables[mode]['vertical_table']
+    horiz_table = tables[mode]["horizontal_table"]
+    vert_table = tables[mode]["vertical_table"]
 
     horiz_reverse = create_reverse_mapping(horiz_table)
     vert_reverse = create_reverse_mapping(vert_table)
@@ -98,13 +96,13 @@ def analyze_tile_set(tables: Dict, mode: str, valid_tiles: Set[int], title: str)
     print(f"  Unreachable via vertical: {len(unreachable_vert)}")
 
     return {
-        'unique_both': len(unique_both),
-        'unique_horiz': len(unique_horiz_only),
-        'unique_vert': len(unique_vert_only),
-        'ambiguous_horiz': len(ambiguous_horiz),
-        'ambiguous_vert': len(ambiguous_vert),
-        'unreachable_horiz': len(unreachable_horiz),
-        'unreachable_vert': len(unreachable_vert),
+        "unique_both": len(unique_both),
+        "unique_horiz": len(unique_horiz_only),
+        "unique_vert": len(unique_vert_only),
+        "ambiguous_horiz": len(ambiguous_horiz),
+        "ambiguous_vert": len(ambiguous_vert),
+        "unreachable_horiz": len(unreachable_horiz),
+        "unreachable_vert": len(unreachable_vert),
     }
 
 
@@ -112,16 +110,18 @@ def main(tables_path: str = "data/tables/compression_tables.json"):
     """Analyze the compression tables for backward mappings."""
 
     # Load compression tables
-    with open(tables_path, 'r') as f:
+    with open(tables_path, "r") as f:
         tables = json.load(f)
 
     # Analyze terrain
     valid_terrain = set(get_valid_terrain_tiles())
-    terrain_results = analyze_tile_set(tables, 'terrain', valid_terrain, "TERRAIN TILES")
+    terrain_results = analyze_tile_set(
+        tables, "terrain", valid_terrain, "TERRAIN TILES"
+    )
 
     # Analyze greens
     valid_greens = set([0x29, 0x2C] + list(range(0x30, 0xA0)) + [0xB0])
-    greens_results = analyze_tile_set(tables, 'greens', valid_greens, "GREENS TILES")
+    greens_results = analyze_tile_set(tables, "greens", valid_greens, "GREENS TILES")
 
     # Print final summary
     print("\n" + "=" * 70)
@@ -129,12 +129,16 @@ def main(tables_path: str = "data/tables/compression_tables.json"):
     print("=" * 70)
     print(f"\nTerrain:")
     print(f"  Fully reversible (both directions): {terrain_results['unique_both']}")
-    print(f"  Partially reversible: {terrain_results['unique_horiz'] + terrain_results['unique_vert']}")
+    print(
+        f"  Partially reversible: {terrain_results['unique_horiz'] + terrain_results['unique_vert']}"
+    )
     print(f"\nGreens:")
     print(f"  Fully reversible (both directions): {greens_results['unique_both']}")
-    print(f"  Partially reversible: {greens_results['unique_horiz'] + greens_results['unique_vert']}")
+    print(
+        f"  Partially reversible: {greens_results['unique_horiz'] + greens_results['unique_vert']}"
+    )
     print("=" * 70)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

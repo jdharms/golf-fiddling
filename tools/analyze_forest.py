@@ -24,7 +24,9 @@ DEEP_ROUGH = 0xDF
 
 def load_neighbor_data() -> Dict:
     """Load terrain_neighbors.json."""
-    data_file = Path(__file__).parent.parent / "data" / "tables" / "terrain_neighbors.json"
+    data_file = (
+        Path(__file__).parent.parent / "data" / "tables" / "terrain_neighbors.json"
+    )
     with open(data_file, "r") as f:
         return json.load(f)
 
@@ -68,7 +70,9 @@ def analyze_coverage(neighbors: Dict) -> None:
     for tile_val in FOREST_FILL:
         tile_hex = int_to_hex(tile_val)
         if tile_hex in neighbors:
-            total_neighbors = sum(len(neighbors[tile_hex][d]) for d in ["up", "down", "left", "right"])
+            total_neighbors = sum(
+                len(neighbors[tile_hex][d]) for d in ["up", "down", "left", "right"]
+            )
             print(f"  {tile_hex}: ✓ ({total_neighbors} total neighbor relationships)")
         else:
             print(f"  {tile_hex}: ✗ NO DATA")
@@ -87,12 +91,17 @@ def analyze_coverage(neighbors: Dict) -> None:
     print(f"  Present: {len(present)}/{len(list(FOREST_BORDER))}")
     print(f"  Missing: {len(missing)}/{len(list(FOREST_BORDER))}")
     if missing:
-        print(f"  Missing tiles: {', '.join(missing[:10])}" + (" ..." if len(missing) > 10 else ""))
+        print(
+            f"  Missing tiles: {', '.join(missing[:10])}"
+            + (" ..." if len(missing) > 10 else "")
+        )
 
     # Check inner border
     inner_hex = int_to_hex(INNER_BORDER)
     if inner_hex in neighbors:
-        total = sum(len(neighbors[inner_hex][d]) for d in ["up", "down", "left", "right"])
+        total = sum(
+            len(neighbors[inner_hex][d]) for d in ["up", "down", "left", "right"]
+        )
         print(f"\nInner Border ($3F): ✓ ({total} total neighbor relationships)")
     else:
         print(f"\nInner Border ($3F): ✗ NO DATA")
@@ -122,7 +131,10 @@ def analyze_transitions(neighbors: Dict) -> None:
 
         for category in sorted(by_category.keys()):
             tiles = by_category[category]
-            print(f"  {category}: {len(tiles)} tiles - {', '.join(tiles[:8])}" + (" ..." if len(tiles) > 8 else ""))
+            print(
+                f"  {category}: {len(tiles)} tiles - {', '.join(tiles[:8])}"
+                + (" ..." if len(tiles) > 8 else "")
+            )
 
     # What leads TO forest fill?
     print("\nTiles that have Forest Fill as neighbors:")
@@ -170,10 +182,18 @@ def analyze_forest_fill_pattern(neighbors: Dict) -> None:
         expected_right = 0xA0 + ((i + 1) % 4)
 
         print(f"{tile_hex}:")
-        print(f"  Left neighbors: {', '.join(int_to_hex(n) for n in sorted(left_neighbors))}")
-        print(f"  Expected left: {int_to_hex(expected_left)} - {'✓' if expected_left in left_neighbors else '✗ NOT FOUND'}")
-        print(f"  Right neighbors: {', '.join(int_to_hex(n) for n in sorted(right_neighbors))}")
-        print(f"  Expected right: {int_to_hex(expected_right)} - {'✓' if expected_right in right_neighbors else '✗ NOT FOUND'}")
+        print(
+            f"  Left neighbors: {', '.join(int_to_hex(n) for n in sorted(left_neighbors))}"
+        )
+        print(
+            f"  Expected left: {int_to_hex(expected_left)} - {'✓' if expected_left in left_neighbors else '✗ NOT FOUND'}"
+        )
+        print(
+            f"  Right neighbors: {', '.join(int_to_hex(n) for n in sorted(right_neighbors))}"
+        )
+        print(
+            f"  Expected right: {int_to_hex(expected_right)} - {'✓' if expected_right in right_neighbors else '✗ NOT FOUND'}"
+        )
         print()
 
 
@@ -205,8 +225,13 @@ def analyze_boundary_depth(neighbors: Dict) -> None:
         if has_border_neighbor:
             border_to_border.append(tile_hex)
 
-    print(f"Border tiles with border neighbors: {len(border_to_border)}/{len(list(FOREST_BORDER))}")
-    print(f"  Tiles: {', '.join(border_to_border[:15])}" + (" ..." if len(border_to_border) > 15 else ""))
+    print(
+        f"Border tiles with border neighbors: {len(border_to_border)}/{len(list(FOREST_BORDER))}"
+    )
+    print(
+        f"  Tiles: {', '.join(border_to_border[:15])}"
+        + (" ..." if len(border_to_border) > 15 else "")
+    )
 
     # Find which border tiles ONLY neighbor fill (these are the "innermost" border)
     print("\nForest Border tiles that neighbor Forest Fill:")
@@ -231,8 +256,13 @@ def analyze_boundary_depth(neighbors: Dict) -> None:
         if has_fill_neighbor:
             border_to_fill.append(tile_hex)
 
-    print(f"Border tiles adjacent to fill: {len(border_to_fill)}/{len(list(FOREST_BORDER))}")
-    print(f"  Tiles: {', '.join(border_to_fill[:15])}" + (" ..." if len(border_to_fill) > 15 else ""))
+    print(
+        f"Border tiles adjacent to fill: {len(border_to_fill)}/{len(list(FOREST_BORDER))}"
+    )
+    print(
+        f"  Tiles: {', '.join(border_to_fill[:15])}"
+        + (" ..." if len(border_to_fill) > 15 else "")
+    )
 
 
 def analyze_feasibility(neighbors: Dict) -> None:
@@ -255,7 +285,9 @@ def analyze_feasibility(neighbors: Dict) -> None:
     border_total = len(list(FOREST_BORDER))
     coverage_pct = (border_coverage / border_total) * 100
     if coverage_pct < 80:
-        issues.append(f"⚠ Only {coverage_pct:.0f}% of forest border tiles have neighbor data")
+        issues.append(
+            f"⚠ Only {coverage_pct:.0f}% of forest border tiles have neighbor data"
+        )
     else:
         print(f"✓ {coverage_pct:.0f}% of forest border tiles have neighbor data")
 

@@ -24,7 +24,7 @@ class Tileset:
     """Loads and renders NES CHR tile data using pygame."""
 
     def __init__(self, chr_path: str):
-        with open(chr_path, 'rb') as f:
+        with open(chr_path, "rb") as f:
             self.data = f.read()
 
         self.num_tiles = len(self.data) // BYTES_PER_TILE
@@ -84,7 +84,7 @@ class Sprite:
     """Loads and renders a sprite from JSON file with embedded CHR data."""
 
     def __init__(self, json_path: str):
-        with open(json_path, 'r') as f:
+        with open(json_path, "r") as f:
             data = json.load(f)
 
         self.name = data.get("name", "unknown")
@@ -140,7 +140,9 @@ class Sprite:
                     if scale == 1:
                         surf.set_at((x, y), color)
                     else:
-                        pygame.draw.rect(surf, color, (x * scale, y * scale, scale, scale))
+                        pygame.draw.rect(
+                            surf, color, (x * scale, y * scale, scale, scale)
+                        )
 
         self._cache[cache_key] = surf
         return surf

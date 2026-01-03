@@ -1,6 +1,7 @@
 """
 Tool protocol and base definitions for editor tools.
 """
+
 from typing import Protocol, Optional, Tuple
 import pygame
 
@@ -13,54 +14,38 @@ class Tool(Protocol):
     """
 
     def handle_mouse_down(
-        self,
-        pos: Tuple[int, int],
-        button: int,
-        modifiers: int,
-        context: 'ToolContext'
-    ) -> 'ToolResult':
+        self, pos: Tuple[int, int], button: int, modifiers: int, context: "ToolContext"
+    ) -> "ToolResult":
         """Handle mouse button down event."""
         ...
 
     def handle_mouse_up(
-        self,
-        pos: Tuple[int, int],
-        button: int,
-        context: 'ToolContext'
-    ) -> 'ToolResult':
+        self, pos: Tuple[int, int], button: int, context: "ToolContext"
+    ) -> "ToolResult":
         """Handle mouse button up event."""
         ...
 
     def handle_mouse_motion(
-        self,
-        pos: Tuple[int, int],
-        context: 'ToolContext'
-    ) -> 'ToolResult':
+        self, pos: Tuple[int, int], context: "ToolContext"
+    ) -> "ToolResult":
         """Handle mouse motion event."""
         ...
 
     def handle_key_down(
-        self,
-        key: int,
-        modifiers: int,
-        context: 'ToolContext'
-    ) -> 'ToolResult':
+        self, key: int, modifiers: int, context: "ToolContext"
+    ) -> "ToolResult":
         """Handle key down event (for tool-specific shortcuts)."""
         ...
 
-    def handle_key_up(
-        self,
-        key: int,
-        context: 'ToolContext'
-    ) -> 'ToolResult':
+    def handle_key_up(self, key: int, context: "ToolContext") -> "ToolResult":
         """Handle key up event."""
         ...
 
-    def on_activated(self, context: 'ToolContext') -> None:
+    def on_activated(self, context: "ToolContext") -> None:
         """Called when tool becomes active."""
         ...
 
-    def on_deactivated(self, context: 'ToolContext') -> None:
+    def on_deactivated(self, context: "ToolContext") -> None:
         """Called when tool is deactivated."""
         ...
 
@@ -129,22 +114,22 @@ class ToolResult:
         self.message = message
 
     @staticmethod
-    def handled() -> 'ToolResult':
+    def handled() -> "ToolResult":
         """Event handled but no action needed."""
         return ToolResult(handled=True)
 
     @staticmethod
-    def not_handled() -> 'ToolResult':
+    def not_handled() -> "ToolResult":
         """Event not handled."""
         return ToolResult(handled=False)
 
     @staticmethod
-    def modified(terrain: bool = False, message: Optional[str] = None) -> 'ToolResult':
+    def modified(terrain: bool = False, message: Optional[str] = None) -> "ToolResult":
         """Content was modified."""
         return ToolResult(
             handled=True,
             needs_undo_push=False,  # Tool handles undo timing
             needs_render=True,
             terrain_modified=terrain,
-            message=message
+            message=message,
         )

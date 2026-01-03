@@ -32,7 +32,10 @@ class TerrainNeighborValidator:
         if neighbors_path is None:
             # Default location: data/tables/terrain_neighbors.json
             neighbors_path = (
-                Path(__file__).parent.parent.parent / "data" / "tables" / "terrain_neighbors.json"
+                Path(__file__).parent.parent.parent
+                / "data"
+                / "tables"
+                / "terrain_neighbors.json"
             )
         else:
             neighbors_path = Path(neighbors_path)
@@ -59,7 +62,10 @@ class TerrainNeighborValidator:
                     "right": set(int(n, 16) for n in directions.get("right", [])),
                 }
                 self.neighbor_frequencies[tile_idx] = {
-                    "up": {}, "down": {}, "left": {}, "right": {}
+                    "up": {},
+                    "down": {},
+                    "left": {},
+                    "right": {},
                 }
             else:
                 # New format: objects with counts
@@ -67,13 +73,27 @@ class TerrainNeighborValidator:
                     "up": set(int(n, 16) for n in directions.get("up", {}).keys()),
                     "down": set(int(n, 16) for n in directions.get("down", {}).keys()),
                     "left": set(int(n, 16) for n in directions.get("left", {}).keys()),
-                    "right": set(int(n, 16) for n in directions.get("right", {}).keys()),
+                    "right": set(
+                        int(n, 16) for n in directions.get("right", {}).keys()
+                    ),
                 }
                 self.neighbor_frequencies[tile_idx] = {
-                    "up": {int(n, 16): count for n, count in directions.get("up", {}).items()},
-                    "down": {int(n, 16): count for n, count in directions.get("down", {}).items()},
-                    "left": {int(n, 16): count for n, count in directions.get("left", {}).items()},
-                    "right": {int(n, 16): count for n, count in directions.get("right", {}).items()},
+                    "up": {
+                        int(n, 16): count
+                        for n, count in directions.get("up", {}).items()
+                    },
+                    "down": {
+                        int(n, 16): count
+                        for n, count in directions.get("down", {}).items()
+                    },
+                    "left": {
+                        int(n, 16): count
+                        for n, count in directions.get("left", {}).items()
+                    },
+                    "right": {
+                        int(n, 16): count
+                        for n, count in directions.get("right", {}).items()
+                    },
                 }
 
     def is_valid_neighbor(self, tile: int, neighbor: int, direction: str) -> bool:
