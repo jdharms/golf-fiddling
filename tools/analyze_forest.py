@@ -7,10 +7,8 @@ Focuses on transitions from rough/OOB borders -> forest borders -> forest fill.
 """
 
 import json
-from pathlib import Path
-from typing import Dict, List, Set
 from collections import defaultdict
-
+from pathlib import Path
 
 # Tile categories from appendix
 INNER_BORDER = 0x3F  # Rough/OOB boundary (no trees)
@@ -22,12 +20,12 @@ SHALLOW_ROUGH = 0x25
 DEEP_ROUGH = 0xDF
 
 
-def load_neighbor_data() -> Dict:
+def load_neighbor_data() -> dict:
     """Load terrain_neighbors.json."""
     data_file = (
         Path(__file__).parent.parent / "data" / "tables" / "terrain_neighbors.json"
     )
-    with open(data_file, "r") as f:
+    with open(data_file) as f:
         return json.load(f)
 
 
@@ -59,7 +57,7 @@ def categorize_tile(tile: int) -> str:
         return "other"
 
 
-def analyze_coverage(neighbors: Dict) -> None:
+def analyze_coverage(neighbors: dict) -> None:
     """Check which forest tiles have neighbor data."""
     print("\n" + "=" * 70)
     print("COVERAGE ANALYSIS")
@@ -104,10 +102,10 @@ def analyze_coverage(neighbors: Dict) -> None:
         )
         print(f"\nInner Border ($3F): ✓ ({total} total neighbor relationships)")
     else:
-        print(f"\nInner Border ($3F): ✗ NO DATA")
+        print("\nInner Border ($3F): ✗ NO DATA")
 
 
-def analyze_transitions(neighbors: Dict) -> None:
+def analyze_transitions(neighbors: dict) -> None:
     """Analyze transitions between tile categories."""
     print("\n" + "=" * 70)
     print("TRANSITION ANALYSIS")
@@ -159,7 +157,7 @@ def analyze_transitions(neighbors: Dict) -> None:
             print(f"    {', '.join(tiles[:12])}" + (" ..." if len(tiles) > 12 else ""))
 
 
-def analyze_forest_fill_pattern(neighbors: Dict) -> None:
+def analyze_forest_fill_pattern(neighbors: dict) -> None:
     """Analyze if Forest Fill maintains horizontal repeat pattern."""
     print("\n" + "=" * 70)
     print("FOREST FILL PATTERN ANALYSIS")
@@ -197,7 +195,7 @@ def analyze_forest_fill_pattern(neighbors: Dict) -> None:
         print()
 
 
-def analyze_boundary_depth(neighbors: Dict) -> None:
+def analyze_boundary_depth(neighbors: dict) -> None:
     """Analyze how deep forest borders typically go."""
     print("\n" + "=" * 70)
     print("BOUNDARY DEPTH ANALYSIS")
@@ -265,7 +263,7 @@ def analyze_boundary_depth(neighbors: Dict) -> None:
     )
 
 
-def analyze_feasibility(neighbors: Dict) -> None:
+def analyze_feasibility(neighbors: dict) -> None:
     """High-level feasibility assessment."""
     print("\n" + "=" * 70)
     print("AUTOMATIC FILL FEASIBILITY ASSESSMENT")
@@ -278,7 +276,7 @@ def analyze_feasibility(neighbors: Dict) -> None:
     if fill_coverage < len(list(FOREST_FILL)):
         issues.append(f"⚠ Only {fill_coverage}/4 forest fill tiles have neighbor data")
     else:
-        print(f"✓ All 4 forest fill tiles have neighbor data")
+        print("✓ All 4 forest fill tiles have neighbor data")
 
     # Check forest border coverage
     border_coverage = sum(1 for v in FOREST_BORDER if int_to_hex(v) in neighbors)
@@ -293,9 +291,9 @@ def analyze_feasibility(neighbors: Dict) -> None:
 
     # Check inner border
     if int_to_hex(INNER_BORDER) in neighbors:
-        print(f"✓ Inner border ($3F) has neighbor data")
+        print("✓ Inner border ($3F) has neighbor data")
     else:
-        issues.append(f"⚠ Inner border ($3F) missing from neighbor data")
+        issues.append("⚠ Inner border ($3F) missing from neighbor data")
 
     # Check if we can find paths from border to fill
     border_tiles_leading_to_fill = 0
@@ -348,7 +346,7 @@ def main():
     data = load_neighbor_data()
     neighbors = data["neighbors"]
 
-    print(f"\nLoaded neighbor data:")
+    print("\nLoaded neighbor data:")
     print(f"  Total unique tiles: {data['metadata']['total_unique_tiles']}")
     print(f"  Total relationships: {data['metadata']['total_relationships']}")
 

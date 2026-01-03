@@ -11,8 +11,9 @@ Examples:
 
 import json
 import sys
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
+
 import numpy as np
 
 from golf.core.palettes import GREEN_TILE_THRESHOLD
@@ -48,7 +49,7 @@ def count_on_green_tiles(greens_data):
 
 def load_hole_data(filepath):
     """Load a single hole JSON file."""
-    with open(filepath, "r") as f:
+    with open(filepath) as f:
         return json.load(f)
 
 
@@ -210,10 +211,10 @@ def analyze_holes(directories):
     print("TERRAIN COMPRESSION RATIO")
     print("=" * 60)
     ratio_stats = percentile_stats(compression_ratios)
-    print(f"\nCompression ratio = compressed_size / (width * height)")
+    print("\nCompression ratio = compressed_size / (width * height)")
     print(f"Average: {np.mean(compression_ratios):.4f}")
     print(f"Std dev: {np.std(compression_ratios):.4f}")
-    print(f"\nDistribution:")
+    print("\nDistribution:")
     print(f"  Min:  {ratio_stats['min']:.4f}")
     print(f"  25th: {ratio_stats['25th']:.4f}")
     print(f"  50th: {ratio_stats['50th']:.4f}")

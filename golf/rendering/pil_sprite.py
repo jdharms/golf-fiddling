@@ -6,14 +6,13 @@ Mirrors the pygame sprite system but uses PIL for rendering.
 """
 
 import json
-from typing import List, Dict, Tuple
 
 try:
     from PIL import Image
 except ImportError:
     raise ImportError("Pillow library required. Install with: pip install Pillow")
 
-from ..core.chr_tile import decode_tile, TILE_SIZE
+from ..core.chr_tile import TILE_SIZE, decode_tile
 from ..core.palettes import SPRITE_OFFSET_Y
 
 
@@ -21,7 +20,7 @@ class PILSprite:
     """Loads and renders a sprite from JSON file with embedded CHR data."""
 
     def __init__(self, json_path: str):
-        with open(json_path, "r") as f:
+        with open(json_path) as f:
             data = json.load(f)
 
         self.name = data.get("name", "unknown")
@@ -46,9 +45,9 @@ class PILSprite:
         # IMPORTANT: These offsets are from the original NES ROM and must be preserved exactly
         self.sprites = data.get("sprites", [{"tile": 0, "x": 0, "y": 0}])
 
-        self._cache: Dict[Tuple[int, int], Image.Image] = {}
+        self._cache: dict[tuple[int, int], Image.Image] = {}
 
-    def decode_tile(self, tile_idx: int) -> List[List[int]]:
+    def decode_tile(self, tile_idx: int) -> list[list[int]]:
         """
         Decode a single 8x8 tile into 2-bit pixel values.
 

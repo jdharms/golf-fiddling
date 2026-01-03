@@ -5,10 +5,10 @@ Renders grid overlay on the canvas for tile alignment.
 """
 
 import pygame
-from pygame import Surface, Rect
+from pygame import Surface
 
-from editor.core.constants import COLOR_GRID, COLOR_GRID_SUPER
 from editor.controllers.view_state import ViewState
+from editor.core.constants import COLOR_GRID, COLOR_GRID_SUPER
 
 
 class GridRenderer:

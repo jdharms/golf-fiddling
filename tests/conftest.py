@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from golf.core.decompressor import TerrainDecompressor, GreensDecompressor
+from golf.core.decompressor import GreensDecompressor, TerrainDecompressor
 from golf.formats.hole_data import HoleData
 
 

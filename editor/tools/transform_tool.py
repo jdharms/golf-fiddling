@@ -2,20 +2,22 @@
 Transform tool for applying compression table transformations via shift+drag.
 """
 
+
 import pygame
-from typing import Optional, Tuple, Dict
-from .base_tool import Tool, ToolContext, ToolResult
+from pygame import Rect
+
 from editor.controllers.view_state import ViewState
 from editor.core.constants import (
-    TILE_SIZE,
-    TERRAIN_WIDTH,
-    GREENS_WIDTH,
-    GREENS_HEIGHT,
     CANVAS_OFFSET_X,
     CANVAS_OFFSET_Y,
+    GREENS_HEIGHT,
+    GREENS_WIDTH,
     STATUS_HEIGHT,
+    TERRAIN_WIDTH,
+    TILE_SIZE,
 )
-from pygame import Rect
+
+from .base_tool import ToolResult
 
 
 class TransformToolState:
@@ -23,13 +25,13 @@ class TransformToolState:
 
     def __init__(self):
         self.is_active = False
-        self.drag_start_pos: Optional[Tuple[int, int]] = None
-        self.origin_tile: Optional[Tuple[int, int]] = None
-        self.preview_changes: Dict[Tuple[int, int], int] = {}
-        self.direction: Optional[str] = None
+        self.drag_start_pos: tuple[int, int] | None = None
+        self.origin_tile: tuple[int, int] | None = None
+        self.preview_changes: dict[tuple[int, int], int] = {}
+        self.direction: str | None = None
         self.blocked = False
 
-    def start(self, mouse_pos: Tuple[int, int], tile_pos: Tuple[int, int]):
+    def start(self, mouse_pos: tuple[int, int], tile_pos: tuple[int, int]):
         self.is_active = True
         self.drag_start_pos = mouse_pos
         self.origin_tile = tile_pos

@@ -1,16 +1,15 @@
 """Unit tests for EventHandler keyboard shortcut handling."""
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 
 import pygame
+import pytest
 
-from editor.controllers.event_handler import EventHandler
 from editor.controllers.editor_state import EditorState
-from editor.tools.tool_manager import ToolManager
-from editor.tools.paint_tool import PaintTool
+from editor.controllers.event_handler import EventHandler
 from editor.tools.forest_fill_tool import ForestFillTool
-from editor.tools.base_tool import ToolResult
+from editor.tools.paint_tool import PaintTool
+from editor.tools.tool_manager import ToolManager
 from golf.formats.hole_data import HoleData
 
 

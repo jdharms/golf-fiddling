@@ -5,12 +5,10 @@ Implements specialized forest fill that detects placeholder tiles and replaces t
 with Forest Border and Forest Fill tiles based on distance from OOB border.
 """
 
-from typing import List, Dict, Set, Tuple, Optional
-from collections import deque
 import math
+from collections import deque
 
 from golf.core.neighbor_validator import TerrainNeighborValidator
-
 
 # Constants
 PLACEHOLDER_TILE = 0x100  # 256 - outside NES tile range, clearly a meta value
@@ -30,16 +28,16 @@ BORDER_DISTANCE_THRESHOLD = 1  # Cells at distance ≤ 1 from OOB get border til
 class ForestFillRegion:
     """Represents a contiguous region of placeholder tiles to be filled with forest."""
 
-    def __init__(self, cells: Set[Tuple[int, int]]):
+    def __init__(self, cells: set[tuple[int, int]]):
         self.cells = cells  # Placeholder tile cells in this region
-        self.distance_field: Dict[
-            Tuple[int, int], int
+        self.distance_field: dict[
+            tuple[int, int], int
         ] = {}  # Manhattan distance to nearest OOB border
-        self.oob_cells: Set[Tuple[int, int]] = (
+        self.oob_cells: set[tuple[int, int]] = (
             set()
         )  # Nearby OOB border ($80-$9B) tiles
 
-    def calculate_distance_field(self, terrain: List[List[int]]):
+    def calculate_distance_field(self, terrain: list[list[int]]):
         """Calculate Manhattan distance from each placeholder to nearest OOB border using BFS."""
         self._find_nearby_oob_tiles(terrain)
 
@@ -72,7 +70,7 @@ class ForestFillRegion:
                 visited.add((nr, nc))
                 queue.append(((nr, nc), dist + 1))
 
-    def _find_nearby_oob_tiles(self, terrain: List[List[int]]):
+    def _find_nearby_oob_tiles(self, terrain: list[list[int]]):
         """Find OOB border tiles near this placeholder region."""
         for row, col in self.cells:
             for dr, dc in [
@@ -94,7 +92,7 @@ class ForestFillRegion:
                 if OOB_BORDER_START <= tile <= OOB_BORDER_END:
                     self.oob_cells.add((nr, nc))
 
-    def _calculate_distance_to_edge(self, terrain: List[List[int]]):
+    def _calculate_distance_to_edge(self, terrain: list[list[int]]):
         """Fallback: calculate distance to terrain edge if no OOB border found."""
         height = len(terrain)
         width = len(terrain[0]) if height > 0 else 0
@@ -109,11 +107,11 @@ class Decision:
 
     def __init__(
         self,
-        cell: Tuple[int, int],
+        cell: tuple[int, int],
         chosen_tile: int,
-        alternatives: List[int],
-        superposition_snapshot: Dict[Tuple[int, int], Set[int]],
-        collapsed_snapshot: Dict[Tuple[int, int], int],
+        alternatives: list[int],
+        superposition_snapshot: dict[tuple[int, int], set[int]],
+        collapsed_snapshot: dict[tuple[int, int], int],
     ):
         self.cell = cell
         self.chosen_tile = chosen_tile
@@ -132,7 +130,7 @@ class ForestFiller:
         self.placeholder_tile = PLACEHOLDER_TILE
         self.debug = debug
 
-    def detect_regions(self, terrain: List[List[int]]) -> List[ForestFillRegion]:
+    def detect_regions(self, terrain: list[list[int]]) -> list[ForestFillRegion]:
         """Find all contiguous regions of placeholder tiles."""
         if not terrain:
             return []
@@ -161,11 +159,11 @@ class ForestFiller:
 
     def _flood_fill_placeholder(
         self,
-        terrain: List[List[int]],
+        terrain: list[list[int]],
         start_row: int,
         start_col: int,
-        visited: Set[Tuple[int, int]],
-    ) -> Set[Tuple[int, int]]:
+        visited: set[tuple[int, int]],
+    ) -> set[tuple[int, int]]:
         """Flood fill to find all connected placeholder tiles."""
         height = len(terrain)
         width = len(terrain[0])
@@ -197,10 +195,10 @@ class ForestFiller:
 
     def fill_region(
         self,
-        terrain: List[List[int]],
+        terrain: list[list[int]],
         region: ForestFillRegion,
         max_backtracks: int = 10_000,
-    ) -> Dict[Tuple[int, int], int]:
+    ) -> dict[tuple[int, int], int]:
         """Fill a placeholder region using WFC with backtracking.
 
         Args:
@@ -212,18 +210,18 @@ class ForestFiller:
             Dict mapping (row, col) to tile values for filled cells
         """
         # Initialize superposition for each cell
-        superposition: Dict[Tuple[int, int], Set[int]] = {}
+        superposition: dict[tuple[int, int], set[int]] = {}
         for cell in region.cells:
             superposition[cell] = set(ALL_FOREST_TILES)
 
         # Initial constraint propagation from existing terrain
-        collapsed: Dict[Tuple[int, int], int] = {}
+        collapsed: dict[tuple[int, int], int] = {}
         for cell in region.cells:
             self._propagate_constraints(cell, terrain, region, superposition, collapsed)
 
         # WFC collapse with backtracking
         cells_to_collapse = set(region.cells)
-        decision_stack: List[Decision] = []
+        decision_stack: list[Decision] = []
         backtrack_count = 0
 
         while cells_to_collapse:
@@ -338,10 +336,10 @@ class ForestFiller:
 
     def _find_min_entropy_cell_in_set(
         self,
-        cell_set: Set[Tuple[int, int]],
-        superposition: Dict[Tuple[int, int], Set[int]],
-        collapsed: Dict[Tuple[int, int], int],
-    ) -> Tuple[Optional[Tuple[int, int]], bool]:
+        cell_set: set[tuple[int, int]],
+        superposition: dict[tuple[int, int], set[int]],
+        collapsed: dict[tuple[int, int], int],
+    ) -> tuple[tuple[int, int] | None, bool]:
         """Find uncollapsed cell with minimum entropy.
 
         Returns:
@@ -380,12 +378,12 @@ class ForestFiller:
 
     def _backtrack(
         self,
-        decision_stack: List[Decision],
-        superposition: Dict[Tuple[int, int], Set[int]],
-        collapsed: Dict[Tuple[int, int], int],
-        cells_to_collapse: Set[Tuple[int, int]],
+        decision_stack: list[Decision],
+        superposition: dict[tuple[int, int], set[int]],
+        collapsed: dict[tuple[int, int], int],
+        cells_to_collapse: set[tuple[int, int]],
         region: ForestFillRegion,
-        terrain: List[List[int]],
+        terrain: list[list[int]],
     ) -> bool:
         """Attempt to backtrack to a previous decision and try an alternative.
 
@@ -436,10 +434,10 @@ class ForestFiller:
 
     def _relaxation_pass(
         self,
-        cells_to_collapse: Set[Tuple[int, int]],
-        superposition: Dict[Tuple[int, int], Set[int]],
-        collapsed: Dict[Tuple[int, int], int],
-        terrain: List[List[int]],
+        cells_to_collapse: set[tuple[int, int]],
+        superposition: dict[tuple[int, int], set[int]],
+        collapsed: dict[tuple[int, int], int],
+        terrain: list[list[int]],
         region: ForestFillRegion,
     ):
         """Last-resort pass: fill remaining cells with any valid tile, relaxing constraints."""
@@ -484,10 +482,10 @@ class ForestFiller:
 
     def _pick_fallback_tile(
         self,
-        cell: Tuple[int, int],
-        terrain: List[List[int]],
-        collapsed: Dict[Tuple[int, int], int],
-    ) -> Optional[int]:
+        cell: tuple[int, int],
+        terrain: list[list[int]],
+        collapsed: dict[tuple[int, int], int],
+    ) -> int | None:
         """Pick a fallback tile when normal constraint satisfaction fails.
 
         Tries all forest tiles and picks one that has at least partial neighbor compatibility.
@@ -546,10 +544,10 @@ class ForestFiller:
 
     def _log_stuck_cells(
         self,
-        cells_to_collapse: Set[Tuple[int, int]],
-        superposition: Dict[Tuple[int, int], Set[int]],
-        collapsed: Dict[Tuple[int, int], int],
-        terrain: List[List[int]],
+        cells_to_collapse: set[tuple[int, int]],
+        superposition: dict[tuple[int, int], set[int]],
+        collapsed: dict[tuple[int, int], int],
+        terrain: list[list[int]],
     ):
         """Log diagnostic information about stuck cells."""
         stuck_cells = [
@@ -568,10 +566,10 @@ class ForestFiller:
 
     def _get_neighbor_info(
         self,
-        cell: Tuple[int, int],
-        terrain: List[List[int]],
-        collapsed: Dict[Tuple[int, int], int],
-    ) -> Dict[str, str]:
+        cell: tuple[int, int],
+        terrain: list[list[int]],
+        collapsed: dict[tuple[int, int], int],
+    ) -> dict[str, str]:
         """Get info about a cell's neighbors for debugging."""
         row, col = cell
         info = {}
@@ -598,7 +596,7 @@ class ForestFiller:
         return info
 
     def _compute_pattern_phase(
-        self, row: int, col: int, collapsed: Dict[Tuple[int, int], int]
+        self, row: int, col: int, collapsed: dict[tuple[int, int], int]
     ) -> int:
         """Compute pattern phase based on existing fill tiles in this row.
 
@@ -630,16 +628,16 @@ class ForestFiller:
 
     def _score_possibilities_with_lookahead(
         self,
-        possibilities: List[int],
-        cell: Tuple[int, int],
-        terrain: List[List[int]],
+        possibilities: list[int],
+        cell: tuple[int, int],
+        terrain: list[list[int]],
         region: ForestFillRegion,
-        superposition: Dict[Tuple[int, int], Set[int]],
-        collapsed: Dict[Tuple[int, int], int],
+        superposition: dict[tuple[int, int], set[int]],
+        collapsed: dict[tuple[int, int], int],
         distance: int,
         pattern_phase: int,
         use_border: bool,
-    ) -> List[Tuple[float, int]]:
+    ) -> list[tuple[float, int]]:
         """Score all possibilities with lookahead to detect contradictions."""
         tile_scores = []
 
@@ -689,11 +687,11 @@ class ForestFiller:
 
     def _propagate_constraints(
         self,
-        cell: Tuple[int, int],
-        terrain: List[List[int]],
+        cell: tuple[int, int],
+        terrain: list[list[int]],
         region: ForestFillRegion,
-        superposition: Dict[Tuple[int, int], Set[int]],
-        collapsed: Dict[Tuple[int, int], int],
+        superposition: dict[tuple[int, int], set[int]],
+        collapsed: dict[tuple[int, int], int],
     ):
         """Propagate constraints from a cell to its neighbors."""
         queue = deque([cell])
@@ -741,12 +739,12 @@ class ForestFiller:
 
     def _get_constrained_possibilities(
         self,
-        cell: Tuple[int, int],
-        terrain: List[List[int]],
+        cell: tuple[int, int],
+        terrain: list[list[int]],
         region: ForestFillRegion,
-        superposition: Dict[Tuple[int, int], Set[int]],
-        collapsed: Dict[Tuple[int, int], int],
-    ) -> Set[int]:
+        superposition: dict[tuple[int, int], set[int]],
+        collapsed: dict[tuple[int, int], int],
+    ) -> set[int]:
         """Get valid tile possibilities for a cell based on current constraints."""
         row, col = cell
         current_possibilities = superposition.get(cell, set(ALL_FOREST_TILES)).copy()
@@ -786,8 +784,8 @@ class ForestFiller:
         return current_possibilities
 
     def _select_best_tile(
-        self, valid_tiles: Set[int], distance: int, pattern_phase: int, use_border: bool
-    ) -> Optional[int]:
+        self, valid_tiles: set[int], distance: int, pattern_phase: int, use_border: bool
+    ) -> int | None:
         """Select best tile from valid candidates based on scoring."""
         if not valid_tiles:
             return None
@@ -809,9 +807,7 @@ class ForestFiller:
         is_border = tile in FOREST_BORDER
         is_fill = tile in FOREST_FILL
 
-        if use_border and is_border:
-            score += 100
-        elif not use_border and is_fill:
+        if use_border and is_border or not use_border and is_fill:
             score += 100
 
         if is_fill:
@@ -824,9 +820,9 @@ class ForestFiller:
     def _score_tile_with_context(
         self,
         tile: int,
-        cell: Tuple[int, int],
-        terrain: List[List[int]],
-        collapsed: Dict[Tuple[int, int], int],
+        cell: tuple[int, int],
+        terrain: list[list[int]],
+        collapsed: dict[tuple[int, int], int],
         distance: int,
         pattern_phase: int,
         use_border: bool,

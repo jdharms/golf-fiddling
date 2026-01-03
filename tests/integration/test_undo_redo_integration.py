@@ -1,15 +1,15 @@
 """Integration tests for undo/redo with editor components."""
 
 import pytest
+from pygame import Rect
 
 from editor.controllers.editor_state import EditorState
 from editor.controllers.event_handler import EventHandler
 from editor.controllers.transform_logic import TransformLogic
 from editor.core.pygame_rendering import Tileset
-from editor.ui.pickers import TilePicker, GreensTilePicker
+from editor.ui.pickers import GreensTilePicker, TilePicker
 from golf.core.compressor import load_compression_tables
 from golf.formats.hole_data import HoleData
-from pygame import Rect
 
 
 @pytest.fixture

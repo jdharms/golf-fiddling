@@ -3,14 +3,14 @@ Greens-specific tile picker panel.
 """
 
 import pygame
-from pygame import Surface, Rect
+from pygame import Rect, Surface
 
 from editor.core.constants import (
-    TILE_SIZE,
+    COLOR_GRID,
     COLOR_PICKER_BG,
     COLOR_SELECTION,
-    COLOR_GRID,
     COLOR_TEXT,
+    TILE_SIZE,
 )
 
 from .tile_banks import SimpleTileBank, _range_to_list

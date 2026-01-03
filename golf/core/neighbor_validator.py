@@ -7,7 +7,6 @@ in the original course data.
 
 import json
 from pathlib import Path
-from typing import Dict, Optional, Set, Tuple, List
 
 
 class TerrainNeighborValidator:
@@ -18,7 +17,7 @@ class TerrainNeighborValidator:
     helping catch common mistakes where multi-tile sprites aren't properly aligned.
     """
 
-    def __init__(self, neighbors_path: Optional[str] = None):
+    def __init__(self, neighbors_path: str | None = None):
         """
         Load neighbor data from JSON file.
 
@@ -43,12 +42,12 @@ class TerrainNeighborValidator:
         if not neighbors_path.exists():
             raise FileNotFoundError(f"Neighbor data file not found: {neighbors_path}")
 
-        with open(neighbors_path, "r") as f:
+        with open(neighbors_path) as f:
             data = json.load(f)
 
         # Convert hex string keys to integers for fast lookup
-        self.neighbors: Dict[int, Dict[str, Set[int]]] = {}
-        self.neighbor_frequencies: Dict[int, Dict[str, Dict[int, int]]] = {}
+        self.neighbors: dict[int, dict[str, set[int]]] = {}
+        self.neighbor_frequencies: dict[int, dict[str, dict[int, int]]] = {}
         for tile_hex, directions in data["neighbors"].items():
             tile_idx = int(tile_hex, 16)
 
@@ -132,7 +131,7 @@ class TerrainNeighborValidator:
             return 0
         return self.neighbor_frequencies[tile][direction].get(neighbor, 0)
 
-    def get_invalid_tiles(self, terrain: List[List[int]]) -> Set[Tuple[int, int]]:
+    def get_invalid_tiles(self, terrain: list[list[int]]) -> set[tuple[int, int]]:
         """
         Find all tiles with invalid neighbors in the given terrain.
 

@@ -4,22 +4,21 @@ NES Open Tournament Golf - Transform Logic
 Applies compression table transformations to tile values.
 """
 
-from typing import Dict, List
 
 
 class TransformLogic:
     """Applies compression table transformations."""
 
-    def __init__(self, tables: Dict):
+    def __init__(self, tables: dict):
         """Initialize with compression tables.
 
         Args:
             tables: Compression tables dict with "terrain" and "greens" keys
         """
-        self.terrain_horiz: List[int] = tables["terrain"]["horizontal_table"]
-        self.terrain_vert: List[int] = tables["terrain"]["vertical_table"]
-        self.greens_horiz: List[int] = tables["greens"]["horizontal_table"]
-        self.greens_vert: List[int] = tables["greens"]["vertical_table"]
+        self.terrain_horiz: list[int] = tables["terrain"]["horizontal_table"]
+        self.terrain_vert: list[int] = tables["terrain"]["vertical_table"]
+        self.greens_horiz: list[int] = tables["greens"]["horizontal_table"]
+        self.greens_vert: list[int] = tables["greens"]["vertical_table"]
 
     def apply_horizontal(self, tile_value: int, mode: str) -> int:
         """Apply horizontal table transformation to a tile value.

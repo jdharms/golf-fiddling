@@ -1,6 +1,5 @@
 """Unit tests for dictionary sequence matching in compression."""
 
-import pytest
 
 
 def test_exact_longest_match(mock_minimal_terrain_tables):

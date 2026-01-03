@@ -5,14 +5,13 @@ Unified NES CHR format tile decoding functionality used by all tools.
 This eliminates duplication between the editor, visualizer, and other tools.
 """
 
-from typing import List
 
 # CHR format constants
 TILE_SIZE = 8  # 8x8 pixels per tile
 BYTES_PER_TILE = 16  # 16 bytes per tile (8 bytes per bitplane)
 
 
-def decode_tile(tile_data: bytes, tile_idx: int = 0) -> List[List[int]]:
+def decode_tile(tile_data: bytes, tile_idx: int = 0) -> list[list[int]]:
     """
     Decode a single 8x8 NES CHR tile into 2-bit pixel values.
 
@@ -75,7 +74,7 @@ class TilesetData:
 
         self.num_tiles = len(self.data) // BYTES_PER_TILE
 
-    def decode_tile(self, tile_idx: int) -> List[List[int]]:
+    def decode_tile(self, tile_idx: int) -> list[list[int]]:
         """
         Decode a single tile from the loaded CHR data.
 

@@ -6,13 +6,12 @@ tileset backgrounds and sprites. Uses shared tile decoding from golf.core.
 """
 
 import json
-from typing import List, Dict, Tuple
 
 import pygame
 from pygame import Surface
 
-from golf.core.chr_tile import decode_tile, TILE_SIZE, BYTES_PER_TILE
-from golf.core.palettes import PALETTES, GREENS_PALETTE
+from golf.core.chr_tile import BYTES_PER_TILE, TILE_SIZE, decode_tile
+from golf.core.palettes import GREENS_PALETTE, PALETTES
 
 from .constants import (
     GREENS_PALETTE_NUM,
@@ -28,9 +27,9 @@ class Tileset:
             self.data = f.read()
 
         self.num_tiles = len(self.data) // BYTES_PER_TILE
-        self._cache: Dict[Tuple[int, int, int], Surface] = {}
+        self._cache: dict[tuple[int, int, int], Surface] = {}
 
-    def decode_tile(self, tile_idx: int) -> List[List[int]]:
+    def decode_tile(self, tile_idx: int) -> list[list[int]]:
         """
         Decode a single 8x8 tile into 2-bit pixel values.
 
@@ -84,7 +83,7 @@ class Sprite:
     """Loads and renders a sprite from JSON file with embedded CHR data."""
 
     def __init__(self, json_path: str):
-        with open(json_path, "r") as f:
+        with open(json_path) as f:
             data = json.load(f)
 
         self.name = data.get("name", "unknown")
@@ -108,9 +107,9 @@ class Sprite:
         # Parse sprite entries (OAM-style: tile index + offsets)
         self.sprites = data.get("sprites", [{"tile": 0, "x": 0, "y": 0}])
 
-        self._cache: Dict[Tuple[int, int], Surface] = {}
+        self._cache: dict[tuple[int, int], Surface] = {}
 
-    def decode_tile(self, tile_idx: int) -> List[List[int]]:
+    def decode_tile(self, tile_idx: int) -> list[list[int]]:
         """
         Decode a single 8x8 tile into 2-bit pixel values.
 

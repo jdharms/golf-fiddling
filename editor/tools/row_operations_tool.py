@@ -2,7 +2,7 @@
 Row operations tool - add and remove terrain rows.
 """
 
-from .base_tool import Tool, ToolContext, ToolResult
+from .base_tool import ToolContext, ToolResult
 
 
 class RowOperationsTool:

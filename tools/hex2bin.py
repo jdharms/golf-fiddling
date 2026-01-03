@@ -9,7 +9,7 @@ import sys
 
 
 def hex_to_binary(input_file, output_file):
-    with open(input_file, "r") as f:
+    with open(input_file) as f:
         hex_data = f.read()
 
     # Split on whitespace and convert each hex string to a byte

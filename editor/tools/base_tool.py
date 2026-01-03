@@ -2,8 +2,7 @@
 Tool protocol and base definitions for editor tools.
 """
 
-from typing import Protocol, Optional, Tuple
-import pygame
+from typing import Protocol
 
 
 class Tool(Protocol):
@@ -14,19 +13,19 @@ class Tool(Protocol):
     """
 
     def handle_mouse_down(
-        self, pos: Tuple[int, int], button: int, modifiers: int, context: "ToolContext"
+        self, pos: tuple[int, int], button: int, modifiers: int, context: "ToolContext"
     ) -> "ToolResult":
         """Handle mouse button down event."""
         ...
 
     def handle_mouse_up(
-        self, pos: Tuple[int, int], button: int, context: "ToolContext"
+        self, pos: tuple[int, int], button: int, context: "ToolContext"
     ) -> "ToolResult":
         """Handle mouse button up event."""
         ...
 
     def handle_mouse_motion(
-        self, pos: Tuple[int, int], context: "ToolContext"
+        self, pos: tuple[int, int], context: "ToolContext"
     ) -> "ToolResult":
         """Handle mouse motion event."""
         ...
@@ -105,7 +104,7 @@ class ToolResult:
         needs_undo_push: bool = False,
         needs_render: bool = False,
         terrain_modified: bool = False,
-        message: Optional[str] = None,
+        message: str | None = None,
     ):
         self.handled = handled
         self.needs_undo_push = needs_undo_push
@@ -124,7 +123,7 @@ class ToolResult:
         return ToolResult(handled=False)
 
     @staticmethod
-    def modified(terrain: bool = False, message: Optional[str] = None) -> "ToolResult":
+    def modified(terrain: bool = False, message: str | None = None) -> "ToolResult":
         """Content was modified."""
         return ToolResult(
             handled=True,

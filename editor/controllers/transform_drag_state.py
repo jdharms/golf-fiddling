@@ -4,7 +4,6 @@ NES Open Tournament Golf - Transform Drag State
 Manages the state of an in-progress transform drag operation, including preview changes.
 """
 
-from typing import Optional, Tuple, Dict
 
 
 class TransformDragState:
@@ -13,13 +12,13 @@ class TransformDragState:
     def __init__(self):
         """Initialize with empty transform state."""
         self.is_active: bool = False
-        self.drag_start_pos: Optional[Tuple[int, int]] = None
-        self.origin_tile: Optional[Tuple[int, int]] = None
-        self.preview_changes: Dict[Tuple[int, int], int] = {}
-        self.direction: Optional[str] = None  # "horizontal" or "vertical"
+        self.drag_start_pos: tuple[int, int] | None = None
+        self.origin_tile: tuple[int, int] | None = None
+        self.preview_changes: dict[tuple[int, int], int] = {}
+        self.direction: str | None = None  # "horizontal" or "vertical"
         self.blocked: bool = False
 
-    def start(self, mouse_pos: Tuple[int, int], tile_pos: Tuple[int, int]):
+    def start(self, mouse_pos: tuple[int, int], tile_pos: tuple[int, int]):
         """Begin transform drag.
 
         Args:

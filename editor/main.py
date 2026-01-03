@@ -5,6 +5,7 @@ Command-line entry point for the editor application.
 """
 
 import sys
+
 from .application import EditorApplication
 
 

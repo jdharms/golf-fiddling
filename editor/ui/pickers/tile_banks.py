@@ -5,18 +5,17 @@ This module provides reusable tile organization components that handle
 layout, rendering, and hit detection for groups of tiles.
 """
 
-from typing import List
 
 import pygame
-from pygame import Surface, Rect
+from pygame import Rect, Surface
 
-from editor.core.pygame_rendering import Tileset
 from editor.core.constants import (
-    TILE_SIZE,
-    COLOR_SELECTION,
     COLOR_GRID,
+    COLOR_SELECTION,
     COLOR_TEXT,
+    TILE_SIZE,
 )
+from editor.core.pygame_rendering import Tileset
 
 
 def _render_placeholder_tile(size: int) -> Surface:
@@ -36,14 +35,14 @@ def _render_placeholder_tile(size: int) -> Surface:
     return surf
 
 
-def _range_to_list(min: int, max: int) -> List[int]:
+def _range_to_list(min: int, max: int) -> list[int]:
     return list(range(min, max))
 
 
 class TileSubBank:
     """A labeled subgroup of tiles within a bank."""
 
-    def __init__(self, label: str, tile_indices: List[int]):
+    def __init__(self, label: str, tile_indices: list[int]):
         """
         Args:
             label: Display name for this subbank (e.g., "Borders With Depth")
@@ -164,7 +163,7 @@ class SimpleTileBank:
     def __init__(
         self,
         label: str,
-        tile_indices: List[int],
+        tile_indices: list[int],
         tiles_per_row: int,
         tile_scale: int,
         tile_spacing: int = 2,
@@ -334,7 +333,7 @@ class GroupedTileBank:
     def __init__(
         self,
         label: str,
-        subbanks: List[TileSubBank],
+        subbanks: list[TileSubBank],
         tiles_per_row: int,
         tile_scale: int,
         tile_spacing: int = 2,

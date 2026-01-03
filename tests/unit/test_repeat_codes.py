@@ -1,6 +1,5 @@
 """Unit tests for repeat code generation in compression."""
 
-import pytest
 
 
 def test_simple_repeat_sequence(mock_minimal_terrain_tables):

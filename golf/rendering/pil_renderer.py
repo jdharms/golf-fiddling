@@ -5,22 +5,22 @@ PIL-based rendering for generating PNG images of golf course holes.
 Used by the visualize tool to create static images.
 """
 
-from typing import Dict, Any, Optional
+from typing import Any
 
 try:
     from PIL import Image
 except ImportError:
     raise ImportError("Pillow library required. Install with: pip install Pillow")
 
-from ..core.chr_tile import TilesetData, TILE_SIZE
-from ..core.palettes import PALETTES, GREEN_OVERLAY_COLOR, GREEN_TILE_THRESHOLD
+from ..core.chr_tile import TILE_SIZE, TilesetData
+from ..core.palettes import GREEN_OVERLAY_COLOR, GREEN_TILE_THRESHOLD, PALETTES
 from .pil_sprite import PILSprite
 
 
 def render_hole_to_image(
-    hole_data: Dict[str, Any],
+    hole_data: dict[str, Any],
     tileset: TilesetData,
-    sprites: Optional[Dict[str, PILSprite]] = None,
+    sprites: dict[str, PILSprite] | None = None,
     render_sprites: bool = True,
     selected_flag_index: int = 0,
 ) -> Image.Image:
@@ -131,8 +131,8 @@ def render_hole_to_image(
 
 def _render_terrain_sprites(
     img: Image.Image,
-    sprites: Dict[str, PILSprite],
-    hole_data: Dict[str, Any],
+    sprites: dict[str, PILSprite],
+    hole_data: dict[str, Any],
     selected_flag_index: int,
 ):
     """

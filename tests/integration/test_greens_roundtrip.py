@@ -1,6 +1,5 @@
 """Integration tests for greens compression round-trip validation."""
 
-import pytest
 
 
 def test_simple_greens_roundtrip(simple_greens_fixture, greens_decompressor):
