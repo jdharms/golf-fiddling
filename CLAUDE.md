@@ -386,6 +386,8 @@ self.tool_manager.register_tool("your_tool", YourTool())
 
 A comprehensive test suite for the compression system is located in the `tests/` directory. Tests are written using pytest and cover both unit and integration testing.
 
+Tests must be executed and must pass after all changes.  There are no "ok failures".  Ever.
+
 ```bash
 # Run all tests with coverage
 pytest
