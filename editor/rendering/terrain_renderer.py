@@ -95,24 +95,39 @@ class TerrainRenderer:
         # Render shift-hover highlights (AFTER base tiles, BEFORE transform preview)
         if shift_hover_tile is not None:
             TerrainRenderer._render_shift_hover_highlights(
-                screen, canvas_rect, hole_data,
-                shift_hover_tile, canvas_scale, canvas_offset_x, canvas_offset_y
+                screen,
+                canvas_rect,
+                hole_data,
+                shift_hover_tile,
+                canvas_scale,
+                canvas_offset_x,
+                canvas_offset_y,
             )
 
         # Render invalid neighbor highlights (red borders)
         if show_invalid_tiles and invalid_terrain_tiles:
             TerrainRenderer._render_invalid_neighbor_highlights(
-                screen, canvas_rect, hole_data, invalid_terrain_tiles,
-                canvas_scale, canvas_offset_x, canvas_offset_y
+                screen,
+                canvas_rect,
+                hole_data,
+                invalid_terrain_tiles,
+                canvas_scale,
+                canvas_offset_x,
+                canvas_offset_y,
             )
 
         # Render transform preview with gold borders (ON TOP of tiles)
         if transform_state.is_active:
             TerrainRenderer._render_transform_preview(
-                screen, canvas_rect, hole_data, tileset,
+                screen,
+                canvas_rect,
+                hole_data,
+                tileset,
                 transform_state.preview_changes,
                 transform_state.origin_tile,
-                canvas_scale, canvas_offset_x, canvas_offset_y
+                canvas_scale,
+                canvas_offset_x,
+                canvas_offset_y,
             )
 
         # Render green overlay
@@ -132,8 +147,15 @@ class TerrainRenderer:
 
     @staticmethod
     def _render_transform_preview(
-        screen, canvas_rect, hole_data, tileset,
-        preview_changes, origin_tile, canvas_scale, canvas_offset_x, canvas_offset_y
+        screen,
+        canvas_rect,
+        hole_data,
+        tileset,
+        preview_changes,
+        origin_tile,
+        canvas_scale,
+        canvas_offset_x,
+        canvas_offset_y,
     ):
         """Render preview tiles with their transformed values and gold borders."""
         tile_size = TILE_SIZE * canvas_scale
@@ -154,7 +176,9 @@ class TerrainRenderer:
                 tile_surf = _render_placeholder_tile(tile_size)
             else:
                 palette_idx = hole_data.get_attribute(row, col)
-                tile_surf = tileset.render_tile(transformed_tile_idx, palette_idx, canvas_scale)
+                tile_surf = tileset.render_tile(
+                    transformed_tile_idx, palette_idx, canvas_scale
+                )
             screen.blit(tile_surf, (x, y))
 
             # Draw gold border around tile
@@ -167,14 +191,23 @@ class TerrainRenderer:
             y = canvas_rect.y + row * tile_size - canvas_offset_y
 
             # Only render if on-screen
-            if not (x + tile_size < canvas_rect.x or x > canvas_rect.right or
-                    y + tile_size < canvas_rect.y or y > canvas_rect.bottom):
+            if not (
+                x + tile_size < canvas_rect.x
+                or x > canvas_rect.right
+                or y + tile_size < canvas_rect.y
+                or y > canvas_rect.bottom
+            ):
                 draw_tile_border(screen, x, y, tile_size)
 
     @staticmethod
     def _render_shift_hover_highlights(
-        screen, canvas_rect, hole_data, highlight_tile_value,
-        canvas_scale, canvas_offset_x, canvas_offset_y
+        screen,
+        canvas_rect,
+        hole_data,
+        highlight_tile_value,
+        canvas_scale,
+        canvas_offset_x,
+        canvas_offset_y,
     ):
         """Render gold borders around all tiles matching the shift-hovered tile value."""
         tile_size = TILE_SIZE * canvas_scale
@@ -199,8 +232,13 @@ class TerrainRenderer:
 
     @staticmethod
     def _render_invalid_neighbor_highlights(
-        screen, canvas_rect, hole_data, invalid_tiles,
-        canvas_scale, canvas_offset_x, canvas_offset_y
+        screen,
+        canvas_rect,
+        hole_data,
+        invalid_tiles,
+        canvas_scale,
+        canvas_offset_x,
+        canvas_offset_y,
     ):
         """Render red borders around tiles with invalid neighbor relationships."""
         tile_size = TILE_SIZE * canvas_scale

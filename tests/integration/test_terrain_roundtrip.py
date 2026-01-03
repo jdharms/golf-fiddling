@@ -17,12 +17,14 @@ def test_simple_terrain_roundtrip(simple_terrain_fixture, terrain_decompressor):
     decompressed = terrain_decompressor.decompress(compressed, row_width=22)
 
     # Verify round-trip
-    assert len(decompressed) == len(original_rows), \
+    assert len(decompressed) == len(original_rows), (
         f"Height mismatch: original={len(original_rows)}, decompressed={len(decompressed)}"
+    )
 
     for i, (original, decomp) in enumerate(zip(original_rows, decompressed)):
-        assert original == decomp, \
+        assert original == decomp, (
             f"Row {i} mismatch: original={original}, decompressed={decomp}"
+        )
 
 
 def test_hole_04_roundtrip(hole_04_data, terrain_decompressor):
@@ -37,13 +39,15 @@ def test_hole_04_roundtrip(hole_04_data, terrain_decompressor):
     decompressed = terrain_decompressor.decompress(compressed, row_width=22)
 
     # Verify dimensions
-    assert len(decompressed) == len(original_rows), \
+    assert len(decompressed) == len(original_rows), (
         f"Height mismatch: original={len(original_rows)}, decompressed={len(decompressed)}"
+    )
 
     # Verify content
     for i, (original, decomp) in enumerate(zip(original_rows, decompressed)):
-        assert original == decomp, \
+        assert original == decomp, (
             f"Hole 4 row {i} mismatch: {len(original)} tiles vs {len(decomp)} tiles"
+        )
 
 
 def test_hole_01_roundtrip(hole_01_data, terrain_decompressor):
@@ -58,13 +62,13 @@ def test_hole_01_roundtrip(hole_01_data, terrain_decompressor):
     decompressed = terrain_decompressor.decompress(compressed, row_width=22)
 
     # Verify dimensions
-    assert len(decompressed) == len(original_rows), \
+    assert len(decompressed) == len(original_rows), (
         f"Height mismatch: original={len(original_rows)}, decompressed={len(decompressed)}"
+    )
 
     # Verify content
     for i, (original, decomp) in enumerate(zip(original_rows, decompressed)):
-        assert original == decomp, \
-            f"Hole 1 row {i} mismatch"
+        assert original == decomp, f"Hole 1 row {i} mismatch"
 
 
 def test_all_terrain_zeros(terrain_decompressor):
@@ -80,8 +84,9 @@ def test_all_terrain_zeros(terrain_decompressor):
     decompressed = terrain_decompressor.decompress(compressed, row_width=22)
 
     # Should compress very efficiently
-    assert len(compressed) < len(original_rows) * 22, \
+    assert len(compressed) < len(original_rows) * 22, (
         "All-zero compression should be much smaller than original"
+    )
 
     # Verify round-trip
     assert len(decompressed) == len(original_rows)
@@ -125,8 +130,9 @@ def test_compression_stats(simple_terrain_fixture, terrain_decompressor):
 
     # Compressed should be smaller than original (with RLE/dict)
     # But not necessarily < 50% due to overhead
-    assert len(compressed) < original_size, \
+    assert len(compressed) < original_size, (
         f"Compression failed: original={original_size} bytes, compressed={len(compressed)} bytes"
+    )
 
     # Verify round-trip still works
     decompressed = terrain_decompressor.decompress(compressed, row_width=22)

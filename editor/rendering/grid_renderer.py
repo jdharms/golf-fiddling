@@ -40,11 +40,15 @@ class GridRenderer:
             x = canvas_rect.x + col * tile_size - offset_x
             if canvas_rect.x <= x <= canvas_rect.right:
                 color = COLOR_GRID_SUPER if col % 2 == 0 else COLOR_GRID
-                pygame.draw.line(screen, color, (x, canvas_rect.y), (x, canvas_rect.bottom))
+                pygame.draw.line(
+                    screen, color, (x, canvas_rect.y), (x, canvas_rect.bottom)
+                )
 
         # Horizontal lines
         for row in range(height + 1):
             y = canvas_rect.y + row * tile_size - offset_y
             if canvas_rect.y <= y <= canvas_rect.bottom:
                 color = COLOR_GRID_SUPER if row % 2 == 0 else COLOR_GRID
-                pygame.draw.line(screen, color, (canvas_rect.x, y), (canvas_rect.right, y))
+                pygame.draw.line(
+                    screen, color, (canvas_rect.x, y), (canvas_rect.right, y)
+                )

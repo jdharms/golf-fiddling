@@ -3,6 +3,7 @@ NES Open Tournament Golf - Undo Manager
 
 Manages undo/redo history for hole data modifications.
 """
+
 from typing import Optional
 import copy
 

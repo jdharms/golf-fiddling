@@ -30,28 +30,24 @@ class GreensTilePicker(TilePicker):
                 [0x29, 0x2C],
                 self.tiles_per_row,
                 self.tile_scale,
-                self.tile_spacing
+                self.tile_spacing,
             ),
             SimpleTileBank(
                 "Fringe",
                 _range_to_list(0x48, 0x88),
                 self.tiles_per_row,
                 self.tile_scale,
-                self.tile_spacing
+                self.tile_spacing,
             ),
             SimpleTileBank(
                 "Slopes",
                 _range_to_list(0x30, 0x48) + _range_to_list(0x88, 0xA0),
                 self.tiles_per_row,
                 self.tile_scale,
-                self.tile_spacing
+                self.tile_spacing,
             ),
             SimpleTileBank(
-                "Flat",
-                [0xB0],
-                self.tiles_per_row,
-                self.tile_scale,
-                self.tile_spacing
+                "Flat", [0xB0], self.tiles_per_row, self.tile_scale, self.tile_spacing
             ),
         ]
         self._calculate_bank_positions()
@@ -120,6 +116,11 @@ class GreensTilePicker(TilePicker):
                     pygame.draw.rect(
                         screen,
                         COLOR_SELECTION,
-                        (tile_x - 1, tile_y - 1, TILE_SIZE * self.tile_scale + 2, TILE_SIZE * self.tile_scale + 2),
-                        2
+                        (
+                            tile_x - 1,
+                            tile_y - 1,
+                            TILE_SIZE * self.tile_scale + 2,
+                            TILE_SIZE * self.tile_scale + 2,
+                        ),
+                        2,
                     )

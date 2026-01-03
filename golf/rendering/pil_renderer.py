@@ -22,7 +22,7 @@ def render_hole_to_image(
     tileset: TilesetData,
     sprites: Optional[Dict[str, PILSprite]] = None,
     render_sprites: bool = True,
-    selected_flag_index: int = 0
+    selected_flag_index: int = 0,
 ) -> Image.Image:
     """
     Render a hole to a PIL Image.
@@ -60,7 +60,7 @@ def render_hole_to_image(
     # Create image
     img_width = terrain_width * TILE_SIZE
     img_height = terrain_height * TILE_SIZE
-    img = Image.new('RGB', (img_width, img_height))
+    img = Image.new("RGB", (img_width, img_height))
     pixels = img.load()
     assert pixels is not None
 
@@ -133,7 +133,7 @@ def _render_terrain_sprites(
     img: Image.Image,
     sprites: Dict[str, PILSprite],
     hole_data: Dict[str, Any],
-    selected_flag_index: int
+    selected_flag_index: int,
 ):
     """
     Render flag, tee, and ball sprites on terrain view.

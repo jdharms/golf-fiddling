@@ -55,8 +55,11 @@ class SpriteRenderer:
                     screen_y = canvas_rect.y + py * canvas_scale - canvas_offset_y
 
                     if canvas_rect.collidepoint(screen_x, screen_y):
-                        pygame.draw.rect(screen, GREEN_OVERLAY_COLOR,
-                                       (screen_x, screen_y, canvas_scale, canvas_scale))
+                        pygame.draw.rect(
+                            screen,
+                            GREEN_OVERLAY_COLOR,
+                            (screen_x, screen_y, canvas_scale, canvas_scale),
+                        )
 
     @staticmethod
     def render_terrain_sprites(

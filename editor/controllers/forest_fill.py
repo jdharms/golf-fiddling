@@ -16,7 +16,7 @@ from golf.core.neighbor_validator import TerrainNeighborValidator
 PLACEHOLDER_TILE = 0x100  # 256 - outside NES tile range, clearly a meta value
 
 OOB_BORDER_START = 0x80  # Out of Bounds border tiles
-OOB_BORDER_END = 0x9B    # Range: $80-$9B inclusive
+OOB_BORDER_END = 0x9B  # Range: $80-$9B inclusive
 
 INNER_BORDER = 0x3F  # User can manually place these, they'll be preserved
 
@@ -32,8 +32,12 @@ class ForestFillRegion:
 
     def __init__(self, cells: Set[Tuple[int, int]]):
         self.cells = cells  # Placeholder tile cells in this region
-        self.distance_field: Dict[Tuple[int, int], int] = {}  # Manhattan distance to nearest OOB border
-        self.oob_cells: Set[Tuple[int, int]] = set()  # Nearby OOB border ($80-$9B) tiles
+        self.distance_field: Dict[
+            Tuple[int, int], int
+        ] = {}  # Manhattan distance to nearest OOB border
+        self.oob_cells: Set[Tuple[int, int]] = (
+            set()
+        )  # Nearby OOB border ($80-$9B) tiles
 
     def calculate_distance_field(self, terrain: List[List[int]]):
         """Calculate Manhattan distance from each placeholder to nearest OOB border using BFS."""
@@ -71,7 +75,16 @@ class ForestFillRegion:
     def _find_nearby_oob_tiles(self, terrain: List[List[int]]):
         """Find OOB border tiles near this placeholder region."""
         for row, col in self.cells:
-            for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
+            for dr, dc in [
+                (-1, 0),
+                (1, 0),
+                (0, -1),
+                (0, 1),
+                (-1, -1),
+                (-1, 1),
+                (1, -1),
+                (1, 1),
+            ]:
                 nr, nc = row + dr, col + dc
 
                 if nr < 0 or nr >= len(terrain) or nc < 0 or nc >= len(terrain[0]):
@@ -93,9 +106,15 @@ class ForestFillRegion:
 
 class Decision:
     """Represents a WFC decision that can be backtracked."""
-    def __init__(self, cell: Tuple[int, int], chosen_tile: int, alternatives: List[int],
-                 superposition_snapshot: Dict[Tuple[int, int], Set[int]],
-                 collapsed_snapshot: Dict[Tuple[int, int], int]):
+
+    def __init__(
+        self,
+        cell: Tuple[int, int],
+        chosen_tile: int,
+        alternatives: List[int],
+        superposition_snapshot: Dict[Tuple[int, int], Set[int]],
+        collapsed_snapshot: Dict[Tuple[int, int], int],
+    ):
         self.cell = cell
         self.chosen_tile = chosen_tile
         self.alternatives = alternatives
@@ -106,7 +125,9 @@ class Decision:
 class ForestFiller:
     """Intelligent forest fill algorithm using Wave Function Collapse."""
 
-    def __init__(self, neighbor_validator: TerrainNeighborValidator, debug: bool = False):
+    def __init__(
+        self, neighbor_validator: TerrainNeighborValidator, debug: bool = False
+    ):
         self.validator = neighbor_validator
         self.placeholder_tile = PLACEHOLDER_TILE
         self.debug = debug
@@ -138,8 +159,13 @@ class ForestFiller:
 
         return regions
 
-    def _flood_fill_placeholder(self, terrain: List[List[int]], start_row: int, start_col: int,
-                                 visited: Set[Tuple[int, int]]) -> Set[Tuple[int, int]]:
+    def _flood_fill_placeholder(
+        self,
+        terrain: List[List[int]],
+        start_row: int,
+        start_col: int,
+        visited: Set[Tuple[int, int]],
+    ) -> Set[Tuple[int, int]]:
         """Flood fill to find all connected placeholder tiles."""
         height = len(terrain)
         width = len(terrain[0])
@@ -169,8 +195,12 @@ class ForestFiller:
 
         return region_cells
 
-    def fill_region(self, terrain: List[List[int]], region: ForestFillRegion,
-                    max_backtracks: int = 10_000) -> Dict[Tuple[int, int], int]:
+    def fill_region(
+        self,
+        terrain: List[List[int]],
+        region: ForestFillRegion,
+        max_backtracks: int = 10_000,
+    ) -> Dict[Tuple[int, int], int]:
         """Fill a placeholder region using WFC with backtracking.
 
         Args:
@@ -210,25 +240,39 @@ class ForestFiller:
                 # Contradiction detected - attempt backtracking
                 if not decision_stack or backtrack_count >= max_backtracks:
                     if self.debug:
-                        self._log_stuck_cells(cells_to_collapse, superposition, collapsed, terrain)
+                        self._log_stuck_cells(
+                            cells_to_collapse, superposition, collapsed, terrain
+                        )
 
                     # Relaxation fallback: try to fill remaining cells anyway
-                    self._relaxation_pass(cells_to_collapse, superposition, collapsed, terrain, region)
+                    self._relaxation_pass(
+                        cells_to_collapse, superposition, collapsed, terrain, region
+                    )
                     break
 
                 # Backtrack
                 backtrack_count += 1
                 restored = self._backtrack(
-                    decision_stack, superposition, collapsed, cells_to_collapse,
-                    region, terrain
+                    decision_stack,
+                    superposition,
+                    collapsed,
+                    cells_to_collapse,
+                    region,
+                    terrain,
                 )
 
                 if not restored:
                     # Exhausted all alternatives
                     if self.debug:
-                        print(f"  Exhausted backtrack stack after {backtrack_count} attempts")
-                        self._log_stuck_cells(cells_to_collapse, superposition, collapsed, terrain)
-                    self._relaxation_pass(cells_to_collapse, superposition, collapsed, terrain, region)
+                        print(
+                            f"  Exhausted backtrack stack after {backtrack_count} attempts"
+                        )
+                        self._log_stuck_cells(
+                            cells_to_collapse, superposition, collapsed, terrain
+                        )
+                    self._relaxation_pass(
+                        cells_to_collapse, superposition, collapsed, terrain, region
+                    )
                     break
 
                 continue
@@ -244,8 +288,15 @@ class ForestFiller:
 
             # Score all possibilities with lookahead
             scored = self._score_possibilities_with_lookahead(
-                possibilities, min_entropy_cell, terrain, region,
-                superposition, collapsed, distance, pattern_phase, use_border
+                possibilities,
+                min_entropy_cell,
+                terrain,
+                region,
+                superposition,
+                collapsed,
+                distance,
+                pattern_phase,
+                use_border,
             )
 
             if not scored:
@@ -263,8 +314,10 @@ class ForestFiller:
                     cell=min_entropy_cell,
                     chosen_tile=chosen_tile,
                     alternatives=alternatives,
-                    superposition_snapshot={cell: poss.copy() for cell, poss in superposition.items()},
-                    collapsed_snapshot=collapsed.copy()
+                    superposition_snapshot={
+                        cell: poss.copy() for cell, poss in superposition.items()
+                    },
+                    collapsed_snapshot=collapsed.copy(),
                 )
                 decision_stack.append(decision)
 
@@ -274,7 +327,9 @@ class ForestFiller:
             cells_to_collapse.discard(min_entropy_cell)
 
             # Propagate constraints
-            self._propagate_constraints(min_entropy_cell, terrain, region, superposition, collapsed)
+            self._propagate_constraints(
+                min_entropy_cell, terrain, region, superposition, collapsed
+            )
 
         if backtrack_count > 0 and self.debug:
             print(f"  Backtracked {backtrack_count} times to resolve contradictions")
@@ -282,10 +337,10 @@ class ForestFiller:
         return collapsed
 
     def _find_min_entropy_cell_in_set(
-            self,
-            cell_set: Set[Tuple[int, int]],
-            superposition: Dict[Tuple[int, int], Set[int]],
-            collapsed: Dict[Tuple[int, int], int]
+        self,
+        cell_set: Set[Tuple[int, int]],
+        superposition: Dict[Tuple[int, int], Set[int]],
+        collapsed: Dict[Tuple[int, int], int],
     ) -> Tuple[Optional[Tuple[int, int]], bool]:
         """Find uncollapsed cell with minimum entropy.
 
@@ -295,7 +350,7 @@ class ForestFiller:
             - (None, False) if all cells are collapsed (success)
             - (None, True) if uncollapsed cells exist but all have empty possibility sets
         """
-        min_entropy = float('inf')
+        min_entropy = float("inf")
         min_cell = None
         has_uncollapsed = False
         has_contradiction = False
@@ -324,13 +379,13 @@ class ForestFiller:
         return min_cell, False
 
     def _backtrack(
-            self,
-            decision_stack: List[Decision],
-            superposition: Dict[Tuple[int, int], Set[int]],
-            collapsed: Dict[Tuple[int, int], int],
-            cells_to_collapse: Set[Tuple[int, int]],
-            region: ForestFillRegion,
-            terrain: List[List[int]]
+        self,
+        decision_stack: List[Decision],
+        superposition: Dict[Tuple[int, int], Set[int]],
+        collapsed: Dict[Tuple[int, int], int],
+        cells_to_collapse: Set[Tuple[int, int]],
+        region: ForestFillRegion,
+        terrain: List[List[int]],
     ) -> bool:
         """Attempt to backtrack to a previous decision and try an alternative.
 
@@ -357,7 +412,9 @@ class ForestFiller:
 
             # Recalculate cells_to_collapse
             cells_to_collapse.clear()
-            cells_to_collapse.update({cell for cell in region.cells if cell not in collapsed})
+            cells_to_collapse.update(
+                {cell for cell in region.cells if cell not in collapsed}
+            )
 
             # Apply alternative choice
             collapsed[last_decision.cell] = next_tile
@@ -365,7 +422,9 @@ class ForestFiller:
             cells_to_collapse.discard(last_decision.cell)
 
             # Propagate constraints
-            self._propagate_constraints(last_decision.cell, terrain, region, superposition, collapsed)
+            self._propagate_constraints(
+                last_decision.cell, terrain, region, superposition, collapsed
+            )
 
             # Remove decision from stack if no more alternatives
             if not last_decision.alternatives:
@@ -376,12 +435,12 @@ class ForestFiller:
         return False
 
     def _relaxation_pass(
-            self,
-            cells_to_collapse: Set[Tuple[int, int]],
-            superposition: Dict[Tuple[int, int], Set[int]],
-            collapsed: Dict[Tuple[int, int], int],
-            terrain: List[List[int]],
-            region: ForestFillRegion
+        self,
+        cells_to_collapse: Set[Tuple[int, int]],
+        superposition: Dict[Tuple[int, int], Set[int]],
+        collapsed: Dict[Tuple[int, int], int],
+        terrain: List[List[int]],
+        region: ForestFillRegion,
     ):
         """Last-resort pass: fill remaining cells with any valid tile, relaxing constraints."""
         remaining = [c for c in cells_to_collapse if c not in collapsed]
@@ -391,7 +450,9 @@ class ForestFiller:
 
         for cell in remaining:
             # Try constrained possibilities first
-            valid = self._get_constrained_possibilities(cell, terrain, region, superposition, collapsed)
+            valid = self._get_constrained_possibilities(
+                cell, terrain, region, superposition, collapsed
+            )
 
             if valid:
                 # Pick the best one by score
@@ -400,7 +461,9 @@ class ForestFiller:
                 use_border = distance <= BORDER_DISTANCE_THRESHOLD
                 pattern_phase = self._compute_pattern_phase(row, col, collapsed)
 
-                best_tile = self._select_best_tile(valid, distance, pattern_phase, use_border)
+                best_tile = self._select_best_tile(
+                    valid, distance, pattern_phase, use_border
+                )
                 if best_tile is not None:
                     collapsed[cell] = best_tile
                     superposition[cell] = {best_tile}
@@ -420,10 +483,10 @@ class ForestFiller:
                     print(f"    FAILED to fill {cell} - no valid tile found")
 
     def _pick_fallback_tile(
-            self,
-            cell: Tuple[int, int],
-            terrain: List[List[int]],
-            collapsed: Dict[Tuple[int, int], int]
+        self,
+        cell: Tuple[int, int],
+        terrain: List[List[int]],
+        collapsed: Dict[Tuple[int, int], int],
     ) -> Optional[int]:
         """Pick a fallback tile when normal constraint satisfaction fails.
 
@@ -437,8 +500,12 @@ class ForestFiller:
             score = 0
             valid_directions = 0
 
-            for direction, (dr, dc) in [("up", (-1, 0)), ("down", (1, 0)),
-                                        ("left", (0, -1)), ("right", (0, 1))]:
+            for direction, (dr, dc) in [
+                ("up", (-1, 0)),
+                ("down", (1, 0)),
+                ("left", (0, -1)),
+                ("right", (0, 1)),
+            ]:
                 nr, nc = row + dr, col + dc
 
                 if nr < 0 or nr >= len(terrain) or nc < 0 or nc >= len(terrain[0]):
@@ -457,7 +524,9 @@ class ForestFiller:
 
                 # Check if this tile can have this neighbor
                 if tile in self.validator.neighbors:
-                    valid_neighbors = self.validator.neighbors[tile].get(direction, set())
+                    valid_neighbors = self.validator.neighbors[tile].get(
+                        direction, set()
+                    )
                     if neighbor_tile in valid_neighbors:
                         score += 2
                         valid_directions += 1
@@ -476,15 +545,16 @@ class ForestFiller:
         return best_tile
 
     def _log_stuck_cells(
-            self,
-            cells_to_collapse: Set[Tuple[int, int]],
-            superposition: Dict[Tuple[int, int], Set[int]],
-            collapsed: Dict[Tuple[int, int], int],
-            terrain: List[List[int]]
+        self,
+        cells_to_collapse: Set[Tuple[int, int]],
+        superposition: Dict[Tuple[int, int], Set[int]],
+        collapsed: Dict[Tuple[int, int], int],
+        terrain: List[List[int]],
     ):
         """Log diagnostic information about stuck cells."""
         stuck_cells = [
-            c for c in cells_to_collapse
+            c
+            for c in cells_to_collapse
             if c not in collapsed and len(superposition.get(c, set())) == 0
         ]
 
@@ -497,17 +567,21 @@ class ForestFiller:
             print(f"    {cell}: neighbors={neighbors}")
 
     def _get_neighbor_info(
-            self,
-            cell: Tuple[int, int],
-            terrain: List[List[int]],
-            collapsed: Dict[Tuple[int, int], int]
+        self,
+        cell: Tuple[int, int],
+        terrain: List[List[int]],
+        collapsed: Dict[Tuple[int, int], int],
     ) -> Dict[str, str]:
         """Get info about a cell's neighbors for debugging."""
         row, col = cell
         info = {}
 
-        for direction, (dr, dc) in [("up", (-1, 0)), ("down", (1, 0)),
-                                    ("left", (0, -1)), ("right", (0, 1))]:
+        for direction, (dr, dc) in [
+            ("up", (-1, 0)),
+            ("down", (1, 0)),
+            ("left", (0, -1)),
+            ("right", (0, 1)),
+        ]:
             nr, nc = row + dr, col + dc
 
             if nr < 0 or nr >= len(terrain) or nc < 0 or nc >= len(terrain[0]):
@@ -524,10 +598,7 @@ class ForestFiller:
         return info
 
     def _compute_pattern_phase(
-            self,
-            row: int,
-            col: int,
-            collapsed: Dict[Tuple[int, int], int]
+        self, row: int, col: int, collapsed: Dict[Tuple[int, int], int]
     ) -> int:
         """Compute pattern phase based on existing fill tiles in this row.
 
@@ -558,16 +629,16 @@ class ForestFiller:
         return (leftmost_phase + (col - leftmost_fill_col)) % 4
 
     def _score_possibilities_with_lookahead(
-            self,
-            possibilities: List[int],
-            cell: Tuple[int, int],
-            terrain: List[List[int]],
-            region: ForestFillRegion,
-            superposition: Dict[Tuple[int, int], Set[int]],
-            collapsed: Dict[Tuple[int, int], int],
-            distance: int,
-            pattern_phase: int,
-            use_border: bool
+        self,
+        possibilities: List[int],
+        cell: Tuple[int, int],
+        terrain: List[List[int]],
+        region: ForestFillRegion,
+        superposition: Dict[Tuple[int, int], Set[int]],
+        collapsed: Dict[Tuple[int, int], int],
+        distance: int,
+        pattern_phase: int,
+        use_border: bool,
     ) -> List[Tuple[float, int]]:
         """Score all possibilities with lookahead to detect contradictions."""
         tile_scores = []
@@ -585,12 +656,16 @@ class ForestFiller:
             test_collapsed[cell] = tile
             test_superposition[cell] = {tile}
 
-            self._propagate_constraints(cell, terrain, region, test_superposition, test_collapsed)
+            self._propagate_constraints(
+                cell, terrain, region, test_superposition, test_collapsed
+            )
 
             # Count contradictions
             contradictions = sum(
-                1 for c in region.cells
-                if c not in test_collapsed and len(test_superposition.get(c, set())) == 0
+                1
+                for c in region.cells
+                if c not in test_collapsed
+                and len(test_superposition.get(c, set())) == 0
             )
 
             # Count total remaining entropy (lower is more constrained, could be risky)
@@ -602,9 +677,9 @@ class ForestFiller:
 
             # Combined score: heavily penalize contradictions
             combined_score = (
-                -contradictions * 10000 +  # Massive penalty for contradictions
-                base_score +               # Positive for good pattern match
-                total_entropy * 0.1        # Slight preference for less constrained states
+                -contradictions * 10000  # Massive penalty for contradictions
+                + base_score  # Positive for good pattern match
+                + total_entropy * 0.1  # Slight preference for less constrained states
             )
 
             tile_scores.append((combined_score, tile))
@@ -613,12 +688,12 @@ class ForestFiller:
         return tile_scores
 
     def _propagate_constraints(
-            self,
-            cell: Tuple[int, int],
-            terrain: List[List[int]],
-            region: ForestFillRegion,
-            superposition: Dict[Tuple[int, int], Set[int]],
-            collapsed: Dict[Tuple[int, int], int]
+        self,
+        cell: Tuple[int, int],
+        terrain: List[List[int]],
+        region: ForestFillRegion,
+        superposition: Dict[Tuple[int, int], Set[int]],
+        collapsed: Dict[Tuple[int, int], int],
     ):
         """Propagate constraints from a cell to its neighbors."""
         queue = deque([cell])
@@ -633,8 +708,12 @@ class ForestFiller:
 
             row, col = current
 
-            for direction, (dr, dc) in [("up", (-1, 0)), ("down", (1, 0)),
-                                        ("left", (0, -1)), ("right", (0, 1))]:
+            for direction, (dr, dc) in [
+                ("up", (-1, 0)),
+                ("down", (1, 0)),
+                ("left", (0, -1)),
+                ("right", (0, 1)),
+            ]:
                 nr, nc = row + dr, col + dc
                 neighbor_cell = (nr, nc)
 
@@ -654,23 +733,30 @@ class ForestFiller:
 
                 superposition[neighbor_cell] = new_possibilities
 
-                if new_possibilities != old_possibilities and neighbor_cell not in processed:
+                if (
+                    new_possibilities != old_possibilities
+                    and neighbor_cell not in processed
+                ):
                     queue.append(neighbor_cell)
 
     def _get_constrained_possibilities(
-            self,
-            cell: Tuple[int, int],
-            terrain: List[List[int]],
-            region: ForestFillRegion,
-            superposition: Dict[Tuple[int, int], Set[int]],
-            collapsed: Dict[Tuple[int, int], int]
+        self,
+        cell: Tuple[int, int],
+        terrain: List[List[int]],
+        region: ForestFillRegion,
+        superposition: Dict[Tuple[int, int], Set[int]],
+        collapsed: Dict[Tuple[int, int], int],
     ) -> Set[int]:
         """Get valid tile possibilities for a cell based on current constraints."""
         row, col = cell
         current_possibilities = superposition.get(cell, set(ALL_FOREST_TILES)).copy()
 
-        for direction, (dr, dc) in [("up", (-1, 0)), ("down", (1, 0)),
-                                    ("left", (0, -1)), ("right", (0, 1))]:
+        for direction, (dr, dc) in [
+            ("up", (-1, 0)),
+            ("down", (1, 0)),
+            ("left", (0, -1)),
+            ("right", (0, 1)),
+        ]:
             nr, nc = row + dr, col + dc
 
             if nr < 0 or nr >= len(terrain) or nc < 0 or nc >= len(terrain[0]):
@@ -689,7 +775,9 @@ class ForestFiller:
                 if candidate not in self.validator.neighbors:
                     continue
 
-                valid_neighbors = self.validator.neighbors[candidate].get(direction, set())
+                valid_neighbors = self.validator.neighbors[candidate].get(
+                    direction, set()
+                )
                 if neighbor_tile in valid_neighbors:
                     valid_for_this_neighbor.add(candidate)
 
@@ -698,11 +786,7 @@ class ForestFiller:
         return current_possibilities
 
     def _select_best_tile(
-            self,
-            valid_tiles: Set[int],
-            distance: int,
-            pattern_phase: int,
-            use_border: bool
+        self, valid_tiles: Set[int], distance: int, pattern_phase: int, use_border: bool
     ) -> Optional[int]:
         """Select best tile from valid candidates based on scoring."""
         if not valid_tiles:
@@ -716,7 +800,9 @@ class ForestFiller:
         scored.sort(reverse=True)
         return scored[0][1]
 
-    def _score_tile(self, tile: int, distance: int, pattern_phase: int, use_border: bool) -> int:
+    def _score_tile(
+        self, tile: int, distance: int, pattern_phase: int, use_border: bool
+    ) -> int:
         """Score a candidate tile based on category and pattern match."""
         score = 0
 
@@ -736,14 +822,14 @@ class ForestFiller:
         return score
 
     def _score_tile_with_context(
-            self,
-            tile: int,
-            cell: Tuple[int, int],
-            terrain: List[List[int]],
-            collapsed: Dict[Tuple[int, int], int],
-            distance: int,
-            pattern_phase: int,
-            use_border: bool
+        self,
+        tile: int,
+        cell: Tuple[int, int],
+        terrain: List[List[int]],
+        collapsed: Dict[Tuple[int, int], int],
+        distance: int,
+        pattern_phase: int,
+        use_border: bool,
     ) -> float:
         """Score a tile considering both intrinsic properties and neighbor context."""
         base_score = self._score_tile(tile, distance, pattern_phase, use_border)
@@ -752,8 +838,12 @@ class ForestFiller:
         row, col = cell
         neighbor_count = 0
 
-        for direction, (dr, dc) in [("up", (-1, 0)), ("down", (1, 0)),
-                                    ("left", (0, -1)), ("right", (0, 1))]:
+        for direction, (dr, dc) in [
+            ("up", (-1, 0)),
+            ("down", (1, 0)),
+            ("left", (0, -1)),
+            ("right", (0, 1)),
+        ]:
             nr, nc = row + dr, col + dc
 
             if nr < 0 or nr >= len(terrain) or nc < 0 or nc >= len(terrain[0]):
@@ -766,7 +856,9 @@ class ForestFiller:
                 neighbor_tile = terrain[nr][nc]
 
             if neighbor_tile is not None:
-                freq = self.validator.get_neighbor_frequency(tile, neighbor_tile, direction)
+                freq = self.validator.get_neighbor_frequency(
+                    tile, neighbor_tile, direction
+                )
                 if freq > 0:
                     frequency_score += 50 * math.log2(1 + freq)
                     neighbor_count += 1

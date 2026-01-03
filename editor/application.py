@@ -3,6 +3,7 @@ NES Open Tournament Golf - Editor Application
 
 Main application class that orchestrates all editor components.
 """
+
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -42,8 +43,7 @@ class EditorApplication:
         self.screen_width = 1200
         self.screen_height = 1200
         self.screen = pygame.display.set_mode(
-            (self.screen_width, self.screen_height),
-            pygame.RESIZABLE
+            (self.screen_width, self.screen_height), pygame.RESIZABLE
         )
         pygame.display.set_caption("NES Open Golf Course Editor")
 
@@ -81,9 +81,12 @@ class EditorApplication:
         # Load terrain neighbor validator
         try:
             from golf.core.neighbor_validator import TerrainNeighborValidator
+
             self.terrain_neighbor_validator = TerrainNeighborValidator()
         except FileNotFoundError:
-            print("Warning: terrain_neighbors.json not found, neighbor validation disabled")
+            print(
+                "Warning: terrain_neighbors.json not found, neighbor validation disabled"
+            )
             self.terrain_neighbor_validator = None
         except Exception as e:
             print(f"Warning: Failed to load neighbor validator: {e}")
@@ -93,6 +96,7 @@ class EditorApplication:
         if self.terrain_neighbor_validator:
             try:
                 from editor.controllers.forest_fill import ForestFiller
+
                 self.forest_filler = ForestFiller(self.terrain_neighbor_validator)
             except Exception as e:
                 print(f"Warning: Failed to initialize forest filler: {e}")
@@ -111,16 +115,21 @@ class EditorApplication:
         self.highlight_state = HighlightState()
 
         # Create pickers first (needed by event handler)
-        picker_rect = Rect(0, TOOLBAR_HEIGHT, PICKER_WIDTH, self.screen_height - TOOLBAR_HEIGHT - STATUS_HEIGHT)
+        picker_rect = Rect(
+            0,
+            TOOLBAR_HEIGHT,
+            PICKER_WIDTH,
+            self.screen_height - TOOLBAR_HEIGHT - STATUS_HEIGHT,
+        )
         self.terrain_picker = TilePicker(
             self.terrain_tileset,
             picker_rect,
-            on_hover_change=self._on_terrain_hover_change
+            on_hover_change=self._on_terrain_hover_change,
         )
         self.greens_picker = GreensTilePicker(
             self.greens_tileset,
             picker_rect,
-            on_hover_change=self._on_greens_hover_change
+            on_hover_change=self._on_greens_hover_change,
         )
 
         # Create tool manager and register tools
@@ -189,9 +198,9 @@ class EditorApplication:
     def _update_mode_buttons(self):
         """Update mode button active states."""
         mode_buttons = self.toolbar.get_mode_buttons()
-        mode_buttons[0].active = (self.state.mode == "terrain")
-        mode_buttons[1].active = (self.state.mode == "palette")
-        mode_buttons[2].active = (self.state.mode == "greens")
+        mode_buttons[0].active = self.state.mode == "terrain"
+        mode_buttons[1].active = self.state.mode == "palette"
+        mode_buttons[2].active = self.state.mode == "greens"
         self._update_flag_buttons()
         self._update_palette_buttons()
 
@@ -204,7 +213,7 @@ class EditorApplication:
         """Update flag button active states."""
         flag_buttons = self.toolbar.get_flag_buttons()
         for i, btn in enumerate(flag_buttons):
-            btn.active = (i == self.state.selected_flag_index)
+            btn.active = i == self.state.selected_flag_index
 
     def _set_palette(self, palette: int):
         """Set the selected palette."""
@@ -215,7 +224,7 @@ class EditorApplication:
         """Update palette button active states."""
         palette_buttons = self.toolbar.get_palette_buttons()
         for i, btn in enumerate(palette_buttons, start=1):
-            btn.active = (i == self.state.selected_palette)
+            btn.active = i == self.state.selected_palette
 
     def _add_row(self, at_top: bool = False):
         """Add terrain row via row operations tool."""
@@ -250,7 +259,9 @@ class EditorApplication:
         if self.cached_invalid_terrain_tiles is None:
             # Cache miss - recompute
             self.cached_invalid_terrain_tiles = (
-                self.terrain_neighbor_validator.get_invalid_tiles(self.hole_data.terrain)
+                self.terrain_neighbor_validator.get_invalid_tiles(
+                    self.hole_data.terrain
+                )
             )
 
         return self.cached_invalid_terrain_tiles
@@ -258,8 +269,7 @@ class EditorApplication:
     def _on_load(self):
         """Load a hole file."""
         path = open_file_dialog(
-            "Load Hole",
-            [("JSON files", "*.json"), ("All files", "*.*")]
+            "Load Hole", [("JSON files", "*.json"), ("All files", "*.*")]
         )
         if path:
             self.hole_data.load(path)
@@ -275,9 +285,7 @@ class EditorApplication:
             self.hole_data.save()
         else:
             path = save_file_dialog(
-                "Save Hole",
-                ".json",
-                [("JSON files", "*.json"), ("All files", "*.*")]
+                "Save Hole", ".json", [("JSON files", "*.json"), ("All files", "*.*")]
             )
             if path:
                 self.hole_data.save(path)
@@ -286,7 +294,9 @@ class EditorApplication:
         """Handle window resize."""
         self.screen_width = width
         self.screen_height = height
-        self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE)
+        self.screen = pygame.display.set_mode(
+            (self.screen_width, self.screen_height), pygame.RESIZABLE
+        )
         self.toolbar.resize(width)
         self.event_handler.update_screen_size(width, height)
 
@@ -312,7 +322,7 @@ class EditorApplication:
             CANVAS_OFFSET_X,
             CANVAS_OFFSET_Y,
             self.screen_width - CANVAS_OFFSET_X,
-            self.screen_height - CANVAS_OFFSET_Y - STATUS_HEIGHT
+            self.screen_height - CANVAS_OFFSET_Y - STATUS_HEIGHT,
         )
 
     def _screen_to_tile(self, screen_pos: Tuple[int, int]) -> Optional[Tuple[int, int]]:
@@ -348,7 +358,9 @@ class EditorApplication:
         if self.state.mode == "greens":
             self.greens_picker.render(self.screen)
         else:
-            palette_for_picker = self.state.selected_palette if self.state.selected_palette > 0 else 1
+            palette_for_picker = (
+                self.state.selected_palette if self.state.selected_palette > 0 else 1
+            )
             self.terrain_picker.render(self.screen, palette_for_picker)
 
         # Canvas
@@ -373,8 +385,12 @@ class EditorApplication:
         pygame.draw.rect(self.screen, (0, 0, 0), canvas_rect)
 
         if not self.hole_data.terrain:
-            text = self.font.render("No hole loaded. Press Ctrl+O to open.", True, COLOR_TEXT)
-            self.screen.blit(text, (canvas_rect.centerx - text.get_width() // 2, canvas_rect.centery))
+            text = self.font.render(
+                "No hole loaded. Press Ctrl+O to open.", True, COLOR_TEXT
+            )
+            self.screen.blit(
+                text, (canvas_rect.centerx - text.get_width() // 2, canvas_rect.centery)
+            )
             return
 
         # Create view state
@@ -382,13 +398,15 @@ class EditorApplication:
             canvas_rect,
             self.state.canvas_offset_x,
             self.state.canvas_offset_y,
-            self.state.canvas_scale
+            self.state.canvas_scale,
         )
 
         # Update highlight state
         self.highlight_state.show_invalid_tiles = self.state.show_invalid_tiles
         if self.state.mode == "terrain":
-            self.highlight_state.invalid_terrain_tiles = self.get_invalid_terrain_tiles()
+            self.highlight_state.invalid_terrain_tiles = (
+                self.get_invalid_terrain_tiles()
+            )
         else:
             self.highlight_state.invalid_terrain_tiles = None
 
@@ -433,7 +451,9 @@ class EditorApplication:
 
     def _render_status(self):
         """Render status bar."""
-        status_rect = Rect(0, self.screen_height - STATUS_HEIGHT, self.screen_width, STATUS_HEIGHT)
+        status_rect = Rect(
+            0, self.screen_height - STATUS_HEIGHT, self.screen_width, STATUS_HEIGHT
+        )
         pygame.draw.rect(self.screen, COLOR_STATUS, status_rect)
 
         # Mouse position
@@ -442,7 +462,9 @@ class EditorApplication:
         status_parts = [f"Mode: {self.state.mode.title()}"]
 
         if self.state.mode == "terrain":
-            status_parts.append(f"Sprites: {'ON' if self.state.show_sprites else 'OFF'}")
+            status_parts.append(
+                f"Sprites: {'ON' if self.state.show_sprites else 'OFF'}"
+            )
             if self.state.show_sprites and self.hole_data.metadata:
                 status_parts.append(f"Flag: {self.state.selected_flag_index + 1}/4")
 
@@ -464,13 +486,21 @@ class EditorApplication:
                 row, col = tile
                 status_parts.append(f"Tile: ({col}, {row})")
 
-                if self.state.mode == "terrain" and 0 <= row < len(self.hole_data.terrain) and 0 <= col < TERRAIN_WIDTH:
+                if (
+                    self.state.mode == "terrain"
+                    and 0 <= row < len(self.hole_data.terrain)
+                    and 0 <= col < TERRAIN_WIDTH
+                ):
                     tile_val = self.hole_data.terrain[row][col]
                     attr_val = self.hole_data.get_attribute(row, col)
                     status_parts.append(f"Value: ${tile_val:02X}")
                     status_parts.append(f"Palette: {attr_val}")
 
-                elif self.state.mode == "greens" and 0 <= row < len(self.hole_data.greens) and 0 <= col < GREENS_WIDTH:
+                elif (
+                    self.state.mode == "greens"
+                    and 0 <= row < len(self.hole_data.greens)
+                    and 0 <= col < GREENS_WIDTH
+                ):
                     tile_val = self.hole_data.greens[row][col]
                     status_parts.append(f"Value: ${tile_val:02X}")
 

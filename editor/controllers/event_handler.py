@@ -4,13 +4,12 @@ NES Open Tournament Golf - Event Handler
 Handles user input events including mouse, keyboard, and window events.
 """
 
-from typing import Tuple, Optional, List, Callable
+from typing import Optional, List, Callable
 
 import pygame
 from pygame import Rect
 
 from .editor_state import EditorState
-from .transform_logic import TransformLogic
 from golf.formats.hole_data import HoleData
 from editor.ui.pickers import TilePicker, GreensTilePicker
 from editor.ui.widgets import Button
@@ -18,10 +17,6 @@ from editor.core.constants import (
     CANVAS_OFFSET_X,
     CANVAS_OFFSET_Y,
     STATUS_HEIGHT,
-    TILE_SIZE,
-    TERRAIN_WIDTH,
-    GREENS_WIDTH,
-    GREENS_HEIGHT,
 )
 
 
@@ -81,6 +76,7 @@ class EventHandler:
 
         # Create tool context (will be updated by Application with transform_logic and forest_filler)
         from editor.tools.base_tool import ToolContext
+
         self.tool_context = ToolContext(
             hole_data=hole_data,
             state=state,
@@ -117,7 +113,9 @@ class EventHandler:
                     tool = self.tool_manager.get_active_tool()
                     if tool:
                         modifiers = pygame.key.get_mods()
-                        result = tool.handle_key_down(event.key, modifiers, self.tool_context)
+                        result = tool.handle_key_down(
+                            event.key, modifiers, self.tool_context
+                        )
                         self._process_tool_result(result)
 
             elif event.type == pygame.KEYUP:
@@ -128,7 +126,11 @@ class EventHandler:
                     self._process_tool_result(result)
                 # Also check transform tool specifically for shift release
                 transform_tool = self.tool_manager.get_tool("transform")
-                if transform_tool and hasattr(transform_tool, 'state') and transform_tool.state.is_active:
+                if (
+                    transform_tool
+                    and hasattr(transform_tool, "state")
+                    and transform_tool.state.is_active
+                ):
                     result = transform_tool.handle_key_up(event.key, self.tool_context)
                     self._process_tool_result(result)
 
@@ -147,7 +149,9 @@ class EventHandler:
                 picker_handled = self.terrain_picker.handle_event(event)
 
             # Handle canvas events (only if button/picker didn't handle)
-            if event.type == pygame.MOUSEBUTTONDOWN and not (button_handled or picker_handled):
+            if event.type == pygame.MOUSEBUTTONDOWN and not (
+                button_handled or picker_handled
+            ):
                 modifiers = pygame.key.get_mods()
 
                 # Try transform tool first if shift held
@@ -191,22 +195,36 @@ class EventHandler:
             elif event.type == pygame.MOUSEBUTTONUP and not picker_handled:
                 # Check transform first (might be active)
                 transform_tool = self.tool_manager.get_tool("transform")
-                if transform_tool and hasattr(transform_tool, 'state') and transform_tool.state.is_active:
-                    result = transform_tool.handle_mouse_up(event.pos, event.button, self.tool_context)
+                if (
+                    transform_tool
+                    and hasattr(transform_tool, "state")
+                    and transform_tool.state.is_active
+                ):
+                    result = transform_tool.handle_mouse_up(
+                        event.pos, event.button, self.tool_context
+                    )
                     self._process_tool_result(result)
                     continue
 
                 # Otherwise delegate to active tool
                 tool = self.tool_manager.get_active_tool()
                 if tool:
-                    result = tool.handle_mouse_up(event.pos, event.button, self.tool_context)
+                    result = tool.handle_mouse_up(
+                        event.pos, event.button, self.tool_context
+                    )
                     self._process_tool_result(result)
 
             elif event.type == pygame.MOUSEMOTION:
                 # Check if transform is active
                 transform_tool = self.tool_manager.get_tool("transform")
-                if transform_tool and hasattr(transform_tool, 'state') and transform_tool.state.is_active:
-                    result = transform_tool.handle_mouse_motion(event.pos, self.tool_context)
+                if (
+                    transform_tool
+                    and hasattr(transform_tool, "state")
+                    and transform_tool.state.is_active
+                ):
+                    result = transform_tool.handle_mouse_motion(
+                        event.pos, self.tool_context
+                    )
                     self._process_tool_result(result)
                     continue
 
@@ -269,7 +287,9 @@ class EventHandler:
             # Ctrl+F = Forest fill
             forest_fill_tool = self.tool_manager.get_tool("forest_fill")
             if forest_fill_tool:
-                result = forest_fill_tool.handle_key_down(event.key, pygame.key.get_mods(), self.tool_context)
+                result = forest_fill_tool.handle_key_down(
+                    event.key, pygame.key.get_mods(), self.tool_context
+                )
                 self._process_tool_result(result)
 
         elif event.key == pygame.K_LEFT:
@@ -285,14 +305,18 @@ class EventHandler:
             # Previous flag position
             if self.hole_data.metadata.get("flag_positions"):
                 num_flags = len(self.hole_data.metadata["flag_positions"])
-                self.state.selected_flag_index = (self.state.selected_flag_index - 1) % num_flags
+                self.state.selected_flag_index = (
+                    self.state.selected_flag_index - 1
+                ) % num_flags
                 self.on_flag_change()
 
         elif event.key == pygame.K_RIGHTBRACKET:  # ]
             # Next flag position
             if self.hole_data.metadata.get("flag_positions"):
                 num_flags = len(self.hole_data.metadata["flag_positions"])
-                self.state.selected_flag_index = (self.state.selected_flag_index + 1) % num_flags
+                self.state.selected_flag_index = (
+                    self.state.selected_flag_index + 1
+                ) % num_flags
                 self.on_flag_change()
 
         elif event.key == pygame.K_v:  # Toggle sprites (V for "view")
@@ -310,7 +334,7 @@ class EventHandler:
             CANVAS_OFFSET_X,
             CANVAS_OFFSET_Y,
             self.screen_width - CANVAS_OFFSET_X,
-            self.screen_height - CANVAS_OFFSET_Y - STATUS_HEIGHT
+            self.screen_height - CANVAS_OFFSET_Y - STATUS_HEIGHT,
         )
 
     def _undo(self):

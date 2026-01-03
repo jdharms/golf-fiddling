@@ -47,8 +47,9 @@ def test_reverse_dict_lookup_sorted(compression_tables):
 
     # Check that lengths are non-increasing (longest first)
     for i in range(len(lengths) - 1):
-        assert lengths[i] >= lengths[i + 1], \
-            f"Reverse lookup not sorted longest-first: {lengths[i]} < {lengths[i+1]}"
+        assert lengths[i] >= lengths[i + 1], (
+            f"Reverse lookup not sorted longest-first: {lengths[i]} < {lengths[i + 1]}"
+        )
 
 
 def test_dict_sequence_expansion(compression_tables):
@@ -84,12 +85,14 @@ def test_table_consistency(compression_tables):
     # All dictionary codes should have first_byte < len(horiz_table)
     for code_name, code_def in dict_codes.items():
         first_byte = code_def["first_byte"]
-        assert first_byte < len(horiz_table), \
+        assert first_byte < len(horiz_table), (
             f"Code {code_name} has first_byte={first_byte} >= len(horiz_table)={len(horiz_table)}"
+        )
 
     # Verify tables are same length for terrain
-    assert len(horiz_table) == len(vert_table), \
+    assert len(horiz_table) == len(vert_table), (
         f"Terrain tables mismatch: horiz={len(horiz_table)}, vert={len(vert_table)}"
+    )
 
     # Check greens consistency too
     greens = compression_tables["greens"]
@@ -97,11 +100,13 @@ def test_table_consistency(compression_tables):
     greens_vert = greens["vertical_table"]
     greens_dict = greens["dictionary_codes"]
 
-    assert len(greens_horiz) == len(greens_vert), \
+    assert len(greens_horiz) == len(greens_vert), (
         f"Greens tables mismatch: horiz={len(greens_horiz)}, vert={len(greens_vert)}"
+    )
 
     # All greens dictionary codes should have valid first_byte
     for code_name, code_def in greens_dict.items():
         first_byte = code_def["first_byte"]
-        assert first_byte < len(greens_horiz), \
+        assert first_byte < len(greens_horiz), (
             f"Greens code {code_name} has first_byte={first_byte} >= len(horiz_table)={len(greens_horiz)}"
+        )

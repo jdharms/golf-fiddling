@@ -27,7 +27,7 @@ class HoleData:
 
     def load(self, path: str):
         """Load hole data from JSON file."""
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             data = json.load(f)
 
         # Parse terrain using shared hex utility
@@ -110,7 +110,7 @@ class HoleData:
             "_debug": self.metadata.get("_debug", {}),
         }
 
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(data, f, indent=2)
 
         self.filepath = path
@@ -123,13 +123,17 @@ class HoleData:
         """Get palette index for a terrain tile position."""
         attr_row = tile_row // 2
         attr_col = tile_col // 2
-        if 0 <= attr_row < len(self.attributes) and 0 <= attr_col < len(self.attributes[attr_row]):
+        if 0 <= attr_row < len(self.attributes) and 0 <= attr_col < len(
+            self.attributes[attr_row]
+        ):
             return self.attributes[attr_row][attr_col]
         return 1
 
     def set_attribute(self, super_row: int, super_col: int, palette: int):
         """Set palette index for a supertile position."""
-        if 0 <= super_row < len(self.attributes) and 0 <= super_col < len(self.attributes[super_row]):
+        if 0 <= super_row < len(self.attributes) and 0 <= super_col < len(
+            self.attributes[super_row]
+        ):
             self.attributes[super_row][super_col] = palette
             self.modified = True
 

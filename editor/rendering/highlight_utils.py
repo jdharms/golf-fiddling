@@ -21,7 +21,7 @@ def draw_tile_border(
     y: int,
     tile_size: int,
     color: Tuple[int, int, int] = HIGHLIGHT_COLOR,
-    border_width: int = HIGHLIGHT_BORDER_WIDTH
+    border_width: int = HIGHLIGHT_BORDER_WIDTH,
 ):
     """
     Draw a colored border around a tile at the specified screen position.
@@ -38,6 +38,6 @@ def draw_tile_border(
         x - border_width,
         y - border_width,
         tile_size + border_width * 2,
-        tile_size + border_width * 2
+        tile_size + border_width * 2,
     )
     pygame.draw.rect(screen, color, border_rect, border_width)

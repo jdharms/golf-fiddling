@@ -39,7 +39,7 @@ def format_hex_row(row: List[int]) -> str:
         >>> format_hex_row([1, 2, 163, 255])
         '01 02 A3 FF'
     """
-    return ' '.join(f'{b:02X}' for b in row)
+    return " ".join(f"{b:02X}" for b in row)
 
 
 def parse_hex_rows(rows: List[str]) -> List[List[int]]:

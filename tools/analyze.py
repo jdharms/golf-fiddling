@@ -69,7 +69,9 @@ def analyze_holes(directories):
         print(f"No JSON files found in {', '.join(directories)}")
         sys.exit(1)
 
-    print(f"Analyzing {len(directories)} director{'y' if len(directories) == 1 else 'ies'}: {', '.join(directories)}")
+    print(
+        f"Analyzing {len(directories)} director{'y' if len(directories) == 1 else 'ies'}: {', '.join(directories)}"
+    )
     print(f"Found {len(json_files)} hole files\n")
 
     # Data collectors
@@ -163,15 +165,23 @@ def analyze_holes(directories):
         pairs.sort()
         # Check if linear relationship exists
         if len(pairs) >= 2:
-            diffs = [(pairs[i+1][0] - pairs[i][0], pairs[i+1][1] - pairs[i][1])
-                     for i in range(len(pairs)-1)]
+            diffs = [
+                (pairs[i + 1][0] - pairs[i][0], pairs[i + 1][1] - pairs[i][1])
+                for i in range(len(pairs) - 1)
+            ]
             print(f"  Data points: {pairs}")
             # Try to find pattern
             sl0, h0 = pairs[0]
-            if all(d[0] != 0 and d[1]/d[0] == diffs[0][1]/diffs[0][0] for d in diffs if d[0] != 0):
+            if all(
+                d[0] != 0 and d[1] / d[0] == diffs[0][1] / diffs[0][0]
+                for d in diffs
+                if d[0] != 0
+            ):
                 slope = diffs[0][1] / diffs[0][0]
                 intercept = h0 - slope * sl0
-                print(f"  Appears linear: height = {slope} * scroll_limit + {intercept}")
+                print(
+                    f"  Appears linear: height = {slope} * scroll_limit + {intercept}"
+                )
 
     print("\n" + "=" * 60)
     print("ODD TERRAIN HEIGHT CHECK")
@@ -187,7 +197,9 @@ def analyze_holes(directories):
     print("ON-GREEN TILE COUNT STATISTICS")
     print("=" * 60)
     stats = percentile_stats(on_green_counts)
-    print(f"\nTiles on green (value >= {GREEN_TILE_THRESHOLD:#04x}) across all holes (n={stats['count']}):")
+    print(
+        f"\nTiles on green (value >= {GREEN_TILE_THRESHOLD:#04x}) across all holes (n={stats['count']}):"
+    )
     print(f"  Min:  {stats['min']:.0f}")
     print(f"  25th: {stats['25th']:.1f}")
     print(f"  50th: {stats['50th']:.1f}")
@@ -215,7 +227,7 @@ def analyze_holes(directories):
     print(f"\nTotal unique tiles: {len(sorted_terrain)}")
     print("\nTiles (in hex):")
     for i in range(0, len(sorted_terrain), 16):
-        row = sorted_terrain[i:i+16]
+        row = sorted_terrain[i : i + 16]
         print("  " + " ".join(f"{tile:02X}" for tile in row))
 
     print("\n" + "=" * 60)
@@ -225,13 +237,15 @@ def analyze_holes(directories):
     print(f"\nTotal unique tiles: {len(sorted_greens)}")
     print("\nTiles (in hex):")
     for i in range(0, len(sorted_greens), 16):
-        row = sorted_greens[i:i+16]
+        row = sorted_greens[i : i + 16]
         print("  " + " ".join(f"{tile:02X}" for tile in row))
 
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python analyze.py <directory_of_json_files> [additional_directories...]")
+        print(
+            "Usage: python analyze.py <directory_of_json_files> [additional_directories...]"
+        )
         sys.exit(1)
 
     analyze_holes(sys.argv[1:])

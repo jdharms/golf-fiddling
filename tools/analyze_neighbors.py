@@ -58,22 +58,30 @@ def analyze_neighbors() -> Dict:
                         # Check up
                         if row_idx > 0:
                             neighbor = hole_data.terrain[row_idx - 1][col_idx]
-                            neighbors[tile]["up"][neighbor] = neighbors[tile]["up"].get(neighbor, 0) + 1
+                            neighbors[tile]["up"][neighbor] = (
+                                neighbors[tile]["up"].get(neighbor, 0) + 1
+                            )
 
                         # Check down
                         if row_idx < len(hole_data.terrain) - 1:
                             neighbor = hole_data.terrain[row_idx + 1][col_idx]
-                            neighbors[tile]["down"][neighbor] = neighbors[tile]["down"].get(neighbor, 0) + 1
+                            neighbors[tile]["down"][neighbor] = (
+                                neighbors[tile]["down"].get(neighbor, 0) + 1
+                            )
 
                         # Check left
                         if col_idx > 0:
                             neighbor = hole_data.terrain[row_idx][col_idx - 1]
-                            neighbors[tile]["left"][neighbor] = neighbors[tile]["left"].get(neighbor, 0) + 1
+                            neighbors[tile]["left"][neighbor] = (
+                                neighbors[tile]["left"].get(neighbor, 0) + 1
+                            )
 
                         # Check right
                         if col_idx < len(row) - 1:
                             neighbor = hole_data.terrain[row_idx][col_idx + 1]
-                            neighbors[tile]["right"][neighbor] = neighbors[tile]["right"].get(neighbor, 0) + 1
+                            neighbors[tile]["right"][neighbor] = (
+                                neighbors[tile]["right"].get(neighbor, 0) + 1
+                            )
 
                 total_holes += 1
                 print(f"  Hole {hole_num:2d}: OK")
@@ -88,10 +96,18 @@ def analyze_neighbors() -> Dict:
     for tile_idx in sorted(neighbors.keys()):
         tile_hex = f"0x{tile_idx:02X}"
         neighbors_json[tile_hex] = {
-            "up": {f"0x{n:02X}": count for n, count in neighbors[tile_idx]["up"].items()},
-            "down": {f"0x{n:02X}": count for n, count in neighbors[tile_idx]["down"].items()},
-            "left": {f"0x{n:02X}": count for n, count in neighbors[tile_idx]["left"].items()},
-            "right": {f"0x{n:02X}": count for n, count in neighbors[tile_idx]["right"].items()},
+            "up": {
+                f"0x{n:02X}": count for n, count in neighbors[tile_idx]["up"].items()
+            },
+            "down": {
+                f"0x{n:02X}": count for n, count in neighbors[tile_idx]["down"].items()
+            },
+            "left": {
+                f"0x{n:02X}": count for n, count in neighbors[tile_idx]["left"].items()
+            },
+            "right": {
+                f"0x{n:02X}": count for n, count in neighbors[tile_idx]["right"].items()
+            },
         }
 
     # Calculate statistics
@@ -134,7 +150,9 @@ def main():
     print(f"\nStatistics:")
     print(f"  Total holes analyzed: {result['metadata']['total_holes_analyzed']}")
     print(f"  Unique tiles: {result['metadata']['total_unique_tiles']}")
-    print(f"  Total neighbor relationships: {result['metadata']['total_relationships']}")
+    print(
+        f"  Total neighbor relationships: {result['metadata']['total_relationships']}"
+    )
 
 
 if __name__ == "__main__":

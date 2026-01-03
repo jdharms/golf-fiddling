@@ -21,12 +21,10 @@ def open_file_dialog(title: str, filetypes: List[Tuple[str, str]]) -> Optional[s
     try:
         import tkinter as tk
         from tkinter import filedialog
+
         root = tk.Tk()
         root.withdraw()
-        path = filedialog.askopenfilename(
-            title=title,
-            filetypes=filetypes
-        )
+        path = filedialog.askopenfilename(title=title, filetypes=filetypes)
         root.destroy()
         return path if path else None
     except ImportError:
@@ -34,7 +32,9 @@ def open_file_dialog(title: str, filetypes: List[Tuple[str, str]]) -> Optional[s
         return None
 
 
-def save_file_dialog(title: str, default_extension: str, filetypes: List[Tuple[str, str]]) -> Optional[str]:
+def save_file_dialog(
+    title: str, default_extension: str, filetypes: List[Tuple[str, str]]
+) -> Optional[str]:
     """
     Display a 'Save File' dialog and return the selected path.
 
@@ -49,12 +49,11 @@ def save_file_dialog(title: str, default_extension: str, filetypes: List[Tuple[s
     try:
         import tkinter as tk
         from tkinter import filedialog
+
         root = tk.Tk()
         root.withdraw()
         path = filedialog.asksaveasfilename(
-            title=title,
-            defaultextension=default_extension,
-            filetypes=filetypes
+            title=title, defaultextension=default_extension, filetypes=filetypes
         )
         root.destroy()
         return path if path else None

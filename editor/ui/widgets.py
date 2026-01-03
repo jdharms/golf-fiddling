@@ -42,7 +42,11 @@ class Button:
         if self.background_color:
             pygame.draw.rect(screen, self.background_color, self.rect)
         else:
-            color = COLOR_BUTTON_ACTIVE if self.active else (COLOR_BUTTON_HOVER if self.hovered else COLOR_BUTTON)
+            color = (
+                COLOR_BUTTON_ACTIVE
+                if self.active
+                else (COLOR_BUTTON_HOVER if self.hovered else COLOR_BUTTON)
+            )
             pygame.draw.rect(screen, color, self.rect)
 
         # Draw selection border (thicker if active)

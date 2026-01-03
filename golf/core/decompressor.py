@@ -64,7 +64,7 @@ class DecompressionStats:
                 "first_byte": first_byte,
                 "repeat_count": repeat_count,
                 "usage_count": 0,
-                "holes": set()
+                "holes": set(),
             }
 
         self.dict_codes[code]["usage_count"] += 1
@@ -81,10 +81,7 @@ class DecompressionStats:
             next_byte: The byte after applying horizontal transition
         """
         if repeat_count not in self.repeat_codes:
-            self.repeat_codes[repeat_count] = {
-                "usage_count": 0,
-                "transitions": {}
-            }
+            self.repeat_codes[repeat_count] = {"usage_count": 0, "transitions": {}}
 
         self.repeat_codes[repeat_count]["usage_count"] += 1
 
@@ -134,7 +131,7 @@ class DecompressionStats:
                 "first_byte": f"0x{data['first_byte']:02X}",
                 "repeat_count": data["repeat_count"],
                 "usage_count": data["usage_count"],
-                "holes": sorted(list(data["holes"]))
+                "holes": sorted(list(data["holes"])),
             }
 
         # Convert repeat_codes (transition tuples need conversion)
@@ -144,33 +141,31 @@ class DecompressionStats:
                 {
                     "prev_byte": f"0x{prev:02X}",
                     "next_byte": f"0x{next:02X}",
-                    "count": trans_count
+                    "count": trans_count,
                 }
-                for (prev, next), trans_count in sorted(data["transitions"].items(), key=lambda x: -x[1])[:20]
+                for (prev, next), trans_count in sorted(
+                    data["transitions"].items(), key=lambda x: -x[1]
+                )[:20]
             ]
             repeat_codes_serializable[str(count)] = {
                 "usage_count": data["usage_count"],
-                "top_transitions": transitions_list
+                "top_transitions": transitions_list,
             }
 
         # Convert horiz_transitions
         horiz_transitions_list = [
-            {
-                "prev_byte": f"0x{prev:02X}",
-                "next_byte": f"0x{next:02X}",
-                "count": count
-            }
-            for (prev, next), count in sorted(self.horiz_transitions.items(), key=lambda x: -x[1])[:50]
+            {"prev_byte": f"0x{prev:02X}", "next_byte": f"0x{next:02X}", "count": count}
+            for (prev, next), count in sorted(
+                self.horiz_transitions.items(), key=lambda x: -x[1]
+            )[:50]
         ]
 
         # Convert vert_fills
         vert_fills_list = [
-            {
-                "byte_above": f"0x{above:02X}",
-                "new_byte": f"0x{new:02X}",
-                "count": count
-            }
-            for (above, new), count in sorted(self.vert_fills.items(), key=lambda x: -x[1])[:50]
+            {"byte_above": f"0x{above:02X}", "new_byte": f"0x{new:02X}", "count": count}
+            for (above, new), count in sorted(
+                self.vert_fills.items(), key=lambda x: -x[1]
+            )[:50]
         ]
 
         return {
@@ -179,16 +174,16 @@ class DecompressionStats:
             "horizontal_transitions": {
                 "total_count": sum(self.horiz_transitions.values()),
                 "unique_transitions": len(self.horiz_transitions),
-                "top_transitions": horiz_transitions_list
+                "top_transitions": horiz_transitions_list,
             },
             "vertical_fills": {
                 "total_count": sum(self.vert_fills.values()),
                 "unique_fills": len(self.vert_fills),
-                "top_fills": vert_fills_list
-            }
+                "top_fills": vert_fills_list,
+            },
         }
 
-    def merge(self, other: 'DecompressionStats'):
+    def merge(self, other: "DecompressionStats"):
         """
         Merge statistics from another DecompressionStats instance.
 
@@ -204,7 +199,7 @@ class DecompressionStats:
                     "first_byte": data["first_byte"],
                     "repeat_count": data["repeat_count"],
                     "usage_count": 0,
-                    "holes": set()
+                    "holes": set(),
                 }
             self.dict_codes[code]["usage_count"] += data["usage_count"]
             self.dict_codes[code]["holes"].update(data["holes"])
@@ -212,10 +207,7 @@ class DecompressionStats:
         # Merge repeat_codes
         for count, data in other.repeat_codes.items():
             if count not in self.repeat_codes:
-                self.repeat_codes[count] = {
-                    "usage_count": 0,
-                    "transitions": {}
-                }
+                self.repeat_codes[count] = {"usage_count": 0, "transitions": {}}
             self.repeat_codes[count]["usage_count"] += data["usage_count"]
 
             for transition, trans_count in data["transitions"].items():
@@ -264,7 +256,12 @@ class TerrainDecompressor:
             self.vert_table = []
             self.dict_table = []
 
-    def decompress(self, compressed: bytes, row_width: int = TERRAIN_ROW_WIDTH, stats: Optional[DecompressionStats] = None) -> List[List[int]]:
+    def decompress(
+        self,
+        compressed: bytes,
+        row_width: int = TERRAIN_ROW_WIDTH,
+        stats: Optional[DecompressionStats] = None,
+    ) -> List[List[int]]:
         """
         Decompress terrain data.
 
@@ -338,7 +335,7 @@ class TerrainDecompressor:
         # Convert to rows
         rows = []
         for i in range(0, len(output), row_width):
-            row = output[i:i + row_width]
+            row = output[i : i + row_width]
             # Pad if necessary
             while len(row) < row_width:
                 row.append(0)
@@ -390,7 +387,9 @@ class GreensDecompressor:
             self.vert_table = []
             self.dict_table = []
 
-    def decompress(self, compressed: bytes, stats: Optional[DecompressionStats] = None) -> List[List[int]]:
+    def decompress(
+        self, compressed: bytes, stats: Optional[DecompressionStats] = None
+    ) -> List[List[int]]:
         """
         Decompress greens data.
 
@@ -465,7 +464,7 @@ class GreensDecompressor:
         # Convert to rows
         rows = []
         for i in range(0, len(output), row_width):
-            row = output[i:i + row_width]
+            row = output[i : i + row_width]
             while len(row) < row_width:
                 row.append(0)
             rows.append(row)

@@ -96,6 +96,7 @@ def event_handler(editor_state, hole_data, tool_manager):
 
 class MockEvent:
     """Mock pygame event."""
+
     def __init__(self, type, **kwargs):
         self.type = type
         for k, v in kwargs.items():
@@ -105,18 +106,21 @@ class MockEvent:
 class TestForestFillShortcut:
     """Regression tests for Ctrl+F forest fill shortcut."""
 
-    def test_ctrl_f_triggers_forest_fill(self, mock_pygame, event_handler, tool_manager):
+    def test_ctrl_f_triggers_forest_fill(
+        self, mock_pygame, event_handler, tool_manager
+    ):
         """Ctrl+F should trigger the forest fill tool."""
         # Create Ctrl+F event
         event = MockEvent(pygame.KEYDOWN, key=pygame.K_f)
 
         # Mock pygame.key.get_mods to return Ctrl
-        with patch('pygame.key.get_mods', return_value=pygame.KMOD_CTRL):
+        with patch("pygame.key.get_mods", return_value=pygame.KMOD_CTRL):
             # Spy on the forest fill tool
             forest_fill_tool = tool_manager.get_tool("forest_fill")
             original_handle_key_down = forest_fill_tool.handle_key_down
 
             call_count = 0
+
             def tracked_handle_key_down(*args, **kwargs):
                 nonlocal call_count
                 call_count += 1
@@ -136,7 +140,7 @@ class TestForestFillShortcut:
         event_handler.state.set_mode("terrain")
         event = MockEvent(pygame.KEYDOWN, key=pygame.K_f)
 
-        with patch('pygame.key.get_mods', return_value=pygame.KMOD_CTRL):
+        with patch("pygame.key.get_mods", return_value=pygame.KMOD_CTRL):
             running = event_handler.handle_events([event])
             assert running is True
 
@@ -145,9 +149,9 @@ class TestForestFillShortcut:
         event_handler.state.set_mode("palette")
         event = MockEvent(pygame.KEYDOWN, key=pygame.K_f)
 
-        with patch('pygame.key.get_mods', return_value=pygame.KMOD_CTRL):
+        with patch("pygame.key.get_mods", return_value=pygame.KMOD_CTRL):
             # Capture print output
-            with patch('builtins.print') as mock_print:
+            with patch("builtins.print") as mock_print:
                 event_handler.handle_events([event])
 
                 # Should have printed message about terrain mode
@@ -160,8 +164,8 @@ class TestForestFillShortcut:
         event_handler.state.set_mode("greens")
         event = MockEvent(pygame.KEYDOWN, key=pygame.K_f)
 
-        with patch('pygame.key.get_mods', return_value=pygame.KMOD_CTRL):
-            with patch('builtins.print') as mock_print:
+        with patch("pygame.key.get_mods", return_value=pygame.KMOD_CTRL):
+            with patch("builtins.print") as mock_print:
                 event_handler.handle_events([event])
                 assert mock_print.called
                 call_args = str(mock_print.call_args)
@@ -172,7 +176,7 @@ class TestForestFillShortcut:
         event = MockEvent(pygame.KEYDOWN, key=pygame.K_f)
 
         # Mock get_mods to return no modifiers
-        with patch('pygame.key.get_mods', return_value=0):
+        with patch("pygame.key.get_mods", return_value=0):
             # Spy on the active tool's handle_key_down
             active_tool = event_handler.tool_manager.get_active_tool()
             call_count = 0
@@ -195,7 +199,10 @@ class TestForestFillShortcut:
         # Set up forest filler to return changes
         mock_filler = event_handler.tool_context.forest_filler
         mock_filler.detect_regions.return_value = [[(0, 0), (0, 1)]]  # Mock region
-        mock_filler.fill_region.return_value = {(0, 0): 0x50, (0, 1): 0x51}  # Mock changes
+        mock_filler.fill_region.return_value = {
+            (0, 0): 0x50,
+            (0, 1): 0x51,
+        }  # Mock changes
 
         event_handler.state.set_mode("terrain")
         event = MockEvent(pygame.KEYDOWN, key=pygame.K_f)
@@ -212,11 +219,13 @@ class TestForestFillShortcut:
 
         event_handler.on_terrain_modified = tracked_callback
 
-        with patch('pygame.key.get_mods', return_value=pygame.KMOD_CTRL):
+        with patch("pygame.key.get_mods", return_value=pygame.KMOD_CTRL):
             event_handler.handle_events([event])
 
         # Callback should be triggered because terrain was modified
-        assert on_terrain_modified_called, "on_terrain_modified should be called when fill succeeds"
+        assert on_terrain_modified_called, (
+            "on_terrain_modified should be called when fill succeeds"
+        )
 
 
 class TestOtherGlobalShortcuts:
@@ -226,7 +235,7 @@ class TestOtherGlobalShortcuts:
         """Ctrl+S should trigger save callback."""
         event = MockEvent(pygame.KEYDOWN, key=pygame.K_s)
 
-        with patch('pygame.key.get_mods', return_value=pygame.KMOD_CTRL):
+        with patch("pygame.key.get_mods", return_value=pygame.KMOD_CTRL):
             event_handler.handle_events([event])
             event_handler.on_save.assert_called_once()
 
@@ -237,7 +246,7 @@ class TestOtherGlobalShortcuts:
 
         event = MockEvent(pygame.KEYDOWN, key=pygame.K_z)
 
-        with patch('pygame.key.get_mods', return_value=pygame.KMOD_CTRL):
+        with patch("pygame.key.get_mods", return_value=pygame.KMOD_CTRL):
             assert event_handler.state.undo_manager.can_undo()
             event_handler.handle_events([event])
             # After undo, should not be able to undo again (only had 1 state)
@@ -248,7 +257,7 @@ class TestOtherGlobalShortcuts:
         initial_grid_state = event_handler.state.show_grid
         event = MockEvent(pygame.KEYDOWN, key=pygame.K_g)
 
-        with patch('pygame.key.get_mods', return_value=0):
+        with patch("pygame.key.get_mods", return_value=0):
             event_handler.handle_events([event])
             assert event_handler.state.show_grid == (not initial_grid_state)
 
@@ -257,7 +266,7 @@ class TestOtherGlobalShortcuts:
         initial_sprite_state = event_handler.state.show_sprites
         event = MockEvent(pygame.KEYDOWN, key=pygame.K_v)
 
-        with patch('pygame.key.get_mods', return_value=0):
+        with patch("pygame.key.get_mods", return_value=0):
             event_handler.handle_events([event])
             assert event_handler.state.show_sprites == (not initial_sprite_state)
 
@@ -282,7 +291,7 @@ class TestEventHandlerDelegation:
         # Send a key that's not handled globally (e.g., 'A')
         event = MockEvent(pygame.KEYDOWN, key=pygame.K_a)
 
-        with patch('pygame.key.get_mods', return_value=0):
+        with patch("pygame.key.get_mods", return_value=0):
             event_handler.handle_events([event])
 
         # Tool should have received the key

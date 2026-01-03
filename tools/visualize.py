@@ -46,11 +46,11 @@ def render_hole(
     output_path: str,
     sprites: Optional[Dict[str, PILSprite]] = None,
     render_sprites: bool = True,
-    flag_index: int = 0
+    flag_index: int = 0,
 ):
     """Render a single hole to PNG."""
 
-    with open(hole_path, 'r') as f:
+    with open(hole_path, "r") as f:
         hole_data = json.load(f)
 
     # Render using shared PIL renderer
@@ -59,7 +59,7 @@ def render_hole(
         tileset,
         sprites=sprites,
         render_sprites=render_sprites,
-        selected_flag_index=flag_index
+        selected_flag_index=flag_index,
     )
 
     # Save image
@@ -73,7 +73,7 @@ def render_course(
     output_dir: str,
     sprites: Optional[Dict[str, PILSprite]] = None,
     render_sprites: bool = True,
-    flag_index: int = 0
+    flag_index: int = 0,
 ):
     """Render all holes in a course."""
     course_path = Path(course_dir)
@@ -98,7 +98,7 @@ def render_course(
             str(out_file),
             sprites=sprites,
             render_sprites=render_sprites,
-            flag_index=flag_index
+            flag_index=flag_index,
         )
 
 
@@ -121,22 +121,25 @@ Examples:
 
   Render with specific flag position:
     python visualize.py chr-ram.bin courses/japan/hole_01.json -f 2
-        """
+        """,
     )
     parser.add_argument("tileset", help="Path to CHR tileset binary file")
     parser.add_argument("input", help="Path to hole JSON file or course directory")
-    parser.add_argument("output", nargs="?", help="Output PNG file or directory (optional)")
+    parser.add_argument(
+        "output", nargs="?", help="Output PNG file or directory (optional)"
+    )
     parser.add_argument(
         "--no-sprites",
         action="store_true",
-        help="Disable sprite rendering (tee, ball, flag)"
+        help="Disable sprite rendering (tee, ball, flag)",
     )
     parser.add_argument(
-        "-f", "--flag-pos",
+        "-f",
+        "--flag-pos",
         type=int,
         choices=[0, 1, 2, 3],
         default=0,
-        help="Flag position to render (0-3, default: 0)"
+        help="Flag position to render (0-3, default: 0)",
     )
 
     args = parser.parse_args()
@@ -165,7 +168,7 @@ Examples:
             output_path,
             sprites=sprites,
             render_sprites=render_sprites,
-            flag_index=args.flag_pos
+            flag_index=args.flag_pos,
         )
 
     elif input_p.is_dir():
@@ -177,7 +180,7 @@ Examples:
             output_dir,
             sprites=sprites,
             render_sprites=render_sprites,
-            flag_index=args.flag_pos
+            flag_index=args.flag_pos,
         )
 
     else:

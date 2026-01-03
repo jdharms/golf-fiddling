@@ -12,7 +12,12 @@ from pathlib import Path
 
 def _get_default_tables_path() -> Path:
     """Get default path to compression_tables.json."""
-    return Path(__file__).parent.parent.parent / "data" / "tables" / "compression_tables.json"
+    return (
+        Path(__file__).parent.parent.parent
+        / "data"
+        / "tables"
+        / "compression_tables.json"
+    )
 
 
 def load_compression_tables(tables_path: Optional[str] = None) -> Dict:
@@ -49,7 +54,12 @@ def load_compression_tables(tables_path: Optional[str] = None) -> Dict:
             raise ValueError(f"Missing '{category}' section in tables")
 
         cat_tables = tables[category]
-        required_keys = ["horizontal_table", "vertical_table", "dictionary_codes", "reverse_dict_lookup"]
+        required_keys = [
+            "horizontal_table",
+            "vertical_table",
+            "dictionary_codes",
+            "reverse_dict_lookup",
+        ]
         for key in required_keys:
             if key not in cat_tables:
                 raise ValueError(f"Missing '{key}' in {category} tables")
@@ -57,7 +67,9 @@ def load_compression_tables(tables_path: Optional[str] = None) -> Dict:
     return tables
 
 
-def detect_vertical_fills(rows: List[List[int]], vert_table: List[int]) -> List[List[int]]:
+def detect_vertical_fills(
+    rows: List[List[int]], vert_table: List[int]
+) -> List[List[int]]:
     """First pass: detect and mark vertical fills with 0x00.
 
     Replaces tiles with their corresponding vert_table value from the row above.
@@ -91,9 +103,7 @@ def detect_vertical_fills(rows: List[List[int]], vert_table: List[int]) -> List[
 
 
 def match_dict_sequence(
-    byte_stream: List[int],
-    position: int,
-    reverse_lookup: Dict[str, List[str]]
+    byte_stream: List[int], position: int, reverse_lookup: Dict[str, List[str]]
 ) -> Optional[Tuple[str, int]]:
     """Try to match dictionary sequence at current position (greedy longest-match).
 
@@ -114,8 +124,8 @@ def match_dict_sequence(
             continue
 
         # Extract bytes from stream and convert to uppercase hex string
-        stream_slice = byte_stream[position:position + seq_len]
-        stream_hex = ''.join(f'{b:02X}' for b in stream_slice)
+        stream_slice = byte_stream[position : position + seq_len]
+        stream_hex = "".join(f"{b:02X}" for b in stream_slice)
 
         # Check for match (case-insensitive)
         if stream_hex == hex_sequence.upper():
@@ -126,10 +136,7 @@ def match_dict_sequence(
 
 
 def generate_repeat_code(
-    byte_stream: List[int],
-    position: int,
-    prev_byte: int,
-    horiz_table: List[int]
+    byte_stream: List[int], position: int, prev_byte: int, horiz_table: List[int]
 ) -> Optional[Tuple[int, int]]:
     """Generate repeat code by following horizontal transitions from prev_byte.
 

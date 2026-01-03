@@ -47,7 +47,9 @@ from golf.formats import compact_json as json
 from golf.formats.hex_utils import format_hex_rows
 
 
-def dump_course(rom: RomReader, course_idx: int, output_dir: Path) -> Tuple[DecompressionStats, DecompressionStats]:
+def dump_course(
+    rom: RomReader, course_idx: int, output_dir: Path
+) -> Tuple[DecompressionStats, DecompressionStats]:
     """Dump all holes for a single course. Returns (terrain_stats, greens_stats)."""
     course = COURSES[course_idx]
     course_dir = output_dir / course["name"]
@@ -65,10 +67,10 @@ def dump_course(rom: RomReader, course_idx: int, output_dir: Path) -> Tuple[Deco
         "name": course["display_name"],
         "hole_offset": hole_offset,
         "terrain_bank": terrain_bank,
-        "greens_bank": greens_bank
+        "greens_bank": greens_bank,
     }
 
-    with open(course_dir / "course.json", 'w') as f:
+    with open(course_dir / "course.json", "w") as f:
         json.dump(course_meta, f, indent=2)
 
     print(f"\nDumping {course['display_name']} course (bank {terrain_bank})...")
@@ -115,7 +117,9 @@ def dump_course(rom: RomReader, course_idx: int, output_dir: Path) -> Tuple[Deco
             flag_positions.append({"x_offset": flag_x_off, "y_offset": flag_y_off})
 
         # Read pointers
-        terrain_start_ptr = rom.read_fixed_word(TABLE_TERRAIN_START_PTR + (hole_idx * 2))
+        terrain_start_ptr = rom.read_fixed_word(
+            TABLE_TERRAIN_START_PTR + (hole_idx * 2)
+        )
         terrain_end_ptr = rom.read_fixed_word(TABLE_TERRAIN_END_PTR + (hole_idx * 2))
         greens_ptr = rom.read_fixed_word(TABLE_GREENS_PTR + (hole_idx * 2))
 
@@ -131,7 +135,9 @@ def dump_course(rom: RomReader, course_idx: int, output_dir: Path) -> Tuple[Deco
         attr_bytes = rom.read_prg(attr_prg, ATTR_TOTAL_BYTES)
 
         # Decompress terrain
-        terrain_rows = terrain_decomp.decompress(terrain_compressed, stats=terrain_stats)
+        terrain_rows = terrain_decomp.decompress(
+            terrain_compressed, stats=terrain_stats
+        )
         terrain_height = len(terrain_rows)
 
         # Unpack attributes
@@ -142,7 +148,9 @@ def dump_course(rom: RomReader, course_idx: int, output_dir: Path) -> Tuple[Deco
         # In the game itself this routine runs until the *output* buffer is filled.
         # So we'll grab a generous buffer to pass to the decompress function.
         if hole_idx < TOTAL_HOLES - 1:
-            next_greens_ptr = rom.read_fixed_word(TABLE_GREENS_PTR + ((hole_idx + 1) * 2))
+            next_greens_ptr = rom.read_fixed_word(
+                TABLE_GREENS_PTR + ((hole_idx + 1) * 2)
+            )
             # Handle course boundaries where pointer table wraps
             if next_greens_ptr > greens_ptr:
                 greens_size = next_greens_ptr - greens_ptr
@@ -155,7 +163,9 @@ def dump_course(rom: RomReader, course_idx: int, output_dir: Path) -> Tuple[Deco
         greens_compressed = rom.read_prg(greens_prg, greens_size)
 
         try:
-            greens_rows = greens_decomp.decompress(greens_compressed, stats=greens_stats)
+            greens_rows = greens_decomp.decompress(
+                greens_compressed, stats=greens_stats
+            )
         except Exception as e:
             print(f"(greens decompress error: {e})")
             greens_rows = []
@@ -167,41 +177,36 @@ def dump_course(rom: RomReader, course_idx: int, output_dir: Path) -> Tuple[Deco
             "distance": distance,
             "handicap": handicap,
             "scroll_limit": scroll_limit,
-
             "green": {"x": green_x, "y": green_y},
             "tee": {"x": tee_x, "y": tee_y},
             "flag_positions": flag_positions,
-
             "terrain": {
                 "width": TERRAIN_ROW_WIDTH,
                 "height": terrain_height,
-                "rows": format_hex_rows(terrain_rows)
+                "rows": format_hex_rows(terrain_rows),
             },
-
             "attributes": {
                 "width": len(attr_rows[0]) if attr_rows else 11,
                 "height": len(attr_rows),
-                "rows": attr_rows
+                "rows": attr_rows,
             },
-
             "greens": {
                 "width": 24,
                 "height": len(greens_rows),
-                "rows": format_hex_rows(greens_rows)
+                "rows": format_hex_rows(greens_rows),
             },
-
             "_debug": {
                 "terrain_ptr": f"${terrain_start_ptr:04X}",
                 "terrain_end_ptr": f"${terrain_end_ptr:04X}",
                 "terrain_compressed_size": terrain_compressed_size,
                 "greens_ptr": f"${greens_ptr:04X}",
-                "attr_raw": ' '.join(f'{b:02X}' for b in attr_bytes)
-            }
+                "attr_raw": " ".join(f"{b:02X}" for b in attr_bytes),
+            },
         }
 
         # Write hole file
         filename = f"hole_{hole_num:02d}.json"
-        with open(course_dir / filename, 'w') as f:
+        with open(course_dir / filename, "w") as f:
             json.dump(hole_data, f, indent=2)
 
         print(f"OK ({terrain_height} rows, {terrain_compressed_size} bytes compressed)")
@@ -212,7 +217,9 @@ def dump_course(rom: RomReader, course_idx: int, output_dir: Path) -> Tuple[Deco
 def main():
     if len(sys.argv) < 2:
         print("Usage: python dump.py <rom_file> [output_dir]")
-        print("\nDumps all course data from NES Open Tournament Golf ROM to JSON files.")
+        print(
+            "\nDumps all course data from NES Open Tournament Golf ROM to JSON files."
+        )
         sys.exit(1)
 
     rom_path = sys.argv[1]
@@ -243,11 +250,11 @@ def main():
         "total_holes": TOTAL_HOLES,
         "statistics": {
             "terrain": global_terrain_stats.to_dict(),
-            "greens": global_greens_stats.to_dict()
-        }
+            "greens": global_greens_stats.to_dict(),
+        },
     }
 
-    with open(output_dir / "meta.json", 'w') as f:
+    with open(output_dir / "meta.json", "w") as f:
         json.dump(global_meta, f, indent=2)
 
     print(f"\nWrote statistics to {output_dir}/meta.json")

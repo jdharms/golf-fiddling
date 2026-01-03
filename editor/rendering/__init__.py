@@ -9,4 +9,4 @@ from .greens_renderer import GreensRenderer
 from .sprite_renderer import SpriteRenderer
 from .grid_renderer import GridRenderer
 
-__all__ = ['TerrainRenderer', 'GreensRenderer', 'SpriteRenderer', 'GridRenderer']
+__all__ = ["TerrainRenderer", "GreensRenderer", "SpriteRenderer", "GridRenderer"]
