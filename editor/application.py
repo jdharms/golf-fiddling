@@ -24,6 +24,11 @@ from .controllers.highlight_state import HighlightState
 from .rendering.render_context import RenderContext
 from .rendering.terrain_renderer import TerrainRenderer
 from .rendering.greens_renderer import GreensRenderer
+from .tools.tool_manager import ToolManager
+from .tools.paint_tool import PaintTool
+from .tools.transform_tool import TransformTool
+from .tools.eyedropper_tool import EyedropperTool
+from .tools.forest_fill_tool import ForestFillTool
 
 
 class EditorApplication:
@@ -105,8 +110,23 @@ class EditorApplication:
 
         # Create pickers first (needed by event handler)
         picker_rect = Rect(0, TOOLBAR_HEIGHT, PICKER_WIDTH, self.screen_height - TOOLBAR_HEIGHT - STATUS_HEIGHT)
-        self.terrain_picker = TilePicker(self.terrain_tileset, picker_rect)
-        self.greens_picker = GreensTilePicker(self.greens_tileset, picker_rect)
+        self.terrain_picker = TilePicker(
+            self.terrain_tileset,
+            picker_rect,
+            on_hover_change=self._on_terrain_hover_change
+        )
+        self.greens_picker = GreensTilePicker(
+            self.greens_tileset,
+            picker_rect,
+            on_hover_change=self._on_greens_hover_change
+        )
+
+        # Create tool manager and register tools
+        self.tool_manager = ToolManager()
+        self.tool_manager.register_tool("paint", PaintTool())
+        self.tool_manager.register_tool("transform", TransformTool())
+        self.tool_manager.register_tool("eyedropper", EyedropperTool())
+        self.tool_manager.register_tool("forest_fill", ForestFillTool())
 
         # Create event handler early (buttons will reference its methods)
         self.event_handler = EventHandler(
@@ -117,15 +137,21 @@ class EditorApplication:
             [],  # Empty buttons list initially
             self.screen_width,
             self.screen_height,
+            self.tool_manager,
             on_load=self._on_load,
             on_save=self._on_save,
             on_mode_change=self._update_mode_buttons,
             on_flag_change=self._update_flag_buttons,
             on_resize=self._on_resize,
-            transform_logic=self.transform_logic,
-            forest_filler=self.forest_filler,
             on_terrain_modified=self.invalidate_terrain_validation_cache,
         )
+
+        # Set transform_logic and forest_filler on tool_context (needed by tools)
+        self.event_handler.tool_context.transform_logic = self.transform_logic
+        self.event_handler.tool_context.forest_filler = self.forest_filler
+
+        # Activate paint tool now that we have context
+        self.tool_manager.set_active_tool("paint", self.event_handler.tool_context)
 
         # Create UI elements (can now reference event_handler methods)
         self.buttons: List[Button] = []
@@ -301,6 +327,22 @@ class EditorApplication:
         self._create_ui()
         self.event_handler.update_screen_size(width, height)
 
+    def _on_terrain_hover_change(self, tile_value: Optional[int]):
+        """Called when terrain picker hover changes."""
+        shift_held = pygame.key.get_mods() & pygame.KMOD_SHIFT
+        if shift_held and self.state.mode in ("terrain", "palette"):
+            self.highlight_state.set_picker_hover(tile_value)
+        else:
+            self.highlight_state.clear_picker_hover()
+
+    def _on_greens_hover_change(self, tile_value: Optional[int]):
+        """Called when greens picker hover changes."""
+        shift_held = pygame.key.get_mods() & pygame.KMOD_SHIFT
+        if shift_held and self.state.mode == "greens":
+            self.highlight_state.set_picker_hover(tile_value)
+        else:
+            self.highlight_state.clear_picker_hover()
+
     def _get_canvas_rect(self) -> Rect:
         """Get the canvas drawing area."""
         return Rect(
@@ -338,16 +380,6 @@ class EditorApplication:
     def _render(self):
         """Render the editor."""
         self.screen.fill(COLOR_BG)
-
-        # Update shift-hover highlight state
-        shift_held = pygame.key.get_mods() & pygame.KMOD_SHIFT
-        if shift_held:
-            if self.state.mode == "greens":
-                self.state.shift_hover_tile = self.greens_picker.get_hovered_tile()
-            else:
-                self.state.shift_hover_tile = self.terrain_picker.get_hovered_tile()
-        else:
-            self.state.shift_hover_tile = None
 
         # Tile picker
         if self.state.mode == "greens":
@@ -399,8 +431,10 @@ class EditorApplication:
         else:
             self.highlight_state.invalid_terrain_tiles = None
 
-        # Get transform state from EditorState (will move to tool in Phase 4)
-        self.highlight_state.transform_state = self.state.transform_state
+        # Get transform state from transform tool
+        transform_tool = self.tool_manager.get_tool("transform")
+        if transform_tool:
+            self.highlight_state.transform_state = transform_tool.state
 
         # Render based on mode
         if self.state.mode == "greens":
