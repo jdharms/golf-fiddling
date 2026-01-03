@@ -133,8 +133,11 @@ class EventHandler:
                     self._process_tool_result(result)
 
             # Handle button events
+            button_handled = False
             for button in self.buttons:
-                button.handle_event(event)
+                if button.handle_event(event):
+                    button_handled = True
+                    break  # Stop after first button handles it
 
             # Handle picker events
             picker_handled = False
@@ -143,8 +146,8 @@ class EventHandler:
             else:
                 picker_handled = self.terrain_picker.handle_event(event)
 
-            # Handle canvas events (only if picker didn't handle)
-            if event.type == pygame.MOUSEBUTTONDOWN and not picker_handled:
+            # Handle canvas events (only if button/picker didn't handle)
+            if event.type == pygame.MOUSEBUTTONDOWN and not (button_handled or picker_handled):
                 modifiers = pygame.key.get_mods()
 
                 # Try transform tool first if shift held
@@ -339,20 +342,3 @@ class EventHandler:
         self.hole_data.green_y = snapshot.green_y
         self.hole_data.metadata = snapshot.metadata
         self.hole_data.modified = True  # Restoring counts as modification
-
-    def add_row(self, at_top: bool = False):
-        """Add terrain row with undo support."""
-        self.state.undo_manager.push_state(self.hole_data)
-        self.hole_data.add_terrain_row(at_top)
-        # Invalidate terrain validation cache
-        if self.on_terrain_modified:
-            self.on_terrain_modified()
-
-    def remove_row(self, from_top: bool = False):
-        """Remove terrain row with undo support."""
-        self.state.undo_manager.push_state(self.hole_data)
-        self.hole_data.remove_terrain_row(from_top)
-        # Invalidate terrain validation cache
-        if self.on_terrain_modified:
-            self.on_terrain_modified()
-

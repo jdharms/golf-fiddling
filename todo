@@ -6,3 +6,10 @@
 * Invalid neighbor indicator should be a single border per pairing
 * Investigate different green slopes, especially unused.
 * Distance measurement!
+* Wooden signs?
+* Scorecard course name?
+* "toolbox"/mode selection? (i.e., fill, rectangle, more?)
+
+Thoughts:
+* It can be tough to know when to "cut bait"
+* I have a temptation to fix problems at the abstraction level I'm working at (claude code), even when fixing the problem is just a few changes to a few lines in a few files.

@@ -16,6 +16,7 @@ from golf.core.compressor import load_compression_tables
 from .ui.widgets import Button
 from .ui.pickers import TilePicker, GreensTilePicker
 from .ui.dialogs import open_file_dialog, save_file_dialog
+from .ui.toolbar import Toolbar, ToolbarCallbacks
 from .controllers.editor_state import EditorState
 from .controllers.event_handler import EventHandler
 from .controllers.transform_logic import TransformLogic
@@ -29,6 +30,7 @@ from .tools.paint_tool import PaintTool
 from .tools.transform_tool import TransformTool
 from .tools.eyedropper_tool import EyedropperTool
 from .tools.forest_fill_tool import ForestFillTool
+from .tools.row_operations_tool import RowOperationsTool
 
 
 class EditorApplication:
@@ -127,6 +129,7 @@ class EditorApplication:
         self.tool_manager.register_tool("transform", TransformTool())
         self.tool_manager.register_tool("eyedropper", EyedropperTool())
         self.tool_manager.register_tool("forest_fill", ForestFillTool())
+        self.tool_manager.register_tool("row_operations", RowOperationsTool())
 
         # Create event handler early (buttons will reference its methods)
         self.event_handler = EventHandler(
@@ -153,94 +156,30 @@ class EditorApplication:
         # Activate paint tool now that we have context
         self.tool_manager.set_active_tool("paint", self.event_handler.tool_context)
 
-        # Create UI elements (can now reference event_handler methods)
-        self.buttons: List[Button] = []
-        self.btn_terrain: Optional[Button] = None
-        self.btn_palette: Optional[Button] = None
-        self.btn_greens: Optional[Button] = None
-        self.btn_sprites: Optional[Button] = None
-        self.palette_buttons: List[Button] = []
-        self.flag_buttons: List[Button] = []
-        self._create_ui()
+        # Create toolbar with callbacks
+        toolbar_callbacks = ToolbarCallbacks(
+            on_load=self._on_load,
+            on_save=self._on_save,
+            on_set_mode=self._set_mode,
+            on_toggle_grid=self.state.toggle_grid,
+            on_add_row=self._add_row,
+            on_remove_row=self._remove_row,
+            on_select_flag=self._select_flag,
+            on_set_palette=self._set_palette,
+            on_toggle_sprites=self.state.toggle_sprites,
+        )
+        self.toolbar = Toolbar(self.screen_width, toolbar_callbacks)
 
-        # Update event handler with created buttons
-        self.event_handler.buttons = self.buttons
+        # Update event handler with toolbar buttons
+        self.event_handler.buttons = self.toolbar.buttons
 
         self.running = True
         self.clock = pygame.time.Clock()
 
-    def _create_ui(self):
-        """Create UI elements."""
-        # Pickers now created in __init__
-
-        # Toolbar buttons
-        self.buttons = []
-        x = 10
-
-        btn_load = Button(Rect(x, 5, 60, 30), "Load", self._on_load)
-        self.buttons.append(btn_load)
-        x += 70
-
-        btn_save = Button(Rect(x, 5, 60, 30), "Save", self._on_save)
-        self.buttons.append(btn_save)
-        x += 80
-
-        self.btn_terrain = Button(Rect(x, 5, 70, 30), "Terrain", lambda: self._set_mode("terrain"))
-        self.buttons.append(self.btn_terrain)
-        x += 80
-
-        self.btn_palette = Button(Rect(x, 5, 70, 30), "Palette", lambda: self._set_mode("palette"))
-        self.buttons.append(self.btn_palette)
-        x += 80
-
-        self.btn_greens = Button(Rect(x, 5, 70, 30), "Greens", lambda: self._set_mode("greens"))
-        self.buttons.append(self.btn_greens)
-        x += 90
-
-        btn_grid = Button(Rect(x, 5, 50, 30), "Grid", self.state.toggle_grid)
-        self.buttons.append(btn_grid)
-        x += 60
-
-        btn_add_row = Button(Rect(x, 5, 70, 30), "+Row", lambda: self.event_handler.add_row(False))
-        self.buttons.append(btn_add_row)
-        x += 80
-
-        btn_del_row = Button(Rect(x, 5, 70, 30), "-Row", lambda: self.event_handler.remove_row(False))
-        self.buttons.append(btn_del_row)
-        x += 100
-
-        # Flag position buttons
-        self.flag_buttons = []
-        for i in range(4):
-            btn = Button(
-                Rect(x + (i * 35), 5, 30, 30),
-                f"F{i+1}",
-                lambda idx=i: self._select_flag(idx)
-            )
-            self.buttons.append(btn)
-            self.flag_buttons.append(btn)
-
-        x += 150
-
-        # Palette selector buttons (only visible in palette mode)
-        self.palette_buttons = []
-        for i in range(1, 4):
-            btn = Button(
-                Rect(x + ((i-1) * 30), 8, 24, 24),
-                str(i),
-                lambda idx=i: self._set_palette(idx),
-                background_color=PALETTES[i][3]
-            )
-            self.buttons.append(btn)
-            self.palette_buttons.append(btn)
-
-        x += 100
-
-        # Sprite toggle
-        self.btn_sprites = Button(Rect(x, 5, 70, 30), "Sprites", self.state.toggle_sprites)
-        self.buttons.append(self.btn_sprites)
-
+        # Update button states
         self._update_mode_buttons()
+        self._update_flag_buttons()
+        self._update_palette_buttons()
 
     def _set_mode(self, mode: str):
         """Set editing mode."""
@@ -249,9 +188,10 @@ class EditorApplication:
 
     def _update_mode_buttons(self):
         """Update mode button active states."""
-        self.btn_terrain.active = (self.state.mode == "terrain")
-        self.btn_palette.active = (self.state.mode == "palette")
-        self.btn_greens.active = (self.state.mode == "greens")
+        mode_buttons = self.toolbar.get_mode_buttons()
+        mode_buttons[0].active = (self.state.mode == "terrain")
+        mode_buttons[1].active = (self.state.mode == "palette")
+        mode_buttons[2].active = (self.state.mode == "greens")
         self._update_flag_buttons()
         self._update_palette_buttons()
 
@@ -262,7 +202,8 @@ class EditorApplication:
 
     def _update_flag_buttons(self):
         """Update flag button active states."""
-        for i, btn in enumerate(self.flag_buttons):
+        flag_buttons = self.toolbar.get_flag_buttons()
+        for i, btn in enumerate(flag_buttons):
             btn.active = (i == self.state.selected_flag_index)
 
     def _set_palette(self, palette: int):
@@ -272,8 +213,30 @@ class EditorApplication:
 
     def _update_palette_buttons(self):
         """Update palette button active states."""
-        for i, btn in enumerate(self.palette_buttons, start=1):
+        palette_buttons = self.toolbar.get_palette_buttons()
+        for i, btn in enumerate(palette_buttons, start=1):
             btn.active = (i == self.state.selected_palette)
+
+    def _add_row(self, at_top: bool = False):
+        """Add terrain row via row operations tool."""
+        row_ops_tool = self.tool_manager.get_tool("row_operations")
+        if row_ops_tool:
+            result = row_ops_tool.add_row(self.event_handler.tool_context, at_top)
+            self._process_tool_result(result)
+
+    def _remove_row(self, from_top: bool = False):
+        """Remove terrain row via row operations tool."""
+        row_ops_tool = self.tool_manager.get_tool("row_operations")
+        if row_ops_tool:
+            result = row_ops_tool.remove_row(self.event_handler.tool_context, from_top)
+            self._process_tool_result(result)
+
+    def _process_tool_result(self, result):
+        """Process a tool result (same logic as EventHandler._process_tool_result)."""
+        if result.terrain_modified:
+            self.invalidate_terrain_validation_cache()
+        if result.message:
+            print(result.message)
 
     def invalidate_terrain_validation_cache(self):
         """Invalidate cached invalid tiles (call when terrain is modified)."""
@@ -324,7 +287,7 @@ class EditorApplication:
         self.screen_width = width
         self.screen_height = height
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE)
-        self._create_ui()
+        self.toolbar.resize(width)
         self.event_handler.update_screen_size(width, height)
 
     def _on_terrain_hover_change(self, tile_value: Optional[int]):
@@ -402,9 +365,7 @@ class EditorApplication:
 
     def _render_toolbar(self):
         """Render toolbar with buttons and palette selector."""
-        pygame.draw.rect(self.screen, COLOR_TOOLBAR, (0, 0, self.screen_width, TOOLBAR_HEIGHT))
-        for button in self.buttons:
-            button.render(self.screen, self.font_small if button in self.palette_buttons else self.font)
+        self.toolbar.render(self.screen, self.font, self.font_small)
 
     def _render_canvas(self):
         """Render the main editing canvas."""
