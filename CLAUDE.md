@@ -424,10 +424,10 @@ Tests must be executed and must pass after all changes.  There are no "ok failur
 # Run all tests with coverage
 pytest
 
-# Run only unit tests (tests individual compression functions)
+# Run only unit tests
 pytest tests/unit/
 
-# Run only integration tests (round-trip compression/decompression)
+# Run only integration tests
 pytest tests/integration/
 
 # Run specific test file
@@ -435,9 +435,6 @@ pytest tests/unit/test_vertical_fill.py -v
 
 # Run with verbose output and see print statements
 pytest -v -s
-
-# Generate coverage report
-pytest --cov=golf --cov-report=html
 ```
 
 ### Test Structure

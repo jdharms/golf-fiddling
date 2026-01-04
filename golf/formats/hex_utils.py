@@ -6,7 +6,6 @@ Consolidates duplicate hex parsing/formatting code across all tools.
 """
 
 
-
 def parse_hex_row(row_str: str) -> list[int]:
     """
     Parse space-separated hex string to list of integers.
