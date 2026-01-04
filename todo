@@ -4,12 +4,15 @@
 * Grid lines should be supertiles when in palette mode
 * ~~drag to transform up/left?~~
 * Invalid neighbor indicator should be a single border per pairing
-* Investigate different green slopes, especially unused.
-* Distance measurement!
 * Wooden signs?
 * Scorecard course name?
-* "toolbox"/mode selection? (i.e., fill, rectangle, more?)
 * Does SuperShot! do anything?
+
+Tool ideas:
+* Rectangle?
+* Border fill?
+
+* I keep finding myself wanting clicking on the picker to switch directly to the paint tool
 
 Thoughts:
 * It can be tough to know when to "cut bait"

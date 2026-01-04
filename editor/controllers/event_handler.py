@@ -213,8 +213,8 @@ class EventHandler:
             self.state.selected_palette = 3
 
         elif event.key == pygame.K_TAB:
-            # Cycle modes
-            modes = ["terrain", "palette", "greens"]
+            # Cycle modes (terrain <-> greens)
+            modes = ["terrain", "greens"]
             idx = modes.index(self.state.mode)
             self.state.set_mode(modes[(idx + 1) % len(modes)])
             self.on_mode_change()

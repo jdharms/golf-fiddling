@@ -66,7 +66,24 @@ class EyedropperTool:
 
         mode = context.state.mode
 
-        if mode == "terrain":
+        # Check if PaletteTool is active
+        active_tool_name = context.tool_manager.get_active_tool_name() if context.tool_manager else None
+
+        if active_tool_name == "palette" and mode == "terrain":
+            # Sample palette attribute
+            supertile = view_state.screen_to_supertile(pos)
+            if supertile:
+                row, col = supertile
+                if 0 <= row < len(context.hole_data.attributes) and 0 <= col < len(
+                    context.hole_data.attributes[row]
+                ):
+                    context.state.selected_palette = context.hole_data.attributes[row][
+                        col
+                    ]
+                    return ToolResult.handled()
+
+        elif mode == "terrain":
+            # Sample terrain tile
             tile = view_state.screen_to_tile(pos)
             if tile:
                 row, col = tile
@@ -79,19 +96,8 @@ class EyedropperTool:
                     ][col]
                     return ToolResult.handled()
 
-        elif mode == "palette":
-            supertile = view_state.screen_to_supertile(pos)
-            if supertile:
-                row, col = supertile
-                if 0 <= row < len(context.hole_data.attributes) and 0 <= col < len(
-                    context.hole_data.attributes[row]
-                ):
-                    context.state.selected_palette = context.hole_data.attributes[row][
-                        col
-                    ]
-                    return ToolResult.handled()
-
         elif mode == "greens":
+            # Sample greens tile
             tile = view_state.screen_to_tile(pos)
             if tile:
                 row, col = tile

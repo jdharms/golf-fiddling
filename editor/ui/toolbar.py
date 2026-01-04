@@ -63,12 +63,6 @@ class Toolbar:
         self.mode_buttons.append(btn_terrain)
         x += 80
 
-        btn_palette = Button(
-            Rect(x, 5, 70, 30), "Palette", lambda: self.callbacks.on_set_mode("palette")
-        )
-        self.mode_buttons.append(btn_palette)
-        x += 80
-
         btn_greens = Button(
             Rect(x, 5, 70, 30), "Greens", lambda: self.callbacks.on_set_mode("greens")
         )

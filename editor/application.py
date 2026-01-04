@@ -27,6 +27,7 @@ from .tools.eyedropper_tool import EyedropperTool
 from .tools.forest_fill_tool import ForestFillTool
 from .tools.measure_tool import MeasureTool
 from .tools.paint_tool import PaintTool
+from .tools.palette_tool import PaletteTool
 from .tools.row_operations_tool import RowOperationsTool
 from .tools.tool_manager import ToolManager
 from .tools.transform_tool import TransformTool
@@ -145,6 +146,7 @@ class EditorApplication:
             on_tool_change=self._on_tool_change,
         )
         self.tool_picker.register_tool("paint", "Paint", "🖌")
+        self.tool_picker.register_tool("palette", "Palette", "🎨")
         self.tool_picker.register_tool("transform", "Transform", "↔")
         self.tool_picker.register_tool("forest_fill", "Forest Fill", "🌲")
         self.tool_picker.register_tool("cycle", "Cycle", "🔄")
@@ -153,6 +155,7 @@ class EditorApplication:
         # Create tool manager and register tools
         self.tool_manager = ToolManager()
         self.tool_manager.register_tool("paint", PaintTool())
+        self.tool_manager.register_tool("palette", PaletteTool())
         self.tool_manager.register_tool("transform", TransformTool())
         self.tool_manager.register_tool("eyedropper", EyedropperTool())
         self.tool_manager.register_tool("forest_fill", ForestFillTool())
@@ -233,8 +236,7 @@ class EditorApplication:
         """Update mode button active states."""
         mode_buttons = self.toolbar.get_mode_buttons()
         mode_buttons[0].active = self.state.mode == "terrain"
-        mode_buttons[1].active = self.state.mode == "palette"
-        mode_buttons[2].active = self.state.mode == "greens"
+        mode_buttons[1].active = self.state.mode == "greens"
         self._update_flag_buttons()
         self._update_palette_buttons()
 
@@ -345,7 +347,7 @@ class EditorApplication:
 
     def _on_terrain_hover_change(self, tile_value: int | None):
         """Called when terrain picker hover changes."""
-        if self.state.mode in ("terrain", "palette"):
+        if self.state.mode == "terrain":
             if tile_value:
                 self.highlight_state.set_picker_hover(tile_value)
             else:
@@ -495,12 +497,14 @@ class EditorApplication:
                 self.state.show_sprites,
                 self.state.selected_flag_index,
             )
+            active_tool_name = self.tool_manager.get_active_tool_name()
             TerrainRenderer.render(
                 self.screen,
                 view_state,
                 self.hole_data,
                 render_ctx,
                 self.highlight_state,
+                active_tool_name,
             )
 
     def _render_status(self):

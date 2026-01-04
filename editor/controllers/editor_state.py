@@ -13,7 +13,7 @@ class EditorState:
 
     def __init__(self):
         # Editing mode
-        self.mode: str = "terrain"  # "terrain", "palette", or "greens"
+        self.mode: str = "terrain"  # "terrain" or "greens"
 
         # View settings
         self.show_grid: bool = True
@@ -34,7 +34,7 @@ class EditorState:
 
     def set_mode(self, mode: str):
         """Set the editing mode."""
-        if mode in ("terrain", "palette", "greens"):
+        if mode in ("terrain", "greens"):
             self.mode = mode
 
     def toggle_grid(self):
