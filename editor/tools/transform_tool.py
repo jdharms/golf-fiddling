@@ -53,10 +53,6 @@ class TransformTool:
         if button != 1:
             return ToolResult.not_handled()
 
-        # Only activate if Shift is held
-        if not (modifiers & pygame.KMOD_SHIFT):
-            return ToolResult.not_handled()
-
         # Only in terrain or greens mode
         if context.state.mode not in ("terrain", "greens"):
             return ToolResult.not_handled()
@@ -121,6 +117,10 @@ class TransformTool:
 
     def reset(self):
         self.state.reset()
+
+    def get_hotkey(self) -> int | None:
+        """Return 'T' key for Transform tool."""
+        return pygame.K_t
 
     def _update_transform_preview(self, pos, context):
         """Update transform preview based on drag movement."""

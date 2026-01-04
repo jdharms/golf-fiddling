@@ -31,6 +31,9 @@ class TilePicker:
         # Callback for hover changes
         self.on_hover_change = on_hover_change
 
+        # If Shift is pressed or released we want to know
+        self.shift_held = False
+
         # Create banks with subbanks
         self.banks = [
             GroupedTileBank(
@@ -133,6 +136,20 @@ class TilePicker:
                     self.on_hover_change(new_hover)
             # Don't return True - let event propagate to buttons
 
+        if event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
+            shift_held = pygame.key.get_mods() & pygame.KMOD_SHIFT
+            if not shift_held:
+                # if we were holding shift previously
+                if self.shift_held and self.on_hover_change:
+                    self.shift_held = False
+                    self.on_hover_change(None)
+            else:
+                # if we were not holding shift previously
+                if not self.shift_held and self.on_hover_change:
+                    self.shift_held = True
+                    self.on_hover_change(self.hovered_tile)
+
+
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.rect.collidepoint(event.pos):
                 if event.button == 1:  # Left click
@@ -190,6 +207,53 @@ class TilePicker:
     def get_hovered_tile(self) -> int | None:
         """Get the tile value currently under mouse, or None."""
         return self.hovered_tile
+
+    def find_tile_position(self, tile_value: int) -> tuple[int, int, int] | None:
+        """Find position of tile in bank hierarchy.
+
+        Returns:
+            (bank_idx, subbank_idx, position_in_subbank) or None if not found
+        """
+        for bank_idx, bank in enumerate(self.banks):
+            for subbank_idx, subbank in enumerate(bank.subbanks):
+                if tile_value in subbank.tile_indices:
+                    position = subbank.tile_indices.index(tile_value)
+                    return (bank_idx, subbank_idx, position)
+        return None
+
+    def get_next_tile_in_subbank(self, tile_value: int) -> int | None:
+        """Get next tile in same sub-bank with circular wrapping.
+
+        Returns:
+            Next tile value or None if tile not found in any bank
+        """
+        position = self.find_tile_position(tile_value)
+        if not position:
+            return None
+
+        bank_idx, subbank_idx, pos = position
+        subbank = self.banks[bank_idx].subbanks[subbank_idx]
+
+        # Circular wrapping
+        next_pos = (pos + 1) % len(subbank.tile_indices)
+        return subbank.tile_indices[next_pos]
+
+    def get_previous_tile_in_subbank(self, tile_value: int) -> int | None:
+        """Get previous tile in same sub-bank with circular wrapping.
+
+        Returns:
+            Previous tile value or None if tile not found in any bank
+        """
+        position = self.find_tile_position(tile_value)
+        if not position:
+            return None
+
+        bank_idx, subbank_idx, pos = position
+        subbank = self.banks[bank_idx].subbanks[subbank_idx]
+
+        # Circular wrapping (negative index works in Python)
+        prev_pos = (pos - 1) % len(subbank.tile_indices)
+        return subbank.tile_indices[prev_pos]
 
     def render(self, screen: Surface, palette_idx: int = 1):
         """Render the tile picker with all banks."""

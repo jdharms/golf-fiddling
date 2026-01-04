@@ -54,6 +54,55 @@ class GreensTilePicker(TilePicker):
 
         self.selected_tile = 0x30
 
+    def find_tile_position(self, tile_value: int) -> tuple[int, int] | None:
+        """Find position of tile in bank hierarchy.
+
+        Returns:
+            (bank_idx, position_in_bank) or None if not found
+        """
+        for bank_idx, bank in enumerate(self.banks):
+            if tile_value in bank.tile_indices:
+                position = bank.tile_indices.index(tile_value)
+                return (bank_idx, position)
+        return None
+
+    def get_next_tile_in_subbank(self, tile_value: int) -> int | None:
+        """Get next tile in same bank with circular wrapping.
+
+        Note: Method name uses 'subbank' for consistency with TilePicker,
+        but SimpleTileBank has no sub-banks - this cycles within the bank.
+
+        Returns:
+            Next tile value or None if tile not found in any bank
+        """
+        position = self.find_tile_position(tile_value)
+        if not position:
+            return None
+
+        bank_idx, pos = position
+        bank = self.banks[bank_idx]
+
+        # Circular wrapping
+        next_pos = (pos + 1) % len(bank.tile_indices)
+        return bank.tile_indices[next_pos]
+
+    def get_previous_tile_in_subbank(self, tile_value: int) -> int | None:
+        """Get previous tile in same bank with circular wrapping.
+
+        Returns:
+            Previous tile value or None if tile not found in any bank
+        """
+        position = self.find_tile_position(tile_value)
+        if not position:
+            return None
+
+        bank_idx, pos = position
+        bank = self.banks[bank_idx]
+
+        # Circular wrapping
+        prev_pos = (pos - 1) % len(bank.tile_indices)
+        return bank.tile_indices[prev_pos]
+
     def render(self, screen: Surface, palette_idx: int = 1):
         """Render the tile picker with greens palette."""
         # Background

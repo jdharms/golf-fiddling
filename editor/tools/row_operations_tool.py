@@ -35,6 +35,9 @@ class RowOperationsTool:
     def reset(self):
         pass
 
+    def get_hotkey(self) -> int | None:
+        return None
+
     def add_row(self, context: ToolContext, at_top: bool = False) -> ToolResult:
         """Add terrain row with undo support."""
         # Push undo state before modification

@@ -3,6 +3,7 @@ Paint tool for terrain, palette, and greens editing.
 """
 
 
+import pygame
 from pygame import Rect
 
 from editor.controllers.view_state import ViewState
@@ -27,6 +28,13 @@ class PaintTool:
         self.undo_pushed = False
 
     def handle_mouse_down(self, pos, button, modifiers, context):
+        # Right-click: delegate to eyedropper
+        if button == 3:
+            eyedropper = context.get_eyedropper_tool()
+            if eyedropper:
+                return eyedropper.handle_mouse_down(pos, button, modifiers, context)
+            return ToolResult.not_handled()
+
         if button != 1:  # Only left click
             return ToolResult.not_handled()
 
@@ -64,6 +72,10 @@ class PaintTool:
         self.is_painting = False
         self.last_paint_pos = None
         self.undo_pushed = False
+
+    def get_hotkey(self) -> int | None:
+        """Return 'P' key for Paint tool."""
+        return pygame.K_p
 
     def _paint_at(self, pos: tuple[int, int], context: ToolContext) -> ToolResult:
         """Paint at screen position based on current mode."""

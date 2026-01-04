@@ -52,6 +52,13 @@ class Tool(Protocol):
         """Reset tool state."""
         ...
 
+    def get_hotkey(self) -> int | None:
+        """Return pygame key constant for this tool's activation hotkey.
+
+        Returns None if tool has no hotkey.
+        """
+        ...
+
 
 class ToolContext:
     """Context object providing tools access to application state.
@@ -70,6 +77,7 @@ class ToolContext:
         forest_filler,
         screen_width: int,
         screen_height: int,
+        tool_manager=None,
     ):
         self.hole_data = hole_data
         self.state = state
@@ -79,6 +87,7 @@ class ToolContext:
         self.forest_filler = forest_filler
         self.screen_width = screen_width
         self.screen_height = screen_height
+        self.tool_manager = tool_manager
 
     def get_selected_tile(self) -> int:
         """Get currently selected tile based on mode."""
@@ -93,6 +102,12 @@ class ToolContext:
             self.greens_picker.selected_tile = tile
         else:
             self.terrain_picker.selected_tile = tile
+
+    def get_eyedropper_tool(self):
+        """Get eyedropper tool for delegation (used by Paint tool)."""
+        if self.tool_manager:
+            return self.tool_manager.get_tool("eyedropper")
+        return None
 
 
 class ToolResult:

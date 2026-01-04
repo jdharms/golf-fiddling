@@ -45,6 +45,9 @@ class EyedropperTool:
     def reset(self):
         pass
 
+    def get_hotkey(self) -> int | None:
+        return None
+
     def _sample_at(self, pos, context) -> ToolResult:
         """Sample tile/palette at position."""
         # Create view state for coordinate conversion

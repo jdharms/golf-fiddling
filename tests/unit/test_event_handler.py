@@ -52,6 +52,7 @@ def event_handler(editor_state, hole_data, tool_manager):
     # Create mock pickers
     mock_terrain_picker = Mock()
     mock_greens_picker = Mock()
+    mock_tool_picker = Mock()
 
     # Create mock callbacks
     mock_on_load = Mock()
@@ -59,6 +60,7 @@ def event_handler(editor_state, hole_data, tool_manager):
     mock_on_mode_change = Mock()
     mock_on_flag_change = Mock()
     mock_on_resize = Mock()
+    mock_on_tool_change = Mock()
     mock_on_terrain_modified = Mock()
 
     handler = EventHandler(
@@ -70,11 +72,13 @@ def event_handler(editor_state, hole_data, tool_manager):
         screen_width=1200,
         screen_height=1200,
         tool_manager=tool_manager,
+        tool_picker=mock_tool_picker,
         on_load=mock_on_load,
         on_save=mock_on_save,
         on_mode_change=mock_on_mode_change,
         on_flag_change=mock_on_flag_change,
         on_resize=mock_on_resize,
+        on_tool_change=mock_on_tool_change,
         on_terrain_modified=mock_on_terrain_modified,
     )
 
@@ -102,79 +106,63 @@ class MockEvent:
             setattr(self, k, v)
 
 
-class TestForestFillShortcut:
-    """Regression tests for Ctrl+F forest fill shortcut."""
+class TestToolHotkeys:
+    """Tests for tool activation hotkeys."""
 
-    def test_ctrl_f_triggers_forest_fill(
+    def test_f_key_activates_forest_fill_tool(
         self, mock_pygame, event_handler, tool_manager
     ):
-        """Ctrl+F should trigger the forest fill tool."""
-        # Create Ctrl+F event
+        """'F' key should activate the forest fill tool."""
+        # Create F key event (no modifiers)
         event = MockEvent(pygame.KEYDOWN, key=pygame.K_f)
 
-        # Mock pygame.key.get_mods to return Ctrl
-        with patch("pygame.key.get_mods", return_value=pygame.KMOD_CTRL):
-            # Spy on the forest fill tool
-            forest_fill_tool = tool_manager.get_tool("forest_fill")
-            original_handle_key_down = forest_fill_tool.handle_key_down
-
-            call_count = 0
-
-            def tracked_handle_key_down(*args, **kwargs):
-                nonlocal call_count
-                call_count += 1
-                return original_handle_key_down(*args, **kwargs)
-
-            forest_fill_tool.handle_key_down = tracked_handle_key_down
-
+        # Mock pygame.key.get_mods to return no modifiers
+        with patch("pygame.key.get_mods", return_value=0):
             # Handle the event
             running = event_handler.handle_events([event])
 
-            # Verify forest fill was triggered
-            assert call_count == 1, "Forest fill tool should be called once"
+            # Verify forest fill tool is now active
+            active_tool = tool_manager.get_active_tool()
+            forest_fill_tool = tool_manager.get_tool("forest_fill")
+            assert active_tool is forest_fill_tool, "Forest fill should be active tool"
             assert running is True, "Event handler should continue running"
 
-    def test_ctrl_f_works_in_terrain_mode(self, mock_pygame, event_handler):
-        """Ctrl+F should work in terrain mode."""
-        event_handler.state.set_mode("terrain")
-        event = MockEvent(pygame.KEYDOWN, key=pygame.K_f)
+    def test_p_key_activates_paint_tool(self, mock_pygame, event_handler, tool_manager):
+        """'P' key should activate the paint tool."""
+        # First activate a different tool
+        tool_manager.set_active_tool("forest_fill", event_handler.tool_context)
 
-        with patch("pygame.key.get_mods", return_value=pygame.KMOD_CTRL):
+        # Create P key event
+        event = MockEvent(pygame.KEYDOWN, key=pygame.K_p)
+
+        with patch("pygame.key.get_mods", return_value=0):
             running = event_handler.handle_events([event])
+
+            # Verify paint tool is now active
+            active_tool = tool_manager.get_active_tool()
+            paint_tool = tool_manager.get_tool("paint")
+            assert active_tool is paint_tool, "Paint should be active tool"
             assert running is True
 
-    def test_ctrl_f_in_palette_mode_shows_message(self, mock_pygame, event_handler):
-        """Ctrl+F in palette mode should show 'only available in terrain mode' message."""
-        event_handler.state.set_mode("palette")
-        event = MockEvent(pygame.KEYDOWN, key=pygame.K_f)
+    def test_f_key_works_in_any_mode(self, mock_pygame, event_handler, tool_manager):
+        """'F' key should activate forest fill regardless of mode."""
+        for mode in ["terrain", "palette", "greens"]:
+            event_handler.state.set_mode(mode)
+            event = MockEvent(pygame.KEYDOWN, key=pygame.K_f)
 
-        with patch("pygame.key.get_mods", return_value=pygame.KMOD_CTRL):
-            # Capture print output
-            with patch("builtins.print") as mock_print:
+            with patch("pygame.key.get_mods", return_value=0):
                 event_handler.handle_events([event])
 
-                # Should have printed message about terrain mode
-                assert mock_print.called
-                call_args = str(mock_print.call_args)
-                assert "terrain mode" in call_args.lower()
+                # Verify forest fill is active
+                active_tool = tool_manager.get_active_tool()
+                forest_fill_tool = tool_manager.get_tool("forest_fill")
+                assert active_tool is forest_fill_tool, f"Forest fill should be active in {mode} mode"
 
-    def test_ctrl_f_in_greens_mode_shows_message(self, mock_pygame, event_handler):
-        """Ctrl+F in greens mode should show 'only available in terrain mode' message."""
-        event_handler.state.set_mode("greens")
-        event = MockEvent(pygame.KEYDOWN, key=pygame.K_f)
+    def test_unknown_hotkey_not_handled(self, mock_pygame, event_handler):
+        """Unknown hotkey should not be handled by global handler."""
+        # Use a key that's not registered as a tool hotkey
+        event = MockEvent(pygame.KEYDOWN, key=pygame.K_q)
 
-        with patch("pygame.key.get_mods", return_value=pygame.KMOD_CTRL):
-            with patch("builtins.print") as mock_print:
-                event_handler.handle_events([event])
-                assert mock_print.called
-                call_args = str(mock_print.call_args)
-                assert "terrain mode" in call_args.lower()
-
-    def test_f_without_ctrl_not_handled_globally(self, mock_pygame, event_handler):
-        """F key without Ctrl should not be handled by global handler."""
-        event = MockEvent(pygame.KEYDOWN, key=pygame.K_f)
-
-        # Mock get_mods to return no modifiers
         with patch("pygame.key.get_mods", return_value=0):
             # Spy on the active tool's handle_key_down
             active_tool = event_handler.tool_manager.get_active_tool()
@@ -190,41 +178,8 @@ class TestForestFillShortcut:
 
             event_handler.handle_events([event])
 
-            # Active tool should receive the unhandled key
-            assert call_count == 1, "Active tool should receive unhandled F key"
-
-    def test_ctrl_f_calls_on_terrain_modified(self, mock_pygame, event_handler):
-        """Ctrl+F should trigger on_terrain_modified callback when terrain is modified."""
-        # Set up forest filler to return changes
-        mock_filler = event_handler.tool_context.forest_filler
-        mock_filler.detect_regions.return_value = [[(0, 0), (0, 1)]]  # Mock region
-        mock_filler.fill_region.return_value = {
-            (0, 0): 0x50,
-            (0, 1): 0x51,
-        }  # Mock changes
-
-        event_handler.state.set_mode("terrain")
-        event = MockEvent(pygame.KEYDOWN, key=pygame.K_f)
-
-        # Track on_terrain_modified callback
-        on_terrain_modified_called = False
-        original_callback = event_handler.on_terrain_modified
-
-        def tracked_callback():
-            nonlocal on_terrain_modified_called
-            on_terrain_modified_called = True
-            if original_callback:
-                original_callback()
-
-        event_handler.on_terrain_modified = tracked_callback
-
-        with patch("pygame.key.get_mods", return_value=pygame.KMOD_CTRL):
-            event_handler.handle_events([event])
-
-        # Callback should be triggered because terrain was modified
-        assert on_terrain_modified_called, (
-            "on_terrain_modified should be called when fill succeeds"
-        )
+            # Active tool should receive the unhandled Q key
+            assert call_count == 1, "Active tool should receive unhandled Q key"
 
 
 class TestOtherGlobalShortcuts:
