@@ -20,8 +20,8 @@ from .tile_picker import TilePicker
 class GreensTilePicker(TilePicker):
     """Tile picker for greens editing."""
 
-    def __init__(self, tileset, rect: Rect, on_hover_change=None):
-        super().__init__(tileset, rect, on_hover_change)
+    def __init__(self, tileset, rect: Rect, on_hover_change=None, on_tile_selected=None):
+        super().__init__(tileset, rect, on_hover_change, on_tile_selected)
 
         # Override banks with greens-specific tiles organized by type
         self.banks = [

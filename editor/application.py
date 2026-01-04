@@ -127,11 +127,13 @@ class EditorApplication:
             self.terrain_tileset,
             picker_rect,
             on_hover_change=self._on_terrain_hover_change,
+            on_tile_selected=self._on_terrain_tile_selected,
         )
         self.greens_picker = GreensTilePicker(
             self.greens_tileset,
             picker_rect,
             on_hover_change=self._on_greens_hover_change,
+            on_tile_selected=self._on_greens_tile_selected,
         )
 
         # Create tool picker (right sidebar)
@@ -353,6 +355,11 @@ class EditorApplication:
             else:
                 self.highlight_state.clear_picker_hover()
 
+    def _on_terrain_tile_selected(self, tile_value: int):
+        """Called when a tile is selected in terrain picker - auto-switch to paint tool."""
+        self.tool_manager.set_active_tool("paint", self.event_handler.tool_context)
+        self.tool_picker.selected_tool = "paint"
+
     def _on_greens_hover_change(self, tile_value: int | None):
         """Called when greens picker hover changes."""
         shift_held = pygame.key.get_mods() & pygame.KMOD_SHIFT
@@ -360,6 +367,11 @@ class EditorApplication:
             self.highlight_state.set_picker_hover(tile_value)
         else:
             self.highlight_state.clear_picker_hover()
+
+    def _on_greens_tile_selected(self, tile_value: int):
+        """Called when a tile is selected in greens picker - auto-switch to paint tool."""
+        self.tool_manager.set_active_tool("paint", self.event_handler.tool_context)
+        self.tool_picker.selected_tool = "paint"
 
     def _get_canvas_rect(self) -> Rect:
         """Get the canvas drawing area."""

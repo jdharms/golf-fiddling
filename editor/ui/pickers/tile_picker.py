@@ -18,7 +18,7 @@ from .tile_banks import GroupedTileBank, TileSubBank, _range_to_list
 class TilePicker:
     """Tile selection panel."""
 
-    def __init__(self, tileset: Tileset, rect: Rect, on_hover_change=None):
+    def __init__(self, tileset: Tileset, rect: Rect, on_hover_change=None, on_tile_selected=None):
         self.tileset = tileset
         self.rect = rect
         self.scroll_y = 0
@@ -30,6 +30,9 @@ class TilePicker:
 
         # Callback for hover changes
         self.on_hover_change = on_hover_change
+
+        # Callback for tile selection (e.g., to auto-switch to paint tool)
+        self.on_tile_selected = on_tile_selected
 
         # If Shift is pressed or released we want to know
         self.shift_held = False
@@ -168,6 +171,9 @@ class TilePicker:
         tile = self._tile_at_position(pos)
         if tile is not None:
             self.selected_tile = tile
+            # Notify callback (e.g., to auto-switch to paint tool)
+            if self.on_tile_selected:
+                self.on_tile_selected(tile)
 
     def _tile_at_position(self, pos: tuple[int, int]) -> int | None:
         """Get tile index at screen position, or None if invalid."""
