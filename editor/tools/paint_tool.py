@@ -1,5 +1,5 @@
 """
-Paint tool for terrain, palette, and greens editing.
+Paint tool for terrain and greens editing.
 """
 
 
@@ -97,8 +97,6 @@ class PaintTool:
 
         if mode == "terrain":
             return self._paint_terrain(view_state, pos, context)
-        elif mode == "palette":
-            return self._paint_palette(view_state, pos, context)
         elif mode == "greens":
             return self._paint_greens(view_state, pos, context)
 
@@ -125,29 +123,6 @@ class PaintTool:
 
                 # Clicked on same value - update position but don't modify
                 self.last_paint_pos = tile
-        return ToolResult.handled()
-
-    def _paint_palette(self, view_state, pos, context) -> ToolResult:
-        supertile = view_state.screen_to_supertile(pos)
-        if supertile and supertile != self.last_paint_pos:
-            row, col = supertile
-            current_palette = context.hole_data.attributes[row][col]
-
-            # Only paint if the value is actually changing
-            if current_palette != context.state.selected_palette:
-                # Push undo state only on first actual modification of this paint stroke
-                if not self.undo_pushed:
-                    context.state.undo_manager.push_state(context.hole_data)
-                    self.undo_pushed = True
-
-                context.hole_data.set_attribute(
-                    row, col, context.state.selected_palette
-                )
-                self.last_paint_pos = supertile
-                return ToolResult.modified(terrain=False)
-
-            # Clicked on same value - update position but don't modify
-            self.last_paint_pos = supertile
         return ToolResult.handled()
 
     def _paint_greens(self, view_state, pos, context) -> ToolResult:

@@ -20,6 +20,7 @@ class GridRenderer:
         view_state: ViewState,
         width: int,
         height: int,
+        supertile_mode: bool = False,
     ):
         """
         Render grid overlay.
@@ -29,26 +30,50 @@ class GridRenderer:
             view_state: Viewport camera and coordinate transformations
             width: Grid width in tiles
             height: Grid height in tiles
+            supertile_mode: If True, render 2x2 supertile grid instead of 1x1 tile grid
         """
         canvas_rect = view_state.canvas_rect
         tile_size = view_state.tile_size
         offset_x = view_state.offset_x
         offset_y = view_state.offset_y
 
-        # Vertical lines
-        for col in range(width + 1):
-            x = canvas_rect.x + col * tile_size - offset_x
-            if canvas_rect.x <= x <= canvas_rect.right:
-                color = COLOR_GRID_SUPER if col % 2 == 0 else COLOR_GRID
-                pygame.draw.line(
-                    screen, color, (x, canvas_rect.y), (x, canvas_rect.bottom)
-                )
+        if supertile_mode:
+            # Render 2x2 supertile grid
+            supertile_size = tile_size * 2
+            super_width = (width + 1) // 2
+            super_height = (height + 1) // 2
 
-        # Horizontal lines
-        for row in range(height + 1):
-            y = canvas_rect.y + row * tile_size - offset_y
-            if canvas_rect.y <= y <= canvas_rect.bottom:
-                color = COLOR_GRID_SUPER if row % 2 == 0 else COLOR_GRID
-                pygame.draw.line(
-                    screen, color, (canvas_rect.x, y), (canvas_rect.right, y)
-                )
+            # Vertical lines
+            for col in range(super_width + 1):
+                x = canvas_rect.x + col * supertile_size - offset_x
+                if canvas_rect.x <= x <= canvas_rect.right:
+                    pygame.draw.line(
+                        screen, COLOR_GRID_SUPER, (x, canvas_rect.y), (x, canvas_rect.bottom)
+                    )
+
+            # Horizontal lines
+            for row in range(super_height + 1):
+                y = canvas_rect.y + row * supertile_size - offset_y
+                if canvas_rect.y <= y <= canvas_rect.bottom:
+                    pygame.draw.line(
+                        screen, COLOR_GRID_SUPER, (canvas_rect.x, y), (canvas_rect.right, y)
+                    )
+        else:
+            # Render standard 1x1 tile grid
+            # Vertical lines
+            for col in range(width + 1):
+                x = canvas_rect.x + col * tile_size - offset_x
+                if canvas_rect.x <= x <= canvas_rect.right:
+                    color = COLOR_GRID_SUPER if col % 2 == 0 else COLOR_GRID
+                    pygame.draw.line(
+                        screen, color, (x, canvas_rect.y), (x, canvas_rect.bottom)
+                    )
+
+            # Horizontal lines
+            for row in range(height + 1):
+                y = canvas_rect.y + row * tile_size - offset_y
+                if canvas_rect.y <= y <= canvas_rect.bottom:
+                    color = COLOR_GRID_SUPER if row % 2 == 0 else COLOR_GRID
+                    pygame.draw.line(
+                        screen, color, (canvas_rect.x, y), (canvas_rect.right, y)
+                    )

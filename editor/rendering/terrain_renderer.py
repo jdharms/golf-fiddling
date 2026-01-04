@@ -48,6 +48,7 @@ class TerrainRenderer:
         hole_data: HoleData,
         render_ctx: RenderContext,
         highlight_state: HighlightState,
+        active_tool_name: str | None = None,
     ):
         """
         Render terrain canvas view.
@@ -58,6 +59,7 @@ class TerrainRenderer:
             hole_data: Hole data to render
             render_ctx: Rendering resources and settings
             highlight_state: Visual highlights and preview state
+            active_tool_name: Name of currently active tool (for grid rendering)
         """
         canvas_rect = view_state.canvas_rect
         canvas_offset_x = view_state.offset_x
@@ -153,8 +155,9 @@ class TerrainRenderer:
 
         # Render grid
         if show_grid:
+            supertile_mode = (active_tool_name == "palette")
             GridRenderer.render(
-                screen, view_state, TERRAIN_WIDTH, hole_data.get_terrain_height()
+                screen, view_state, TERRAIN_WIDTH, hole_data.get_terrain_height(), supertile_mode
             )
 
     @staticmethod

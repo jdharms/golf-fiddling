@@ -51,12 +51,6 @@ class CycleTool:
             return self._cycle_terrain(view_state, pos, button, context)
         elif mode == "greens":
             return self._cycle_greens(view_state, pos, button, context)
-        elif mode == "palette":
-            # Cycling palettes doesn't make sense - only 4 values
-            return ToolResult(
-                handled=True,
-                message="Cycle: Not available in palette mode"
-            )
 
         return ToolResult.not_handled()
 
