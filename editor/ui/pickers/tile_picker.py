@@ -132,7 +132,7 @@ class TilePicker:
             # Only notify if hover changed
             if new_hover != self.hovered_tile:
                 self.hovered_tile = new_hover
-                if self.on_hover_change:
+                if self.on_hover_change and self.shift_held:
                     self.on_hover_change(new_hover)
             # Don't return True - let event propagate to buttons
 

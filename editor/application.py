@@ -25,6 +25,7 @@ from .rendering.terrain_renderer import TerrainRenderer
 from .tools.cycle_tool import CycleTool
 from .tools.eyedropper_tool import EyedropperTool
 from .tools.forest_fill_tool import ForestFillTool
+from .tools.measure_tool import MeasureTool
 from .tools.paint_tool import PaintTool
 from .tools.row_operations_tool import RowOperationsTool
 from .tools.tool_manager import ToolManager
@@ -40,7 +41,7 @@ class EditorApplication:
     def __init__(self, terrain_chr: str, greens_chr: str):
         pygame.init()
 
-        self.screen_width = 1200
+        self.screen_width = 1280
         self.screen_height = 1200
         self.screen = pygame.display.set_mode(
             (self.screen_width, self.screen_height), pygame.RESIZABLE
@@ -147,6 +148,7 @@ class EditorApplication:
         self.tool_picker.register_tool("transform", "Transform", "↔")
         self.tool_picker.register_tool("forest_fill", "Forest Fill", "🌲")
         self.tool_picker.register_tool("cycle", "Cycle", "🔄")
+        self.tool_picker.register_tool("measure", "Measure", "📏")
 
         # Create tool manager and register tools
         self.tool_manager = ToolManager()
@@ -155,6 +157,7 @@ class EditorApplication:
         self.tool_manager.register_tool("eyedropper", EyedropperTool())
         self.tool_manager.register_tool("forest_fill", ForestFillTool())
         self.tool_manager.register_tool("cycle", CycleTool())
+        self.tool_manager.register_tool("measure", MeasureTool())
         self.tool_manager.register_tool("row_operations", RowOperationsTool())
 
         # Create event handler early (buttons will reference its methods)
@@ -342,11 +345,11 @@ class EditorApplication:
 
     def _on_terrain_hover_change(self, tile_value: int | None):
         """Called when terrain picker hover changes."""
-        shift_held = pygame.key.get_mods() & pygame.KMOD_SHIFT
-        if shift_held and self.state.mode in ("terrain", "palette"):
-            self.highlight_state.set_picker_hover(tile_value)
-        else:
-            self.highlight_state.clear_picker_hover()
+        if self.state.mode in ("terrain", "palette"):
+            if tile_value:
+                self.highlight_state.set_picker_hover(tile_value)
+            else:
+                self.highlight_state.clear_picker_hover()
 
     def _on_greens_hover_change(self, tile_value: int | None):
         """Called when greens picker hover changes."""
@@ -457,6 +460,14 @@ class EditorApplication:
         transform_tool = self.tool_manager.get_tool("transform")
         if transform_tool:
             self.highlight_state.transform_state = transform_tool.state
+
+        # Get measure points from measure tool
+        measure_tool = self.tool_manager.get_tool("measure")
+        # Only measure in terrain mode
+        if measure_tool:
+            self.highlight_state.measure_points = (
+                measure_tool.points if measure_tool.points and self.state.mode == "terrain" else None
+            )
 
         # Render based on mode
         if self.state.mode == "greens":

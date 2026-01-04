@@ -5,6 +5,9 @@ Renders greens editing canvas view.
 """
 
 
+import math
+
+import pygame
 from pygame import Surface
 
 from editor.controllers.highlight_state import HighlightState
@@ -101,6 +104,17 @@ class GreensRenderer:
                 screen, view_state, sprites, hole_data, selected_flag_index
             )
 
+        # Render measurement overlay
+        if highlight_state.measure_points:
+            GreensRenderer._render_measurement_overlay(
+                screen,
+                view_state.canvas_rect,
+                highlight_state.measure_points,
+                view_state.scale,
+                view_state.offset_x,
+                view_state.offset_y,
+            )
+
         # Render grid
         if show_grid:
             GridRenderer.render(screen, view_state, GREENS_WIDTH, GREENS_HEIGHT)
@@ -186,3 +200,87 @@ class GreensRenderer:
 
                 # Draw gold border
                 draw_tile_border(screen, x, y, tile_size)
+
+    @staticmethod
+    def _render_measurement_overlay(
+        screen,
+        canvas_rect,
+        measure_points,
+        canvas_scale,
+        canvas_offset_x,
+        canvas_offset_y,
+    ):
+        """Render measurement lines and distance labels."""
+        if not measure_points or len(measure_points) == 0:
+            return
+
+        # Line and point colors for visibility
+        line_color = (0, 255, 255)  # Cyan
+        point_color = (255, 255, 0)  # Yellow
+
+        # Create ViewState for coordinate conversion
+        view_state = ViewState(canvas_rect, canvas_offset_x, canvas_offset_y, canvas_scale)
+
+        # Convert game pixel positions to screen positions
+        screen_points = []
+        for game_pixel_pos in measure_points:
+            screen_pos = view_state.game_pixels_to_screen(game_pixel_pos)
+            screen_points.append(screen_pos)
+
+        # Draw lines between consecutive pairs
+        font = pygame.font.SysFont("monospace", 12)
+
+        for i in range(len(screen_points) - 1):
+            p1_screen = screen_points[i]
+            p2_screen = screen_points[i + 1]
+            p1_game = measure_points[i]
+            p2_game = measure_points[i + 1]
+
+            # Check if line is visible (either endpoint on screen)
+            p1_visible = (
+                canvas_rect.left <= p1_screen[0] <= canvas_rect.right
+                and canvas_rect.top <= p1_screen[1] <= canvas_rect.bottom
+            )
+            p2_visible = (
+                canvas_rect.left <= p2_screen[0] <= canvas_rect.right
+                and canvas_rect.top <= p2_screen[1] <= canvas_rect.bottom
+            )
+
+            if not (p1_visible or p2_visible):
+                continue  # Skip off-screen lines
+
+            # Draw line
+            pygame.draw.line(screen, line_color, p1_screen, p2_screen, 2)
+
+            # Calculate distance in yards
+            dx = p2_game[0] - p1_game[0]
+            dy = p2_game[1] - p1_game[1]
+            distance_yards = math.sqrt(dx * dx + dy * dy) * 2
+
+            # Draw label at midpoint
+            mid_x = (p1_screen[0] + p2_screen[0]) // 2
+            mid_y = (p1_screen[1] + p2_screen[1]) // 2
+
+            label_text = f"{distance_yards:.1f}y"
+            label_surf = font.render(label_text, True, (255, 255, 255))
+
+            # Draw background rectangle for readability
+            label_rect = label_surf.get_rect(center=(mid_x, mid_y))
+            bg_rect = label_rect.inflate(4, 2)
+            pygame.draw.rect(screen, (0, 0, 0), bg_rect)
+            pygame.draw.rect(screen, line_color, bg_rect, 1)
+
+            screen.blit(label_surf, label_rect)
+
+        # Draw points (on top of lines)
+        for screen_x, screen_y in screen_points:
+            # Check if point is visible
+            if not (
+                canvas_rect.left <= screen_x <= canvas_rect.right
+                and canvas_rect.top <= screen_y <= canvas_rect.bottom
+            ):
+                continue
+
+            # Draw point as filled circle with black outline
+            pygame.draw.circle(screen, point_color, (screen_x, screen_y), 4)
+            pygame.draw.circle(screen, (0, 0, 0), (screen_x, screen_y), 4, 1)
