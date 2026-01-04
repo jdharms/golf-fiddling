@@ -14,7 +14,7 @@ from editor.core.constants import (
     CANVAS_OFFSET_Y,
     STATUS_HEIGHT,
 )
-from editor.ui.pickers import GreensTilePicker, TilePicker
+from editor.ui.pickers import GreensTilePicker, TilePicker, ToolPicker
 from editor.ui.widgets import Button
 from golf.formats.hole_data import HoleData
 
@@ -34,11 +34,13 @@ class EventHandler:
         screen_width: int,
         screen_height: int,
         tool_manager,
+        tool_picker: ToolPicker,
         on_load: Callable[[], None],
         on_save: Callable[[], None],
         on_mode_change: Callable[[], None],
         on_flag_change: Callable[[], None],
         on_resize: Callable[[int, int], None],
+        on_tool_change: Callable[[], None],
         on_terrain_modified: Callable[[], None] | None = None,
     ):
         """
@@ -64,6 +66,7 @@ class EventHandler:
         self.hole_data = hole_data
         self.terrain_picker = terrain_picker
         self.greens_picker = greens_picker
+        self.tool_picker = tool_picker
         self.buttons = buttons
         self.screen_width = screen_width
         self.screen_height = screen_height
@@ -73,6 +76,7 @@ class EventHandler:
         self.on_mode_change = on_mode_change
         self.on_flag_change = on_flag_change
         self.on_resize = on_resize
+        self.on_tool_change = on_tool_change
         self.on_terrain_modified = on_terrain_modified
 
         # Create tool context (will be updated by Application with transform_logic and forest_filler)
@@ -120,19 +124,10 @@ class EventHandler:
                         self._process_tool_result(result)
 
             elif event.type == pygame.KEYUP:
-                # Let tools handle key up (e.g., transform cancels on shift release)
+                # Let active tool handle key up
                 tool = self.tool_manager.get_active_tool()
                 if tool:
                     result = tool.handle_key_up(event.key, self.tool_context)
-                    self._process_tool_result(result)
-                # Also check transform tool specifically for shift release
-                transform_tool = self.tool_manager.get_tool("transform")
-                if (
-                    transform_tool
-                    and hasattr(transform_tool, "state")
-                    and transform_tool.state.is_active
-                ):
-                    result = transform_tool.handle_key_up(event.key, self.tool_context)
                     self._process_tool_result(result)
 
             # Handle button events
@@ -149,33 +144,16 @@ class EventHandler:
             else:
                 picker_handled = self.terrain_picker.handle_event(event)
 
+            # Handle tool picker events
+            tool_picker_handled = self.tool_picker.handle_event(event)
+            if tool_picker_handled:
+                continue
+
             # Handle canvas events (only if button/picker didn't handle)
             if event.type == pygame.MOUSEBUTTONDOWN and not (
                 button_handled or picker_handled
             ):
                 modifiers = pygame.key.get_mods()
-
-                # Try transform tool first if shift held
-                if modifiers & pygame.KMOD_SHIFT:
-                    transform_tool = self.tool_manager.get_tool("transform")
-                    if transform_tool:
-                        result = transform_tool.handle_mouse_down(
-                            event.pos, event.button, modifiers, self.tool_context
-                        )
-                        if result.handled:
-                            self._process_tool_result(result)
-                            continue
-
-                # Try eyedropper on right click
-                if event.button == 3:
-                    eyedropper_tool = self.tool_manager.get_tool("eyedropper")
-                    if eyedropper_tool:
-                        result = eyedropper_tool.handle_mouse_down(
-                            event.pos, event.button, modifiers, self.tool_context
-                        )
-                        if result.handled:
-                            self._process_tool_result(result)
-                            continue
 
                 # Handle scrolling
                 if event.button == 4:  # Scroll up
@@ -185,7 +163,7 @@ class EventHandler:
                     self.state.canvas_offset_y += 20
                     continue
 
-                # Default to active tool (paint)
+                # Delegate to active tool
                 tool = self.tool_manager.get_active_tool()
                 if tool:
                     result = tool.handle_mouse_down(
@@ -194,20 +172,7 @@ class EventHandler:
                     self._process_tool_result(result)
 
             elif event.type == pygame.MOUSEBUTTONUP and not picker_handled:
-                # Check transform first (might be active)
-                transform_tool = self.tool_manager.get_tool("transform")
-                if (
-                    transform_tool
-                    and hasattr(transform_tool, "state")
-                    and transform_tool.state.is_active
-                ):
-                    result = transform_tool.handle_mouse_up(
-                        event.pos, event.button, self.tool_context
-                    )
-                    self._process_tool_result(result)
-                    continue
-
-                # Otherwise delegate to active tool
+                # Delegate to active tool
                 tool = self.tool_manager.get_active_tool()
                 if tool:
                     result = tool.handle_mouse_up(
@@ -216,20 +181,7 @@ class EventHandler:
                     self._process_tool_result(result)
 
             elif event.type == pygame.MOUSEMOTION:
-                # Check if transform is active
-                transform_tool = self.tool_manager.get_tool("transform")
-                if (
-                    transform_tool
-                    and hasattr(transform_tool, "state")
-                    and transform_tool.state.is_active
-                ):
-                    result = transform_tool.handle_mouse_motion(
-                        event.pos, self.tool_context
-                    )
-                    self._process_tool_result(result)
-                    continue
-
-                # Otherwise delegate to active tool
+                # Delegate to active tool
                 tool = self.tool_manager.get_active_tool()
                 if tool:
                     result = tool.handle_mouse_motion(event.pos, self.tool_context)
@@ -284,14 +236,6 @@ class EventHandler:
         elif event.key == pygame.K_x and pygame.key.get_mods() & pygame.KMOD_CTRL:
             # Ctrl+X = Toggle invalid tile highlighting
             self.state.toggle_invalid_tiles()
-        elif event.key == pygame.K_f and pygame.key.get_mods() & pygame.KMOD_CTRL:
-            # Ctrl+F = Forest fill
-            forest_fill_tool = self.tool_manager.get_tool("forest_fill")
-            if forest_fill_tool:
-                result = forest_fill_tool.handle_key_down(
-                    event.key, pygame.key.get_mods(), self.tool_context
-                )
-                self._process_tool_result(result)
 
         elif event.key == pygame.K_LEFT:
             self.state.canvas_offset_x = max(0, self.state.canvas_offset_x - 20)
@@ -323,6 +267,10 @@ class EventHandler:
         elif event.key == pygame.K_v:  # Toggle sprites (V for "view")
             self.state.toggle_sprites()
         else:
+            # Try tool hotkeys
+            if self.tool_manager.activate_by_hotkey(event.key, self.tool_context):
+                self.on_tool_change()  # Sync picker state
+                return True
             # Key not handled by global handler
             return False
 

@@ -22,6 +22,7 @@ from .core.pygame_rendering import Sprite, Tileset
 from .rendering.greens_renderer import GreensRenderer
 from .rendering.render_context import RenderContext
 from .rendering.terrain_renderer import TerrainRenderer
+from .tools.cycle_tool import CycleTool
 from .tools.eyedropper_tool import EyedropperTool
 from .tools.forest_fill_tool import ForestFillTool
 from .tools.paint_tool import PaintTool
@@ -29,7 +30,7 @@ from .tools.row_operations_tool import RowOperationsTool
 from .tools.tool_manager import ToolManager
 from .tools.transform_tool import TransformTool
 from .ui.dialogs import open_file_dialog, save_file_dialog
-from .ui.pickers import GreensTilePicker, TilePicker
+from .ui.pickers import GreensTilePicker, TilePicker, ToolPicker
 from .ui.toolbar import Toolbar, ToolbarCallbacks
 
 
@@ -131,12 +132,29 @@ class EditorApplication:
             on_hover_change=self._on_greens_hover_change,
         )
 
+        # Create tool picker (right sidebar)
+        tool_picker_rect = Rect(
+            self.screen_width - TOOL_PICKER_WIDTH,
+            TOOLBAR_HEIGHT,
+            TOOL_PICKER_WIDTH,
+            self.screen_height - TOOLBAR_HEIGHT - STATUS_HEIGHT,
+        )
+        self.tool_picker = ToolPicker(
+            tool_picker_rect,
+            on_tool_change=self._on_tool_change,
+        )
+        self.tool_picker.register_tool("paint", "Paint", "🖌")
+        self.tool_picker.register_tool("transform", "Transform", "↔")
+        self.tool_picker.register_tool("forest_fill", "Forest Fill", "🌲")
+        self.tool_picker.register_tool("cycle", "Cycle", "🔄")
+
         # Create tool manager and register tools
         self.tool_manager = ToolManager()
         self.tool_manager.register_tool("paint", PaintTool())
         self.tool_manager.register_tool("transform", TransformTool())
         self.tool_manager.register_tool("eyedropper", EyedropperTool())
         self.tool_manager.register_tool("forest_fill", ForestFillTool())
+        self.tool_manager.register_tool("cycle", CycleTool())
         self.tool_manager.register_tool("row_operations", RowOperationsTool())
 
         # Create event handler early (buttons will reference its methods)
@@ -149,17 +167,20 @@ class EditorApplication:
             self.screen_width,
             self.screen_height,
             self.tool_manager,
+            self.tool_picker,
             on_load=self._on_load,
             on_save=self._on_save,
             on_mode_change=self._update_mode_buttons,
             on_flag_change=self._update_flag_buttons,
             on_resize=self._on_resize,
+            on_tool_change=self._on_tool_change,
             on_terrain_modified=self.invalidate_terrain_validation_cache,
         )
 
-        # Set transform_logic and forest_filler on tool_context (needed by tools)
+        # Set transform_logic, forest_filler, and tool_manager on tool_context (needed by tools)
         self.event_handler.tool_context.transform_logic = self.transform_logic
         self.event_handler.tool_context.forest_filler = self.forest_filler
+        self.event_handler.tool_context.tool_manager = self.tool_manager
 
         # Activate paint tool now that we have context
         self.tool_manager.set_active_tool("paint", self.event_handler.tool_context)
@@ -193,6 +214,17 @@ class EditorApplication:
         """Set editing mode."""
         self.state.set_mode(mode)
         self._update_mode_buttons()
+
+    def _on_tool_change(self, tool_name: str | None = None):
+        """Handle tool selection change from picker or hotkey."""
+        if tool_name is None:
+            # Called from hotkey - sync picker selection
+            tool_name = self.tool_manager.get_active_tool_name()
+            if tool_name:
+                self.tool_picker.selected_tool = tool_name
+        else:
+            # Called from picker - activate tool
+            self.tool_manager.set_active_tool(tool_name, self.event_handler.tool_context)
 
     def _update_mode_buttons(self):
         """Update mode button active states."""
@@ -297,6 +329,15 @@ class EditorApplication:
             (self.screen_width, self.screen_height), pygame.RESIZABLE
         )
         self.toolbar.resize(width)
+
+        # Resize tool picker (right sidebar)
+        self.tool_picker.rect = Rect(
+            width - TOOL_PICKER_WIDTH,
+            TOOLBAR_HEIGHT,
+            TOOL_PICKER_WIDTH,
+            height - TOOLBAR_HEIGHT - STATUS_HEIGHT,
+        )
+
         self.event_handler.update_screen_size(width, height)
 
     def _on_terrain_hover_change(self, tile_value: int | None):
@@ -320,7 +361,7 @@ class EditorApplication:
         return Rect(
             CANVAS_OFFSET_X,
             CANVAS_OFFSET_Y,
-            self.screen_width - CANVAS_OFFSET_X,
+            self.screen_width - CANVAS_OFFSET_X - TOOL_PICKER_WIDTH,
             self.screen_height - CANVAS_OFFSET_Y - STATUS_HEIGHT,
         )
 
@@ -353,7 +394,7 @@ class EditorApplication:
         """Render the editor."""
         self.screen.fill(COLOR_BG)
 
-        # Tile picker
+        # Tile picker (left sidebar)
         if self.state.mode == "greens":
             self.greens_picker.render(self.screen)
         else:
@@ -361,6 +402,9 @@ class EditorApplication:
                 self.state.selected_palette if self.state.selected_palette > 0 else 1
             )
             self.terrain_picker.render(self.screen, palette_for_picker)
+
+        # Tool picker (right sidebar)
+        self.tool_picker.render(self.screen, self.font)
 
         # Canvas
         self._render_canvas()

@@ -332,12 +332,31 @@ Example: `golf-expand-dict = "tools.expand_dict:main"` makes `golf-expand-dict` 
 
 ### Adding Editor Tools
 
-Editor tools are separate classes that handle specific editing operations (paint, transform, eyedropper, etc.).
+Editor tools are classes that handle specific editing operations. The editor uses three types of tools:
 
-**To add a new editor tool:**
+**Tool Types:**
 
-1. Create tool class in `editor/tools/your_tool.py` implementing the Tool protocol:
+1. **Modal Tools** (Paint, Transform, Forest Fill): Persistent modes shown in tool picker
+   - Remain active until user switches to another tool
+   - Implement `get_hotkey()` to define activation hotkey ('P', 'T', 'F')
+   - Use `on_activated`/`on_deactivated` for lifecycle management
+   - Example: Forest Fill stays active; each click fills a region
+
+2. **Service Tools** (Eyedropper): Not in picker, used via delegation
+   - Called by other tools (e.g., Paint delegates right-click to Eyedropper)
+   - No hotkey, no picker presence
+   - Accessed via `context.get_eyedropper_tool()`
+
+3. **Toolbar Actions** (Row Operations): Triggered by toolbar buttons
+   - Invoked once via button click, execute and complete
+   - Not persistent modes, no picker presence
+
+**To add a modal tool:**
+
+1. Create tool class implementing Tool protocol in `editor/tools/your_tool.py`:
 ```python
+import pygame
+
 class YourTool:
     def handle_mouse_down(self, pos, button, modifiers, context):
         # Handle mouse press
@@ -363,14 +382,25 @@ class YourTool:
 
     def reset(self):
         pass
+
+    def get_hotkey(self):
+        """Return pygame key constant for activation hotkey."""
+        return pygame.K_y  # 'Y' key activates this tool
 ```
 
-2. Register tool in `editor/application.py` `__init__`:
+2. Register in Application.__init__:
 ```python
 self.tool_manager.register_tool("your_tool", YourTool())
 ```
 
-3. Activate tool via ToolManager or keyboard shortcut in EventHandler
+3. Add to tool picker:
+```python
+self.tool_picker.register_tool("your_tool", "Your Tool", "🔧")
+```
+
+**Hotkey Conflicts**: ToolManager validates uniqueness on registration and throws ValueError on conflicts.
+
+**Reserved Keys**: G (grid), Tab (mode), 1-3 (flags), Ctrl+Z/Y (undo/redo), Ctrl+S (save), Ctrl+X (invalid tiles), P/T/F (tool hotkeys)
 
 **Tool Best Practices:**
 - Return `ToolResult.modified()` when data changes (triggers re-render)
@@ -379,6 +409,8 @@ self.tool_manager.register_tool("your_tool", YourTool())
 - Push undo state BEFORE modifying data: `context.state.undo_manager.push_state(context.hole_data)`
 - Use `context.get_selected_tile()` / `context.set_selected_tile()` for mode-agnostic tile access
 - Store tool-specific state as instance variables (e.g., `self.is_painting`)
+
+**Forest Fill Behavior**: When Forest Fill tool is active, clicking inside a forest placeholder region fills only that region (not all regions). Tool stays active for multiple clicks.
 
 ## Testing
 

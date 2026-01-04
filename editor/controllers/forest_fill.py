@@ -37,6 +37,9 @@ class ForestFillRegion:
             set()
         )  # Nearby OOB border ($80-$9B) tiles
 
+    def contains_tile(self, tile: tuple[int, int]) -> bool:
+        return tile in self.cells
+
     def calculate_distance_field(self, terrain: list[list[int]]):
         """Calculate Manhattan distance from each placeholder to nearest OOB border using BFS."""
         self._find_nearby_oob_tiles(terrain)

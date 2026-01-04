@@ -3,6 +3,8 @@
 import pytest
 from pygame import Rect
 
+from unittest.mock import Mock
+
 from editor.controllers.editor_state import EditorState
 from editor.controllers.event_handler import EventHandler
 from editor.controllers.transform_logic import TransformLogic
@@ -43,6 +45,7 @@ def editor_setup():
 
     # Create event handler
     transform_logic = TransformLogic(load_compression_tables())
+    mock_tool_picker = Mock()
     event_handler = EventHandler(
         state,
         hole_data,
@@ -52,11 +55,13 @@ def editor_setup():
         800,
         600,
         tool_manager,
+        mock_tool_picker,
         on_load=lambda: None,
         on_save=lambda: None,
         on_mode_change=lambda: None,
         on_flag_change=lambda: None,
         on_resize=lambda w, h: None,
+        on_tool_change=lambda: None,
     )
 
     # Set transform_logic and forest_filler on tool_context
