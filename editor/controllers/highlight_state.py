@@ -21,6 +21,7 @@ class HighlightState:
         self.transform_state: TransformToolState | None = None
         self.show_invalid_tiles: bool = False
         self.invalid_terrain_tiles: set | None = None
+        self.measure_points: list[tuple[int, int]] | None = None
 
     def set_picker_hover(self, tile_value: int | None):
         """

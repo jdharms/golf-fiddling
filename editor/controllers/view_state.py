@@ -107,3 +107,48 @@ class ViewState:
             or y + tile_size < self.canvas_rect.y
             or y > self.canvas_rect.bottom
         )
+
+    def screen_to_game_pixels(
+        self, screen_pos: tuple[int, int]
+    ) -> tuple[int, int] | None:
+        """
+        Convert screen coordinates to game pixel coordinates with sub-tile precision.
+
+        Game pixels are the NES-native pixel coordinates where each tile is 8x8.
+        This provides finer precision than tile coordinates, allowing measurements
+        to capture the exact clicked position within a tile.
+
+        Args:
+            screen_pos: Screen position (x, y) in pixels
+
+        Returns:
+            Game pixel coordinates (x, y), or None if outside canvas
+        """
+        if not self.canvas_rect.collidepoint(screen_pos):
+            return None
+
+        local_x = screen_pos[0] - self.canvas_rect.x + self.offset_x
+        local_y = screen_pos[1] - self.canvas_rect.y + self.offset_y
+
+        # Scale converts screen pixels to game pixels
+        game_pixel_x = local_x // self.scale
+        game_pixel_y = local_y // self.scale
+
+        return (game_pixel_x, game_pixel_y)
+
+    def game_pixels_to_screen(self, game_pixel_pos: tuple[int, int]) -> tuple[int, int]:
+        """
+        Convert game pixel coordinates to screen coordinates.
+
+        Args:
+            game_pixel_pos: Game pixel coordinates (x, y)
+
+        Returns:
+            Screen position (x, y) in pixels
+        """
+        gx, gy = game_pixel_pos
+
+        screen_x = self.canvas_rect.x + gx * self.scale - self.offset_x
+        screen_y = self.canvas_rect.y + gy * self.scale - self.offset_y
+
+        return (screen_x, screen_y)
