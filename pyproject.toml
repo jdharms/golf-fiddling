@@ -34,6 +34,7 @@ addopts = [
     "--strict-markers",
     "--tb=short",
     "--cov=golf",
+    "--cov=editor",
     "--cov-report=term-missing",
 ]
 

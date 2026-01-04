@@ -410,16 +410,8 @@ pytest --cov=golf --cov-report=html
 
 ### Test Structure
 
-- **Unit Tests** (`tests/unit/`): 23 tests validating individual compression functions
-  - `test_vertical_fill.py` - Vertical fill detection (7 tests)
-  - `test_dict_matching.py` - Dictionary sequence matching (6 tests)
-  - `test_repeat_codes.py` - Repeat code generation (6 tests)
-  - `test_table_loading.py` - Compression table validation (4 tests)
-
-- **Integration Tests** (`tests/integration/`): 11 tests for round-trip validation
-  - `test_terrain_roundtrip.py` - Terrain compress/decompress (6 tests)
-  - `test_greens_roundtrip.py` - Greens compress/decompress (5 tests)
-
+- **Unit Tests** (`tests/unit/`)
+- **Integration Tests** (`tests/integration/`)
 - **Test Fixtures** (`tests/fixtures/` and `tests/conftest.py`):
   - Real compression tables from `data/tables/compression_tables.json`
   - Mock minimal tables for unit testing
