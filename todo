@@ -1,7 +1,6 @@
 * rows must be even
 * scroll limit is calculable
 * edit metadata
-* Grid lines should be supertiles when in palette mode
 * ~~drag to transform up/left?~~
 * Invalid neighbor indicator should be a single border per pairing
 * Wooden signs?
@@ -11,8 +10,6 @@
 Tool ideas:
 * Rectangle?
 * Border fill?
-
-* I keep finding myself wanting clicking on the picker to switch directly to the paint tool
 
 Thoughts:
 * It can be tough to know when to "cut bait"
