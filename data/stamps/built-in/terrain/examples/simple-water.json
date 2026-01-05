@@ -1,0 +1,17 @@
+{
+  "id": "simple_water_2x2",
+  "name": "Simple Water 2x2",
+  "description": "Simple 2x2 water tile pattern",
+  "created": "2026-01-04T00:00:00",
+  "category": "terrain",
+  "tags": ["water", "simple"],
+  "mode": "terrain",
+  "width": 2,
+  "height": 2,
+  "tiles": {
+    "rows": [
+      "58 59",
+      "68 69"
+    ]
+  }
+}

@@ -78,6 +78,8 @@ class ToolContext:
         screen_width: int,
         screen_height: int,
         tool_manager=None,
+        highlight_state=None,
+        stamp_library=None,
     ):
         self.hole_data = hole_data
         self.state = state
@@ -88,6 +90,8 @@ class ToolContext:
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.tool_manager = tool_manager
+        self.highlight_state = highlight_state
+        self.stamp_library = stamp_library
 
     def get_selected_tile(self) -> int:
         """Get currently selected tile based on mode."""

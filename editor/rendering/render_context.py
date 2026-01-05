@@ -4,6 +4,12 @@ NES Open Tournament Golf - Render Context
 Bundles rendering resources and settings for canvas rendering.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from editor.controllers.editor_state import EditorState
 
 from editor.core.pygame_rendering import Sprite, Tileset
 
@@ -19,6 +25,7 @@ class RenderContext:
         show_grid: bool = True,
         show_sprites: bool = True,
         selected_flag_index: int = 0,
+        state: EditorState | None = None,
     ):
         """
         Initialize render context.
@@ -30,6 +37,7 @@ class RenderContext:
             show_grid: Whether to show grid overlay
             show_sprites: Whether to show sprite overlays
             selected_flag_index: Which flag position to render (0-3)
+            state: EditorState for clipboard/paste preview access
         """
         self.tileset = tileset
         self.sprites = sprites
@@ -37,3 +45,4 @@ class RenderContext:
         self.show_grid = show_grid
         self.show_sprites = show_sprites
         self.selected_flag_index = selected_flag_index
+        self.state = state

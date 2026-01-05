@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from editor.data import StampData
     from editor.tools.transform_tool import TransformToolState
 
 
@@ -22,6 +23,15 @@ class HighlightState:
         self.show_invalid_tiles: bool = False
         self.invalid_terrain_tiles: set | None = None
         self.measure_points: list[tuple[int, int]] | None = None
+
+        # Selection and paste/stamp preview state
+        self.selection_rect: tuple[int, int, int, int] | None = (
+            None  # (row, col, width, height)
+        )
+        self.selection_mode: str | None = None  # "terrain" or "greens"
+        self.paste_preview_pos: tuple[int, int] | None = None  # (row, col)
+        self.stamp_preview_pos: tuple[int, int] | None = None  # (row, col)
+        self.current_stamp: StampData | None = None
 
     def set_picker_hover(self, tile_value: int | None):
         """

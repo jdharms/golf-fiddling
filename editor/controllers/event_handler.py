@@ -35,12 +35,14 @@ class EventHandler:
         screen_height: int,
         tool_manager,
         tool_picker: ToolPicker,
+        stamp_browser,
         on_load: Callable[[], None],
         on_save: Callable[[], None],
         on_mode_change: Callable[[], None],
         on_flag_change: Callable[[], None],
         on_resize: Callable[[int, int], None],
         on_tool_change: Callable[[], None],
+        on_create_stamp: Callable[[], None] | None = None,
         on_terrain_modified: Callable[[], None] | None = None,
     ):
         """
@@ -55,11 +57,13 @@ class EventHandler:
             screen_width: Screen width
             screen_height: Screen height
             tool_manager: Tool manager for handling tools
+            stamp_browser: Stamp browser widget
             on_load: Callback for load action
             on_save: Callback for save action
             on_mode_change: Callback when mode changes
             on_flag_change: Callback when flag selection changes
             on_resize: Callback for window resize (width, height)
+            on_create_stamp: Callback for creating stamp from selection
             on_terrain_modified: Callback when terrain is modified
         """
         self.state = state
@@ -67,6 +71,7 @@ class EventHandler:
         self.terrain_picker = terrain_picker
         self.greens_picker = greens_picker
         self.tool_picker = tool_picker
+        self.stamp_browser = stamp_browser
         self.buttons = buttons
         self.screen_width = screen_width
         self.screen_height = screen_height
@@ -74,6 +79,7 @@ class EventHandler:
         self.on_load = on_load
         self.on_save = on_save
         self.on_mode_change = on_mode_change
+        self.on_create_stamp = on_create_stamp
         self.on_flag_change = on_flag_change
         self.on_resize = on_resize
         self.on_tool_change = on_tool_change
@@ -137,9 +143,13 @@ class EventHandler:
                     button_handled = True
                     break  # Stop after first button handles it
 
-            # Handle picker events
+            # Handle picker/browser events (depends on active tool)
             picker_handled = False
-            if self.state.mode == "greens":
+            active_tool = self.tool_manager.get_active_tool_name()
+            if active_tool == "stamp":
+                # Stamp browser is active
+                picker_handled = self.stamp_browser.handle_event(event)
+            elif self.state.mode == "greens":
                 picker_handled = self.greens_picker.handle_event(event)
             else:
                 picker_handled = self.terrain_picker.handle_event(event)
@@ -219,8 +229,15 @@ class EventHandler:
             self.state.set_mode(modes[(idx + 1) % len(modes)])
             self.on_mode_change()
 
-        elif event.key == pygame.K_s and pygame.key.get_mods() & pygame.KMOD_CTRL:
-            self.on_save()
+        elif event.key == pygame.K_s:
+            mods = pygame.key.get_mods()
+            if mods & pygame.KMOD_CTRL and mods & pygame.KMOD_SHIFT:
+                # Ctrl+Shift+S: Create stamp from selection
+                if self.on_create_stamp:
+                    self.on_create_stamp()
+            elif mods & pygame.KMOD_CTRL:
+                # Ctrl+S: Save
+                self.on_save()
         elif event.key == pygame.K_o and pygame.key.get_mods() & pygame.KMOD_CTRL:
             self.on_load()
         elif event.key == pygame.K_z and pygame.key.get_mods() & pygame.KMOD_CTRL:
@@ -233,9 +250,32 @@ class EventHandler:
         elif event.key == pygame.K_y and pygame.key.get_mods() & pygame.KMOD_CTRL:
             # Ctrl+Y = Redo
             self._redo()
-        elif event.key == pygame.K_x and pygame.key.get_mods() & pygame.KMOD_CTRL:
-            # Ctrl+X = Toggle invalid tile highlighting
+        elif event.key == pygame.K_i and pygame.key.get_mods() & pygame.KMOD_CTRL:
+            # Ctrl+I = Toggle invalid tile highlighting (changed from Ctrl+X to avoid conflict with Cut)
             self.state.toggle_invalid_tiles()
+
+        # Selection tool shortcuts (delegate to active tool if it's Selection)
+        elif event.key == pygame.K_c and pygame.key.get_mods() & pygame.KMOD_CTRL:
+            # Ctrl+C = Copy (if Selection tool is active)
+            active_tool = self.tool_manager.get_active_tool()
+            if active_tool and hasattr(active_tool, '_copy_selection'):
+                # Selection tool handles this
+                return False  # Let tool handle it
+            return False  # Not handled
+        elif event.key == pygame.K_x and pygame.key.get_mods() & pygame.KMOD_CTRL:
+            # Ctrl+X = Cut (if Selection tool is active)
+            active_tool = self.tool_manager.get_active_tool()
+            if active_tool and hasattr(active_tool, '_cut_selection'):
+                # Selection tool handles this
+                return False  # Let tool handle it
+            return False  # Not handled
+        elif event.key == pygame.K_v and pygame.key.get_mods() & pygame.KMOD_CTRL:
+            # Ctrl+V = Paste (if Selection tool is active)
+            active_tool = self.tool_manager.get_active_tool()
+            if active_tool and hasattr(active_tool, '_start_paste'):
+                # Selection tool handles this
+                return False  # Let tool handle it
+            return False  # Not handled
 
         elif event.key == pygame.K_LEFT:
             self.state.canvas_offset_x = max(0, self.state.canvas_offset_x - 20)

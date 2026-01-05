@@ -18,6 +18,7 @@ from golf.formats.hole_data import HoleData
 from .grid_renderer import GridRenderer
 from .highlight_utils import draw_tile_border
 from .render_context import RenderContext
+from .selection_renderer import SelectionRenderer
 from .sprite_renderer import SpriteRenderer
 
 
@@ -113,6 +114,44 @@ class GreensRenderer:
                 view_state.scale,
                 view_state.offset_x,
                 view_state.offset_y,
+            )
+
+        # Render selection rectangle
+        if highlight_state.selection_rect and highlight_state.selection_mode == "greens":
+            SelectionRenderer.render_selection_rect(
+                screen,
+                highlight_state,
+                view_state.offset_x,
+                view_state.offset_y,
+                view_state.scale,
+            )
+
+        # Render paste preview
+        if highlight_state.paste_preview_pos and render_ctx.state.paste_preview_active:
+            SelectionRenderer.render_paste_preview(
+                screen,
+                highlight_state,
+                render_ctx.state.clipboard,
+                hole_data,
+                tileset,
+                view_state.offset_x,
+                view_state.offset_y,
+                view_state.scale,
+                "greens",
+            )
+
+        # Render stamp preview
+        if highlight_state.stamp_preview_pos and highlight_state.current_stamp:
+            from editor.rendering.stamp_renderer import StampRenderer
+            StampRenderer.render_stamp_preview(
+                screen,
+                highlight_state,
+                hole_data,
+                tileset,
+                view_state.offset_x,
+                view_state.offset_y,
+                view_state.scale,
+                "greens",
             )
 
         # Render grid
