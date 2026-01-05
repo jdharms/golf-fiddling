@@ -152,9 +152,9 @@ class EditorApplication:
             on_tool_change=self._on_tool_change,
         )
         self.tool_picker.register_tool("paint", "Paint", "🖌")
+        self.tool_picker.register_tool("palette", "Palette", "🎨")
         self.tool_picker.register_tool("selection", "Select", "✂")
         self.tool_picker.register_tool("stamp", "Stamp", "📋")
-        self.tool_picker.register_tool("palette", "Palette", "🎨")
         self.tool_picker.register_tool("transform", "Transform", "↔")
         self.tool_picker.register_tool("forest_fill", "Forest Fill", "🌲")
         self.tool_picker.register_tool("cycle", "Cycle", "🔄")
