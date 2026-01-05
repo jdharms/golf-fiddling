@@ -15,6 +15,7 @@ from golf.formats.hole_data import HoleData
 from .controllers.editor_state import EditorState
 from .controllers.event_handler import EventHandler
 from .controllers.highlight_state import HighlightState
+from .controllers.stamp_library import StampLibrary
 from .controllers.transform_logic import TransformLogic
 from .controllers.view_state import ViewState
 from .core.constants import *
@@ -29,10 +30,13 @@ from .tools.measure_tool import MeasureTool
 from .tools.paint_tool import PaintTool
 from .tools.palette_tool import PaletteTool
 from .tools.row_operations_tool import RowOperationsTool
+from .tools.selection_tool import SelectionTool
+from .tools.stamp_tool import StampTool
 from .tools.tool_manager import ToolManager
 from .tools.transform_tool import TransformTool
 from .ui.dialogs import open_file_dialog, save_file_dialog
 from .ui.pickers import GreensTilePicker, TilePicker, ToolPicker
+from .ui.stamp_browser import StampBrowser
 from .ui.toolbar import Toolbar, ToolbarCallbacks
 
 
@@ -148,15 +152,30 @@ class EditorApplication:
             on_tool_change=self._on_tool_change,
         )
         self.tool_picker.register_tool("paint", "Paint", "🖌")
+        self.tool_picker.register_tool("selection", "Select", "✂")
+        self.tool_picker.register_tool("stamp", "Stamp", "📋")
         self.tool_picker.register_tool("palette", "Palette", "🎨")
         self.tool_picker.register_tool("transform", "Transform", "↔")
         self.tool_picker.register_tool("forest_fill", "Forest Fill", "🌲")
         self.tool_picker.register_tool("cycle", "Cycle", "🔄")
         self.tool_picker.register_tool("measure", "Measure", "📏")
 
+        # Create stamp library and browser
+        self.stamp_library = StampLibrary()
+        self.stamp_library.load_stamps()
+
+        self.stamp_browser = StampBrowser(
+            picker_rect,
+            self.stamp_library,
+            self.font,
+            on_stamp_selected=self._on_stamp_selected,
+        )
+
         # Create tool manager and register tools
         self.tool_manager = ToolManager()
         self.tool_manager.register_tool("paint", PaintTool())
+        self.tool_manager.register_tool("selection", SelectionTool())
+        self.tool_manager.register_tool("stamp", StampTool())
         self.tool_manager.register_tool("palette", PaletteTool())
         self.tool_manager.register_tool("transform", TransformTool())
         self.tool_manager.register_tool("eyedropper", EyedropperTool())
@@ -176,19 +195,23 @@ class EditorApplication:
             self.screen_height,
             self.tool_manager,
             self.tool_picker,
+            self.stamp_browser,
             on_load=self._on_load,
             on_save=self._on_save,
             on_mode_change=self._update_mode_buttons,
             on_flag_change=self._update_flag_buttons,
             on_resize=self._on_resize,
             on_tool_change=self._on_tool_change,
+            on_create_stamp=self._on_create_stamp,
             on_terrain_modified=self.invalidate_terrain_validation_cache,
         )
 
-        # Set transform_logic, forest_filler, and tool_manager on tool_context (needed by tools)
+        # Set transform_logic, forest_filler, tool_manager, highlight_state, and stamp_library on tool_context (needed by tools)
         self.event_handler.tool_context.transform_logic = self.transform_logic
         self.event_handler.tool_context.forest_filler = self.forest_filler
         self.event_handler.tool_context.tool_manager = self.tool_manager
+        self.event_handler.tool_context.highlight_state = self.highlight_state
+        self.event_handler.tool_context.stamp_library = self.stamp_library
 
         # Activate paint tool now that we have context
         self.tool_manager.set_active_tool("paint", self.event_handler.tool_context)
@@ -373,6 +396,66 @@ class EditorApplication:
         self.tool_manager.set_active_tool("paint", self.event_handler.tool_context)
         self.tool_picker.selected_tool = "paint"
 
+    def _on_stamp_selected(self, stamp):
+        """Called when a stamp is selected in stamp browser - set on stamp tool."""
+        # Get stamp tool and set the selected stamp
+        stamp_tool = self.tool_manager.get_tool("stamp")
+        if stamp_tool:
+            stamp_tool.set_stamp(stamp)
+
+        # Ensure stamp tool is active
+        if self.tool_manager.get_active_tool_name() != "stamp":
+            self.tool_manager.set_active_tool("stamp", self.event_handler.tool_context)
+            self.tool_picker.selected_tool = "stamp"
+
+    def _on_create_stamp(self):
+        """Called when user presses Ctrl+Shift+S to create stamp from selection."""
+        from editor.data import ClipboardData
+        from editor.ui.stamp_creation_dialog import StampCreationDialog
+
+        # Check for active selection first (preferred)
+        clipboard_data = None
+        if self.highlight_state.selection_rect and self.highlight_state.selection_mode == self.state.mode:
+            # Create ClipboardData from active selection
+            # Convert from (row, col, width, height) to (start_row, start_col, end_row, end_col)
+            row, col, width, height = self.highlight_state.selection_rect
+            rect_for_copy = (row, col, row + height - 1, col + width - 1)
+
+            clipboard_data = ClipboardData()
+            clipboard_data.copy_region(
+                self.hole_data,
+                rect_for_copy,
+                self.state.mode,
+            )
+        elif self.state.clipboard and not self.state.clipboard.is_empty():
+            # Fall back to clipboard if no active selection
+            clipboard_data = self.state.clipboard
+        else:
+            print("No selection to create stamp from - use Selection tool to select a region first")
+            return
+
+        # Get appropriate tileset based on mode
+        tileset = self.greens_tileset if self.state.mode == "greens" else self.terrain_tileset
+
+        # Create and show dialog
+        dialog = StampCreationDialog(
+            self.screen_width,
+            self.screen_height,
+            clipboard_data,
+            tileset,
+            self.font,
+        )
+
+        stamp_data = dialog.show(self.screen, self.clock)
+
+        if stamp_data:
+            # Save stamp to library
+            save_path = self.stamp_library.save_stamp(stamp_data)
+            print(f"Stamp saved to {save_path}")
+
+            # Reload stamps to update browser
+            self.stamp_library.load_stamps()
+
     def _get_canvas_rect(self) -> Rect:
         """Get the canvas drawing area."""
         return Rect(
@@ -411,14 +494,20 @@ class EditorApplication:
         """Render the editor."""
         self.screen.fill(COLOR_BG)
 
-        # Tile picker (left sidebar)
-        if self.state.mode == "greens":
-            self.greens_picker.render(self.screen)
+        # Left sidebar - stamp browser or tile picker
+        active_tool = self.tool_manager.get_active_tool_name()
+        if active_tool == "stamp":
+            # Show stamp browser when stamp tool is active
+            self.stamp_browser.render(self.screen)
         else:
-            palette_for_picker = (
-                self.state.selected_palette if self.state.selected_palette > 0 else 1
-            )
-            self.terrain_picker.render(self.screen, palette_for_picker)
+            # Show tile picker for other tools
+            if self.state.mode == "greens":
+                self.greens_picker.render(self.screen)
+            else:
+                palette_for_picker = (
+                    self.state.selected_palette if self.state.selected_palette > 0 else 1
+                )
+                self.terrain_picker.render(self.screen, palette_for_picker)
 
         # Tool picker (right sidebar)
         self.tool_picker.render(self.screen, self.font)
@@ -492,6 +581,7 @@ class EditorApplication:
                 self.state.show_grid,
                 self.state.show_sprites,
                 self.state.selected_flag_index,
+                self.state,  # Add state for clipboard/paste preview access
             )
             GreensRenderer.render(
                 self.screen,
@@ -508,6 +598,7 @@ class EditorApplication:
                 self.state.show_grid,
                 self.state.show_sprites,
                 self.state.selected_flag_index,
+                self.state,  # Add state for clipboard/paste preview access
             )
             active_tool_name = self.tool_manager.get_active_tool_name()
             TerrainRenderer.render(
