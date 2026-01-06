@@ -102,7 +102,12 @@ class GreensRenderer:
         # Render flag-cup sprite
         if show_sprites:
             SpriteRenderer.render_greens_sprites(
-                screen, view_state, sprites, hole_data, selected_flag_index
+                screen,
+                view_state,
+                sprites,
+                hole_data,
+                selected_flag_index,
+                highlight_state.position_tool_selected,
             )
 
         # Render measurement overlay

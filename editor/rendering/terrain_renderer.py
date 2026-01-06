@@ -140,7 +140,12 @@ class TerrainRenderer:
         # Render sprites
         if show_sprites:
             SpriteRenderer.render_terrain_sprites(
-                screen, view_state, sprites, hole_data, selected_flag_index
+                screen,
+                view_state,
+                sprites,
+                hole_data,
+                selected_flag_index,
+                highlight_state.position_tool_selected,
             )
 
         # Render measurement overlay

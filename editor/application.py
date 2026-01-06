@@ -27,8 +27,10 @@ from .tools.cycle_tool import CycleTool
 from .tools.eyedropper_tool import EyedropperTool
 from .tools.forest_fill_tool import ForestFillTool
 from .tools.measure_tool import MeasureTool
+from .tools.metadata_editor_tool import MetadataEditorTool
 from .tools.paint_tool import PaintTool
 from .tools.palette_tool import PaletteTool
+from .tools.position_tool import PositionTool
 from .tools.row_operations_tool import RowOperationsTool
 from .tools.selection_tool import SelectionTool
 from .tools.stamp_tool import StampTool
@@ -159,6 +161,8 @@ class EditorApplication:
         self.tool_picker.register_tool("forest_fill", "Forest Fill", "🌲")
         self.tool_picker.register_tool("cycle", "Cycle", "🔄")
         self.tool_picker.register_tool("measure", "Measure", "📏")
+        self.tool_picker.register_tool("metadata_editor", "Metadata", "📝")
+        self.tool_picker.register_tool("position", "Position", "🎯")
 
         # Create stamp library and browser
         self.stamp_library = StampLibrary()
@@ -184,6 +188,8 @@ class EditorApplication:
         self.tool_manager.register_tool("cycle", CycleTool())
         self.tool_manager.register_tool("measure", MeasureTool())
         self.tool_manager.register_tool("row_operations", RowOperationsTool())
+        self.tool_manager.register_tool("metadata_editor", MetadataEditorTool())
+        self.tool_manager.register_tool("position", PositionTool())
 
         # Create event handler early (buttons will reference its methods)
         self.event_handler = EventHandler(
@@ -522,6 +528,11 @@ class EditorApplication:
 
         # Status bar
         self._render_status()
+
+        # Tool overlays (metadata dialog, etc.)
+        active_tool = self.tool_manager.get_active_tool()
+        if active_tool and hasattr(active_tool, "render_overlay"):
+            active_tool.render_overlay(self.screen)
 
         pygame.display.flip()
 

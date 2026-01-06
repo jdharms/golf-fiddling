@@ -1,15 +1,13 @@
 * rows must be even
 * scroll limit is calculable
-* edit metadata
 * ~~drag to transform up/left?~~
 * Invalid neighbor indicator should be a single border per pairing
 * Wooden signs?
 * Scorecard course name?
 * Does SuperShot! do anything?
 
-Tool ideas:
-* Rectangle?
-* Border fill?
+* Movement tool could benefit from held arrow keys registering.
+
 
 Thoughts:
 * It can be tough to know when to "cut bait"

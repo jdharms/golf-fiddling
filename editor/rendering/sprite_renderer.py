@@ -9,7 +9,7 @@ import pygame
 from pygame import Surface
 
 from editor.controllers.view_state import ViewState
-from editor.core.constants import GREEN_OVERLAY_COLOR
+from editor.core.constants import COLOR_SELECTION, GREEN_OVERLAY_COLOR
 from editor.core.pygame_rendering import Sprite
 from golf.formats.hole_data import HoleData
 
@@ -67,6 +67,7 @@ class SpriteRenderer:
         sprites: dict[str, Sprite],
         hole_data: HoleData,
         selected_flag_index: int,
+        highlighted_position: str | None = None,
     ):
         """
         Render flag, tee, and ball sprites on terrain view.
@@ -77,6 +78,7 @@ class SpriteRenderer:
             sprites: Dictionary of loaded sprites
             hole_data: Hole data containing metadata
             selected_flag_index: Which flag position to render (0-3)
+            highlighted_position: Position to highlight ("tee", "green", "flag1", etc.)
         """
         if not hole_data.metadata:
             return
@@ -100,6 +102,14 @@ class SpriteRenderer:
             sx, sy = to_screen(tee_x, tee_y)
             sprites["tee"].render(screen, sx, sy, canvas_scale)
 
+            # Highlight if selected
+            if highlighted_position == "tee":
+                # Draw yellow border around tee sprite
+                sprite_width = 16 * canvas_scale  # Tee is 2x2 tiles = 16 pixels
+                sprite_height = 16 * canvas_scale
+                highlight_rect = pygame.Rect(sx, sy, sprite_width, sprite_height)
+                pygame.draw.rect(screen, COLOR_SELECTION, highlight_rect, 2)
+
         # Ball at tee
         if sprites.get("ball"):
             tee = hole_data.metadata.get("tee", {})
@@ -122,6 +132,15 @@ class SpriteRenderer:
                 sx, sy = to_screen(flag_x, flag_y)
                 sprites["flag"].render(screen, sx, sy, canvas_scale)
 
+                # Highlight if selected
+                flag_name = f"flag{selected_flag_index + 1}"
+                if highlighted_position == flag_name:
+                    # Draw yellow border around flag sprite
+                    sprite_width = 16 * canvas_scale  # Flag is 2x2 tiles = 16 pixels
+                    sprite_height = 16 * canvas_scale
+                    highlight_rect = pygame.Rect(sx, sy, sprite_width, sprite_height)
+                    pygame.draw.rect(screen, COLOR_SELECTION, highlight_rect, 2)
+
     @staticmethod
     def render_greens_sprites(
         screen: Surface,
@@ -129,6 +148,7 @@ class SpriteRenderer:
         sprites: dict[str, Sprite],
         hole_data: HoleData,
         selected_flag_index: int,
+        highlighted_position: str | None = None,
     ):
         """
         Render flag and cup on greens detail view.
@@ -139,6 +159,7 @@ class SpriteRenderer:
             sprites: Dictionary of loaded sprites
             hole_data: Hole data containing metadata
             selected_flag_index: Which flag position to render (0-3)
+            highlighted_position: Position to highlight ("flag1", "flag2", etc.)
         """
         if not sprites.get("green-cup") or not sprites.get("green-flag"):
             return
@@ -162,3 +183,12 @@ class SpriteRenderer:
 
         sprites["green-cup"].render(screen, screen_x, screen_y, canvas_scale)
         sprites["green-flag"].render(screen, screen_x, screen_y, canvas_scale)
+
+        # Highlight if selected
+        flag_name = f"flag{selected_flag_index + 1}"
+        if highlighted_position == flag_name:
+            # Draw yellow border around flag sprite
+            sprite_width = 16 * canvas_scale  # Flag is 2x2 tiles = 16 pixels
+            sprite_height = 16 * canvas_scale
+            highlight_rect = pygame.Rect(screen_x, screen_y, sprite_width, sprite_height)
+            pygame.draw.rect(screen, COLOR_SELECTION, highlight_rect, 2)

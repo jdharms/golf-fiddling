@@ -119,15 +119,20 @@ class EventHandler:
                 return False
 
             if event.type == pygame.KEYDOWN:
-                if not self._handle_global_keys(event):
-                    # Let active tool handle key events (for tool-specific shortcuts like Ctrl+F)
-                    tool = self.tool_manager.get_active_tool()
-                    if tool:
-                        modifiers = pygame.key.get_mods()
-                        result = tool.handle_key_down(
-                            event.key, modifiers, self.tool_context
-                        )
-                        self._process_tool_result(result)
+                # Let active tool handle key events first (for tool-specific shortcuts)
+                tool = self.tool_manager.get_active_tool()
+                tool_handled = False
+                if tool:
+                    modifiers = pygame.key.get_mods()
+                    result = tool.handle_key_down(
+                        event.key, modifiers, self.tool_context
+                    )
+                    self._process_tool_result(result)
+                    tool_handled = result.handled
+
+                # Only process global keys if tool didn't handle it
+                if not tool_handled:
+                    self._handle_global_keys(event)
 
             elif event.type == pygame.KEYUP:
                 # Let active tool handle key up
