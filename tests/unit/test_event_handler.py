@@ -53,6 +53,7 @@ def event_handler(editor_state, hole_data, tool_manager):
     mock_terrain_picker = Mock()
     mock_greens_picker = Mock()
     mock_tool_picker = Mock()
+    mock_stamp_browser = Mock()
 
     # Create mock callbacks
     mock_on_load = Mock()
@@ -73,6 +74,7 @@ def event_handler(editor_state, hole_data, tool_manager):
         screen_height=1200,
         tool_manager=tool_manager,
         tool_picker=mock_tool_picker,
+        stamp_browser=mock_stamp_browser,
         on_load=mock_on_load,
         on_save=mock_on_save,
         on_mode_change=mock_on_mode_change,

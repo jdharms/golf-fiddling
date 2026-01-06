@@ -46,6 +46,7 @@ def editor_setup():
     # Create event handler
     transform_logic = TransformLogic(load_compression_tables())
     mock_tool_picker = Mock()
+    mock_stamp_browser = Mock()
     event_handler = EventHandler(
         state,
         hole_data,
@@ -56,6 +57,7 @@ def editor_setup():
         600,
         tool_manager,
         mock_tool_picker,
+        mock_stamp_browser,
         on_load=lambda: None,
         on_save=lambda: None,
         on_mode_change=lambda: None,

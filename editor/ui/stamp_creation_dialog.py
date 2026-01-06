@@ -76,9 +76,7 @@ class StampCreationDialog:
         self.stamp_name = ""
         self.category = "user"
         self.name_input_active = False
-
-        # Categories
-        self.categories = ["user", "terrain", "water", "bunker", "green"]
+        self.category_input_active = False
 
         # Calculate layout
         self._calculate_layout()
@@ -122,7 +120,7 @@ class StampCreationDialog:
             30,
         )
 
-        # Category dropdown
+        # Category input
         category_y = input_y + 40
         self.category_label_rect = Rect(
             self.dialog_rect.x + margin,
@@ -130,10 +128,10 @@ class StampCreationDialog:
             200,
             30,
         )
-        self.category_button_rect = Rect(
+        self.category_input_rect = Rect(
             self.category_label_rect.right + 10,
             category_y,
-            200,
+            self.dialog_width - 230 - margin * 2,
             30,
         )
 
@@ -153,20 +151,6 @@ class StampCreationDialog:
             button_height,
         )
 
-        # Category dropdown menu (shown when category button clicked)
-        self.category_dropdown_visible = False
-        self.category_dropdown_rects = []
-        dropdown_y = self.category_button_rect.bottom
-        for i, cat in enumerate(self.categories):
-            self.category_dropdown_rects.append(
-                Rect(
-                    self.category_button_rect.x,
-                    dropdown_y + i * 30,
-                    200,
-                    30,
-                )
-            )
-
     def handle_event(self, event: pygame.event.Event) -> bool:
         """Handle input events. Returns True if dialog should close."""
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -178,24 +162,17 @@ class StampCreationDialog:
                 self.cancelled = True
                 return True
 
-            # Check category dropdown
-            if self.category_dropdown_visible:
-                for i, rect in enumerate(self.category_dropdown_rects):
-                    if rect.collidepoint(event.pos):
-                        self.category = self.categories[i]
-                        self.category_dropdown_visible = False
-                        return False
-                # Click outside dropdown closes it
-                self.category_dropdown_visible = False
-            elif self.category_button_rect.collidepoint(event.pos):
-                self.category_dropdown_visible = True
-                return False
-
             # Check name input
             if self.name_input_rect.collidepoint(event.pos):
                 self.name_input_active = True
+                self.category_input_active = False
+            # Check category input
+            elif self.category_input_rect.collidepoint(event.pos):
+                self.category_input_active = True
+                self.name_input_active = False
             else:
                 self.name_input_active = False
+                self.category_input_active = False
 
             # Check preview grid (toggle transparency)
             if self.preview_rect.collidepoint(event.pos):
@@ -205,11 +182,21 @@ class StampCreationDialog:
             if self.name_input_active:
                 if event.key == pygame.K_BACKSPACE:
                     self.stamp_name = self.stamp_name[:-1]
-                elif event.key == pygame.K_RETURN:
+                elif event.key == pygame.K_RETURN or event.key == pygame.K_TAB:
                     self.name_input_active = False
+                    if event.key == pygame.K_TAB:
+                        self.category_input_active = True
                 elif event.unicode and event.unicode.isprintable():
                     if len(self.stamp_name) < 50:
                         self.stamp_name += event.unicode
+            elif self.category_input_active:
+                if event.key == pygame.K_BACKSPACE:
+                    self.category = self.category[:-1]
+                elif event.key == pygame.K_RETURN:
+                    self.category_input_active = False
+                elif event.unicode and event.unicode.isprintable():
+                    if len(self.category) < 50:
+                        self.category += event.unicode
             elif event.key == pygame.K_ESCAPE:
                 self.cancelled = True
                 return True
@@ -304,25 +291,27 @@ class StampCreationDialog:
         )
         screen.blit(name_surf, name_rect)
 
-        # Category label and button
+        # Category label and input
         cat_label_surf = self.font.render("Category:", True, COLOR_TEXT)
         screen.blit(cat_label_surf, self.category_label_rect)
 
-        pygame.draw.rect(screen, COLOR_BUTTON, self.category_button_rect)
-        pygame.draw.rect(screen, COLOR_GRID, self.category_button_rect, 1)
+        # Category input box
+        cat_input_color = COLOR_SELECTION if self.category_input_active else COLOR_GRID
+        pygame.draw.rect(screen, COLOR_BUTTON, self.category_input_rect)
+        pygame.draw.rect(screen, cat_input_color, self.category_input_rect, 2)
 
-        cat_surf = self.font.render(self.category.capitalize(), True, COLOR_TEXT)
-        cat_rect = cat_surf.get_rect(center=self.category_button_rect.center)
+        # Category text or placeholder
+        if self.category:
+            cat_text = self.category
+        else:
+            cat_text = "e.g., bunker/small or green/edges/top"
+
+        cat_surf = self.font.render(cat_text, True, COLOR_TEXT)
+        cat_rect = cat_surf.get_rect(
+            left=self.category_input_rect.left + 5,
+            centery=self.category_input_rect.centery,
+        )
         screen.blit(cat_surf, cat_rect)
-
-        # Category dropdown
-        if self.category_dropdown_visible:
-            for i, (cat, rect) in enumerate(zip(self.categories, self.category_dropdown_rects)):
-                pygame.draw.rect(screen, COLOR_BUTTON_HOVER, rect)
-                pygame.draw.rect(screen, COLOR_GRID, rect, 1)
-                cat_text_surf = self.font.render(cat.capitalize(), True, COLOR_TEXT)
-                cat_text_rect = cat_text_surf.get_rect(center=rect.center)
-                screen.blit(cat_text_surf, cat_text_rect)
 
         # Buttons
         self._render_button(screen, self.save_button_rect, "Save")
