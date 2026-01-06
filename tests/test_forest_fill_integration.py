@@ -142,7 +142,6 @@ def test_fill_placeholder_regions(forest_filler, hole_18_with_placeholders):
     )
 
 
-# @pytest.mark.xfail(reason="Depends on test_fill_placeholder_regions which is failing")
 def test_neighbor_validation_after_fill(
     forest_filler, neighbor_validator, hole_18_with_placeholders
 ):
@@ -199,35 +198,6 @@ def test_neighbor_validation_after_fill(
     assert len(invalid_tiles) == 0, (
         f"All filled tiles should have valid neighbors, found {len(invalid_tiles)} invalid"
     )
-
-
-"""
-DEBUGGING NOTES FOR NEXT SESSION:
-
-The forest fill algorithm is partially working but has a critical bug in _get_valid_tiles().
-
-Symptoms:
-- Region detection works perfectly (finds 199 placeholder tiles in 1 region)
-- Distance field calculation works (distances range from 1 to 15)
-- Only 77/199 tiles get filled successfully
-- 122 tiles report "No valid tile found"
-
-Test case to reproduce:
-- Load: tests/fixtures/hole_18_with_placeholders.json
-- Failing cell example: (3, 13) with down neighbor 0x94 (148)
-
-Key issue:
-The neighbor validator uses decimal string keys like "148" not hex like "0x94".
-This was partially fixed but the algorithm still fails to find valid tiles.
-
-Next debugging steps:
-1. Verify neighbor validator keys are correct format (str(tile_value))
-2. Check if forest tiles (0xA0-0xBB) exist in neighbor validator data
-3. Manually test: can any forest tile have 0x94 as a down neighbor?
-4. Print debug info for one failing cell to see what valid_in_direction contains
-
-The fix is likely in how we're querying the validator's neighbor relationships.
-"""
 
 
 if __name__ == "__main__":

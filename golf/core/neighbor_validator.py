@@ -17,7 +17,7 @@ class TerrainNeighborValidator:
     helping catch common mistakes where multi-tile sprites aren't properly aligned.
     """
 
-    def __init__(self, neighbors_path: str | None = None):
+    def __init__(self, neighbors_path: str | Path | None = None):
         """
         Load neighbor data from JSON file.
 
