@@ -857,7 +857,7 @@ class ForestFiller:
             # A lot of tiles have neighbors that only appear a few times in the
             # vanilla game's dataset.  It's best to just not even treat these as real
             # options, I've found.
-            NEIGHBOR_THRESHOLD = 5
+            NEIGHBOR_THRESHOLD = 4
 
             if neighbor_tile is not None:
                 freq = self.validator.get_neighbor_frequency(
