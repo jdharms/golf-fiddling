@@ -7,6 +7,7 @@ Manages loading and saving of stamp patterns from built-in and user directories.
 from pathlib import Path
 
 from editor.data import StampData
+from editor.data.category_tree import CategoryTree
 
 
 class StampLibrary:
@@ -15,7 +16,8 @@ class StampLibrary:
     def __init__(self):
         """Initialize stamp library."""
         self.stamps: dict[str, StampData] = {}  # stamp_id -> StampData
-        self.categories: dict[str, list[str]] = {}  # category -> list of stamp_ids
+        self.categories: dict[str, list[str]] = {}  # category -> list of stamp_ids (backward compat)
+        self.category_tree = CategoryTree()  # Hierarchical category tree
 
         # Paths
         self.built_in_path = Path("data/stamps/built-in")
@@ -28,6 +30,7 @@ class StampLibrary:
         """Load all stamps from built-in and user directories."""
         self.stamps.clear()
         self.categories.clear()
+        self.category_tree.clear()
 
         # Load built-in stamps
         if self.built_in_path.exists():
@@ -58,11 +61,14 @@ class StampLibrary:
                 # Store stamp
                 self.stamps[stamp_id] = stamp
 
-                # Categorize stamp
+                # Categorize stamp (flat - for backward compatibility)
                 category = stamp.metadata.category
                 if category not in self.categories:
                     self.categories[category] = []
                 self.categories[category].append(stamp_id)
+
+                # Add to category tree (hierarchical)
+                self.category_tree.add_stamp(category, stamp_id)
 
             except Exception as e:
                 print(f"Warning: Failed to load stamp {json_file}: {e}")
@@ -79,6 +85,28 @@ class StampLibrary:
         """
         stamp_ids = self.categories.get(category, [])
         return [self.stamps[stamp_id] for stamp_id in stamp_ids if stamp_id in self.stamps]
+
+    def get_stamps_by_path(self, category_path: str, recursive: bool = False) -> list[StampData]:
+        """
+        Get stamps by category path (supports hierarchical paths).
+
+        Args:
+            category_path: Category path (e.g., "terrain/water" or just "water")
+            recursive: If True, include stamps from subcategories
+
+        Returns:
+            List of StampData objects
+        """
+        node = self.category_tree.get_node(category_path)
+        if not node:
+            return []
+
+        if recursive:
+            stamp_ids = node.get_all_stamp_ids()
+        else:
+            stamp_ids = node.stamp_ids
+
+        return [self.stamps[sid] for sid in stamp_ids if sid in self.stamps]
 
     def get_all_categories(self) -> list[str]:
         """Get list of all categories."""

@@ -854,11 +854,16 @@ class ForestFiller:
             elif terrain[nr][nc] != self.placeholder_tile:
                 neighbor_tile = terrain[nr][nc]
 
+            # A lot of tiles have neighbors that only appear a few times in the
+            # vanilla game's dataset.  It's best to just not even treat these as real
+            # options, I've found.
+            NEIGHBOR_THRESHOLD = 5
+
             if neighbor_tile is not None:
                 freq = self.validator.get_neighbor_frequency(
                     tile, neighbor_tile, direction
                 )
-                if freq > 0:
+                if freq > NEIGHBOR_THRESHOLD:
                     frequency_score += 50 * math.log2(1 + freq)
                     neighbor_count += 1
 

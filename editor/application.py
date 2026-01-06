@@ -168,6 +168,7 @@ class EditorApplication:
             picker_rect,
             self.stamp_library,
             self.font,
+            self.terrain_tileset,  # Use terrain tileset for stamp previews
             on_stamp_selected=self._on_stamp_selected,
         )
 
@@ -498,7 +499,7 @@ class EditorApplication:
         active_tool = self.tool_manager.get_active_tool_name()
         if active_tool == "stamp":
             # Show stamp browser when stamp tool is active
-            self.stamp_browser.render(self.screen)
+            self.stamp_browser.render(self.screen, self.state.selected_palette)
         else:
             # Show tile picker for other tools
             if self.state.mode == "greens":
