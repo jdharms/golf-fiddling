@@ -7,6 +7,9 @@
 * Does SuperShot! do anything?
 
 * Movement tool could benefit from held arrow keys registering.
+* Metadata tool should send you back to previous tool or paint tool
+* Movement tool should automatically switch the flag being displayed!
+* Movement tool sprite highlighting is kinda bizarre
 
 
 Thoughts:
