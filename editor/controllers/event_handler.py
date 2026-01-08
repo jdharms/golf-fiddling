@@ -213,7 +213,7 @@ class EventHandler:
             self.on_terrain_modified()
 
         if result.message:
-            print(result.message)  # TODO: Better status display
+            self.state.tool_message = result.message
 
     def _handle_global_keys(self, event) -> bool:
         """Handle keyboard input."""

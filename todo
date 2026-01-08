@@ -6,6 +6,7 @@
 * Scorecard course name?
 * Does SuperShot! do anything?
 
+Todos:
 * Movement tool could benefit from held arrow keys registering.
 * Metadata tool should send you back to previous tool or paint tool
 * Movement tool should automatically switch the flag being displayed!
@@ -13,6 +14,12 @@
 * Measurement tool should show sum in status bar
 * Movement tool needs to unset the status bar when it's done/deactivated
 * Forest border tiles are "subset" of fill tiles--can we exploit this?
+Bugs:
+* Palette tile crashes on out of range paint
+* Should right click in transform send us back to paint + eyedropper?
+  * How would that work?  How does paint get that right click event?
+* Select tool delete leaves fill instead of placeholder
+
 
 
 Thoughts:

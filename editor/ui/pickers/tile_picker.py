@@ -58,16 +58,6 @@ class TilePicker:
                 self.tile_spacing,
             ),
             GroupedTileBank(
-                "Teebox",
-                [
-                    TileSubBank("Top", [0x36, 0x3C, 0x37, 0x39, 0x38]),
-                    TileSubBank("Bottom", [0x3B, 0x35, 0x3A]),
-                ],
-                self.tiles_per_row,
-                self.tile_scale,
-                self.tile_spacing,
-            ),
-            GroupedTileBank(
                 "Rough",
                 [
                     TileSubBank("Small Tree", [0x3E]),
@@ -97,6 +87,16 @@ class TilePicker:
                     TileSubBank("Inner Border", [0x3F]),
                     TileSubBank("Forest fill", _range_to_list(0xA0, 0xA4)),
                     TileSubBank("Forest border", _range_to_list(0xA4, 0xBC)),
+                ],
+                self.tiles_per_row,
+                self.tile_scale,
+                self.tile_spacing,
+            ),
+            GroupedTileBank(
+                "Teebox",
+                [
+                    TileSubBank("Top", [0x36, 0x3C, 0x37, 0x39, 0x38]),
+                    TileSubBank("Bottom", [0x3B, 0x35, 0x3A]),
                 ],
                 self.tiles_per_row,
                 self.tile_scale,

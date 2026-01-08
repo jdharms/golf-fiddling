@@ -34,6 +34,7 @@ class EditorState:
         # Tool settings
         self.selected_palette: int = 1  # For palette mode
         self.selected_flag_index: int = 0  # Which of 4 flag positions (0-3)
+        self.tool_message: str | None = None  # Current tool status message
 
         # Clipboard and paste preview
         self.clipboard: ClipboardData | None = None

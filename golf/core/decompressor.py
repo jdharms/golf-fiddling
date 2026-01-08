@@ -508,7 +508,7 @@ def unpack_attributes(attr_bytes: bytes, num_rows: int) -> list[list[int]]:
     rows = []
     attr_idx = 0
 
-    for megatile_row in range(num_rows // 2):
+    for megatile_row in range((num_rows + 1) // 2):
         # Each megatile row produces 2 supertile rows
         top_row = []
         bottom_row = []

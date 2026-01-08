@@ -12,6 +12,7 @@ from pygame import Rect
 from golf.core.compressor import load_compression_tables
 from golf.formats.hole_data import HoleData
 
+from .controllers.better_forest_fill import BetterForestFiller
 from .controllers.editor_state import EditorState
 from .controllers.event_handler import EventHandler
 from .controllers.highlight_state import HighlightState
@@ -100,17 +101,9 @@ class EditorApplication:
             print(f"Warning: Failed to load neighbor validator: {e}")
             self.terrain_neighbor_validator = None
 
-        # Initialize forest filler (requires neighbor validator)
-        if self.terrain_neighbor_validator:
-            try:
-                from editor.controllers.forest_fill import ForestFiller
 
-                self.forest_filler = ForestFiller(self.terrain_neighbor_validator)
-            except Exception as e:
-                print(f"Warning: Failed to initialize forest filler: {e}")
-                self.forest_filler = None
-        else:
-            self.forest_filler = None
+        # Load Forest Filler algorithm
+        self.forest_filler = BetterForestFiller()
 
         # Cache for invalid tiles (performance optimization)
         self.cached_invalid_terrain_tiles = None
@@ -681,6 +674,10 @@ class EditorApplication:
             name = Path(self.hole_data.filepath).name
             modified = "*" if self.hole_data.modified else ""
             status_parts.append(f"File: {name}{modified}")
+
+        # Show tool message (e.g., from Position Tool)
+        if self.state.tool_message:
+            status_parts.append(self.state.tool_message)
 
         # Show undo/redo availability
         if self.state.undo_manager.can_undo():

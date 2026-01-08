@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from editor.controllers.forest_fill import PLACEHOLDER_TILE, ForestFiller
+from editor.controllers.better_forest_fill import PLACEHOLDER_TILE, BetterForestFiller as ForestFiller
 from golf.core.neighbor_validator import TerrainNeighborValidator
 from golf.formats.hole_data import HoleData
 
@@ -123,7 +123,7 @@ def test_fill_placeholder_regions(forest_filler, hole_18_with_placeholders):
     print(f"  Remaining placeholders: {remaining_placeholders}")
 
     # Verify all filled tiles are valid forest tiles
-    from editor.controllers.forest_fill import FOREST_BORDER, FOREST_FILL
+    from editor.controllers.better_forest_fill import FOREST_BORDER, FOREST_FILL
 
     valid_forest_tiles = FOREST_FILL | FOREST_BORDER
 

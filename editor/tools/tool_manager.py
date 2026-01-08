@@ -10,6 +10,7 @@ from .eyedropper_tool import EyedropperTool
 from .forest_fill_tool import ForestFillTool
 from .measure_tool import MeasureTool
 from .paint_tool import PaintTool
+from .stamp_tool import StampTool
 from .row_operations_tool import RowOperationsTool
 from .transform_tool import TransformTool
 
@@ -59,6 +60,9 @@ class ToolManager:
 
     @overload
     def get_tool(self, name: Literal["measure"]) -> MeasureTool | None: ...
+
+    @overload
+    def get_tool(self, name: Literal["stamp"]) -> StampTool | None: ...
 
     def get_tool(self, name: str) -> Tool | None:
         """Get a tool by name."""
