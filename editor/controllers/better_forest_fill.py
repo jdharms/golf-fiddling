@@ -173,12 +173,11 @@ def select_best_tile(
 
 
 class ForestFillRegion:
-    """Represents a contiguous region of placeholder tiles to be filled with forest."""
+    """Represents a contiguous region of placeholder tiles to be filled with forest, as
+    well as any forest tiles contiguous with the placeholder tiles."""
 
     def __init__(self, cells: set[tuple[int, int]]):
         self.cells = cells
-        self.distance_field: dict[tuple[int, int], int] = {}
-        self.oob_cells: set[tuple[int, int]] = set()
 
     def contains_tile(self, tile: tuple[int, int]) -> bool:
         return tile in self.cells

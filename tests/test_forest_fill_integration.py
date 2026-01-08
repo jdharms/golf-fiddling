@@ -57,12 +57,6 @@ def test_detect_placeholder_regions(forest_filler, hole_18_with_placeholders):
     print(f"Number of regions detected: {len(regions)}")
     for i, region in enumerate(regions):
         print(f"  Region {i + 1}: {len(region.cells)} cells")
-        print(f"    Distance field entries: {len(region.distance_field)}")
-        print(f"    OOB cells found: {len(region.oob_cells)}")
-        if region.distance_field:
-            min_dist = min(region.distance_field.values())
-            max_dist = max(region.distance_field.values())
-            print(f"    Distance range: {min_dist} to {max_dist}")
 
     assert len(regions) > 0, "Should detect at least one placeholder region"
 
