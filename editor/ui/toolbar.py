@@ -74,18 +74,6 @@ class Toolbar:
         self.tool_buttons.append(btn_grid)
         x += 60
 
-        btn_add_row = Button(
-            Rect(x, 5, 70, 30), "+Row", lambda: self.callbacks.on_add_row(False)
-        )
-        self.tool_buttons.append(btn_add_row)
-        x += 80
-
-        btn_del_row = Button(
-            Rect(x, 5, 70, 30), "-Row", lambda: self.callbacks.on_remove_row(False)
-        )
-        self.tool_buttons.append(btn_del_row)
-        x += 100
-
         # Flag position buttons
         for i in range(4):
             btn = Button(

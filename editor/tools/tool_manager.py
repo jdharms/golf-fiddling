@@ -4,14 +4,16 @@ Tool manager for registering and switching between editor tools.
 
 from typing import Literal, overload
 
+from .add_row_tool import AddRowTool
 from .base_tool import Tool, ToolContext
 from .cycle_tool import CycleTool
 from .eyedropper_tool import EyedropperTool
 from .forest_fill_tool import ForestFillTool
 from .measure_tool import MeasureTool
 from .paint_tool import PaintTool
-from .stamp_tool import StampTool
+from .remove_row_tool import RemoveRowTool
 from .row_operations_tool import RowOperationsTool
+from .stamp_tool import StampTool
 from .transform_tool import TransformTool
 
 
@@ -64,23 +66,42 @@ class ToolManager:
     @overload
     def get_tool(self, name: Literal["stamp"]) -> StampTool | None: ...
 
+    @overload
+    def get_tool(self, name: Literal["add_row"]) -> AddRowTool | None: ...
+
+    @overload
+    def get_tool(self, name: Literal["remove_row"]) -> RemoveRowTool | None: ...
+
     def get_tool(self, name: str) -> Tool | None:
         """Get a tool by name."""
         return self.tools.get(name)
 
     def set_active_tool(self, name: str, context: ToolContext) -> bool:
-        """Set the active tool by name."""
+        """Set the active tool by name. Action tools execute immediately without switching."""
         if name not in self.tools:
             return False
 
-        if self.active_tool and self.active_tool_name != name:
-            self.active_tool.on_deactivated(context)
+        tool = self.tools[name]
 
-        self.active_tool = self.tools[name]
-        self.active_tool_name = name
-        self.active_tool.on_activated(context)
+        # Check if this is an action tool (has an is_action_tool attribute)
+        # We check for the method dynamically to avoid protocol changes
+        is_action = hasattr(tool, 'is_action_tool') and callable(tool.is_action_tool) and tool.is_action_tool()
 
-        return True
+        if is_action:
+            # Execute action tool without changing active tool
+            tool.on_activated(context)
+            # Don't change self.active_tool or self.active_tool_name
+            return True
+        else:
+            # Normal modal tool behavior
+            if self.active_tool and self.active_tool_name != name:
+                self.active_tool.on_deactivated(context)
+
+            self.active_tool = self.tools[name]
+            self.active_tool_name = name
+            self.active_tool.on_activated(context)
+
+            return True
 
     def get_active_tool(self) -> Tool | None:
         """Get the currently active tool."""
