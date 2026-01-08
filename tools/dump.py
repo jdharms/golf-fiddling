@@ -143,6 +143,8 @@ def dump_course(
         attr_height = (terrain_height + 1) // 2  # Supertile rows
         attr_rows = unpack_attributes(attr_bytes, attr_height)
 
+        print(f"hole: {hole_num}, terrain_height: {terrain_height}, attr_height: {attr_height}, attr_rows: {len(attr_rows)}")
+
         # Read and decompress greens
         # In the game itself this routine runs until the *output* buffer is filled.
         # So we'll grab a generous buffer to pass to the decompress function.
