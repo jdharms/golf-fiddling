@@ -3,10 +3,6 @@ Integration tests for forest fill algorithm using real hole data.
 
 These tests use hole_18_with_placeholders.json which is UK hole 18
 with a large placeholder region (199 tiles) for testing the forest fill algorithm.
-
-CURRENT STATUS: FAILING - Algorithm only fills 77/199 tiles successfully.
-The issue appears to be with neighbor constraint matching - many cells
-report "No valid tile found" even though valid forest tiles should exist.
 """
 
 from pathlib import Path

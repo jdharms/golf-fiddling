@@ -258,7 +258,6 @@ class BetterForestFiller:
                                 oob_cells.add((nr, nc))
 
                 region = ForestFillRegion(region_cells)
-                region.oob_cells = oob_cells
                 regions.append(region)
 
         return regions
