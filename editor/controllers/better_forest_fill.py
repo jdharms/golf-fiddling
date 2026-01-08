@@ -1,8 +1,12 @@
 """
 NES Open Tournament Golf - Intelligent Forest Fill Algorithm
 
-Deterministic algorithm based on tile family constraints and tree exertion matching.
+Deterministic algorithm based on tile family constraints and tree exertion matching,
+using arc consistency for bidirectional constraint propagation.
 """
+
+from __future__ import annotations
+from collections import deque
 
 # Constants
 PLACEHOLDER_TILE = 0x100  # 256 - outside NES tile range, clearly a meta value
@@ -10,7 +14,9 @@ PLACEHOLDER_TILE = 0x100  # 256 - outside NES tile range, clearly a meta value
 OOB_BORDER_START = 0x80  # Out of Bounds border tiles
 OOB_BORDER_END = 0x9B  # Range: $80-$9B inclusive
 
-INNER_BORDER = 0x3F  # User can manually place these, they'll be preserved
+# Universal fallback tile - works with any family, exerts all zeros.
+# Used sparingly when constraints are otherwise unsatisfiable.
+INNER_BORDER = 0x3F
 
 FOREST_FILL = frozenset({0xA0, 0xA1, 0xA2, 0xA3})
 FOREST_BORDER = frozenset(range(0xA4, 0xBC))  # $A4-$BB inclusive
@@ -18,24 +24,18 @@ ALL_FOREST_TILES = FOREST_FILL | FOREST_BORDER
 
 # Direction constants
 UP, RIGHT, DOWN, LEFT = 0, 1, 2, 3
+DIRECTIONS = (UP, RIGHT, DOWN, LEFT)
 OPPOSITE = {UP: DOWN, DOWN: UP, LEFT: RIGHT, RIGHT: LEFT}
-# Deltas are (row_delta, col_delta) to match (row, col) tuple convention
 DIRECTION_DELTAS = {
-    UP: (-1, 0),     # row decreases = toward top of screen
-    RIGHT: (0, 1),   # col increases = toward right
-    DOWN: (1, 0),    # row increases = toward bottom of screen
-    LEFT: (0, -1),   # col decreases = toward left
+    UP: (-1, 0),
+    RIGHT: (0, 1),
+    DOWN: (1, 0),
+    LEFT: (0, -1),
 }
 
 # Tile exertion data: {tile_id: (up, right, down, left)}
 # Each direction is a tuple of bits representing tree exertions.
-# Single-bit edges use (b,), double-bit edges use (b1, b2).
 # Two adjacent tiles match if their exertions on the shared edge are identical.
-#
-# Family pattern:
-#   A0, A3: down is 2-bit, others are 1-bit
-#   A1, A2: up is 2-bit, others are 1-bit
-
 TILE_EXERTIONS = {
     # A0 family - down is 2-bit
     0xA0: ((1,), (1,), (1, 1), (1,)),
@@ -86,12 +86,12 @@ TILE_FAMILY = {
     0xB9: 0xA3, 0xBA: 0xA3, 0xBB: 0xA3,
 }
 
-# Group tiles by family (fill tile first, then border tiles)
+# Group tiles by family (fill tile first for preference during selection)
 FAMILY_TILES = {
-    0xA0: [0xA0, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9],
-    0xA1: [0xA1, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF],
-    0xA2: [0xA2, 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5],
-    0xA3: [0xA3, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xBB],
+    0xA0: (0xA0, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9),
+    0xA1: (0xA1, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF),
+    0xA2: (0xA2, 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5),
+    0xA3: (0xA3, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xBB),
 }
 
 
@@ -103,8 +103,6 @@ def get_family_for_position(row: int, col: int, orientation: int = 0xA0) -> int:
         Row 0: O, O+1, O+2, O+3, O, O+1, ...
         Row 1: O+2, O+3, O, O+1, O+2, ...
 
-    Where O is the orientation (0xA0-0xA3) determining the top-left tile.
-
     Args:
         row: Row position
         col: Column position
@@ -113,68 +111,33 @@ def get_family_for_position(row: int, col: int, orientation: int = 0xA0) -> int:
     Returns:
         The family fill tile (0xA0-0xA3) for this position
     """
-    base = orientation - 0xA0  # 0, 1, 2, or 3
+    base = orientation - 0xA0
     offset = (col + 2 * (row % 2)) % 4
     family_index = (base + offset) % 4
     return 0xA0 + family_index
 
 
-def count_ones(exertions: tuple[tuple[int, ...], ...]) -> int:
-    """Count total 1-bits across all directions in a tile's exertions."""
-    return sum(sum(bits) for bits in exertions)
+def get_zero_exertion(family: int, direction: int) -> tuple[int, ...]:
+    """Get the all-zeros exertion tuple matching a family's edge bit-width."""
+    fill_exertion = TILE_EXERTIONS[family][direction]
+    return tuple(0 for _ in fill_exertion)
 
 
-def exertion_is_zero(bits: tuple[int, ...]) -> bool:
-    """Check if all exertion bits are 0 (no trees on this edge)."""
-    return all(b == 0 for b in bits)
+def is_all_zeros(exertion: tuple[int, ...]) -> bool:
+    """Check if an exertion is all zeros (regardless of bit-width)."""
+    return all(b == 0 for b in exertion)
 
 
-def select_best_tile(
-    family: int,
-    constraints: dict[int, tuple[int, ...]],
-) -> int | None:
-    """
-    Select the best tile from a family given directional constraints.
-
-    Constraints specify the EXACT exertion required in each direction
-    (to match what neighbors expect/provide).
-
-    Among valid tiles, returns the one with maximum total 1-bits
-    (to maximize fill pattern compression).
-
-    Args:
-        family: The fill tile family (0xA0-0xA3)
-        constraints: Map from direction to required exertion bits
-
-    Returns:
-        Best tile ID, or None if no valid tile exists
-    """
-    best_tile = None
-    best_score = -1
-
-    for tile in FAMILY_TILES[family]:
-        exertions = TILE_EXERTIONS[tile]
-        valid = True
-
-        for direction, required_bits in constraints.items():
-            tile_bits = exertions[direction]
-            # Must match exactly
-            if tile_bits != required_bits:
-                valid = False
-                break
-
-        if valid:
-            score = count_ones(exertions)
-            if score > best_score:
-                best_score = score
-                best_tile = tile
-
-    return best_tile
+def count_ones(tile: int) -> int:
+    """Count total 1-bits in a tile's exertions (higher = more "fill-like")."""
+    return sum(sum(bits) for bits in TILE_EXERTIONS[tile])
 
 
 class ForestFillRegion:
-    """Represents a contiguous region of placeholder tiles to be filled with forest, as
-    well as any forest tiles contiguous with the placeholder tiles."""
+    """
+    Represents a contiguous region to be filled with forest tiles.
+    May contain placeholder tiles and existing forest tiles that are contiguous.
+    """
 
     def __init__(self, cells: set[tuple[int, int]]):
         self.cells = cells
@@ -183,22 +146,111 @@ class ForestFillRegion:
         return tile in self.cells
 
 
+class CellConstraints:
+    """
+    Tracks achievable exertions for a single cell.
+
+    For each direction, maintains the set of exertion tuples that are still
+    achievable given current constraints. Arc consistency narrows these sets
+    until stable.
+    """
+
+    def __init__(self, family: int):
+        self.family = family
+        # Initialize with all exertions achievable by family tiles
+        self.achievable: dict[int, set[tuple[int, ...]]] = {
+            d: set() for d in DIRECTIONS
+        }
+        for tile in FAMILY_TILES[family]:
+            ex = TILE_EXERTIONS[tile]
+            for d in DIRECTIONS:
+                self.achievable[d].add(ex[d])
+
+        # Cache valid tiles (tiles consistent with current achievable sets)
+        self._valid_tiles: set[int] | None = None
+
+    def constrain_direction(self, direction: int, allowed: set[tuple[int, ...]]) -> bool:
+        """
+        Restrict achievable exertions in a direction to intersection with allowed.
+
+        Returns True if any change was made.
+        """
+        old = self.achievable[direction]
+        new = old & allowed
+        if new != old:
+            self.achievable[direction] = new
+            self._valid_tiles = None  # Invalidate cache
+            return True
+        return False
+
+    def constrain_to_single(self, direction: int, value: tuple[int, ...]) -> bool:
+        """Constrain a direction to exactly one value."""
+        return self.constrain_direction(direction, {value})
+
+    def get_valid_tiles(self) -> set[int]:
+        """Get tiles from family that satisfy all current constraints."""
+        if self._valid_tiles is not None:
+            return self._valid_tiles
+
+        valid = set()
+        for tile in FAMILY_TILES[self.family]:
+            ex = TILE_EXERTIONS[tile]
+            if all(ex[d] in self.achievable[d] for d in DIRECTIONS):
+                valid.add(tile)
+
+        self._valid_tiles = valid
+        return valid
+
+    def recompute_achievable_from_valid_tiles(self) -> set[int]:
+        """
+        Recompute achievable sets based on valid tiles only.
+
+        Returns set of directions that changed.
+        """
+        valid = self.get_valid_tiles()
+        if not valid:
+            return set()
+
+        changed_directions = set()
+        for d in DIRECTIONS:
+            new_achievable = {TILE_EXERTIONS[t][d] for t in valid}
+            if new_achievable != self.achievable[d]:
+                self.achievable[d] = new_achievable
+                changed_directions.add(d)
+
+        return changed_directions
+
+    def is_empty(self) -> bool:
+        """Check if no valid tiles remain."""
+        return len(self.get_valid_tiles()) == 0
+
+    def select_best_tile(self) -> int | None:
+        """Select tile with maximum 1-bits (prefers fill tiles)."""
+        valid = self.get_valid_tiles()
+        if not valid:
+            return None
+        return max(valid, key=count_ones)
+
+
 class BetterForestFiller:
     """
-    Deterministic forest fill algorithm based on tile family constraints.
+    Forest fill algorithm using arc consistency for constraint propagation.
 
     Algorithm overview:
-    1. Assign each cell to a family (A0-A3) based on position and orientation
-    2. Initialize constraints: external edges must exert 0
-    3. Propagate constraints inward: if a cell's best tile exerts less than
-       full on an internal edge, the neighbor gets constrained
-    4. Once stable, assign each cell its best valid tile (maximizing 1-bits)
+    1. Assign each cell to a family based on position and orientation
+    2. Initialize achievable exertion sets:
+       - All family exertions for unconstrained edges
+       - Restricted for external edges (must be zero) and pre-assigned neighbors
+    3. Propagate constraints bidirectionally until stable (arc consistency)
+    4. If any cell has no valid tiles, introduce INNER_BORDER and re-propagate
+    5. Assign tiles: pick best valid tile for each cell
+
+    INNER_BORDER (0x3F) serves as a universal fallback that exerts all zeros
+    and can be placed at any family position. It's used sparingly to resolve
+    otherwise unsatisfiable constraint conflicts.
     """
 
-    def __init__(
-        self, debug: bool = True
-    ):
-        self.placeholder_tile = PLACEHOLDER_TILE
+    def __init__(self, debug: bool = False):
         self.debug = debug
 
     def detect_regions(self, terrain: list[list[int]]) -> list[ForestFillRegion]:
@@ -210,9 +262,7 @@ class BetterForestFiller:
             terrain: 2D grid of tile IDs, indexed as terrain[row][col]
 
         Returns:
-            List of ForestFillRegion objects, each containing connected
-            placeholder cells (and any adjacent forest tiles) and adjacent OOB border cells.
-            Cell coordinates are (row, col) tuples.
+            List of ForestFillRegion objects containing connected cells.
             Only regions containing at least one placeholder tile are returned.
         """
         if not terrain or not terrain[0]:
@@ -228,120 +278,268 @@ class BetterForestFiller:
                 if (row, col) in visited:
                     continue
                 tile = terrain[row][col]
-                # Only START a region from a placeholder tile
-                # (forest tiles will be included if contiguous with placeholders)
                 if tile != PLACEHOLDER_TILE:
                     continue
 
                 # BFS to find contiguous region
                 region_cells: set[tuple[int, int]] = set()
-                oob_cells: set[tuple[int, int]] = set()
-                queue = [(row, col)]
+                queue = deque([(row, col)])
                 visited.add((row, col))
 
                 while queue:
-                    cr, cc = queue.pop(0)
+                    cr, cc = queue.popleft()
                     region_cells.add((cr, cc))
 
                     for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                         nr, nc = cr + dr, cc + dc
                         if (nr, nc) in visited:
                             continue
-
                         if 0 <= nr < height and 0 <= nc < width:
                             neighbor_tile = terrain[nr][nc]
-                            # Include placeholders and forest tiles in region
                             if neighbor_tile == PLACEHOLDER_TILE or neighbor_tile in ALL_FOREST_TILES:
                                 visited.add((nr, nc))
                                 queue.append((nr, nc))
-                            elif OOB_BORDER_START <= neighbor_tile <= OOB_BORDER_END:
-                                oob_cells.add((nr, nc))
 
-                region = ForestFillRegion(region_cells)
-                regions.append(region)
+                regions.append(ForestFillRegion(region_cells))
 
         return regions
 
-    def _get_external_directions(
-        self, cell: tuple[int, int], region: ForestFillRegion
-    ) -> set[int]:
-        """
-        Get directions where this cell faces outside the region.
-
-        Args:
-            cell: (row, col) position
-            region: The forest region being filled
-
-        Returns:
-            Set of direction constants (UP, RIGHT, DOWN, LEFT) for external edges
-        """
-        row, col = cell
-        external = set()
-
-        for direction, (dr, dc) in DIRECTION_DELTAS.items():
-            neighbor = (row + dr, col + dc)
-            if neighbor not in region.cells:
-                external.add(direction)
-
-        return external
-
-    def _select_best_orientation(
+    def _classify_edges(
         self,
-        region: ForestFillRegion,
-        terrain: list[list[int]] | None = None,
-    ) -> int:
+        cells_to_fill: set[tuple[int, int]],
+        pre_assigned: dict[tuple[int, int], int],
+        inner_border_cells: set[tuple[int, int]],
+        terrain_height: int,
+        terrain_width: int,
+    ) -> tuple[
+        dict[tuple[int, int], set[int]],  # external_edges
+        dict[tuple[int, int], set[int]],  # screen_edges
+        dict[tuple[int, int], set[int]],  # pre_assigned_edges
+        dict[tuple[int, int], set[int]],  # inner_border_edges
+        dict[tuple[int, int], set[int]],  # internal_edges
+    ]:
+        """Classify each cell's edges by what they border."""
+        external_edges: dict[tuple[int, int], set[int]] = {}
+        screen_edges: dict[tuple[int, int], set[int]] = {}
+        pre_assigned_edges: dict[tuple[int, int], set[int]] = {}
+        inner_border_edges: dict[tuple[int, int], set[int]] = {}
+        internal_edges: dict[tuple[int, int], set[int]] = {}
+
+        for cell in cells_to_fill:
+            external_edges[cell] = set()
+            screen_edges[cell] = set()
+            pre_assigned_edges[cell] = set()
+            inner_border_edges[cell] = set()
+            internal_edges[cell] = set()
+            row, col = cell
+
+            for direction, (dr, dc) in DIRECTION_DELTAS.items():
+                neighbor = (row + dr, col + dc)
+                nr, nc = neighbor
+
+                if neighbor in cells_to_fill:
+                    internal_edges[cell].add(direction)
+                elif neighbor in inner_border_cells:
+                    inner_border_edges[cell].add(direction)
+                elif neighbor in pre_assigned:
+                    pre_assigned_edges[cell].add(direction)
+                else:
+                    external_edges[cell].add(direction)
+                    if nr < 0 or nr >= terrain_height or nc < 0 or nc >= terrain_width:
+                        screen_edges[cell].add(direction)
+
+        return external_edges, screen_edges, pre_assigned_edges, inner_border_edges, internal_edges
+
+    def _initialize_constraints(
+        self,
+        cells_to_fill: set[tuple[int, int]],
+        cell_families: dict[tuple[int, int], int],
+        pre_assigned: dict[tuple[int, int], int],
+        external_edges: dict[tuple[int, int], set[int]],
+        screen_edges: dict[tuple[int, int], set[int]],
+        pre_assigned_edges: dict[tuple[int, int], set[int]],
+        inner_border_edges: dict[tuple[int, int], set[int]],
+        terrain: list[list[int]],
+        terrain_height: int,
+        terrain_width: int,
+    ) -> dict[tuple[int, int], CellConstraints]:
+        """Initialize constraint objects for each cell."""
+        constraints: dict[tuple[int, int], CellConstraints] = {}
+
+        for cell in cells_to_fill:
+            family = cell_families[cell]
+            constraints[cell] = CellConstraints(family)
+            row, col = cell
+
+            # Constrain external non-screen edges
+            for direction in external_edges[cell]:
+                if direction in screen_edges[cell]:
+                    continue  # Screen edges have no constraint
+
+                dr, dc = DIRECTION_DELTAS[direction]
+                nr, nc = row + dr, col + dc
+
+                if terrain and 0 <= nr < terrain_height and 0 <= nc < terrain_width:
+                    neighbor_tile = terrain[nr][nc]
+                    if neighbor_tile in TILE_EXERTIONS:
+                        # External forest neighbor: must match its exertion
+                        opposite = OPPOSITE[direction]
+                        required = TILE_EXERTIONS[neighbor_tile][opposite]
+                        constraints[cell].constrain_to_single(direction, required)
+                    else:
+                        # Non-forest neighbor: must exert zero
+                        zero = get_zero_exertion(family, direction)
+                        constraints[cell].constrain_to_single(direction, zero)
+                else:
+                    # Out of terrain bounds (shouldn't happen if not screen edge)
+                    zero = get_zero_exertion(family, direction)
+                    constraints[cell].constrain_to_single(direction, zero)
+
+            # Constrain edges adjacent to pre-assigned cells
+            for direction in pre_assigned_edges[cell]:
+                dr, dc = DIRECTION_DELTAS[direction]
+                neighbor = (row + dr, col + dc)
+                neighbor_tile = pre_assigned[neighbor]
+                opposite = OPPOSITE[direction]
+                required = TILE_EXERTIONS[neighbor_tile][opposite]
+                constraints[cell].constrain_to_single(direction, required)
+
+            # Constrain edges adjacent to INNER_BORDER cells
+            # INNER_BORDER is compatible with any zero exertion regardless of bit-width
+            for direction in inner_border_edges[cell]:
+                # Find all zero-exerting values this cell can achieve in this direction
+                zero_exertions = {
+                    ex for ex in constraints[cell].achievable[direction]
+                    if is_all_zeros(ex)
+                }
+                if zero_exertions:
+                    constraints[cell].constrain_direction(direction, zero_exertions)
+                else:
+                    # No zero option available - constrain to expected zero anyway
+                    # (will likely become empty and need INNER_BORDER)
+                    zero = get_zero_exertion(family, direction)
+                    constraints[cell].constrain_to_single(direction, zero)
+
+        return constraints
+
+    def _propagate_arc_consistency(
+        self,
+        cells_to_fill: set[tuple[int, int]],
+        constraints: dict[tuple[int, int], CellConstraints],
+        internal_edges: dict[tuple[int, int], set[int]],
+    ) -> None:
         """
-        Select the best orientation for a region by trying all four
-        and picking the one with fewest failures, then most fill tiles.
+        Propagate constraints until arc consistent.
 
-        Args:
-            region: The forest region to fill
-            terrain: The terrain grid for neighbor lookup
-
-        Returns:
-            Best orientation (0xA0-0xA3)
+        Uses a worklist algorithm: when a cell's achievable set narrows,
+        its neighbors are re-examined.
         """
-        best_orientation = 0xA0
-        best_failures = float('inf')
-        best_fill_count = -1
+        # Initialize worklist with all internal edge pairs
+        # Each item is (cell, direction) meaning "check cell's constraint toward that direction"
+        worklist: deque[tuple[tuple[int, int], int]] = deque()
+        in_worklist: set[tuple[tuple[int, int], int]] = set()
 
-        for orientation in [0xA0, 0xA1, 0xA2, 0xA3]:
-            result, failures = self._fill_with_orientation(
-                region, orientation, terrain
-            )
-            fill_count = sum(1 for tile in result.values() if tile in FOREST_FILL)
+        for cell in cells_to_fill:
+            for direction in internal_edges[cell]:
+                item = (cell, direction)
+                worklist.append(item)
+                in_worklist.add(item)
 
-            # Prefer fewer failures, then more fill tiles
-            if (failures < best_failures or
-                (failures == best_failures and fill_count > best_fill_count)):
-                best_failures = failures
-                best_fill_count = fill_count
-                best_orientation = orientation
+        max_iterations = len(cells_to_fill) * 50 + 500
+        iterations = 0
 
-        return best_orientation
+        while worklist and iterations < max_iterations:
+            iterations += 1
+            cell, direction = worklist.popleft()
+            in_worklist.discard((cell, direction))
+
+            row, col = cell
+            dr, dc = DIRECTION_DELTAS[direction]
+            neighbor = (row + dr, col + dc)
+
+            if neighbor not in constraints:
+                continue
+
+            opposite = OPPOSITE[direction]
+            cell_constraints = constraints[cell]
+            neighbor_constraints = constraints[neighbor]
+
+            # Get what each can currently achieve toward the other
+            cell_can = cell_constraints.achievable[direction]
+            neighbor_can = neighbor_constraints.achievable[opposite]
+
+            # They must match - compute intersection
+            common = cell_can & neighbor_can
+
+            if not common:
+                # No valid matching possible - constraint failure
+                # Leave as-is; will be detected later
+                continue
+
+            # Narrow both sides to common values
+            cell_changed = cell_constraints.constrain_direction(direction, common)
+            neighbor_changed = neighbor_constraints.constrain_direction(opposite, common)
+
+            # If a cell's achievable set changed, recompute valid tiles and
+            # potentially narrow other edges, then add ALL edges (including
+            # the one we just processed from the neighbor's perspective)
+            if cell_changed:
+                other_changed = cell_constraints.recompute_achievable_from_valid_tiles()
+                # Add all changed internal edges to worklist
+                for d in other_changed:
+                    if d in internal_edges[cell]:
+                        item = (cell, d)
+                        if item not in in_worklist:
+                            worklist.append(item)
+                            in_worklist.add(item)
+                # Also re-check edges FROM neighbors TO this cell, since our
+                # achievable set changed and neighbors might need to re-narrow
+                for d in internal_edges[cell]:
+                    dr2, dc2 = DIRECTION_DELTAS[d]
+                    nb = (row + dr2, col + dc2)
+                    if nb in constraints:
+                        opp = OPPOSITE[d]
+                        item = (nb, opp)
+                        if item not in in_worklist:
+                            worklist.append(item)
+                            in_worklist.add(item)
+
+            if neighbor_changed:
+                other_changed = neighbor_constraints.recompute_achievable_from_valid_tiles()
+                nr, nc = neighbor
+                for d in other_changed:
+                    if d in internal_edges.get(neighbor, set()):
+                        item = (neighbor, d)
+                        if item not in in_worklist:
+                            worklist.append(item)
+                            in_worklist.add(item)
+                # Also re-check edges FROM this cell and other neighbors TO neighbor
+                for d in internal_edges.get(neighbor, set()):
+                    dr2, dc2 = DIRECTION_DELTAS[d]
+                    nb = (nr + dr2, nc + dc2)
+                    if nb in constraints:
+                        opp = OPPOSITE[d]
+                        item = (nb, opp)
+                        if item not in in_worklist:
+                            worklist.append(item)
+                            in_worklist.add(item)
 
     def _fill_with_orientation(
         self,
         region: ForestFillRegion,
         orientation: int,
-        terrain: list[list[int]] | None = None,
-    ) -> tuple[dict[tuple[int, int], int], int]:
+        terrain: list[list[int]],
+    ) -> tuple[dict[tuple[int, int], int], int, int]:
         """
-        Fill a region with a specific orientation.
-
-        Args:
-            region: The forest region to fill
-            orientation: Which fill tile (0xA0-0xA3) goes at the origin
-            terrain: The terrain grid for neighbor lookup and bounds detection
+        Fill a region using arc consistency constraint propagation.
 
         Returns:
-            Tuple of (mapping from (row, col) to tile ID, number of failures)
+            (tile_assignments, failure_count, inner_border_count)
         """
         terrain_height = len(terrain) if terrain else 0
         terrain_width = len(terrain[0]) if terrain and terrain[0] else 0
 
-        # Step 1: Identify cells that already have forest tiles (pre-assigned)
-        # These will be preserved and used as constraint sources
+        # Separate pre-assigned forest cells from cells to fill
         pre_assigned: dict[tuple[int, int], int] = {}
         cells_to_fill: set[tuple[int, int]] = set()
 
@@ -350,276 +548,300 @@ class BetterForestFiller:
             if terrain and 0 <= row < terrain_height and 0 <= col < terrain_width:
                 existing_tile = terrain[row][col]
                 if existing_tile in TILE_EXERTIONS:
-                    # This cell already has a forest tile - preserve it
                     pre_assigned[cell] = existing_tile
                 else:
                     cells_to_fill.add(cell)
             else:
                 cells_to_fill.add(cell)
 
-        # Step 2: Check compatibility of pre-assigned tiles with this orientation
-        # Count how many pre-assigned tiles are in the "wrong" family for their position
-        family_mismatches = 0
-        for cell, tile in pre_assigned.items():
-            expected_family = get_family_for_position(cell[0], cell[1], orientation)
-            actual_family = TILE_FAMILY[tile]
-            if actual_family != expected_family:
-                family_mismatches += 1
+        if not cells_to_fill:
+            return dict(pre_assigned), 0, 0
 
-        # Step 3: Assign families to cells that need filling based on position
+        # Assign families based on position
         cell_families = {
             cell: get_family_for_position(cell[0], cell[1], orientation)
             for cell in cells_to_fill
         }
 
-        # Step 4: Compute distance from boundary for cells to fill
-        # Boundary includes: external edges AND edges adjacent to pre-assigned cells
-        external_dirs: dict[tuple[int, int], set[int]] = {}
-        screen_edge_dirs: dict[tuple[int, int], set[int]] = {}
-        pre_assigned_dirs: dict[tuple[int, int], set[int]] = {}
-        distance: dict[tuple[int, int], int] = {}
+        # Count pre-assigned tiles in wrong family (orientation mismatch)
+        family_mismatches = sum(
+            1 for cell, tile in pre_assigned.items()
+            if TILE_FAMILY[tile] != get_family_for_position(cell[0], cell[1], orientation)
+        )
 
-        for cell in cells_to_fill:
-            external_dirs[cell] = set()
-            screen_edge_dirs[cell] = set()
-            pre_assigned_dirs[cell] = set()
-            row, col = cell
-            for direction, (dr, dc) in DIRECTION_DELTAS.items():
-                neighbor = (row + dr, col + dc)
-                if neighbor not in cells_to_fill:
-                    if neighbor in pre_assigned:
-                        # Adjacent to a pre-assigned cell inside region
-                        pre_assigned_dirs[cell].add(direction)
-                    elif neighbor not in region.cells:
-                        # External edge (outside region entirely)
-                        external_dirs[cell].add(direction)
-                        # Check if this is a screen edge
-                        nr, nc = neighbor
-                        if terrain_height > 0 and terrain_width > 0:
-                            if nr < 0 or nr >= terrain_height or nc < 0 or nc >= terrain_width:
-                                screen_edge_dirs[cell].add(direction)
+        # Iteratively solve with INNER_BORDER fallback
+        inner_border_cells: set[tuple[int, int]] = set()
+        max_inner_border_iterations = len(cells_to_fill) + 1
 
-        # BFS to compute distances from boundary
-        # Boundary = cells with external edges OR adjacent to pre-assigned cells
-        queue = []
-        for cell in cells_to_fill:
-            if external_dirs[cell] or pre_assigned_dirs[cell]:
-                distance[cell] = 0
-                queue.append(cell)
+        for _ in range(max_inner_border_iterations):
+            # Remove cells assigned to INNER_BORDER from cells_to_fill
+            current_cells = cells_to_fill - inner_border_cells
 
-        while queue:
-            cell = queue.pop(0)
-            row, col = cell
-            for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                neighbor = (row + dr, col + dc)
-                if neighbor in cells_to_fill and neighbor not in distance:
-                    distance[neighbor] = distance[cell] + 1
-                    queue.append(neighbor)
-
-        # Step 5: Initialize constraints
-        # - Screen edges: no constraint
-        # - Pre-assigned neighbors: match their exertion
-        # - External neighbors: look up tile, match if forest, else 0
-        constraints: dict[tuple[int, int], dict[int, tuple[int, ...]]] = {
-            cell: {} for cell in cells_to_fill
-        }
-
-        for cell in cells_to_fill:
-            family = cell_families[cell]
-            row, col = cell
-
-            # Handle pre-assigned neighbor constraints
-            for direction in pre_assigned_dirs[cell]:
-                dr, dc = DIRECTION_DELTAS[direction]
-                nr, nc = row + dr, col + dc
-                neighbor_tile = pre_assigned[(nr, nc)]
-                opposite = OPPOSITE[direction]
-                neighbor_exertion = TILE_EXERTIONS[neighbor_tile][opposite]
-                constraints[cell][direction] = neighbor_exertion
-
-            # Handle external edge constraints
-            for direction in external_dirs[cell]:
-                # Skip screen edges - no constraint needed
-                if direction in screen_edge_dirs[cell]:
-                    continue
-
-                # Get the actual neighbor tile from terrain
-                dr, dc = DIRECTION_DELTAS[direction]
-                nr, nc = row + dr, col + dc
-
-                if terrain and 0 <= nr < terrain_height and 0 <= nc < terrain_width:
-                    neighbor_tile = terrain[nr][nc]
-                    opposite = OPPOSITE[direction]
-
-                    if neighbor_tile in TILE_EXERTIONS:
-                        # Neighbor is a forest tile - match its exertion toward us
-                        neighbor_exertion = TILE_EXERTIONS[neighbor_tile][opposite]
-                        constraints[cell][direction] = neighbor_exertion
-                    else:
-                        # Neighbor is not a forest tile (OOB, etc) - must exert 0
-                        fill_exertion = TILE_EXERTIONS[family][direction]
-                        constraints[cell][direction] = tuple(0 for _ in fill_exertion)
-                else:
-                    # Can't look up neighbor - assume OOB, must exert 0
-                    fill_exertion = TILE_EXERTIONS[family][direction]
-                    constraints[cell][direction] = tuple(0 for _ in fill_exertion)
-
-        # Step 6: Assign tiles using BFS from constraint sources
-        # Pre-assigned constraints are SACRED - never overwrite them
-        assigned: dict[tuple[int, int], int] = {}
-
-        # Track which constraints came from pre-assigned tiles (sacred, cannot be overwritten)
-        sacred_constraints: dict[tuple[int, int], set[int]] = {
-            cell: set() for cell in cells_to_fill
-        }
-        for cell in cells_to_fill:
-            for direction in pre_assigned_dirs[cell]:
-                if direction in constraints[cell]:
-                    sacred_constraints[cell].add(direction)
-
-        # Initialize all cells with best tile for their initial constraints
-        for cell in cells_to_fill:
-            family = cell_families[cell]
-            tile = select_best_tile(family, constraints[cell])
-            if tile is None:
-                tile = self._find_fallback_tile(family, constraints[cell])
-            assigned[cell] = tile
-
-        # Iteratively propagate constraints from border tiles to neighbors
-        # Keep iterating until stable
-        max_iterations = len(cells_to_fill) + 10
-        for iteration in range(max_iterations):
-            changed = False
-
-            for cell in cells_to_fill:
-                family = cell_families[cell]
-                current_tile = assigned[cell]
-                row, col = cell
-
-                # Start with sacred constraints (from pre-assigned tiles)
-                cell_constraints = dict(constraints[cell])
-
-                # Add constraints from neighbors, but ONLY if:
-                # 1. The direction isn't already constrained by a sacred constraint
-                # 2. The neighbor is a border tile (not a fill tile)
-                for direction, (dr, dc) in DIRECTION_DELTAS.items():
-                    # Skip if already has sacred constraint
-                    if direction in sacred_constraints[cell]:
-                        continue
-                    # Skip external edges (handled in initial constraints)
-                    if direction in external_dirs[cell]:
-                        continue
-                    # Skip pre-assigned neighbors (handled in initial constraints)
-                    if direction in pre_assigned_dirs[cell]:
-                        continue
-
-                    neighbor = (row + dr, col + dc)
-                    if neighbor not in assigned:
-                        continue
-
-                    neighbor_tile = assigned[neighbor]
-                    neighbor_family = cell_families.get(neighbor)
-
-                    # Only propagate constraint if neighbor is a BORDER tile (demoted from fill)
-                    if neighbor_family and neighbor_tile == neighbor_family:
-                        continue  # Neighbor is still a fill tile, don't constrain based on it
-
-                    opposite = OPPOSITE[direction]
-                    neighbor_exertion = TILE_EXERTIONS[neighbor_tile][opposite]
-                    cell_constraints[direction] = neighbor_exertion
-
-                # Find best tile satisfying all constraints
-                best_tile = select_best_tile(family, cell_constraints)
-                if best_tile is None:
-                    best_tile = self._find_fallback_tile(family, cell_constraints)
-
-                if assigned[cell] != best_tile:
-                    assigned[cell] = best_tile
-                    changed = True
-
-            if not changed:
+            if not current_cells:
                 break
 
-        # Final pass: count failures (edge mismatches)
-        tile_failures = 0
-        for cell in cells_to_fill:
-            tile = assigned[cell]
-            tile_ex = TILE_EXERTIONS[tile]
-            row, col = cell
+            # Classify edges
+            (
+                external_edges,
+                screen_edges,
+                pre_assigned_edges,
+                inner_border_edges,
+                internal_edges,
+            ) = self._classify_edges(
+                current_cells,
+                pre_assigned,
+                inner_border_cells,
+                terrain_height,
+                terrain_width,
+            )
 
-            for direction, (dr, dc) in DIRECTION_DELTAS.items():
-                # External non-screen edges must be 0
-                if direction in external_dirs[cell] and direction not in screen_edge_dirs[cell]:
-                    if not all(b == 0 for b in tile_ex[direction]):
-                        tile_failures += 1
+            # Initialize constraints
+            constraints = self._initialize_constraints(
+                current_cells,
+                cell_families,
+                pre_assigned,
+                external_edges,
+                screen_edges,
+                pre_assigned_edges,
+                inner_border_edges,
+                terrain,
+                terrain_height,
+                terrain_width,
+            )
 
-                # Pre-assigned edges must match
-                elif direction in pre_assigned_dirs[cell]:
-                    neighbor = (row + dr, col + dc)
-                    neighbor_tile = pre_assigned[neighbor]
-                    opposite = OPPOSITE[direction]
-                    if tile_ex[direction] != TILE_EXERTIONS[neighbor_tile][opposite]:
-                        tile_failures += 1
+            # After initial constraints, recompute achievable sets for all cells.
+            # This ensures constraints on one edge (e.g., from pre-assigned neighbor)
+            # propagate to other edges of the same cell before arc consistency starts.
+            for cell in current_cells:
+                constraints[cell].recompute_achievable_from_valid_tiles()
 
-        # Step 7: Merge pre-assigned cells into the result
-        # Pre-assigned cells are preserved as-is
+            # Propagate arc consistency
+            self._propagate_arc_consistency(current_cells, constraints, internal_edges)
+
+            # Find cells with no valid tiles
+            new_inner_border = False
+            for cell in current_cells:
+                if constraints[cell].is_empty():
+                    inner_border_cells.add(cell)
+                    new_inner_border = True
+
+            if not new_inner_border:
+                # All cells have valid tiles, we're done
+                break
+
+        # Final assignment
+        assigned: dict[tuple[int, int], int] = {}
+
+        # Assign INNER_BORDER to cells that needed it
+        for cell in inner_border_cells:
+            assigned[cell] = INNER_BORDER
+
+        # Assign best tiles to remaining cells
+        final_cells = cells_to_fill - inner_border_cells
+        if final_cells:
+            # Re-run constraint initialization and propagation one more time
+            # with inner_border_cells finalized
+            (
+                external_edges,
+                screen_edges,
+                pre_assigned_edges,
+                inner_border_edges,
+                internal_edges,
+            ) = self._classify_edges(
+                final_cells,
+                pre_assigned,
+                inner_border_cells,
+                terrain_height,
+                terrain_width,
+            )
+
+            constraints = self._initialize_constraints(
+                final_cells,
+                cell_families,
+                pre_assigned,
+                external_edges,
+                screen_edges,
+                pre_assigned_edges,
+                inner_border_edges,
+                terrain,
+                terrain_height,
+                terrain_width,
+            )
+
+            # Recompute achievable sets after initial constraints
+            for cell in final_cells:
+                constraints[cell].recompute_achievable_from_valid_tiles()
+
+            self._propagate_arc_consistency(final_cells, constraints, internal_edges)
+
+            for cell in final_cells:
+                tile = constraints[cell].select_best_tile()
+                if tile is not None:
+                    assigned[cell] = tile
+                else:
+                    # Shouldn't happen after INNER_BORDER iteration, but fallback
+                    assigned[cell] = INNER_BORDER
+                    inner_border_cells.add(cell)
+
+        # Count edge failures
+        edge_failures = self._count_edge_failures(
+            cells_to_fill,
+            assigned,
+            cell_families,
+            pre_assigned,
+            inner_border_cells,
+            terrain,
+            terrain_height,
+            terrain_width,
+        )
+
+        # Merge pre-assigned cells
         assigned.update(pre_assigned)
 
-        # Total failures = family mismatches (pre-assigned in wrong family) + edge mismatches
-        total_failures = family_mismatches + tile_failures
+        total_failures = family_mismatches + edge_failures
+        return assigned, total_failures, len(inner_border_cells)
 
-        return assigned, total_failures
-
-    def _find_fallback_tile(
-        self, family: int, constraints: dict[int, tuple[int, ...]]
+    def _count_edge_failures(
+        self,
+        cells_to_fill: set[tuple[int, int]],
+        assigned: dict[tuple[int, int], int],
+        cell_families: dict[tuple[int, int], int],
+        pre_assigned: dict[tuple[int, int], int],
+        inner_border_cells: set[tuple[int, int]],
+        terrain: list[list[int]],
+        terrain_height: int,
+        terrain_width: int,
     ) -> int:
-        """
-        Find a tile that minimizes constraint violations when no perfect match exists.
-        """
-        best_tile = family  # Default to fill tile
-        best_violations = float('inf')
+        """Count edges that don't properly match."""
+        failures = 0
+        checked_pairs: set[tuple[tuple[int, int], tuple[int, int]]] = set()
 
-        for tile in FAMILY_TILES[family]:
-            exertions = TILE_EXERTIONS[tile]
-            violations = 0
+        for cell in cells_to_fill:
+            tile = assigned.get(cell)
+            if tile is None:
+                continue
 
-            for direction, required_bits in constraints.items():
-                tile_bits = exertions[direction]
-                # Count bit mismatches
-                for tb, rb in zip(tile_bits, required_bits):
-                    if tb != rb:
-                        violations += 1
+            row, col = cell
+            family = cell_families[cell]
 
-            if violations < best_violations:
-                best_violations = violations
-                best_tile = tile
+            # Get exertions (INNER_BORDER exerts all zeros)
+            if tile == INNER_BORDER:
+                tile_ex = tuple(get_zero_exertion(family, d) for d in DIRECTIONS)
+            else:
+                tile_ex = TILE_EXERTIONS[tile]
 
-        return best_tile
+            for direction, (dr, dc) in DIRECTION_DELTAS.items():
+                nr, nc = row + dr, col + dc
+                neighbor = (nr, nc)
+
+                # Check external edges (non-screen must be zero)
+                if neighbor not in cells_to_fill and neighbor not in pre_assigned:
+                    if nr < 0 or nr >= terrain_height or nc < 0 or nc >= terrain_width:
+                        continue  # Screen edge, no constraint
+
+                    # Check what the external tile expects
+                    if terrain and 0 <= nr < terrain_height and 0 <= nc < terrain_width:
+                        neighbor_tile = terrain[nr][nc]
+                        if neighbor_tile in TILE_EXERTIONS:
+                            opposite = OPPOSITE[direction]
+                            expected = TILE_EXERTIONS[neighbor_tile][opposite]
+                            if tile_ex[direction] != expected:
+                                failures += 1
+                        else:
+                            # Non-forest neighbor, must be zero
+                            zero = get_zero_exertion(family, direction)
+                            if tile_ex[direction] != zero:
+                                failures += 1
+                    continue
+
+                # Check pre-assigned edges
+                if neighbor in pre_assigned:
+                    neighbor_tile = pre_assigned[neighbor]
+                    opposite = OPPOSITE[direction]
+                    expected = TILE_EXERTIONS[neighbor_tile][opposite]
+                    if tile_ex[direction] != expected:
+                        failures += 1
+                    continue
+
+                # Check internal edges (avoid double-counting)
+                if neighbor in cells_to_fill:
+                    pair = (min(cell, neighbor), max(cell, neighbor))
+                    if pair in checked_pairs:
+                        continue
+                    checked_pairs.add(pair)
+
+                    neighbor_tile = assigned.get(neighbor)
+                    if neighbor_tile is None:
+                        continue
+
+                    opposite = OPPOSITE[direction]
+                    neighbor_family = cell_families[neighbor]
+
+                    if neighbor_tile == INNER_BORDER:
+                        neighbor_ex = get_zero_exertion(neighbor_family, opposite)
+                    else:
+                        neighbor_ex = TILE_EXERTIONS[neighbor_tile][opposite]
+
+                    if tile_ex[direction] != neighbor_ex:
+                        failures += 1
+
+        return failures
+
+    def _select_best_orientation(
+        self,
+        region: ForestFillRegion,
+        terrain: list[list[int]],
+    ) -> int:
+        """Try all orientations, pick best by: fewest failures, fewest INNER_BORDERs, most fills."""
+        best_orientation = 0xA0
+        best_failures = float('inf')
+        best_inner_count = float('inf')
+        best_fill_count = -1
+
+        for orientation in [0xA0, 0xA1, 0xA2, 0xA3]:
+            result, failures, inner_count = self._fill_with_orientation(
+                region, orientation, terrain
+            )
+            fill_count = sum(1 for t in result.values() if t in FOREST_FILL)
+
+            # Priority: fewer failures > fewer INNER_BORDERs > more fill tiles
+            if (
+                failures < best_failures
+                or (failures == best_failures and inner_count < best_inner_count)
+                or (
+                    failures == best_failures
+                    and inner_count == best_inner_count
+                    and fill_count > best_fill_count
+                )
+            ):
+                best_failures = failures
+                best_inner_count = inner_count
+                best_fill_count = fill_count
+                best_orientation = orientation
+
+        return best_orientation
 
     def fill_region(
         self,
         terrain: list[list[int]],
         region: ForestFillRegion,
-        max_backtracks: int = 1000,
         orientation: int | None = None,
     ) -> dict[tuple[int, int], int]:
         """
-        Fill a region with forest tiles using deterministic algorithm.
+        Fill a region with forest tiles.
 
         Args:
-            terrain: The terrain grid (used for neighbor lookup and bounds)
-            region: The region to fill
-            max_backtracks: Unused, kept for API compatibility
-            orientation: Force a specific orientation (0xA0-0xA3), or None
-                        to auto-select the best one
+            terrain: 2D grid of tile IDs
+            region: Region to fill
+            orientation: Force orientation (0xA0-0xA3), or None to auto-select
 
         Returns:
-            Mapping from (row, col) cell positions to tile IDs
+            Mapping from (row, col) to tile ID
         """
         if orientation is None:
             orientation = self._select_best_orientation(region, terrain)
 
-        result, _ = self._fill_with_orientation(region, orientation, terrain)
+        result, _, _ = self._fill_with_orientation(region, orientation, terrain)
         return result
 
     @staticmethod
