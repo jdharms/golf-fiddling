@@ -24,6 +24,7 @@ from .core.pygame_rendering import Sprite, Tileset
 from .rendering.greens_renderer import GreensRenderer
 from .rendering.render_context import RenderContext
 from .rendering.terrain_renderer import TerrainRenderer
+from .tools.add_row_tool import AddRowTool
 from .tools.cycle_tool import CycleTool
 from .tools.eyedropper_tool import EyedropperTool
 from .tools.forest_fill_tool import ForestFillTool
@@ -32,6 +33,7 @@ from .tools.metadata_editor_tool import MetadataEditorTool
 from .tools.paint_tool import PaintTool
 from .tools.palette_tool import PaletteTool
 from .tools.position_tool import PositionTool
+from .tools.remove_row_tool import RemoveRowTool
 from .tools.row_operations_tool import RowOperationsTool
 from .tools.selection_tool import SelectionTool
 from .tools.stamp_tool import StampTool
@@ -58,6 +60,9 @@ class EditorApplication:
 
         self.font = pygame.font.SysFont("monospace", 14)
         self.font_small = pygame.font.SysFont("monospace", 12)
+
+        # Track previous tool for revert behavior (used by dialog tools)
+        self.previous_tool_name: str | None = None
 
         # Load tilesets
         self.terrain_tileset = Tileset(terrain_chr)
@@ -156,6 +161,8 @@ class EditorApplication:
         self.tool_picker.register_tool("measure", "Measure", "📏")
         self.tool_picker.register_tool("metadata_editor", "Metadata", "📝")
         self.tool_picker.register_tool("position", "Position", "🎯")
+        self.tool_picker.register_tool("add_row", "Add Row", "➕", is_action=True)
+        self.tool_picker.register_tool("remove_row", "Remove Row", "➖", is_action=True)
 
         # Create stamp library and browser
         self.stamp_library = StampLibrary()
@@ -183,6 +190,8 @@ class EditorApplication:
         self.tool_manager.register_tool("row_operations", RowOperationsTool())
         self.tool_manager.register_tool("metadata_editor", MetadataEditorTool())
         self.tool_manager.register_tool("position", PositionTool())
+        self.tool_manager.register_tool("add_row", AddRowTool())
+        self.tool_manager.register_tool("remove_row", RemoveRowTool())
 
         # Create event handler early (buttons will reference its methods)
         self.event_handler = EventHandler(
@@ -206,12 +215,13 @@ class EditorApplication:
             on_terrain_modified=self.invalidate_terrain_validation_cache,
         )
 
-        # Set transform_logic, forest_filler, tool_manager, highlight_state, and stamp_library on tool_context (needed by tools)
+        # Set transform_logic, forest_filler, tool_manager, highlight_state, stamp_library, and revert callback on tool_context (needed by tools)
         self.event_handler.tool_context.transform_logic = self.transform_logic
         self.event_handler.tool_context.forest_filler = self.forest_filler
         self.event_handler.tool_context.tool_manager = self.tool_manager
         self.event_handler.tool_context.highlight_state = self.highlight_state
         self.event_handler.tool_context.stamp_library = self.stamp_library
+        self.event_handler.tool_context._on_revert_to_previous_tool = self._revert_to_previous_tool
 
         # Activate paint tool now that we have context
         self.tool_manager.set_active_tool("paint", self.event_handler.tool_context)
@@ -222,8 +232,6 @@ class EditorApplication:
             on_save=self._on_save,
             on_set_mode=self._set_mode,
             on_toggle_grid=self.state.toggle_grid,
-            on_add_row=self._add_row,
-            on_remove_row=self._remove_row,
             on_select_flag=self._select_flag,
             on_set_palette=self._set_palette,
             on_toggle_sprites=self.state.toggle_sprites,
@@ -254,8 +262,31 @@ class EditorApplication:
             if tool_name:
                 self.tool_picker.selected_tool = tool_name
         else:
-            # Called from picker - activate tool
+            # Called from picker or hotkey - activate tool
+            current_tool = self.tool_manager.active_tool_name
             self.tool_manager.set_active_tool(tool_name, self.event_handler.tool_context)
+
+            # Check if this was an action tool (active tool didn't change)
+            if self.tool_manager.active_tool_name == current_tool:
+                # Action tool executed - invalidate cache for terrain modifications
+                self.invalidate_terrain_validation_cache()
+            else:
+                # Normal tool switch - track previous tool for revert
+                self.previous_tool_name = current_tool
+
+    def _revert_to_previous_tool(self):
+        """Revert to the previously active tool.
+
+        Called by dialog tools (like Metadata Editor) when their dialog closes
+        to automatically switch back to the tool that was active before.
+        """
+        if self.previous_tool_name:
+            self.tool_manager.set_active_tool(
+                self.previous_tool_name, self.event_handler.tool_context
+            )
+            # Update picker selection to match
+            self.tool_picker.selected_tool = self.previous_tool_name
+            # Don't update previous_tool_name here - keep the chain for nested reverts
 
     def _update_mode_buttons(self):
         """Update mode button active states."""
@@ -287,19 +318,6 @@ class EditorApplication:
         for i, btn in enumerate(palette_buttons, start=1):
             btn.active = i == self.state.selected_palette
 
-    def _add_row(self, at_top: bool = False):
-        """Add terrain row via row operations tool."""
-        row_ops_tool = self.tool_manager.get_tool("row_operations")
-        if row_ops_tool:
-            result = row_ops_tool.add_row(self.event_handler.tool_context, at_top)
-            self._process_tool_result(result)
-
-    def _remove_row(self, from_top: bool = False):
-        """Remove terrain row via row operations tool."""
-        row_ops_tool = self.tool_manager.get_tool("row_operations")
-        if row_ops_tool:
-            result = row_ops_tool.remove_row(self.event_handler.tool_context, from_top)
-            self._process_tool_result(result)
 
     def _process_tool_result(self, result):
         """Process a tool result (same logic as EventHandler._process_tool_result)."""

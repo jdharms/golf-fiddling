@@ -19,10 +19,11 @@ from editor.core.constants import (
 class ToolButton:
     """Individual tool button in the picker."""
 
-    def __init__(self, tool_name: str, label: str, icon_char: str):
+    def __init__(self, tool_name: str, label: str, icon_char: str, is_action: bool = False):
         self.tool_name = tool_name  # "paint", "transform", "forest_fill"
         self.label = label  # "Paint", "Transform", "Forest Fill"
         self.icon_char = icon_char  # Unicode icon/emoji
+        self.is_action = is_action  # True for action tools that execute immediately
         self.rect: Rect | None = None  # Set during layout
         self.hovered = False
 
@@ -40,9 +41,9 @@ class ToolPicker:
         self.selected_tool = "paint"  # Default
         self.buttons: list[ToolButton] = []
 
-    def register_tool(self, tool_name: str, label: str, icon: str):
+    def register_tool(self, tool_name: str, label: str, icon: str, is_action: bool = False):
         """Add a tool to the picker."""
-        button = ToolButton(tool_name, label, icon)
+        button = ToolButton(tool_name, label, icon, is_action)
         self.buttons.append(button)
         self._calculate_button_positions()
 
@@ -64,9 +65,14 @@ class ToolPicker:
             # Check if click is on any button
             for button in self.buttons:
                 if button.rect and button.rect.collidepoint(event.pos):
-                    if button.tool_name != self.selected_tool:
-                        self.selected_tool = button.tool_name
+                    if button.is_action:
+                        # Action tools: always execute, don't change selection
                         self.on_tool_change(button.tool_name)
+                    else:
+                        # Modal tools: only change if different
+                        if button.tool_name != self.selected_tool:
+                            self.selected_tool = button.tool_name
+                            self.on_tool_change(button.tool_name)
                     return True
 
         elif event.type == pygame.MOUSEMOTION:

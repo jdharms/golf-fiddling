@@ -86,16 +86,23 @@ class MetadataEditorTool:
     def _close_dialog(self, context: ToolContext) -> ToolResult:
         """Close dialog and return appropriate result."""
         if self.dialog:
-            if self.dialog.saved:
+            saved = self.dialog.saved
+            par_value = self.dialog.par_value
+            distance_value = self.dialog.distance_value
+
+            # Clean up dialog state
+            self.dialog = None
+            self.undo_pushed = False
+
+            # Request revert to previous tool
+            context.request_revert_to_previous_tool()
+
+            if saved:
                 # Changes were saved
-                message = f"Metadata updated: Par={self.dialog.par_value}, Distance={self.dialog.distance_value}"
-                self.dialog = None
-                self.undo_pushed = False
+                message = f"Metadata updated: Par={par_value}, Distance={distance_value}"
                 return ToolResult.modified(message=message)
             else:
                 # Dialog was cancelled
-                self.dialog = None
-                self.undo_pushed = False
                 return ToolResult(handled=True, message="Metadata edit cancelled")
 
         return ToolResult.handled()

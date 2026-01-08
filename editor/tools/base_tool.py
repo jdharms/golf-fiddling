@@ -80,6 +80,7 @@ class ToolContext:
         tool_manager=None,
         highlight_state=None,
         stamp_library=None,
+        on_revert_to_previous_tool=None,
     ):
         self.hole_data = hole_data
         self.state = state
@@ -92,6 +93,7 @@ class ToolContext:
         self.tool_manager = tool_manager
         self.highlight_state = highlight_state
         self.stamp_library = stamp_library
+        self._on_revert_to_previous_tool = on_revert_to_previous_tool
 
     def get_selected_tile(self) -> int:
         """Get currently selected tile based on mode."""
@@ -112,6 +114,15 @@ class ToolContext:
         if self.tool_manager:
             return self.tool_manager.get_tool("eyedropper")
         return None
+
+    def request_revert_to_previous_tool(self):
+        """Request that the application revert to the previously active tool.
+
+        Used by dialog tools (like Metadata Editor) to automatically switch
+        back to the previous tool after the dialog closes.
+        """
+        if self._on_revert_to_previous_tool:
+            self._on_revert_to_previous_tool()
 
 
 class ToolResult:

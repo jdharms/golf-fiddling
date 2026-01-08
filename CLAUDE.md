@@ -347,9 +347,23 @@ Editor tools are classes that handle specific editing operations. The editor use
    - No hotkey, no picker presence
    - Accessed via `context.get_eyedropper_tool()`
 
-3. **Toolbar Actions** (Row Operations): Triggered by toolbar buttons
-   - Invoked once via button click, execute and complete
-   - Not persistent modes, no picker presence
+3. **Action Tools** (Add Row, Remove Row): Tool picker buttons that execute immediately
+   - Appear in tool picker with icon and hotkey
+   - Execute operation in `on_activated()` when clicked or hotkey pressed
+   - Don't change active tool (previous tool stays active)
+   - Can be clicked multiple times in succession to repeat the action
+   - Implement `is_action_tool()` returning `True` for identification
+   - Registered with `is_action=True` in ToolPicker
+   - ToolManager detects and handles specially in `set_active_tool()`
+   - Example: Add Row adds a terrain row at bottom, Remove Row removes a row
+
+4. **Dialog Tools** (Metadata Editor): Tools that open a dialog and revert when done
+   - Appear in tool picker with icon and hotkey
+   - Show as active in picker while dialog is open
+   - Open modal dialog in `on_activated()`
+   - Call `context.request_revert_to_previous_tool()` when dialog closes
+   - Automatically switch back to the previously active tool
+   - Example: Metadata Editor opens dialog, shows as active, reverts to Paint when closed
 
 **To add a modal tool:**
 
@@ -398,9 +412,122 @@ self.tool_manager.register_tool("your_tool", YourTool())
 self.tool_picker.register_tool("your_tool", "Your Tool", "🔧")
 ```
 
+**To add an action tool:**
+
+1. Create tool class implementing Tool protocol with `is_action_tool()` in `editor/tools/your_action_tool.py`:
+```python
+import pygame
+from .base_tool import ToolContext, ToolResult
+
+class YourActionTool:
+    def handle_mouse_down(self, pos, button, modifiers, context):
+        return ToolResult.not_handled()  # All handlers return not_handled
+
+    def handle_mouse_up(self, pos, button, context):
+        return ToolResult.not_handled()
+
+    def handle_mouse_motion(self, pos, context):
+        return ToolResult.not_handled()
+
+    def handle_key_down(self, key, modifiers, context):
+        return ToolResult.not_handled()
+
+    def handle_key_up(self, key, context):
+        return ToolResult.not_handled()
+
+    def on_activated(self, context: ToolContext):
+        """Execute the action here."""
+        # Push undo, modify data, etc.
+        context.state.undo_manager.push_state(context.hole_data)
+        # Perform operation...
+
+    def on_deactivated(self, context: ToolContext):
+        pass
+
+    def reset(self):
+        pass
+
+    def get_hotkey(self):
+        """Return pygame key constant for hotkey."""
+        return pygame.K_y  # Example: 'Y' key
+
+    def is_action_tool(self):
+        """Identify this as an action tool."""
+        return True
+```
+
+2. Register in Application.__init__:
+```python
+self.tool_manager.register_tool("your_action", YourActionTool())
+```
+
+3. Add to tool picker with is_action=True:
+```python
+self.tool_picker.register_tool("your_action", "Your Action", "⚡", is_action=True)
+```
+
+The `is_action=True` parameter tells the tool picker to:
+- Always execute the tool when clicked (even if already "selected")
+- Never update the selected tool (keeps previous modal tool active)
+- This enables clicking the button multiple times in succession
+
+**To add a dialog tool:**
+
+1. Create tool class that opens a dialog and requests revert on close:
+```python
+import pygame
+from .base_tool import ToolContext, ToolResult
+
+class YourDialogTool:
+    def __init__(self):
+        self.dialog = None
+
+    def handle_mouse_down(self, pos, button, modifiers, context):
+        if self.dialog:
+            # Delegate to dialog, check if it wants to close
+            if self.dialog.handle_event(...):
+                return self._close_dialog(context)
+        return ToolResult.handled()
+
+    def on_activated(self, context: ToolContext):
+        """Create and show dialog when activated."""
+        self.dialog = YourDialog(...)
+
+    def on_deactivated(self, context: ToolContext):
+        """Clean up when tool is deactivated."""
+        self.dialog = None
+
+    def _close_dialog(self, context: ToolContext) -> ToolResult:
+        """Close dialog and revert to previous tool."""
+        self.dialog = None
+        # Request automatic revert to previous tool
+        context.request_revert_to_previous_tool()
+        return ToolResult.handled()
+
+    def get_hotkey(self):
+        return pygame.K_d  # Example: 'D' key
+
+    def render_overlay(self, screen):
+        """Render dialog if active."""
+        if self.dialog:
+            self.dialog.render(screen)
+```
+
+2. Register normally (no special parameters needed):
+```python
+self.tool_manager.register_tool("your_dialog", YourDialogTool())
+self.tool_picker.register_tool("your_dialog", "Your Dialog", "💬")
+```
+
+The dialog tool pattern:
+- Shows as active in picker while dialog is open
+- User can interact with dialog via tool's event handlers
+- When dialog closes, `context.request_revert_to_previous_tool()` switches back
+- Previous tool becomes active again automatically
+
 **Hotkey Conflicts**: ToolManager validates uniqueness on registration and throws ValueError on conflicts.
 
-**Reserved Keys**: G (grid), Tab (mode), 1-3 (flags), Ctrl+Z/Y (undo/redo), Ctrl+S (save), Ctrl+X (invalid tiles), P/T/F (tool hotkeys)
+**Reserved Keys**: G (grid), Tab (mode), 1-3 (flags), Ctrl+Z/Y (undo/redo), Ctrl+S (save), Ctrl+X (invalid tiles), P/T/F/C/S/M/D (tool hotkeys), = (add row), - (remove row)
 
 **Tool Best Practices:**
 - Return `ToolResult.modified()` when data changes (triggers re-render)
