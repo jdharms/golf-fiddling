@@ -81,6 +81,7 @@ class ToolContext:
         highlight_state=None,
         stamp_library=None,
         on_revert_to_previous_tool=None,
+        on_select_flag=None,
     ):
         self.hole_data = hole_data
         self.state = state
@@ -94,6 +95,7 @@ class ToolContext:
         self.highlight_state = highlight_state
         self.stamp_library = stamp_library
         self._on_revert_to_previous_tool = on_revert_to_previous_tool
+        self._on_select_flag = on_select_flag
 
     def get_selected_tile(self) -> int:
         """Get currently selected tile based on mode."""
@@ -123,6 +125,15 @@ class ToolContext:
         """
         if self._on_revert_to_previous_tool:
             self._on_revert_to_previous_tool()
+
+    def select_flag(self, index: int):
+        """Request that the application change the visible flag.
+
+        Used by tools (like PositionTool) to sync the visible flag with
+        the currently selected position being edited.
+        """
+        if self._on_select_flag:
+            self._on_select_flag(index)
 
 
 class ToolResult:

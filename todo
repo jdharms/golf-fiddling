@@ -5,7 +5,6 @@ Investigate:
 
 
 Todos:
-* Movement tool could benefit from held arrow keys registering.
 * Movement tool maybe should only allow moving tee, green on terrain and flags on green?
 * Movement tool should automatically switch the flag being displayed!
 * clean up status bar a bit
@@ -32,3 +31,4 @@ Done:
 * Metadata tool should send you back to previous tool or paint tool
 * Measurement tool should show sum in status bar
 * Movement tool sprite highlighting is kinda bizarre -- why is it 2x2 tiles
+* Movement tool could benefit from held arrow keys registering.

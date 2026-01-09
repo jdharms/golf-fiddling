@@ -222,6 +222,7 @@ class EditorApplication:
         self.event_handler.tool_context.highlight_state = self.highlight_state
         self.event_handler.tool_context.stamp_library = self.stamp_library
         self.event_handler.tool_context._on_revert_to_previous_tool = self._revert_to_previous_tool
+        self.event_handler.tool_context._on_select_flag = self._select_flag
 
         # Activate paint tool now that we have context
         self.tool_manager.set_active_tool("paint", self.event_handler.tool_context)

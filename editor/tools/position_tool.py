@@ -34,7 +34,7 @@ class PositionTool:
     def _get_available_positions(self, mode: str) -> list[str]:
         """Return positions available in current mode."""
         if mode == "terrain":
-            return ["tee", "green", "flag1", "flag2", "flag3", "flag4"]
+            return ["tee", "green"]  # Only tee and green in terrain mode
         else:  # greens mode
             return ["flag1", "flag2", "flag3", "flag4"]  # Only flags in greens mode
 
@@ -144,6 +144,12 @@ class PositionTool:
             self.selected_position_index = (self.selected_position_index + 1) % len(available_positions)
             current_position = available_positions[self.selected_position_index]
             context.highlight_state.position_tool_selected = current_position
+
+            # Sync visible flag in greens mode
+            if context.state.mode == "greens":
+                flag_index = int(current_position[-1]) - 1  # "flag1" -> 0
+                context.select_flag(flag_index)
+
             message = self._get_status_message(current_position, context.hole_data)
             return ToolResult(handled=True, message=message)
 
@@ -152,6 +158,12 @@ class PositionTool:
             self.selected_position_index = (self.selected_position_index - 1) % len(available_positions)
             current_position = available_positions[self.selected_position_index]
             context.highlight_state.position_tool_selected = current_position
+
+            # Sync visible flag in greens mode
+            if context.state.mode == "greens":
+                flag_index = int(current_position[-1]) - 1  # "flag1" -> 0
+                context.select_flag(flag_index)
+
             message = self._get_status_message(current_position, context.hole_data)
             return ToolResult(handled=True, message=message)
 
@@ -160,6 +172,12 @@ class PositionTool:
             self.selected_position_index = (self.selected_position_index + 1) % len(available_positions)
             current_position = available_positions[self.selected_position_index]
             context.highlight_state.position_tool_selected = current_position
+
+            # Sync visible flag in greens mode
+            if context.state.mode == "greens":
+                flag_index = int(current_position[-1]) - 1  # "flag1" -> 0
+                context.select_flag(flag_index)
+
             message = self._get_status_message(current_position, context.hole_data)
             return ToolResult(handled=True, message=message)
 
@@ -250,6 +268,11 @@ class PositionTool:
 
         # Set highlight state
         context.highlight_state.position_tool_selected = current_position
+
+        # Sync visible flag if in greens mode
+        if context.state.mode == "greens":
+            flag_index = int(current_position[-1]) - 1  # "flag1" -> 0
+            context.select_flag(flag_index)
 
     def on_deactivated(self, context):
         """Called when tool is deactivated."""
