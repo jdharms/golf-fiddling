@@ -137,7 +137,9 @@ class TerrainRenderer:
             )
 
         # Render green overlay
-        SpriteRenderer.render_green_overlay(screen, view_state, hole_data)
+        SpriteRenderer.render_green_overlay(
+            screen, view_state, hole_data, highlight_state.position_tool_selected
+        )
 
         # Render sprites
         if show_sprites:

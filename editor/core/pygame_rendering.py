@@ -160,3 +160,38 @@ class Sprite:
 
             tile_surf = self.render_tile(tile_idx, scale)
             screen.blit(tile_surf, (sx, sy))
+
+    def get_bounding_box(self, anchor_x: int, anchor_y: int) -> tuple[int, int, int, int]:
+        """
+        Calculate bounding box of all sprite tiles in game pixel space.
+
+        Args:
+            anchor_x: Anchor point X coordinate (game pixels)
+            anchor_y: Anchor point Y coordinate (game pixels)
+
+        Returns:
+            Tuple of (min_x, min_y, max_x, max_y) in game pixels
+        """
+        if not self.sprites:
+            return (anchor_x, anchor_y, anchor_x, anchor_y)
+
+        min_x = float('inf')
+        min_y = float('inf')
+        max_x = float('-inf')
+        max_y = float('-inf')
+
+        for entry in self.sprites:
+            offset_x = entry.get("x", 0)
+            offset_y = entry.get("y", 0) + SPRITE_OFFSET_Y  # Apply NES scanline delay
+
+            # Calculate tile position in game pixel space
+            tile_x = anchor_x + offset_x
+            tile_y = anchor_y + offset_y
+
+            # Expand bounding box
+            min_x = min(min_x, tile_x)
+            min_y = min(min_y, tile_y)
+            max_x = max(max_x, tile_x + TILE_SIZE)
+            max_y = max(max_y, tile_y + TILE_SIZE)
+
+        return (int(min_x), int(min_y), int(max_x), int(max_y))
