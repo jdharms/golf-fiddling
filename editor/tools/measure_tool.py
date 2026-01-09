@@ -2,6 +2,7 @@
 Measure tool - measure distances between points in yards.
 """
 
+import math
 import pygame
 from pygame import Rect
 
@@ -22,6 +23,34 @@ class MeasureTool:
         """Initialize measure tool with empty points list."""
         self.points: list[tuple[int, int]] = []  # Game pixel coordinates
 
+    def _calculate_cumulative_distance(self) -> float:
+        """Calculate cumulative distance in yards between all consecutive points."""
+        if len(self.points) < 2:
+            return 0.0
+
+        total_yards = 0.0
+        for i in range(len(self.points) - 1):
+            p1 = self.points[i]
+            p2 = self.points[i + 1]
+            dx = p2[0] - p1[0]
+            dy = p2[1] - p1[1]
+            segment_yards = math.sqrt(dx * dx + dy * dy) * 2
+            total_yards += segment_yards
+
+        return total_yards
+
+    def _get_status_message(self) -> str:
+        """Generate status bar message showing measurement info."""
+        num_points = len(self.points)
+        if num_points == 0:
+            return "Measure: Click to add points, Right-click to clear"
+        elif num_points == 1:
+            return "Measure: 1 point - Click to add more points"
+        else:
+            total_distance = self._calculate_cumulative_distance()
+            num_segments = num_points - 1
+            return f"Total Distance: {total_distance:.1f}y"
+
     def handle_mouse_down(self, pos, button, modifiers, context):
         """Handle mouse click - add point or clear points."""
         if context.state.mode != "terrain":
@@ -30,7 +59,8 @@ class MeasureTool:
         # Right click - clear all points
         if button == 3:
             self.points.clear()
-            return ToolResult.handled()
+            message = self._get_status_message()
+            return ToolResult(handled=True, message=message)
 
         # Only handle left click
         if button != 1:
@@ -58,7 +88,9 @@ class MeasureTool:
         # Add point to measurement sequence
         self.points.append(game_pixel_pos)
 
-        return ToolResult.handled()
+        # Return status message with cumulative distance
+        message = self._get_status_message()
+        return ToolResult(handled=True, message=message)
 
     def handle_mouse_up(self, pos, button, context):
         """Handle mouse release - not used by measure tool."""
@@ -77,12 +109,13 @@ class MeasureTool:
         return ToolResult.not_handled()
 
     def on_activated(self, context):
-        """Called when tool becomes active."""
-        pass
+        """Called when tool becomes active - show initial status message."""
+        context.state.tool_message = self._get_status_message()
 
     def on_deactivated(self, context):
-        """Called when tool is deactivated - clear points for clean state."""
+        """Called when tool is deactivated - clear points and status message."""
         self.reset()
+        context.state.tool_message = None
 
     def reset(self):
         """Reset tool state - clear all measurement points."""

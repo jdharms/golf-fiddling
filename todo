@@ -1,5 +1,4 @@
-* rows must be even
-* scroll limit is calculable
+
 * ~~drag to transform up/left?~~
 * Invalid neighbor indicator should be a single border per pairing
 * Wooden signs?
@@ -8,12 +7,11 @@
 
 Todos:
 * Movement tool could benefit from held arrow keys registering.
-* Metadata tool should send you back to previous tool or paint tool
 * Movement tool should automatically switch the flag being displayed!
 * Movement tool sprite highlighting is kinda bizarre -- why is it 2x2 tiles
-* Measurement tool should show sum in status bar
-* Movement tool needs to unset the status bar when it's done/deactivated
-* Forest border tiles are "subset" of fill tiles--can we exploit this?
+
+
+
 Bugs:
 * Palette tile crashes on out of range paint
 * Should right click in transform send us back to paint + eyedropper?
@@ -25,3 +23,11 @@ Bugs:
 Thoughts:
 * It can be tough to know when to "cut bait"
 * I have a temptation to fix problems at the abstraction level I'm working at (claude code), even when fixing the problem is just a few changes to a few lines in a few files.
+
+
+Done:
+* rows must be even
+* scroll limit is calculable
+* Forest border tiles are "subset" of fill tiles--can we exploit this? YES WE CAN!
+* Metadata tool should send you back to previous tool or paint tool
+* Measurement tool should show sum in status bar
