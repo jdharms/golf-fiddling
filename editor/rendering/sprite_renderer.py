@@ -9,7 +9,7 @@ import pygame
 from pygame import Surface
 
 from editor.controllers.view_state import ViewState
-from editor.core.constants import COLOR_SELECTION, GREEN_OVERLAY_COLOR
+from editor.core.constants import COLOR_SELECTION, GREEN_OVERLAY_COLOR, HIGHLIGHT_PADDING
 from editor.core.pygame_rendering import Sprite
 from golf.formats.hole_data import HoleData
 
@@ -22,6 +22,7 @@ class SpriteRenderer:
         screen: Surface,
         view_state: ViewState,
         hole_data: HoleData,
+        highlighted_position: str | None = None,
     ):
         """
         Render the putting green overlay on terrain view.
@@ -30,6 +31,7 @@ class SpriteRenderer:
             screen: Pygame surface to draw on
             view_state: Viewport camera and coordinate transformations
             hole_data: Hole data containing greens information
+            highlighted_position: Position to highlight ("green", etc.)
         """
         if not hole_data.greens:
             return
@@ -42,9 +44,23 @@ class SpriteRenderer:
         green_x = hole_data.green_x
         green_y = hole_data.green_y
 
+        # Track bounding box for highlighting
+        min_gx = float('inf')
+        min_gy = float('inf')
+        max_gx = float('-inf')
+        max_gy = float('-inf')
+        has_green_tiles = False
+
         for gy, grow in enumerate(hole_data.greens):
             for gx, gval in enumerate(grow):
                 if gval >= 0x30:
+                    # Track bounds for highlighting
+                    min_gx = min(min_gx, gx)
+                    min_gy = min(min_gy, gy)
+                    max_gx = max(max_gx, gx + 1)  # +1 for inclusive right edge
+                    max_gy = max(max_gy, gy + 1)  # +1 for inclusive bottom edge
+                    has_green_tiles = True
+
                     # Calculate pixel position
                     px = green_x + gx
                     py = green_y + gy
@@ -59,6 +75,29 @@ class SpriteRenderer:
                             GREEN_OVERLAY_COLOR,
                             (screen_x, screen_y, canvas_scale, canvas_scale),
                         )
+
+        # Highlight green position if selected
+        if highlighted_position == "green" and has_green_tiles:
+            # Convert greens-relative coords to world coords
+            min_x = green_x + min_gx - HIGHLIGHT_PADDING
+            min_y = green_y + min_gy - HIGHLIGHT_PADDING
+            max_x = green_x + max_gx + HIGHLIGHT_PADDING
+            max_y = green_y + max_gy + HIGHLIGHT_PADDING
+
+            # Convert to screen coords
+            screen_min_x = canvas_rect.x + min_x * canvas_scale - canvas_offset_x
+            screen_min_y = canvas_rect.y + min_y * canvas_scale - canvas_offset_y
+            screen_max_x = canvas_rect.x + max_x * canvas_scale - canvas_offset_x
+            screen_max_y = canvas_rect.y + max_y * canvas_scale - canvas_offset_y
+
+            # Draw yellow border around green with padding
+            highlight_rect = pygame.Rect(
+                screen_min_x,
+                screen_min_y,
+                screen_max_x - screen_min_x,
+                screen_max_y - screen_min_y
+            )
+            pygame.draw.rect(screen, COLOR_SELECTION, highlight_rect, 2)
 
     @staticmethod
     def render_terrain_sprites(
@@ -104,10 +143,29 @@ class SpriteRenderer:
 
             # Highlight if selected
             if highlighted_position == "tee":
-                # Draw yellow border around tee sprite
-                sprite_width = 16 * canvas_scale  # Tee is 2x2 tiles = 16 pixels
-                sprite_height = 16 * canvas_scale
-                highlight_rect = pygame.Rect(sx, sy, sprite_width, sprite_height)
+                # Calculate sprite bounding box with padding
+                bbox = sprites["tee"].get_bounding_box(tee_x, tee_y)
+                min_x, min_y, max_x, max_y = bbox
+
+                # Apply padding (in game pixels)
+                min_x -= HIGHLIGHT_PADDING
+                min_y -= HIGHLIGHT_PADDING
+                max_x += HIGHLIGHT_PADDING
+                max_y += HIGHLIGHT_PADDING
+
+                # Convert to screen coords
+                screen_min_x = canvas_rect.x + min_x * canvas_scale - canvas_offset_x
+                screen_min_y = canvas_rect.y + min_y * canvas_scale - canvas_offset_y
+                screen_max_x = canvas_rect.x + max_x * canvas_scale - canvas_offset_x
+                screen_max_y = canvas_rect.y + max_y * canvas_scale - canvas_offset_y
+
+                # Draw yellow border around sprite with padding
+                highlight_rect = pygame.Rect(
+                    screen_min_x,
+                    screen_min_y,
+                    screen_max_x - screen_min_x,
+                    screen_max_y - screen_min_y
+                )
                 pygame.draw.rect(screen, COLOR_SELECTION, highlight_rect, 2)
 
         # Ball at tee
@@ -135,10 +193,29 @@ class SpriteRenderer:
                 # Highlight if selected
                 flag_name = f"flag{selected_flag_index + 1}"
                 if highlighted_position == flag_name:
-                    # Draw yellow border around flag sprite
-                    sprite_width = 16 * canvas_scale  # Flag is 2x2 tiles = 16 pixels
-                    sprite_height = 16 * canvas_scale
-                    highlight_rect = pygame.Rect(sx, sy, sprite_width, sprite_height)
+                    # Calculate sprite bounding box with padding
+                    bbox = sprites["flag"].get_bounding_box(flag_x, flag_y)
+                    min_x, min_y, max_x, max_y = bbox
+
+                    # Apply padding (in game pixels)
+                    min_x -= HIGHLIGHT_PADDING
+                    min_y -= HIGHLIGHT_PADDING
+                    max_x += HIGHLIGHT_PADDING
+                    max_y += HIGHLIGHT_PADDING
+
+                    # Convert to screen coords
+                    screen_min_x = canvas_rect.x + min_x * canvas_scale - canvas_offset_x
+                    screen_min_y = canvas_rect.y + min_y * canvas_scale - canvas_offset_y
+                    screen_max_x = canvas_rect.x + max_x * canvas_scale - canvas_offset_x
+                    screen_max_y = canvas_rect.y + max_y * canvas_scale - canvas_offset_y
+
+                    # Draw yellow border around sprite with padding
+                    highlight_rect = pygame.Rect(
+                        screen_min_x,
+                        screen_min_y,
+                        screen_max_x - screen_min_x,
+                        screen_max_y - screen_min_y
+                    )
                     pygame.draw.rect(screen, COLOR_SELECTION, highlight_rect, 2)
 
     @staticmethod
@@ -187,8 +264,33 @@ class SpriteRenderer:
         # Highlight if selected
         flag_name = f"flag{selected_flag_index + 1}"
         if highlighted_position == flag_name:
-            # Draw yellow border around flag sprite
-            sprite_width = 16 * canvas_scale  # Flag is 2x2 tiles = 16 pixels
-            sprite_height = 16 * canvas_scale
-            highlight_rect = pygame.Rect(screen_x, screen_y, sprite_width, sprite_height)
+            # Calculate combined bounding box for both flag and cup sprites
+            flag_bbox = sprites["green-flag"].get_bounding_box(flag_x, flag_y)
+            cup_bbox = sprites["green-cup"].get_bounding_box(flag_x, flag_y)
+
+            # Union of both bounding boxes
+            min_x = min(flag_bbox[0], cup_bbox[0])
+            min_y = min(flag_bbox[1], cup_bbox[1])
+            max_x = max(flag_bbox[2], cup_bbox[2])
+            max_y = max(flag_bbox[3], cup_bbox[3])
+
+            # Apply padding (in game pixels)
+            min_x -= HIGHLIGHT_PADDING
+            min_y -= HIGHLIGHT_PADDING
+            max_x += HIGHLIGHT_PADDING
+            max_y += HIGHLIGHT_PADDING
+
+            # Convert to screen coords
+            screen_min_x = canvas_rect.x + min_x * canvas_scale - canvas_offset_x
+            screen_min_y = canvas_rect.y + min_y * canvas_scale - canvas_offset_y
+            screen_max_x = canvas_rect.x + max_x * canvas_scale - canvas_offset_x
+            screen_max_y = canvas_rect.y + max_y * canvas_scale - canvas_offset_y
+
+            # Draw yellow border around combined sprite bounds with padding
+            highlight_rect = pygame.Rect(
+                screen_min_x,
+                screen_min_y,
+                screen_max_x - screen_min_x,
+                screen_max_y - screen_min_y
+            )
             pygame.draw.rect(screen, COLOR_SELECTION, highlight_rect, 2)

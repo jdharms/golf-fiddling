@@ -44,3 +44,6 @@ GREENS_PALETTE_NUM = 4
 
 # NES sprite coordinate offsets
 SPRITE_OFFSET_Y = +1  # Scanline delay
+
+# Position tool highlighting
+HIGHLIGHT_PADDING = 2  # Game pixels to expand bounding box for better visibility
