@@ -5,8 +5,6 @@ Investigate:
 
 
 Todos:
-* Movement tool maybe should only allow moving tee, green on terrain and flags on green?
-* Movement tool should automatically switch the flag being displayed!
 * clean up status bar a bit
 * clean up unnecessary "sprites" button and remove ability for sprite visibility to be toggled
 * Invalid neighbor indicator should be a single border per pairing
@@ -32,3 +30,5 @@ Done:
 * Measurement tool should show sum in status bar
 * Movement tool sprite highlighting is kinda bizarre -- why is it 2x2 tiles
 * Movement tool could benefit from held arrow keys registering.
+* Movement tool maybe should only allow moving tee, green on terrain and flags on green?
+* Movement tool should automatically switch the flag being displayed!
