@@ -24,6 +24,7 @@ def editor_setup():
 
     # Initialize hole with realistic data
     hole_data.terrain = [[0xA0 + i] * 22 for i in range(30)]
+    hole_data.terrain_height = 30  # Set terrain height
     hole_data.attributes = [[1] * 11 for _ in range(15)]
     hole_data.greens = [[0xC0] * 24 for _ in range(24)]
     hole_data.green_x = 100
@@ -193,90 +194,92 @@ class TestRowOperationUndo:
     """Tests for undo/redo of row add/remove operations."""
 
     def test_add_row_undo(self, editor_setup):
-        """Adding a row should be undoable."""
+        """Adding rows should be undoable (adds 2 rows at a time)."""
         state = editor_setup["state"]
         hole_data = editor_setup["hole_data"]
         event_handler = editor_setup["event_handler"]
         row_operations_tool = editor_setup["row_operations_tool"]
 
-        initial_height = len(hole_data.terrain)
+        initial_height = hole_data.terrain_height
 
-        # Add row (this pushes undo state internally)
+        # Add row (this pushes undo state internally, adds 2 rows)
         row_operations_tool.add_row(event_handler.tool_context, False)
 
-        assert len(hole_data.terrain) == initial_height + 1
+        assert hole_data.terrain_height == initial_height + 2
         assert state.undo_manager.can_undo()
 
         # Undo
         restored = state.undo_manager.undo(hole_data)
-        assert len(restored.terrain) == initial_height
+        assert restored.terrain_height == initial_height
 
     def test_remove_row_undo(self, editor_setup):
-        """Removing a row should be undoable."""
+        """Removing rows should be undoable (removes 2 rows at a time, soft removal)."""
         state = editor_setup["state"]
         hole_data = editor_setup["hole_data"]
         event_handler = editor_setup["event_handler"]
         row_operations_tool = editor_setup["row_operations_tool"]
 
-        initial_height = len(hole_data.terrain)
+        # Start with more rows so we can remove (minimum is 30)
+        hole_data.terrain_height = 34
+        initial_height = hole_data.terrain_height
 
-        # Remove row
+        # Remove row (soft removal: decreases height by 2, keeps data)
         row_operations_tool.remove_row(event_handler.tool_context, False)
 
-        assert len(hole_data.terrain) == initial_height - 1
+        assert hole_data.terrain_height == initial_height - 2
         assert state.undo_manager.can_undo()
 
         # Undo
         restored = state.undo_manager.undo(hole_data)
-        assert len(restored.terrain) == initial_height
+        assert restored.terrain_height == initial_height
 
     def test_add_multiple_rows_separate_undos(self, editor_setup):
-        """Each row add should be separate undo action."""
+        """Each row add should be separate undo action (adds 2 rows each time)."""
         state = editor_setup["state"]
         hole_data = editor_setup["hole_data"]
         event_handler = editor_setup["event_handler"]
         row_operations_tool = editor_setup["row_operations_tool"]
 
-        initial_height = len(hole_data.terrain)
+        initial_height = hole_data.terrain_height
 
-        # Add 3 rows
+        # Add 3 times (2 rows each = 6 rows total)
         row_operations_tool.add_row(event_handler.tool_context, False)
         row_operations_tool.add_row(event_handler.tool_context, False)
         row_operations_tool.add_row(event_handler.tool_context, False)
 
-        assert len(hole_data.terrain) == initial_height + 3
+        assert hole_data.terrain_height == initial_height + 6
         assert len(state.undo_manager.undo_stack) == 3
 
         # Undo each one
         s1 = state.undo_manager.undo(hole_data)
-        assert len(s1.terrain) == initial_height + 2
+        assert s1.terrain_height == initial_height + 4
 
         s2 = state.undo_manager.undo(s1)
-        assert len(s2.terrain) == initial_height + 1
+        assert s2.terrain_height == initial_height + 2
 
         s3 = state.undo_manager.undo(s2)
-        assert len(s3.terrain) == initial_height
+        assert s3.terrain_height == initial_height
 
     def test_add_undo_redo_row_sequence(self, editor_setup):
-        """Should handle add/undo/redo sequences for rows."""
+        """Should handle add/undo/redo sequences for rows (adds 2 rows at a time)."""
         state = editor_setup["state"]
         hole_data = editor_setup["hole_data"]
         event_handler = editor_setup["event_handler"]
         row_operations_tool = editor_setup["row_operations_tool"]
 
-        initial_height = len(hole_data.terrain)
+        initial_height = hole_data.terrain_height
 
-        # Add row
+        # Add row (adds 2 rows)
         row_operations_tool.add_row(event_handler.tool_context, False)
-        assert len(hole_data.terrain) == initial_height + 1
+        assert hole_data.terrain_height == initial_height + 2
 
         # Undo
         s1 = state.undo_manager.undo(hole_data)
-        assert len(s1.terrain) == initial_height
+        assert s1.terrain_height == initial_height
 
         # Redo
         s2 = state.undo_manager.redo(s1)
-        assert len(s2.terrain) == initial_height + 1
+        assert s2.terrain_height == initial_height + 2
 
 
 class TestFileLoadClearsUndoHistory:
@@ -338,7 +341,7 @@ class TestComplexUndoRedoSequences:
         event_handler = editor_setup["event_handler"]
         row_operations_tool = editor_setup["row_operations_tool"]
 
-        initial_height = len(hole_data.terrain)
+        initial_height = hole_data.terrain_height
 
         # Paint stroke
         state.undo_manager.push_state(hole_data)
@@ -346,7 +349,7 @@ class TestComplexUndoRedoSequences:
         hole_data.set_terrain_tile(5, 5, 0xB5)
         state.painting = False
 
-        # Add row
+        # Add row (adds 2 rows)
         row_operations_tool.add_row(event_handler.tool_context, False)
 
         # Should have 2 undo states
@@ -354,39 +357,39 @@ class TestComplexUndoRedoSequences:
 
         # Undo row add
         s1 = state.undo_manager.undo(hole_data)
-        assert len(s1.terrain) == initial_height
+        assert s1.terrain_height == initial_height
 
         # Undo paint
         s2 = state.undo_manager.undo(s1)
         assert s2.terrain[5][5] == 0xA5
 
     def test_undo_redo_undo_redo_cycle(self, editor_setup):
-        """Should handle undo/redo/undo/redo cycles."""
+        """Should handle undo/redo/undo/redo cycles (adds 2 rows at a time)."""
         state = editor_setup["state"]
         hole_data = editor_setup["hole_data"]
         event_handler = editor_setup["event_handler"]
         row_operations_tool = editor_setup["row_operations_tool"]
 
-        initial_height = len(hole_data.terrain)
+        initial_height = hole_data.terrain_height
 
-        # Add row
+        # Add row (adds 2 rows)
         row_operations_tool.add_row(event_handler.tool_context, False)
 
         # Undo
         s1 = state.undo_manager.undo(hole_data)
-        assert len(s1.terrain) == initial_height
+        assert s1.terrain_height == initial_height
 
         # Redo
         s2 = state.undo_manager.redo(s1)
-        assert len(s2.terrain) == initial_height + 1
+        assert s2.terrain_height == initial_height + 2
 
         # Undo again
         s3 = state.undo_manager.undo(s2)
-        assert len(s3.terrain) == initial_height
+        assert s3.terrain_height == initial_height
 
         # Redo again
         s4 = state.undo_manager.redo(s3)
-        assert len(s4.terrain) == initial_height + 1
+        assert s4.terrain_height == initial_height + 2
 
     def test_paint_undo_new_paint_clears_redo(self, editor_setup):
         """New paint after undo should clear redo stack."""

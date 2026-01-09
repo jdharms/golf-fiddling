@@ -113,6 +113,7 @@ class UndoManager:
         """
         snapshot = HoleData()
         snapshot.terrain = copy.deepcopy(hole_data.terrain)
+        snapshot.terrain_height = hole_data.terrain_height  # Preserve terrain height
         snapshot.attributes = copy.deepcopy(hole_data.attributes)
         snapshot.greens = copy.deepcopy(hole_data.greens)
         snapshot.green_x = hole_data.green_x

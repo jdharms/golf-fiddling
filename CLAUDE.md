@@ -99,11 +99,25 @@ Separate decompression tables exist for terrain (in fixed bank) and greens (in s
 
 **Data Model**: `HoleData` is the central model for hole information. It stores:
 - Terrain tiles (22 columns wide, variable height)
+- Terrain height (`terrain_height` field) - visible height, separate from physical terrain data length
 - Greens tiles (24x24 grid)
 - Attributes (palette indices for 2x2 supertiles)
-- Metadata (par, distance, tee/green positions, flag positions)
+- Metadata (par, distance, tee/green positions, flag positions, scroll_limit)
 
-**JSON Format**: Holes are stored as JSON with hex-encoded tile rows (e.g., "A2 A3 A0 A1"). This compact format is human-readable and can be directly edited.
+**Terrain Height Architecture**: The editor uses a dual-height system for terrain:
+- **Physical terrain data** (`terrain` list): Can hold up to 48 rows of tile data
+- **Visible terrain height** (`terrain_height` field): Controls how many rows are rendered (30-48 rows)
+- **Soft removal**: Removing rows decreases `terrain_height` but preserves data in the `terrain` list
+- **Smart restoration**: Adding rows restores hidden data (if present) before creating new rows
+- **Scroll limit**: Auto-calculated as `(terrain_height - 28) / 2` and updated on every add/remove operation
+
+**Row Operations Constraints**:
+- **Minimum**: 30 rows (firm minimum)
+- **Maximum**: 48 rows (firm maximum)
+- **Pair operations**: Rows are always added/removed in pairs of 2 to maintain even count
+- **Even row count**: All holes must have an even number of rows
+
+**JSON Format**: Holes are stored as JSON with hex-encoded tile rows (e.g., "A2 A3 A0 A1"). This compact format is human-readable and can be directly edited. The `terrain.height` field stores the visible terrain height, which may be less than the number of rows in the `terrain.rows` array (soft removal).
 
 **CHR Graphics**: NES graphics use 8x8 tiles stored in CHR format. The codebase requires extracted CHR binaries for terrain and greens tilesets. `Tileset` class handles loading and rendering CHR tiles with NES palettes.
 
@@ -118,7 +132,7 @@ Separate decompression tables exist for terrain (in fixed bank) and greens (in s
 
 ### Important Coordinate Systems
 
-- **Terrain tiles**: 22 tiles wide, variable height (typically 30-40 rows)
+- **Terrain tiles**: 22 tiles wide, visible height 30-48 rows (always even)
 - **Supertiles**: 2x2 tile blocks used for attribute (palette) mapping
 - **Attributes**: 11 columns wide (12 supertiles minus 1 HUD column)
 - **Greens tiles**: Fixed 24x24 grid centered at green position
