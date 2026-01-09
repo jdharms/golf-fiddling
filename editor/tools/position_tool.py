@@ -24,6 +24,7 @@ class PositionTool:
     def __init__(self):
         self.selected_position_index: int = 0
         self.undo_position_tracker: str | None = None  # Track which position has undo state
+        self.last_validated_mode: str | None = None  # Track last mode for detecting mode changes
 
         # Key repeat state
         self.held_key: int | None = None  # Which arrow key is currently held (pygame.K_*)
@@ -37,6 +38,43 @@ class PositionTool:
             return ["tee", "green"]  # Only tee and green in terrain mode
         else:  # greens mode
             return ["flag1", "flag2", "flag3", "flag4"]  # Only flags in greens mode
+
+    def _validate_and_correct_position(self, context) -> bool:
+        """Validate that selected_position_index is valid for current mode.
+
+        Returns True if correction was made, False if position was already valid.
+        Very fast in the common case (just a mode comparison + bounds check).
+        """
+        current_mode = context.state.mode
+        available_positions = self._get_available_positions(current_mode)
+
+        # Detect mode change
+        mode_changed = self.last_validated_mode != current_mode
+        out_of_bounds = self.selected_position_index >= len(available_positions)
+
+        # Fast path: same mode and position is valid
+        if not mode_changed and not out_of_bounds:
+            return False
+
+        # Mode changed or out of bounds - need to update
+        if out_of_bounds:
+            # Reset to first position if out of bounds
+            self.selected_position_index = 0
+
+        current_position = available_positions[self.selected_position_index]
+
+        # Update highlight state
+        context.highlight_state.position_tool_selected = current_position
+
+        # Sync visible flag if in greens mode
+        if current_mode == "greens":
+            flag_index = int(current_position[-1]) - 1  # "flag1" -> 0
+            context.select_flag(flag_index)
+
+        # Remember this mode for next check
+        self.last_validated_mode = current_mode
+
+        return True
 
     def _ensure_metadata_exists(self, hole_data):
         """Ensure required metadata exists with defaults."""
@@ -135,6 +173,9 @@ class PositionTool:
         return ToolResult.not_handled()
 
     def handle_key_down(self, key, modifiers, context):
+        # Validate position for current mode (safety check)
+        self._validate_and_correct_position(context)
+
         available_positions = self._get_available_positions(context.state.mode)
         current_position = available_positions[self.selected_position_index]
 
@@ -230,6 +271,17 @@ class PositionTool:
 
     def update(self, context: ToolContext) -> ToolResult:
         """Called every frame to handle key repeat timing."""
+        # Validate position index for current mode (fast bounds check)
+        # Handles mode switches (e.g., from greens flag3 to terrain with only 2 positions)
+        corrected = self._validate_and_correct_position(context)
+        if corrected:
+            # Mode switched and position was reset - show status message
+            available_positions = self._get_available_positions(context.state.mode)
+            current_position = available_positions[self.selected_position_index]
+            message = self._get_status_message(current_position, context.hole_data)
+            return ToolResult.modified(message=message)
+
+        # Continue with key repeat logic
         if self.held_key is None or self.key_held_since is None:
             return ToolResult.not_handled()
 
@@ -263,8 +315,9 @@ class PositionTool:
         self.selected_position_index = 0
         current_position = available_positions[self.selected_position_index]
 
-        # Reset undo tracker
+        # Reset undo tracker and mode tracker
         self.undo_position_tracker = None
+        self.last_validated_mode = context.state.mode
 
         # Set highlight state
         context.highlight_state.position_tool_selected = current_position
@@ -286,6 +339,7 @@ class PositionTool:
         """Reset tool state."""
         self.selected_position_index = 0
         self.undo_position_tracker = None
+        self.last_validated_mode = None
 
         # Clear key repeat state
         self.held_key = None
