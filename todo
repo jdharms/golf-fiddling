@@ -1,17 +1,16 @@
-
-* ~~drag to transform up/left?~~
-* Invalid neighbor indicator should be a single border per pairing
+Investigate:
 * Wooden signs?
 * Scorecard course name?
 * Does SuperShot! do anything?
+
 
 Todos:
 * Movement tool could benefit from held arrow keys registering.
 * Movement tool maybe should only allow moving tee, green on terrain and flags on green?
 * Movement tool should automatically switch the flag being displayed!
-* Movement tool sprite highlighting is kinda bizarre -- why is it 2x2 tiles
 * clean up status bar a bit
-
+* clean up unnecessary "sprites" button and remove ability for sprite visibility to be toggled
+* Invalid neighbor indicator should be a single border per pairing
 
 
 Bugs:
@@ -19,7 +18,6 @@ Bugs:
 * Should right click in transform send us back to paint + eyedropper?
   * How would that work?  How does paint get that right click event?
 * Select tool delete leaves fill instead of placeholder
-
 
 
 Thoughts:
@@ -33,3 +31,4 @@ Done:
 * Forest border tiles are "subset" of fill tiles--can we exploit this? YES WE CAN!
 * Metadata tool should send you back to previous tool or paint tool
 * Measurement tool should show sum in status bar
+* Movement tool sprite highlighting is kinda bizarre -- why is it 2x2 tiles

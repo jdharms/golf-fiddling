@@ -503,6 +503,13 @@ class EditorApplication:
         while self.running:
             events = pygame.event.get()
             self.running = self.event_handler.handle_events(events)
+
+            # Update active tool (for time-based behavior like key repeat)
+            active_tool = self.tool_manager.get_active_tool()
+            if active_tool and hasattr(active_tool, 'update'):
+                result = active_tool.update(self.event_handler.tool_context)
+                self._process_tool_result(result)
+
             self._render()
             self.clock.tick(60)
 
