@@ -77,8 +77,10 @@ class TerrainRenderer:
         show_invalid_tiles = highlight_state.show_invalid_tiles
         invalid_terrain_tiles = highlight_state.invalid_terrain_tiles
 
-        # Render terrain tiles
-        for row_idx, row in enumerate(hole_data.terrain):
+        # Render terrain tiles (only up to terrain_height)
+        visible_height = hole_data.get_terrain_height()
+        for row_idx in range(visible_height):
+            row = hole_data.terrain[row_idx]
             for col_idx, tile_idx in enumerate(row):
                 x = canvas_rect.x + col_idx * tile_size - canvas_offset_x
                 y = canvas_rect.y + row_idx * tile_size - canvas_offset_y
@@ -272,7 +274,10 @@ class TerrainRenderer:
         """Render gold borders around all tiles matching the shift-hovered tile value."""
         tile_size = TILE_SIZE * canvas_scale
 
-        for row_idx, row in enumerate(hole_data.terrain):
+        # Only highlight visible rows (up to terrain_height)
+        visible_height = hole_data.get_terrain_height()
+        for row_idx in range(visible_height):
+            row = hole_data.terrain[row_idx]
             for col_idx, tile_idx in enumerate(row):
                 # Only highlight if tile matches the hovered value
                 if tile_idx != highlight_tile_value:

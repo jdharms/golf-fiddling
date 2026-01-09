@@ -17,6 +17,7 @@ class HoleData:
 
     def __init__(self):
         self.terrain: list[list[int]] = []
+        self.terrain_height: int = 0  # Visible terrain height (may be < len(terrain))
         self.attributes: list[list[int]] = []
         self.greens: list[list[int]] = []
         self.green_x: int = 0
@@ -35,6 +36,9 @@ class HoleData:
         for row_str in data["terrain"]["rows"]:
             row = hex_utils.parse_hex_row(row_str)
             self.terrain.append(row)
+
+        # Set terrain height from JSON
+        self.terrain_height = data["terrain"]["height"]
 
         # Parse attributes
         self.attributes = data["attributes"]["rows"]
@@ -94,7 +98,7 @@ class HoleData:
             "flag_positions": self.metadata.get("flag_positions", []),
             "terrain": {
                 "width": TERRAIN_WIDTH,
-                "height": len(self.terrain),
+                "height": self.terrain_height,
                 "rows": terrain_rows,
             },
             "attributes": {
@@ -117,7 +121,7 @@ class HoleData:
         self.modified = False
 
     def get_terrain_height(self) -> int:
-        return len(self.terrain)
+        return self.terrain_height
 
     def get_attribute(self, tile_row: int, tile_col: int) -> int:
         """Get palette index for a terrain tile position."""
