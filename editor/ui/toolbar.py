@@ -95,12 +95,6 @@ class Toolbar:
             self.palette_buttons.append(btn)
         x += 100
 
-        # Sprite toggle
-        btn_sprites = Button(
-            Rect(x, 5, 70, 30), "Sprites", self.callbacks.on_toggle_sprites
-        )
-        self.tool_buttons.append(btn_sprites)
-
     def handle_events(self, events):
         """Delegate events to all buttons."""
         for button in self.buttons:

@@ -23,7 +23,6 @@ class EditorState:
 
         # View settings
         self.show_grid: bool = True
-        self.show_sprites: bool = True
         self.show_invalid_tiles: bool = False
 
         # Canvas position and zoom
@@ -51,10 +50,6 @@ class EditorState:
     def toggle_grid(self):
         """Toggle grid visibility."""
         self.show_grid = not self.show_grid
-
-    def toggle_sprites(self):
-        """Toggle sprite visibility."""
-        self.show_sprites = not self.show_sprites
 
     def toggle_invalid_tiles(self):
         """Toggle invalid tile highlighting."""

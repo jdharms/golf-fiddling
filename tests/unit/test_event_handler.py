@@ -217,15 +217,6 @@ class TestOtherGlobalShortcuts:
             event_handler.handle_events([event])
             assert event_handler.state.show_grid == (not initial_grid_state)
 
-    def test_v_toggles_sprites(self, mock_pygame, event_handler):
-        """V key should toggle sprite visibility."""
-        initial_sprite_state = event_handler.state.show_sprites
-        event = MockEvent(pygame.KEYDOWN, key=pygame.K_v)
-
-        with patch("pygame.key.get_mods", return_value=0):
-            event_handler.handle_events([event])
-            assert event_handler.state.show_sprites == (not initial_sprite_state)
-
 
 class TestEventHandlerDelegation:
     """Tests for event handler delegation to tools."""

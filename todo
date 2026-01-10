@@ -6,15 +6,12 @@ Investigate:
 
 Todos:
 * clean up status bar a bit
-* clean up unnecessary "sprites" button and remove ability for sprite visibility to be toggled
 * Invalid neighbor indicator should be a single border per pairing
-
-
-Bugs:
-* Palette tile crashes on out of range paint
+* Add lie chart to rangefinder
 * Should right click in transform send us back to paint + eyedropper?
   * How would that work?  How does paint get that right click event?
-* Select tool delete leaves fill instead of placeholder
+
+Bugs:
 
 
 Thoughts:
@@ -32,3 +29,5 @@ Done:
 * Movement tool could benefit from held arrow keys registering.
 * Movement tool maybe should only allow moving tee, green on terrain and flags on green?
 * Movement tool should automatically switch the flag being displayed!
+* clean up unnecessary "sprites" button and remove ability for sprite visibility to be toggled
+* Palette tile crashes on out of range paint

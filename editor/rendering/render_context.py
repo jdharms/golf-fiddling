@@ -23,7 +23,6 @@ class RenderContext:
         sprites: dict[str, Sprite | None],
         mode: str,
         show_grid: bool = True,
-        show_sprites: bool = True,
         selected_flag_index: int = 0,
         state: EditorState | None = None,
     ):
@@ -35,7 +34,6 @@ class RenderContext:
             sprites: Dictionary of sprite objects
             mode: Current editing mode ("terrain", "palette", "greens")
             show_grid: Whether to show grid overlay
-            show_sprites: Whether to show sprite overlays
             selected_flag_index: Which flag position to render (0-3)
             state: EditorState for clipboard/paste preview access
         """
@@ -43,6 +41,5 @@ class RenderContext:
         self.sprites = sprites
         self.mode = mode
         self.show_grid = show_grid
-        self.show_sprites = show_sprites
         self.selected_flag_index = selected_flag_index
         self.state = state

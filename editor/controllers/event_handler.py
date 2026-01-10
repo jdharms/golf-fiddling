@@ -309,8 +309,6 @@ class EventHandler:
                 ) % num_flags
                 self.on_flag_change()
 
-        elif event.key == pygame.K_v:  # Toggle sprites (V for "view")
-            self.state.toggle_sprites()
         else:
             # Try tool hotkeys
             if self.tool_manager.activate_by_hotkey(event.key, self.tool_context):

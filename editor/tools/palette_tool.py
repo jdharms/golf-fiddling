@@ -100,6 +100,12 @@ class PaletteTool:
         supertile = view_state.screen_to_supertile(pos)
         if supertile and supertile != self.last_paint_pos:
             row, col = supertile
+
+            # Validate bounds before accessing attributes array
+            if not (0 <= row < len(context.hole_data.attributes) and
+                    0 <= col < len(context.hole_data.attributes[row])):
+                return ToolResult.handled()  # Outside valid area
+
             current_palette = context.hole_data.attributes[row][col]
 
             # Only paint if the value is actually changing

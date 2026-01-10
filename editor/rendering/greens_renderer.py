@@ -54,7 +54,6 @@ class GreensRenderer:
         tileset = render_ctx.tileset
         sprites = render_ctx.sprites
         show_grid = render_ctx.show_grid
-        show_sprites = render_ctx.show_sprites
         selected_flag_index = render_ctx.selected_flag_index
         transform_state = highlight_state.transform_state
         shift_hover_tile = highlight_state.shift_hover_tile
@@ -100,15 +99,14 @@ class GreensRenderer:
             )
 
         # Render flag-cup sprite
-        if show_sprites:
-            SpriteRenderer.render_greens_sprites(
-                screen,
-                view_state,
-                sprites,
-                hole_data,
-                selected_flag_index,
-                highlight_state.position_tool_selected,
-            )
+        SpriteRenderer.render_greens_sprites(
+            screen,
+            view_state,
+            sprites,
+            hole_data,
+            selected_flag_index,
+            highlight_state.position_tool_selected,
+        )
 
         # Render measurement overlay
         if highlight_state.measure_points:

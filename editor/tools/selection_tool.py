@@ -308,7 +308,7 @@ class SelectionTool:
 
         # Fill selection with default tile
         start_row, start_col, end_row, end_col = sel_rect
-        default_tile = 0x25 if context.state.mode == "terrain" else 0x29
+        default_tile = 0x100 if context.state.mode == "terrain" else 0x29
 
         for row in range(start_row, end_row + 1):
             for col in range(start_col, end_col + 1):

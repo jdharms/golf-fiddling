@@ -235,7 +235,6 @@ class EditorApplication:
             on_toggle_grid=self.state.toggle_grid,
             on_select_flag=self._select_flag,
             on_set_palette=self._set_palette,
-            on_toggle_sprites=self.state.toggle_sprites,
         )
         self.toolbar = Toolbar(self.screen_width, toolbar_callbacks)
 
@@ -610,7 +609,6 @@ class EditorApplication:
                 self.sprites,
                 self.state.mode,
                 self.state.show_grid,
-                self.state.show_sprites,
                 self.state.selected_flag_index,
                 self.state,  # Add state for clipboard/paste preview access
             )
@@ -627,7 +625,6 @@ class EditorApplication:
                 self.sprites,
                 self.state.mode,
                 self.state.show_grid,
-                self.state.show_sprites,
                 self.state.selected_flag_index,
                 self.state,  # Add state for clipboard/paste preview access
             )
@@ -651,14 +648,10 @@ class EditorApplication:
         # Mouse position
         mouse_pos = pygame.mouse.get_pos()
 
-        status_parts = [f"Mode: {self.state.mode.title()}"]
+        status_parts: list[str] = []
 
-        if self.state.mode == "terrain":
-            status_parts.append(
-                f"Sprites: {'ON' if self.state.show_sprites else 'OFF'}"
-            )
-            if self.state.show_sprites and self.hole_data.metadata:
-                status_parts.append(f"Flag: {self.state.selected_flag_index + 1}/4")
+        if self.state.mode == "terrain" and self.hole_data.metadata:
+            status_parts.append(f"Flag: {self.state.selected_flag_index + 1}/4")
 
         # Check picker hover first (priority over canvas)
         picker_hover_tile = None

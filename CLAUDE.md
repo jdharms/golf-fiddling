@@ -39,8 +39,8 @@ golf-hex2bin
 # Expand dictionary codes into their complete horizontal transition sequences
 golf-expand-dict <meta.json> [terrain|greens]
 
-# Launch the course editor (requires CHR binary files)
-golf-editor <terrain_chr.bin> <greens_chr.bin> [hole.json]
+# Launch the course editor (CHR files optional, defaults to data/ files)
+golf-editor [terrain_chr.bin] [greens_chr.bin] [hole.json]
 ```
 
 ### Example Workflow
@@ -54,7 +54,10 @@ golf-visualize data/chr-ram.bin courses/japan/hole_01.json output.png
 # Or visualize an entire course
 golf-visualize data/chr-ram.bin courses/japan/ renders/japan/
 
-# Edit a hole in the visual editor
+# Edit a hole using default CHR files
+golf-editor courses/japan/hole_01.json
+
+# Or specify custom CHR files
 golf-editor data/chr-ram.bin data/green-ram.bin courses/japan/hole_01.json
 ```
 
