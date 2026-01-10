@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Distance Calculation Test</title>
+</head>
+<body>
+  <h1>Distance Calculation Verification</h1>
+  <pre id="output"></pre>
+
+  <script type="module">
+    import { MeasurementState } from './measure.js';
+
+    const output = document.getElementById('output');
+    const state = new MeasurementState();
+
+    // Test 1: Japan Hole 1 - Tee to Green Center
+    // Tee: (83, 258), Green: (64, 47)
+    // Expected: sqrt((64-83)² + (47-258)²) × 2 = sqrt(361 + 44521) × 2 = 423.7y
+    state.addPoint(83, 258);
+    state.addPoint(64, 47);
+    const distance1 = state.calculateTotalDistance();
+
+    output.textContent += `Test 1: Tee to Green Center\n`;
+    output.textContent += `  Tee: (83, 258)\n`;
+    output.textContent += `  Green: (64, 47)\n`;
+    output.textContent += `  Calculated Distance: ${distance1.toFixed(1)}y\n`;
+    output.textContent += `  Expected: ~423.7y\n`;
+    output.textContent += `  Match: ${Math.abs(distance1 - 423.7) < 0.1 ? 'PASS ✓' : 'FAIL ✗'}\n\n`;
+
+    // Test 2: Known hole distance (400y)
+    // The actual flag position should be closer to 400y
+    output.textContent += `Test 2: Hole Metadata\n`;
+    output.textContent += `  Listed Distance: 400y\n`;
+    output.textContent += `  Tee to Green Center: ${distance1.toFixed(1)}y\n`;
+    output.textContent += `  Note: Flag position (not green center) determines actual distance\n\n`;
+
+    // Test 3: Short distance (10 pixels = 20 yards)
+    state.clearPoints();
+    state.addPoint(0, 0);
+    state.addPoint(10, 0);
+    const distance2 = state.calculateTotalDistance();
+    output.textContent += `Test 3: Short Distance\n`;
+    output.textContent += `  Points: (0,0) to (10,0)\n`;
+    output.textContent += `  Calculated Distance: ${distance2.toFixed(1)}y\n`;
+    output.textContent += `  Expected: 20.0y (10 pixels × 2)\n`;
+    output.textContent += `  Match: ${Math.abs(distance2 - 20.0) < 0.01 ? 'PASS ✓' : 'FAIL ✗'}\n\n`;
+
+    // Test 4: Multi-waypoint path
+    state.clearPoints();
+    state.addPoint(0, 0);
+    state.addPoint(10, 0);  // 20y
+    state.addPoint(10, 10); // 20y
+    state.addPoint(0, 10);  // 20y
+    const distance3 = state.calculateTotalDistance();
+    const segments = state.getSegmentDistances();
+    output.textContent += `Test 4: Multi-waypoint Path\n`;
+    output.textContent += `  Waypoints: (0,0) → (10,0) → (10,10) → (0,10)\n`;
+    output.textContent += `  Segment distances: ${segments.map(d => d.toFixed(1)).join('y, ')}y\n`;
+    output.textContent += `  Total Distance: ${distance3.toFixed(1)}y\n`;
+    output.textContent += `  Expected: 60.0y (20+20+20)\n`;
+    output.textContent += `  Match: ${Math.abs(distance3 - 60.0) < 0.01 ? 'PASS ✓' : 'FAIL ✗'}\n\n`;
+
+    // Test 5: Diagonal distance (Pythagorean theorem)
+    state.clearPoints();
+    state.addPoint(0, 0);
+    state.addPoint(3, 4);  // 3-4-5 triangle, distance = 5 pixels = 10 yards
+    const distance4 = state.calculateTotalDistance();
+    output.textContent += `Test 5: Diagonal Distance (3-4-5 Triangle)\n`;
+    output.textContent += `  Points: (0,0) to (3,4)\n`;
+    output.textContent += `  Calculated Distance: ${distance4.toFixed(1)}y\n`;
+    output.textContent += `  Expected: 10.0y (5 pixels × 2)\n`;
+    output.textContent += `  Match: ${Math.abs(distance4 - 10.0) < 0.01 ? 'PASS ✓' : 'FAIL ✗'}\n\n`;
+
+    output.textContent += `\n=== All Tests Complete ===\n`;
+  </script>
+</body>
+</html>

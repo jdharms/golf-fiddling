@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NES Open Tournament Golf - Distance Measurement</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="controls">
+      <div class="selectors">
+        <label>
+          Course:
+          <select id="course-select">
+            <!-- Populated dynamically -->
+          </select>
+        </label>
+        <label>
+          Hole:
+          <select id="hole-select">
+            <!-- Populated dynamically -->
+          </select>
+        </label>
+      </div>
+      <div class="zoom-controls">
+        <label>Zoom:</label>
+        <button id="zoom-out" type="button">−</button>
+        <span id="zoom-display">2x</span>
+        <button id="zoom-in" type="button">+</button>
+        <button id="zoom-reset" type="button" title="Reset to 2x">Reset</button>
+      </div>
+      <div class="info">
+        <span id="hole-info"></span>
+        <span id="distance-display">Distance: 0.0y</span>
+      </div>
+    </header>
+
+    <main class="viewer">
+      <div class="image-container">
+        <img id="hole-image" src="" alt="Golf hole">
+        <canvas id="overlay-canvas"></canvas>
+      </div>
+    </main>
+
+    <footer class="instructions">
+      <p><strong>Instructions:</strong> Left-click to add waypoint • Right-click to clear all</p>
+    </footer>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -20,6 +20,7 @@ golf-expand-dict = "tools.expand_dict:main"
 golf-extract-tables = "tools.extract_tables:main"
 golf-analyze-transform = "tools.analyze_transform:main"
 golf-analyze-neighbors = "tools.analyze_neighbors:main"
+golf-render-web = "tools.render_web:main"
 
 [tool.uv]
 package = true
