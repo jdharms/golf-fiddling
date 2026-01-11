@@ -24,6 +24,14 @@ The project provides several command-line tools via entry points (defined in `py
 # Extract all course data from ROM to JSON files with compression statistics
 golf-dump <rom_file.nes> <output_dir>
 
+# Write course data from JSON files back to ROM (inverse of golf-dump)
+golf-write <rom_file.nes> <course_dir> [options]
+# Options:
+#   -o, --output PATH    Output ROM file (default: <rom>.modified.nes)
+#   -c, --course INDEX   Course index 0-2 (default: auto-detect from course.json)
+#   --validate-only      Compress and validate without writing
+#   --verbose            Show compression statistics
+
 # Analyze ROM structure and show technical details
 golf-analyze <rom_file.nes> [hole_number]
 
@@ -48,17 +56,20 @@ golf-editor [terrain_chr.bin] [greens_chr.bin] [hole.json]
 # Extract all courses from ROM
 golf-dump nes_open_us.nes courses/
 
+# Edit a hole using the course editor
+golf-editor courses/japan/hole_01.json
+
+# Write edited course back to ROM
+golf-write nes_open_us.nes courses/japan/ -o modified.nes
+
+# Validate course will fit without writing
+golf-write nes_open_us.nes courses/japan/ --validate-only --verbose
+
 # Visualize a specific hole
 golf-visualize data/chr-ram.bin courses/japan/hole_01.json output.png
 
 # Or visualize an entire course
 golf-visualize data/chr-ram.bin courses/japan/ renders/japan/
-
-# Edit a hole using default CHR files
-golf-editor courses/japan/hole_01.json
-
-# Or specify custom CHR files
-golf-editor data/chr-ram.bin data/green-ram.bin courses/japan/hole_01.json
 ```
 
 ### JSON Inspection

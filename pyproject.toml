@@ -13,6 +13,7 @@ dependencies = [
 [project.scripts]
 golf-editor = "editor.main:main"
 golf-dump = "tools.dump:main"
+golf-write = "tools.write:main"
 golf-analyze = "tools.analyze:main"
 golf-visualize = "tools.visualize:main"
 golf-hex2bin = "tools.hex2bin:main"
