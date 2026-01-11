@@ -9,9 +9,11 @@ Todos:
 * Add lie chart to rangefinder
 * Should right click in transform send us back to paint + eyedropper?
   * How would that work?  How does paint get that right click event?
+* F1 through F4 keys should send us to flag 1 through flag 4
+* Sub-bank fringe tiles according to classifications
 
 Bugs:
-* Greens compression is extremely fucked?
+* scroll state should be separate for terrain and green if possible
 
 
 Thoughts:
@@ -32,3 +34,4 @@ Done:
 * clean up unnecessary "sprites" button and remove ability for sprite visibility to be toggled
 * Palette tile crashes on out of range paint
 * clean up status bar a bit
+* Greens compression is extremely messed up?
