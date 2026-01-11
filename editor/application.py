@@ -28,6 +28,7 @@ from .tools.add_row_tool import AddRowTool
 from .tools.cycle_tool import CycleTool
 from .tools.eyedropper_tool import EyedropperTool
 from .tools.forest_fill_tool import ForestFillTool
+from .tools.fringe_generation_tool import FringeGenerationTool
 from .tools.measure_tool import MeasureTool
 from .tools.metadata_editor_tool import MetadataEditorTool
 from .tools.paint_tool import PaintTool
@@ -157,6 +158,7 @@ class EditorApplication:
         self.tool_picker.register_tool("stamp", "Stamp", "📋")
         self.tool_picker.register_tool("transform", "Transform", "↔")
         self.tool_picker.register_tool("forest_fill", "Forest Fill", "🌲")
+        self.tool_picker.register_tool("fringe_generation", "Fringe Gen", "🌊")
         self.tool_picker.register_tool("cycle", "Cycle", "🔄")
         self.tool_picker.register_tool("measure", "Measure", "📏")
         self.tool_picker.register_tool("metadata_editor", "Metadata", "📝")
@@ -185,6 +187,7 @@ class EditorApplication:
         self.tool_manager.register_tool("transform", TransformTool())
         self.tool_manager.register_tool("eyedropper", EyedropperTool())
         self.tool_manager.register_tool("forest_fill", ForestFillTool())
+        self.tool_manager.register_tool("fringe_generation", FringeGenerationTool())
         self.tool_manager.register_tool("cycle", CycleTool())
         self.tool_manager.register_tool("measure", MeasureTool())
         self.tool_manager.register_tool("row_operations", RowOperationsTool())
