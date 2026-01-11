@@ -93,10 +93,10 @@ def test_multiple_rows(mock_minimal_terrain_tables):
     assert result[0] == [0x10, 0x11, 0x12]  # First row unchanged
     assert result[1] == [0x00, 0x00, 0x99]  # First two match row 0, third doesn't
     assert result[2] == [
-        0x10,
+        0x00,
         0x99,
         0x12,
-    ]  # None match (row 1 has 0x00 values, different from row 0)
+    ]  # First matches original row 1 (cascading fill), middle and third don't match
     assert result[3] == [
         0x99,
         0x00,
@@ -106,7 +106,7 @@ def test_multiple_rows(mock_minimal_terrain_tables):
         0x10,
         0x11,
         0x12,
-    ]  # None match (row 3 has 0x99 values, different from row 0 tiles)
+    ]  # None match row 3 (0x99 values don't match 0x10, 0x11, 0x12)
 
 
 def test_bounds_safety(mock_minimal_terrain_tables):

@@ -86,7 +86,7 @@ def detect_vertical_fills(
     # Process rows starting from row 1 (row 0 has no row above)
     for row_idx in range(1, len(result)):
         for col_idx in range(len(result[row_idx])):
-            tile_above = result[row_idx - 1][col_idx]
+            tile_above = rows[row_idx - 1][col_idx]
             current_tile = result[row_idx][col_idx]
 
             # Bounds check before table access
@@ -308,6 +308,8 @@ class GreensCompressor:
         # Pass 1: Vertical fill detection
         marked_rows = detect_vertical_fills(rows, self.vert_table)
 
+        # print(marked_rows)
+
         # Flatten to byte stream
         byte_stream = []
         for row in marked_rows:
@@ -325,6 +327,7 @@ class GreensCompressor:
                 code_str, length = dict_match
                 code_byte = int(code_str, 16)
                 output.append(code_byte)
+                # print(dict_match)
                 pos += length
 
                 # Track last byte of expanded sequence for potential repeat codes

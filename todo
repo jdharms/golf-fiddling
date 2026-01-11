@@ -5,13 +5,13 @@ Investigate:
 
 
 Todos:
-* clean up status bar a bit
 * Invalid neighbor indicator should be a single border per pairing
 * Add lie chart to rangefinder
 * Should right click in transform send us back to paint + eyedropper?
   * How would that work?  How does paint get that right click event?
 
 Bugs:
+* Greens compression is extremely fucked?
 
 
 Thoughts:
@@ -31,3 +31,4 @@ Done:
 * Movement tool should automatically switch the flag being displayed!
 * clean up unnecessary "sprites" button and remove ability for sprite visibility to be toggled
 * Palette tile crashes on out of range paint
+* clean up status bar a bit

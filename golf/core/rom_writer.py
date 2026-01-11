@@ -218,13 +218,16 @@ class RomWriter:
             self._write_prg(current_offset, data["terrain"])
             current_offset += len(data["terrain"])
 
+            # Terrain ends here (attributes start here)
+            terrain_end = current_offset
+
             # Write attributes (72 bytes)
             self._write_prg(current_offset, data["attributes"])
             current_offset += len(data["attributes"])
 
             # Calculate CPU addresses
             terrain_start_cpu = self._prg_to_cpu_switched(terrain_start)
-            terrain_end_cpu = self._prg_to_cpu_switched(current_offset)
+            terrain_end_cpu = self._prg_to_cpu_switched(terrain_end)
 
             pointers.append({"start": terrain_start_cpu, "end": terrain_end_cpu})
 
@@ -397,8 +400,9 @@ class RomWriter:
             cpu_addr: CPU address to write
         """
         prg_offset = self._cpu_to_prg_fixed(table_addr + hole_idx * 2)
-        self.rom_data[prg_offset] = cpu_addr & 0xFF  # Low byte
-        self.rom_data[prg_offset + 1] = (cpu_addr >> 8) & 0xFF  # High byte
+        file_offset = self.prg_start + prg_offset
+        self.rom_data[file_offset] = cpu_addr & 0xFF  # Low byte
+        self.rom_data[file_offset + 1] = (cpu_addr >> 8) & 0xFF  # High byte
 
     def _write_prg(self, prg_offset: int, data: bytes):
         """
