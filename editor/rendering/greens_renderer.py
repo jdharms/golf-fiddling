@@ -157,6 +157,15 @@ class GreensRenderer:
                 "greens",
             )
 
+        # Render fringe generation path overlay
+        if highlight_state.fringe_path:
+            GreensRenderer._render_fringe_path_overlay(
+                screen,
+                canvas_rect,
+                view_state,
+                highlight_state,
+            )
+
         # Render grid
         if show_grid:
             GridRenderer.render(screen, view_state, GREENS_WIDTH, GREENS_HEIGHT)
@@ -326,3 +335,40 @@ class GreensRenderer:
             # Draw point as filled circle with black outline
             pygame.draw.circle(screen, point_color, (screen_x, screen_y), 4)
             pygame.draw.circle(screen, (0, 0, 0), (screen_x, screen_y), 4, 1)
+
+    @staticmethod
+    def _render_fringe_path_overlay(
+        screen: Surface,
+        canvas_rect,
+        view_state: ViewState,
+        highlight_state: HighlightState,
+    ):
+        """Render fringe generation path overlay."""
+        if not highlight_state.fringe_path:
+            return
+
+        tile_size = int(TILE_SIZE * view_state.scale)
+
+        # Render path tiles with green border
+        for row, col in highlight_state.fringe_path:
+            screen_pos = view_state.tile_to_screen((col, row))
+            if screen_pos is None:
+                continue
+            rect = pygame.Rect(screen_pos[0], screen_pos[1], tile_size, tile_size)
+            pygame.draw.rect(screen, (0, 255, 0), rect, 2)  # Green, 2px border
+
+        # Render initial position with thicker, brighter border
+        if highlight_state.fringe_initial_pos:
+            row, col = highlight_state.fringe_initial_pos
+            screen_pos = view_state.tile_to_screen((col, row))
+            if screen_pos is not None:
+                rect = pygame.Rect(screen_pos[0], screen_pos[1], tile_size, tile_size)
+                pygame.draw.rect(screen, (0, 255, 128), rect, 4)  # Bright green, 4px border
+
+        # Render current position with yellow border
+        if highlight_state.fringe_current_pos:
+            row, col = highlight_state.fringe_current_pos
+            screen_pos = view_state.tile_to_screen((col, row))
+            if screen_pos is not None:
+                rect = pygame.Rect(screen_pos[0], screen_pos[1], tile_size, tile_size)
+                pygame.draw.rect(screen, (255, 255, 0), rect, 3)  # Yellow, 3px border

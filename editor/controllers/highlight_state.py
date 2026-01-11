@@ -36,6 +36,11 @@ class HighlightState:
         # Position tool (sprite mover) state
         self.position_tool_selected: str | None = None  # "tee", "green", "flag1", etc.
 
+        # Fringe generation pathing state
+        self.fringe_path: list[tuple[int, int]] | None = None
+        self.fringe_initial_pos: tuple[int, int] | None = None
+        self.fringe_current_pos: tuple[int, int] | None = None
+
     def set_picker_hover(self, tile_value: int | None):
         """
         Update the shift-hover tile highlight.

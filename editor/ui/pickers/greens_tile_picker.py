@@ -26,6 +26,13 @@ class GreensTilePicker(TilePicker):
         # Override banks with greens-specific tiles organized by type
         self.banks = [
             SimpleTileBank(
+                "Placeholder",
+                [0x100],
+                self.tiles_per_row,
+                self.tile_scale,
+                self.tile_spacing,
+            ),
+            SimpleTileBank(
                 "Rough",
                 [0x29, 0x2C],
                 self.tiles_per_row,
