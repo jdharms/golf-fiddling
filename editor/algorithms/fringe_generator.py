@@ -323,8 +323,8 @@ class FringeGenerator:
                     f"after arc consistency filtering"
                 )
 
-        # Step 3: Greedy assignment
-        assignment = self._greedy_assign(candidates, path)
+        # Step 3: Backtracking assignment
+        assignment = self._backtracking_assign(candidates, path)
 
         return list(zip(path, assignment))
 
@@ -451,60 +451,64 @@ class FringeGenerator:
                     )
                 }
                 if valid_j < candidates[j]:
+                    print(f"replacing {candidates[j]} with {valid_j}")
                     candidates[j] = valid_j
                     changed = True
 
-    def _greedy_assign(
+    def _backtracking_assign(
         self,
         candidates: list[set[int]],
         path: list[tuple[int, int]]
     ) -> list[int]:
         """
-        Assign tiles greedily, randomly selecting from compatible candidates.
+        Assign tiles using backtracking search.
 
-        Starts with first position, then each subsequent position must be
-        compatible with the previous assignment.
-
-        Returns:
-            List of tile IDs in path order
-
-        Raises:
-            ValueError: If no compatible tile found for some position
+        Unlike greedy assignment, this correctly handles the cycle closure
+        constraint by exploring alternatives when a path doesn't work out.
         """
         n = len(candidates)
-        assignment: list[int] = []
-
-        for i in range(n):
-            if i == 0:
-                # First position: random choice from candidates
-                tile = random.choice(list(candidates[0]))
-            else:
-                # Subsequent positions: must be compatible with previous
-                prev_tile = assignment[-1]
-                prev_dir = direction_to(path[i - 1], path[i])
-
-                valid = [
-                    t for t in candidates[i]
-                    if self._is_compatible(prev_tile, prev_dir, t)
-                ]
-
-                if not valid:
-                    raise ValueError(
-                        f"No compatible tile for position {i} ({path[i]}) "
-                        f"following tile {prev_tile:#04x}"
-                    )
-
-                tile = random.choice(valid)
-
-            assignment.append(tile)
-
-        # Verify path closure: last tile must be compatible with first
         last_to_first_dir = direction_to(path[-1], path[0])
-        if not self._is_compatible(assignment[-1], last_to_first_dir, assignment[0]):
+
+        def is_valid_extension(assignment: list[int], next_tile: int) -> bool:
+            pos = len(assignment)
+
+            # Check compatibility with previous tile
+            if pos > 0:
+                prev_tile = assignment[-1]
+                prev_dir = direction_to(path[pos - 1], path[pos])
+                if not self._is_compatible(prev_tile, prev_dir, next_tile):
+                    return False
+
+            # Check closure constraint at final position
+            if pos == n - 1:
+                first_tile = assignment[0]
+                if not self._is_compatible(next_tile, last_to_first_dir, first_tile):
+                    return False
+
+            return True
+
+        def backtrack(assignment: list[int]) -> list[int] | None:
+            if len(assignment) == n:
+                return assignment
+
+            pos = len(assignment)
+            # Shuffle for variety in output
+            tile_list = list(candidates[pos])
+            random.shuffle(tile_list)
+
+            for tile in tile_list:
+                if is_valid_extension(assignment, tile):
+                    result = backtrack(assignment + [tile])
+                    if result is not None:
+                        return result
+
+            return None
+
+        result = backtrack([])
+        if result is None:
             raise ValueError(
-                f"Path closure failed: tile {assignment[-1]:#04x} at end "
-                f"not compatible with tile {assignment[0]:#04x} at start "
-                f"in direction {last_to_first_dir}"
+                "No valid tile assignment found. This may indicate incompatible "
+                "path geometry or insufficient tile variety in training data."
             )
 
-        return assignment
+        return result

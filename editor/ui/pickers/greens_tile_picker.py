@@ -13,7 +13,7 @@ from editor.core.constants import (
     TILE_SIZE,
 )
 
-from .tile_banks import SimpleTileBank, _range_to_list
+from .tile_banks import SimpleTileBank, range_to_list
 from .tile_picker import TilePicker
 
 
@@ -41,14 +41,14 @@ class GreensTilePicker(TilePicker):
             ),
             SimpleTileBank(
                 "Fringe",
-                _range_to_list(0x48, 0x88),
+                range_to_list(0x48, 0x88),
                 self.tiles_per_row,
                 self.tile_scale,
                 self.tile_spacing,
             ),
             SimpleTileBank(
                 "Slopes",
-                _range_to_list(0x30, 0x48) + _range_to_list(0x88, 0xA0),
+                range_to_list(0x30, 0x48) + range_to_list(0x88, 0xA0),
                 self.tiles_per_row,
                 self.tile_scale,
                 self.tile_spacing,

@@ -14,6 +14,22 @@ from editor.core.constants import CANVAS_OFFSET_X, CANVAS_OFFSET_Y, STATUS_HEIGH
 
 from .base_tool import ToolContext, ToolResult
 
+# Greens grid dimensions
+GREENS_WIDTH = 24
+GREENS_HEIGHT = 24
+GREENS_PLACEHOLDER_TILE = 0x100
+
+# Path constraints
+MIN_PATH_LENGTH = 4  # Minimum tiles in path before loop closure allowed
+
+# Arrow key to direction mapping
+DIRECTION_KEYS = {
+    pygame.K_UP: "up",
+    pygame.K_DOWN: "down",
+    pygame.K_LEFT: "left",
+    pygame.K_RIGHT: "right",
+}
+
 
 class FringeToolState:
     """State for fringe generation pathing interaction."""
@@ -29,12 +45,6 @@ class FringeToolState:
         # Original tiles (for restoration on Escape)
         self.original_tiles: dict[tuple[int, int], int] = {}
 
-        # Key repeat state (same pattern as PositionTool)
-        self.held_key: int | None = None
-        self.key_held_since: float | None = None
-        self.last_repeat_time: float | None = None
-        self.repeat_active: bool = False
-
 
 class FringeGenerationTool:
     """
@@ -44,17 +54,13 @@ class FringeGenerationTool:
     and the algorithm generates appropriate fringe tiles when the loop closes.
     """
 
-    # Timing for key repeat (same as PositionTool)
-    INITIAL_DELAY = 0.5  # 500ms delay before repeating starts
-    REPEAT_INTERVAL = 0.05  # 50ms between repeats (20 moves/second)
-
     def __init__(self):
         """Initialize tool with fresh state and load fringe generation data."""
         self.state = FringeToolState()
         self.generator = FringeGenerator()
         self.generator.load_data()
 
-    def handle_mouse_down(self, pos, button, modifiers, context: ToolContext):
+    def handle_mouse_down(self, pos: tuple[int, int], button: int, modifiers: int, context: ToolContext) -> ToolResult:
         """Handle mouse click to start pathing."""
         # Only process in greens mode
         if context.state.mode != "greens":
@@ -99,46 +105,36 @@ class FringeGenerationTool:
         original_tile = context.hole_data.greens[row][col]
         self.state.original_tiles[(row, col)] = original_tile
 
+        # Push undo state before generation
+        context.state.undo_manager.push_state(context.hole_data)
+
         # Convert to placeholder if not already
-        if original_tile != 0x100:
-            context.hole_data.set_greens_tile(row, col, 0x100)
+        if original_tile != GREENS_PLACEHOLDER_TILE:
+            context.hole_data.set_greens_tile(row, col, GREENS_PLACEHOLDER_TILE)
 
         # Update highlights
-        context.highlight_state.fringe_initial_pos = (row, col)
-        context.highlight_state.fringe_current_pos = (row, col)
-        context.highlight_state.fringe_path = [(row, col)]
+        self._update_highlights(context)
 
         return ToolResult.modified(message="Fringe path started - use arrow keys to trace")
 
-    def handle_mouse_up(self, pos, button, context: ToolContext):
+    def handle_mouse_up(self, pos: tuple[int, int], button: int, context: ToolContext) -> ToolResult:
         """Handle mouse release (no-op for this tool)."""
         return ToolResult.not_handled()
 
-    def handle_mouse_motion(self, pos, context: ToolContext):
+    def handle_mouse_motion(self, pos: tuple[int, int], context: ToolContext) -> ToolResult:
         """Handle mouse motion (no-op for this tool)."""
         return ToolResult.not_handled()
 
-    def handle_key_down(self, key, modifiers, context: ToolContext):
+    def handle_key_down(self, key: int, modifiers: int, context: ToolContext) -> ToolResult:
         """Handle keyboard input for path navigation."""
         # Only process if pathing is active
         if not self.state.is_active:
             return ToolResult.not_handled()
 
         # Arrow keys for navigation
-        if key in (pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT):
-            # Start key repeat tracking
-            self.state.held_key = key
-            self.state.key_held_since = pygame.time.get_ticks() / 1000.0
-            self.state.last_repeat_time = self.state.key_held_since
-            self.state.repeat_active = False
-
-            # Perform immediate move
-            direction = {
-                pygame.K_UP: "up",
-                pygame.K_DOWN: "down",
-                pygame.K_LEFT: "left",
-                pygame.K_RIGHT: "right",
-            }[key]
+        if key in DIRECTION_KEYS:
+            # Perform move
+            direction = DIRECTION_KEYS[key]
             return self._move_in_direction(direction, context)
 
         # Escape to cancel
@@ -151,41 +147,7 @@ class FringeGenerationTool:
 
         return ToolResult.handled()
 
-    def handle_key_up(self, key, context: ToolContext):
-        """Handle key release to stop repeat."""
-        if key == self.state.held_key:
-            self.state.held_key = None
-            self.state.key_held_since = None
-            self.state.last_repeat_time = None
-            self.state.repeat_active = False
-        return ToolResult.not_handled()
-
-    def update(self, context: ToolContext):
-        """Handle key repeat timing (called every frame)."""
-        if not self.state.is_active or self.state.held_key is None:
-            return ToolResult.not_handled()
-
-        current_time = pygame.time.get_ticks() / 1000.0
-        time_held = current_time - self.state.key_held_since
-
-        # Check if we should start repeating
-        if not self.state.repeat_active and time_held >= self.INITIAL_DELAY:
-            self.state.repeat_active = True
-            self.state.last_repeat_time = current_time
-
-        # Perform repeat if active
-        if self.state.repeat_active:
-            time_since_last = current_time - self.state.last_repeat_time
-            if time_since_last >= self.REPEAT_INTERVAL:
-                direction = {
-                    pygame.K_UP: "up",
-                    pygame.K_DOWN: "down",
-                    pygame.K_LEFT: "left",
-                    pygame.K_RIGHT: "right",
-                }[self.state.held_key]
-                self._move_in_direction(direction, context)
-                self.state.last_repeat_time = current_time
-
+    def handle_key_up(self, key, context):
         return ToolResult.not_handled()
 
     def on_activated(self, context: ToolContext):
@@ -195,9 +157,7 @@ class FringeGenerationTool:
     def on_deactivated(self, context: ToolContext):
         """Called when tool is deactivated."""
         # Clear highlights
-        context.highlight_state.fringe_path = None
-        context.highlight_state.fringe_initial_pos = None
-        context.highlight_state.fringe_current_pos = None
+        self._update_highlights(context)
         self.reset()
 
     def reset(self):
@@ -207,6 +167,20 @@ class FringeGenerationTool:
     def get_hotkey(self):
         """Return hotkey for activating this tool (None = no hotkey initially)."""
         return None
+
+    def _update_highlights(self, context: ToolContext) -> None:
+        """Update highlight state for current path."""
+        if context.highlight_state is None:
+            return
+
+        if self.state.is_active:
+            context.highlight_state.fringe_path = list(self.state.path)
+            context.highlight_state.fringe_initial_pos = self.state.initial_pos
+            context.highlight_state.fringe_current_pos = self.state.current_pos
+        else:
+            context.highlight_state.fringe_path = None
+            context.highlight_state.fringe_initial_pos = None
+            context.highlight_state.fringe_current_pos = None
 
     def _move_in_direction(self, direction: str, context: ToolContext) -> ToolResult:
         """
@@ -233,7 +207,7 @@ class FringeGenerationTool:
         new_row, new_col = row + dr, col + dc
 
         # Validate bounds (greens are 24x24)
-        if not (0 <= new_row < 24 and 0 <= new_col < 24):
+        if not (0 <= new_row < GREENS_HEIGHT and 0 <= new_col < GREENS_WIDTH):
             return ToolResult.handled()  # Ignore out-of-bounds moves
 
         new_pos = (new_row, new_col)
@@ -254,15 +228,12 @@ class FringeGenerationTool:
             self.state.current_pos = self.state.path[-1]
 
             # Update highlights
-            context.highlight_state.fringe_current_pos = self.state.current_pos
-            context.highlight_state.fringe_path = list(self.state.path)
+            self._update_highlights(context)
 
             return ToolResult.modified(message=f"Path length: {len(self.state.path)}")
 
         # Check for loop completion (returning to initial position)
-        print(f"initial pos: {self.state.initial_pos}")
-        if len(self.state.path) >= 4 and new_pos == self.state.initial_pos:
-            print("completion")
+        if len(self.state.path) >= MIN_PATH_LENGTH and new_pos == self.state.initial_pos:
             return self._generate_fringe(context)
 
         # Extend path to new position
@@ -272,15 +243,14 @@ class FringeGenerationTool:
             self.state.original_tiles[new_pos] = original_tile
 
         # Convert to placeholder
-        context.hole_data.set_greens_tile(new_row, new_col, 0x100)
+        context.hole_data.set_greens_tile(new_row, new_col, GREENS_PLACEHOLDER_TILE)
 
         # Add to path
         self.state.path.append(new_pos)
         self.state.current_pos = new_pos
 
         # Update highlights
-        context.highlight_state.fringe_current_pos = new_pos
-        context.highlight_state.fringe_path = list(self.state.path)
+        self._update_highlights(context)
 
         return ToolResult.modified(message=f"Path length: {len(self.state.path)}")
 
@@ -290,42 +260,41 @@ class FringeGenerationTool:
 
         Calls the FringeGenerator algorithm and applies results.
         """
-        # Push undo state before generation
-        context.state.undo_manager.push_state(context.hole_data)
-
         try:
             # Generate fringe tiles
             results = self.generator.generate(self.state.path)
-
-            print(results)
 
             # Apply results
             for (row, col), tile_id in results:
                 context.hole_data.set_greens_tile(row, col, tile_id)
 
+            # Show success message
+            num_tiles = len(results)
+            message = f"Generated {num_tiles} fringe tile{'s' if num_tiles != 1 else ''}"
+
             # Clear state and highlights
             self.state = FringeToolState()
-            context.highlight_state.fringe_path = None
-            context.highlight_state.fringe_initial_pos = None
-            context.highlight_state.fringe_current_pos = None
+            self._update_highlights(context)
 
             # Revert to paint tool
             context.request_revert_to_previous_tool()
 
-            return ToolResult.modified(message="Fringe generated successfully!")
+            return ToolResult.modified(message=message)
 
         except ValueError as e:
-            # Generation failed - show error but keep path active
             error_msg = str(e)
+
+            # Map technical errors to user-friendly messages
             if "Shape key not found" in error_msg:
-                print("shape key not found")
-                return ToolResult.handled()
-            elif "No valid candidates" in error_msg:
-                print("no valid canddiates")
-                return ToolResult.handled()
+                user_message = "Fringe shape not recognized - try a different path"
+            elif "No valid candidates" in error_msg:  # Fixed typo
+                user_message = "Could not generate fringe for this path - try a simpler shape"
             else:
-                print(e)
-                return ToolResult.handled()
+                user_message = f"Fringe generation failed: {error_msg}"
+
+            # Cancel pathing and show error to user
+            self._cancel_pathing(context)
+            return ToolResult(handled=True, message=user_message)
 
     def _cancel_pathing(self, context: ToolContext) -> ToolResult:
         """Cancel pathing and restore original tiles."""
@@ -335,8 +304,6 @@ class FringeGenerationTool:
 
         # Clear state and highlights
         self.state = FringeToolState()
-        context.highlight_state.fringe_path = None
-        context.highlight_state.fringe_initial_pos = None
-        context.highlight_state.fringe_current_pos = None
+        self._update_highlights(context)
 
         return ToolResult.modified(message="Fringe path cancelled")

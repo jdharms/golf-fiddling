@@ -35,7 +35,7 @@ def _render_placeholder_tile(size: int) -> Surface:
     return surf
 
 
-def _range_to_list(min: int, max: int) -> list[int]:
+def range_to_list(min: int, max: int) -> list[int]:
     return list(range(min, max))
 
 

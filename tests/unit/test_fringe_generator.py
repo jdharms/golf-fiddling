@@ -236,19 +236,19 @@ def build_rectangle_test_data():
             # Convex corners - each needs connections for both CW and CCW traversal
             "0x48": {  # (down,right) interior=(down,right)
                 "right": {"0x49": 50, "0x4B": 50},  # to horizontal or corner
-                "down": {"0x52": 50},               # to vertical straight
+                "down": {"0x52": 50, "0x5F": 50},   # to vertical straight or corner
             },
             "0x4B": {  # (down,left) interior=(down,left)
                 "down": {"0x53": 50, "0x4F": 50},   # to vertical or corner
-                "left": {"0x49": 50},               # to horizontal straight
+                "left": {"0x49": 50, "0x48": 50},   # to horizontal straight or corner
             },
             "0x4F": {  # (left,up) interior=(left,up)
                 "left": {"0x4E": 50, "0x4C": 50},   # to horizontal or corner
-                "up": {"0x53": 50},                 # to vertical straight
+                "up": {"0x53": 50, "0x4B": 50},                 # to vertical straight
             },
             "0x4C": {  # (right,up) interior=(right,up)
                 "up": {"0x52": 50, "0x48": 50},     # to vertical or corner
-                "right": {"0x4E": 50},              # to horizontal straight
+                "right": {"0x4E": 50, "0x4F": 50},              # to horizontal straight
             },
 
             # Horizontal straights
@@ -353,7 +353,7 @@ class TestFringeGeneratorOutput:
             (0, 0), (0, 1), (0, 2),  # top edge, going right
             (1, 2), (2, 2),          # right edge, going down
             (2, 1), (2, 0),          # bottom edge, going left
-            (1, 0),                   # left edge, going up
+            (1, 0),                  # left edge, going up
         ]
         result = generator.generate(path)
         assert len(result) == 8

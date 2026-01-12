@@ -351,7 +351,7 @@ class GreensRenderer:
 
         # Render path tiles with green border
         for row, col in highlight_state.fringe_path:
-            screen_pos = view_state.tile_to_screen((col, row))
+            screen_pos = view_state.tile_to_screen((row, col))
             if screen_pos is None:
                 continue
             rect = pygame.Rect(screen_pos[0], screen_pos[1], tile_size, tile_size)
@@ -360,7 +360,7 @@ class GreensRenderer:
         # Render initial position with thicker, brighter border
         if highlight_state.fringe_initial_pos:
             row, col = highlight_state.fringe_initial_pos
-            screen_pos = view_state.tile_to_screen((col, row))
+            screen_pos = view_state.tile_to_screen((row, col))
             if screen_pos is not None:
                 rect = pygame.Rect(screen_pos[0], screen_pos[1], tile_size, tile_size)
                 pygame.draw.rect(screen, (0, 255, 128), rect, 4)  # Bright green, 4px border
@@ -368,7 +368,7 @@ class GreensRenderer:
         # Render current position with yellow border
         if highlight_state.fringe_current_pos:
             row, col = highlight_state.fringe_current_pos
-            screen_pos = view_state.tile_to_screen((col, row))
+            screen_pos = view_state.tile_to_screen((row, col))
             if screen_pos is not None:
                 rect = pygame.Rect(screen_pos[0], screen_pos[1], tile_size, tile_size)
                 pygame.draw.rect(screen, (255, 255, 0), rect, 3)  # Yellow, 3px border

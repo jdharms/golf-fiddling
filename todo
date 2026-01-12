@@ -11,6 +11,8 @@ Todos:
   * How would that work?  How does paint get that right click event?
 * F1 through F4 keys should send us to flag 1 through flag 4
 * Sub-bank fringe tiles according to classifications
+* Picker/banks code doesn't look great
+* Green rough fill, green putting surface fill
 
 Bugs:
 * scroll state should be separate for terrain and green if possible

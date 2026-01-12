@@ -12,7 +12,7 @@ from editor.core.constants import (
 )
 from editor.core.pygame_rendering import Tileset
 
-from .tile_banks import GroupedTileBank, TileSubBank, _range_to_list
+from .tile_banks import GroupedTileBank, TileSubBank, range_to_list
 
 
 class TilePicker:
@@ -71,8 +71,8 @@ class TilePicker:
             GroupedTileBank(
                 "Features",
                 [
-                    TileSubBank("Borders With Depth", _range_to_list(0x40, 0x55)),
-                    TileSubBank("Borders, Flat", _range_to_list(0x55, 0x80)),
+                    TileSubBank("Borders With Depth", range_to_list(0x40, 0x55)),
+                    TileSubBank("Borders, Flat", range_to_list(0x55, 0x80)),
                     TileSubBank("w/ Treetop", [0xBC, 0xBE]),
                     TileSubBank("w/ Treebase", [0xBD, 0xBF]),
                 ],
@@ -83,10 +83,10 @@ class TilePicker:
             GroupedTileBank(
                 "Out of bounds",
                 [
-                    TileSubBank("Border", _range_to_list(0x80, 0x9C)),
+                    TileSubBank("Border", range_to_list(0x80, 0x9C)),
                     TileSubBank("Inner Border", [0x3F]),
-                    TileSubBank("Forest fill", _range_to_list(0xA0, 0xA4)),
-                    TileSubBank("Forest border", _range_to_list(0xA4, 0xBC)),
+                    TileSubBank("Forest fill", range_to_list(0xA0, 0xA4)),
+                    TileSubBank("Forest border", range_to_list(0xA4, 0xBC)),
                 ],
                 self.tiles_per_row,
                 self.tile_scale,

@@ -64,19 +64,38 @@ class Tileset:
         if cache_key in self._cache:
             return self._cache[cache_key]
 
-        pixels = self.decode_tile(tile_idx)
+        if tile_idx == 0x100:
+            surf = _render_placeholder_tile(TILE_SIZE * scale)
+        else:
+            pixels = self.decode_tile(tile_idx)
 
-        surf = Surface((TILE_SIZE * scale, TILE_SIZE * scale))
-        for y in range(8):
-            for x in range(8):
-                color = GREENS_PALETTE[pixels[y][x]]
-                if scale == 1:
-                    surf.set_at((x, y), color)
-                else:
-                    pygame.draw.rect(surf, color, (x * scale, y * scale, scale, scale))
+            surf = Surface((TILE_SIZE * scale, TILE_SIZE * scale))
+            for y in range(8):
+                for x in range(8):
+                    color = GREENS_PALETTE[pixels[y][x]]
+                    if scale == 1:
+                        surf.set_at((x, y), color)
+                    else:
+                        pygame.draw.rect(surf, color, (x * scale, y * scale, scale, scale))
 
         self._cache[cache_key] = surf
         return surf
+
+def _render_placeholder_tile(size: int) -> Surface:
+    """Render the placeholder tile (0x100) with a distinctive pattern."""
+    surf = Surface((size, size))
+    # Gray checkerboard pattern to indicate meta/placeholder tile
+    gray1 = (100, 100, 100)
+    gray2 = (140, 140, 140)
+    checker_size = size // 4
+
+    for row in range(4):
+        for col in range(4):
+            color = gray1 if (row + col) % 2 == 0 else gray2
+            rect = (col * checker_size, row * checker_size, checker_size, checker_size)
+            pygame.draw.rect(surf, color, rect)
+
+    return surf
 
 
 class Sprite:
