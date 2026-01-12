@@ -10,6 +10,45 @@ import random
 from pathlib import Path
 
 
+# =============================================================================
+# Direction Constants and Utilities
+# =============================================================================
+
+DIRECTIONS = ("up", "down", "left", "right")
+
+OPPOSITES = {
+    "up": "down",
+    "down": "up",
+    "left": "right",
+    "right": "left",
+}
+
+# 90° clockwise rotation (used for "right-hand" perpendicular)
+ROTATE_CW = {
+    "up": "right",
+    "right": "down",
+    "down": "left",
+    "left": "up",
+}
+
+# 90° counter-clockwise rotation (used for "left-hand" perpendicular)
+ROTATE_CCW = {
+    "up": "left",
+    "left": "down",
+    "down": "right",
+    "right": "up",
+}
+
+# Direction vectors as (delta_col, delta_row) for cross product calculation
+# Using (col, row) as (x, y) in screen coordinates
+DIR_VECTORS = {
+    "up": (0, -1),
+    "down": (0, 1),
+    "left": (-1, 0),
+    "right": (1, 0),
+}
+
+
 def direction_from(pos1: tuple[int, int], pos2: tuple[int, int]) -> str:
     """
     Calculate direction from pos1 to pos2.
@@ -22,201 +61,159 @@ def direction_from(pos1: tuple[int, int], pos2: tuple[int, int]) -> str:
         Direction string: "up", "down", "left", or "right"
 
     Raises:
-        ValueError: If positions are the same or not orthogonally adjacent
+        ValueError: If positions are not orthogonally adjacent
     """
     dr = pos2[0] - pos1[0]
     dc = pos2[1] - pos1[1]
 
-    if dr == 0 and dc == 0:
-        raise ValueError(f"Positions are the same: {pos1}")
-
-    if abs(dr) + abs(dc) != 1:
-        raise ValueError(f"Positions not orthogonally adjacent: {pos1} -> {pos2}")
-
-    if dr > 0:
-        return "down"
-    if dr < 0:
+    if (dr, dc) == (-1, 0):
         return "up"
-    if dc > 0:
-        return "right"
-    if dc < 0:
+    elif (dr, dc) == (1, 0):
+        return "down"
+    elif (dr, dc) == (0, -1):
         return "left"
-
-    raise ValueError(f"Invalid direction calculation: {pos1} -> {pos2}")
+    elif (dr, dc) == (0, 1):
+        return "right"
+    else:
+        raise ValueError(f"Positions not orthogonally adjacent: {pos1} -> {pos2}")
 
 
 def direction_to(pos1: tuple[int, int], pos2: tuple[int, int]) -> str:
-    """
-    Calculate direction to pos2 from pos1 (same as direction_from).
-
-    This is an alias for clarity in different contexts.
-    """
+    """Alias for direction_from, for semantic clarity in different contexts."""
     return direction_from(pos1, pos2)
 
 
 def opposite(direction: str) -> str:
-    """
-    Get the opposite direction.
+    """Get the opposite direction."""
+    return OPPOSITES[direction]
 
-    Args:
-        direction: "up", "down", "left", or "right"
+
+# =============================================================================
+# Geometry Calculations
+# =============================================================================
+
+def compute_signed_area(path: list[tuple[int, int]]) -> float:
+    """
+    Compute signed area of closed path using shoelace formula.
+
+    Uses (col, row) as (x, y) in screen coordinates where row increases downward.
 
     Returns:
-        Opposite direction
-    """
-    opposites = {
-        "up": "down",
-        "down": "up",
-        "left": "right",
-        "right": "left",
-    }
-    if direction not in opposites:
-        raise ValueError(f"Invalid direction: {direction}")
-    return opposites[direction]
-
-
-def compute_interior_side_from_winding(
-    path: list[tuple[int, int]], index: int
-) -> str | tuple[str, str]:
-    """
-    Compute which side of the path is interior (green side) at given index.
-
-    Uses the shoelace formula to compute signed area. Positive area indicates
-    clockwise winding (interior on right), negative indicates counter-clockwise
-    (interior on left).
-
-    Args:
-        path: List of (row, col) positions forming closed loop
-        index: Index in path to compute interior side for
-
-    Returns:
-        Single direction string for straight segments ("up", "down", "left", "right")
-        Tuple of two directions for corner segments (e.g., ("down", "right"))
+        Positive value for clockwise winding
+        Negative value for counter-clockwise winding
     """
     n = len(path)
+    area = 0.0
 
-    # Compute signed area using shoelace formula
-    # Using (col, row) as (x, y)
-    area = 0
     for i in range(n):
         j = (i + 1) % n
-        # Shoelace: A = 1/2 * sum(x[i]*y[i+1] - x[i+1]*y[i])
-        area += path[i][1] * path[j][0]  # col[i] * row[i+1]
-        area -= path[j][1] * path[i][0]  # col[i+1] * row[i]
+        # Use (col, row) as (x, y)
+        x_i, y_i = path[i][1], path[i][0]
+        x_j, y_j = path[j][1], path[j][0]
+        area += x_i * y_j - x_j * y_i
 
-    # Determine winding direction
-    is_clockwise = area < 0
+    return area / 2.0
 
-    # Get incoming and outgoing directions
+
+def compute_cross_product(dir1: str, dir2: str) -> int:
+    """
+    Compute 2D cross product of two direction vectors.
+
+    In screen coordinates (y increases downward):
+        Positive result = clockwise rotation (right turn)
+        Negative result = counter-clockwise rotation (left turn)
+    """
+    v1 = DIR_VECTORS[dir1]
+    v2 = DIR_VECTORS[dir2]
+    return v1[0] * v2[1] - v1[1] * v2[0]
+
+
+def compute_interior_side(
+    path: list[tuple[int, int]],
+    index: int,
+    is_clockwise: bool
+) -> str | tuple[str, str]:
+    """
+    Determine which side of the path is interior (putting surface) at given index.
+
+    For clockwise paths, interior is on the right side of travel direction.
+    For counter-clockwise paths, interior is on the left side.
+
+    Args:
+        path: Closed loop of (row, col) positions
+        index: Position in path to compute interior for
+        is_clockwise: Whether path winds clockwise
+
+    Returns:
+        For straight segments: single direction string
+        For corners: tuple of two direction strings (sorted)
+    """
+    n = len(path)
     prev_pos = path[(index - 1) % n]
     curr_pos = path[index]
     next_pos = path[(index + 1) % n]
 
-    incoming_dir = direction_from(curr_pos, prev_pos)
-    outgoing_dir = direction_to(curr_pos, next_pos)
+    # Directions from current tile toward its path neighbors
+    to_prev = direction_from(curr_pos, prev_pos)
+    to_next = direction_from(curr_pos, next_pos)
 
-    # Check if this is a corner (non-opposite AND non-same directions)
-    # Straight segment: either same direction or opposite directions
-    is_straight = incoming_dir == opposite(outgoing_dir)
-    is_corner = not is_straight
+    # Determine if this is a straight segment or corner
+    is_straight = (to_prev == opposite(to_next))
 
-    if is_corner:
-        # Corner tile: determine which corner quadrant has the green
-        # For clockwise: green is on the right as you travel (inside the turn for right turns)
-        # For counter-clockwise: green is on the left as you travel
-
-        # Compute turn direction using cross product concept
-        # Right turn (clockwise turn): green is on inside of turn
-        # Left turn (counter-clockwise turn): green is on outside of turn
-
-        # Map direction to vector
-        dir_vectors = {
-            "up": (-1, 0),
-            "down": (1, 0),
-            "left": (0, -1),
-            "right": (0, 1),
-        }
-
-        incoming_vec = dir_vectors[incoming_dir]
-        outgoing_vec = dir_vectors[outgoing_dir]
-
-        # Cross product in 2D: (a.row * b.col - a.col * b.row)
-        cross = incoming_vec[0] * outgoing_vec[1] - incoming_vec[1] * outgoing_vec[0]
-
-        is_right_turn = cross < 0
-        print(f"is_right_turn: {is_right_turn}")
-        print(f"is_clockwise: {is_clockwise}")
-
+    if is_straight:
+        # For straight segments, interior is perpendicular to travel direction
+        # Travel direction is to_next (direction we're moving along the path)
+        travel_dir = to_next
         if is_clockwise:
-            if is_right_turn:
-                # Clockwise path, right turn: green is inside turn (same as path quadrant)
-                return tuple(sorted([incoming_dir, outgoing_dir]))  # type: ignore
-            else:
-                # Clockwise path, left turn: green is outside turn (opposite quadrant)
-                path_edges = {incoming_dir, outgoing_dir}
-                all_dirs = {"up", "down", "left", "right"}
-                interior_dirs = all_dirs - path_edges
-                return tuple(sorted(interior_dirs))  # type: ignore
+            return ROTATE_CW[travel_dir]
         else:
-            # Counter-clockwise: opposite of clockwise
-            if is_right_turn:
-                # Counter-clockwise path, right turn: green is outside turn
-                path_edges = {incoming_dir, outgoing_dir}
-                all_dirs = {"up", "down", "left", "right"}
-                interior_dirs = all_dirs - path_edges
-                return tuple(sorted(interior_dirs))  # type: ignore
-            else:
-                # Counter-clockwise path, left turn: green is inside turn
-                return tuple(sorted([incoming_dir, outgoing_dir]))  # type: ignore
+            return ROTATE_CCW[travel_dir]
     else:
-        # Straight tile: interior side is perpendicular to path direction
-        # For clockwise: green is to the right as you travel
-        # For counter-clockwise: green is to the left as you travel
+        # For corners, we need to determine convex vs concave
+        # Travel INTO this tile is opposite of to_prev
+        # Travel OUT OF this tile is to_next
+        travel_in = opposite(to_prev)
+        travel_out = to_next
 
-        # Perpendicular to the right (clockwise interior)
-        right_perpendicular = {
-            "up": "right",
-            "down": "left",
-            "left": "up",
-            "right": "down",
-        }
+        # Determine turn direction using cross product
+        cross = compute_cross_product(travel_in, travel_out)
+        is_right_turn = cross > 0
 
-        # Perpendicular to the left (counter-clockwise interior)
-        left_perpendicular = {
-            "up": "left",
-            "down": "right",
-            "left": "down",
-            "right": "up",
-        }
+        # Build edge sets
+        path_edges = tuple(sorted([to_prev, to_next]))
+        all_dirs = set(DIRECTIONS)
+        non_path_edges = tuple(sorted(all_dirs - set(path_edges)))
 
-        if is_clockwise:
-            return right_perpendicular[incoming_dir]
+        # Determine if corner is convex or concave from interior's perspective
+        # Convex: interior bulges into this corner (like rectangle corner)
+        # Concave: interior has a bay here
+        #
+        # For clockwise path:
+        #   - Right turn = convex (turning toward interior)
+        #   - Left turn = concave (turning away from interior)
+        # For CCW path: opposite
+        is_convex = (is_clockwise == is_right_turn)
+
+        if is_convex:
+            # Green is in the corner of the tile (between path edges)
+            return path_edges
         else:
-            return left_perpendicular[incoming_dir]
+            # Green is opposite the corner (on non-path edge side)
+            return non_path_edges
 
 
 def make_shape_key(
-    incoming_dir: str, outgoing_dir: str, interior_side: str | tuple[str, str]
+    path_edges: tuple[str, str],
+    interior_side: str | tuple[str, str]
 ) -> str:
     """
-    Create shape key matching classification_index format.
+    Create shape key string matching classification_index format.
 
     Format: "path=(dir1,dir2) interior=dir" or "path=(dir1,dir2) interior=(dir1,dir2)"
-    where path directions are sorted alphabetically.
-
-    Args:
-        incoming_dir: Direction coming into this position
-        outgoing_dir: Direction leaving this position
-        interior_side: Single direction or tuple of directions for interior
-
-    Returns:
-        Shape key string matching classification_index format
+    Directions are sorted alphabetically within each group.
     """
-    # Sort path directions alphabetically
-    path_tuple = tuple(sorted([incoming_dir, outgoing_dir]))
-    path_str = f"({','.join(path_tuple)})"
+    path_str = f"({','.join(sorted(path_edges))})"
 
-    # Format interior side
     if isinstance(interior_side, tuple):
         interior_str = f"({','.join(sorted(interior_side))})"
     else:
@@ -225,203 +222,203 @@ def make_shape_key(
     return f"path={path_str} interior={interior_str}"
 
 
+# =============================================================================
+# Main Generator Class
+# =============================================================================
+
 class FringeGenerator:
     """
     Generates fringe tiles using neighbor frequency analysis and arc consistency.
 
-    Loads data from greens_neighbors.json and uses constraint satisfaction
-    to assign compatible tiles along a traced path.
+    Algorithm:
+        1. Load empirical neighbor frequency data from analyzed greens
+        2. For each path position, determine shape classification (corner type,
+           interior direction) based on path geometry
+        3. Build candidate tile sets from classification index
+        4. Use arc consistency (AC-3) to filter incompatible candidates
+        5. Greedily assign tiles, respecting neighbor compatibility
     """
 
     def __init__(self):
         """Initialize generator with empty data structures."""
         self.neighbor_freq: dict[int, dict[str, dict[int, int]]] = {}
-        self.classification_index: dict[str, list[str]] = {}
-        self.freq_threshold: int = 3
+        self.classification_index: dict[str, list[int]] = {}
+        self.freq_threshold: int = 1
         self._data_loaded: bool = False
 
     def load_data(self, data_path: Path | None = None) -> None:
         """
-        Load and preprocess greens_neighbors.json.
+        Load neighbor frequency data and classification index from JSON.
 
         Args:
-            data_path: Path to greens_neighbors.json (defaults to data/tables/greens_neighbors.json)
+            data_path: Path to greens_neighbors.json. If None, uses default
+                       location at data/tables/greens_neighbors.json
         """
         if data_path is None:
-            # Default to data/tables/greens_neighbors.json relative to project root
-            data_path = Path(__file__).parent.parent.parent / "data" / "tables" / "greens_neighbors.json"
+            data_path = (
+                Path(__file__).parent.parent.parent
+                / "data" / "tables" / "greens_neighbors.json"
+            )
 
-        with open(data_path, "r") as f:
+        with open(data_path) as f:
             data = json.load(f)
 
         # Convert neighbor frequency data from hex strings to integers
-        neighbors = data["neighbors"]
         self.neighbor_freq = {}
-
-        for tile_hex, directions in neighbors.items():
+        for tile_hex, directions in data["neighbors"].items():
             tile_id = int(tile_hex, 16)
             self.neighbor_freq[tile_id] = {}
-
             for direction, neighbor_counts in directions.items():
                 self.neighbor_freq[tile_id][direction] = {
                     int(neighbor_hex, 16): count
                     for neighbor_hex, count in neighbor_counts.items()
                 }
 
-        # Store classification_index as-is (values are still hex strings, will convert on use)
-        self.classification_index = data["classification_index"]
+        # Convert classification index tile values from hex to int
+        self.classification_index = {}
+        for shape_key, tile_hexes in data["classification_index"].items():
+            self.classification_index[shape_key] = [
+                int(t, 16) for t in tile_hexes
+            ]
 
         self._data_loaded = True
 
-    def generate(self, path: list[tuple[int, int]]) -> list[tuple[tuple[int, int], int]]:
+    def generate(
+        self,
+        path: list[tuple[int, int]]
+    ) -> list[tuple[tuple[int, int], int]]:
         """
         Generate fringe tiles for a closed path.
 
-        Uses three-step algorithm:
-        1. Build candidate sets based on shape classification
-        2. Arc consistency filtering (iterative constraint propagation)
-        3. Greedy assignment with random selection
-
         Args:
-            path: Ordered list of (row, col) positions forming closed loop
+            path: Ordered list of (row, col) positions forming a closed loop.
+                  Must be traced in order (clockwise or counter-clockwise).
 
         Returns:
-            List of ((row, col), tile_id) assignments
+            List of ((row, col), tile_id) tuples assigning a tile to each position.
 
         Raises:
-            ValueError: If path is invalid or no valid assignment found
+            RuntimeError: If data not loaded
+            ValueError: If path is invalid or no valid tile assignment exists
         """
-
-        print(path)
-        print(f"index: {self.classification_index}")
-
         if not self._data_loaded:
             raise RuntimeError("Data not loaded. Call load_data() first.")
 
-        # Validate path
         self._validate_path(path)
 
-        n = len(path)
+        # Determine winding direction
+        is_clockwise = compute_signed_area(path) > 0
 
-        # Step 1: Build candidate sets for each position
-        candidates: list[set[int]] = []
-        for i in range(n):
-            prev_pos = path[(i - 1) % n]
-            curr_pos = path[i]
-            next_pos = path[(i + 1) % n]
-
-            incoming_dir = direction_from(curr_pos, prev_pos)
-            outgoing_dir = direction_to(curr_pos, next_pos)
-            print(f"incoming: {incoming_dir}, outgoing: {outgoing_dir}")
-            interior_side = compute_interior_side_from_winding(path, i)
-            print(f"interior: {interior_side}")
-
-            # For straight segments, path edges are the travel directions (left/right or up/down)
-            if incoming_dir == outgoing_dir:
-                # Straight segment: path directions are the opposite pair in same axis
-                if incoming_dir in ("left", "right"):
-                    # Horizontal travel: path is left-right
-                    path_dir1, path_dir2 = "left", "right"
-                else:
-                    # Vertical travel: path is up-down
-                    path_dir1, path_dir2 = "up", "down"
-                shape_key = make_shape_key(path_dir1, path_dir2, interior_side)
-            else:
-                # Corner segment: use incoming/outgoing as path edges
-                shape_key = make_shape_key(incoming_dir, outgoing_dir, interior_side)
-
-
-            if shape_key not in self.classification_index:
-                raise ValueError(
-                    f"Shape key not found in classification_index: {shape_key} "
-                    f"at position {i} ({curr_pos})"
-                )
-
-            # Convert hex strings to integers for candidate tiles
-            tile_hexes = self.classification_index[shape_key]
-            candidate_set = {int(tile_hex, 16) for tile_hex in tile_hexes}
-            candidates.append(candidate_set)
+        # Step 1: Build candidate sets based on shape classification
+        candidates = self._build_candidate_sets(path, is_clockwise)
 
         # Step 2: Arc consistency filtering
         self._arc_consistency_filter(candidates, path)
 
-        # Check that all positions still have candidates
-        for i, candidate_set in enumerate(candidates):
-            if not candidate_set:
+        # Verify all positions still have candidates
+        for i, cands in enumerate(candidates):
+            if not cands:
                 raise ValueError(
                     f"No valid candidates remaining for position {i} ({path[i]}) "
                     f"after arc consistency filtering"
                 )
 
         # Step 3: Greedy assignment
-        assignment = self._greedy_assignment(candidates, path)
+        assignment = self._greedy_assign(candidates, path)
 
-        # Return list of ((row, col), tile_id) tuples
         return list(zip(path, assignment))
 
     def _validate_path(self, path: list[tuple[int, int]]) -> None:
         """
         Validate that path is suitable for fringe generation.
 
-        Raises:
-            ValueError: If path is invalid
+        Checks:
+            - Minimum length of 4 positions
+            - All moves are orthogonally adjacent
+            - No duplicate positions
         """
         if len(path) < 4:
             raise ValueError(
-                f"Path too short: {len(path)} positions. "
-                f"Minimum 4 positions required (square with cardinal moves)."
+                f"Path too short: {len(path)} positions (minimum 4 required)"
             )
 
-        # Check that path forms a loop (not strictly necessary since we use modulo,
-        # but helps catch user errors)
-        # Note: We don't require path[0] == path[-1] since we treat it as cyclic
-
-        # Check all moves are orthogonal (should be guaranteed by arrow key navigation,
-        # but validate anyway)
+        # Check all moves are orthogonal
         n = len(path)
         for i in range(n):
+            curr = path[i]
+            next_ = path[(i + 1) % n]
+            dr = abs(next_[0] - curr[0])
+            dc = abs(next_[1] - curr[1])
+            if dr + dc != 1:
+                raise ValueError(
+                    f"Non-orthogonal move at index {i}: {curr} -> {next_}"
+                )
+
+        # Check for duplicates
+        if len(set(path)) != len(path):
+            raise ValueError("Path contains duplicate positions")
+
+    def _build_candidate_sets(
+        self,
+        path: list[tuple[int, int]],
+        is_clockwise: bool
+    ) -> list[set[int]]:
+        """
+        Build candidate tile sets for each position based on shape classification.
+
+        Each position gets candidates from the classification index entry
+        matching its (path_edges, interior_side) shape key.
+        """
+        candidates = []
+        n = len(path)
+
+        for i in range(n):
+            prev_pos = path[(i - 1) % n]
             curr_pos = path[i]
             next_pos = path[(i + 1) % n]
 
-            dr = abs(next_pos[0] - curr_pos[0])
-            dc = abs(next_pos[1] - curr_pos[1])
+            # Path edges are directions from this tile to its path neighbors
+            to_prev = direction_from(curr_pos, prev_pos)
+            to_next = direction_from(curr_pos, next_pos)
+            path_edges = (to_prev, to_next)
 
-            if dr + dc != 1:
+            # Compute interior side based on path geometry
+            interior_side = compute_interior_side(path, i, is_clockwise)
+
+            # Look up candidates from classification index
+            shape_key = make_shape_key(path_edges, interior_side)
+
+            if shape_key not in self.classification_index:
                 raise ValueError(
-                    f"Non-orthogonal move detected: {curr_pos} -> {next_pos} "
-                    f"at index {i}"
+                    f"Unknown shape key '{shape_key}' at position {i} ({curr_pos})"
                 )
 
-    def _is_compatible(
-        self, tile_a: int, direction: str, tile_b: int
-    ) -> bool:
+            candidates.append(set(self.classification_index[shape_key]))
+
+        return candidates
+
+    def _is_compatible(self, tile_a: int, direction: str, tile_b: int) -> bool:
         """
         Check if tile_a can have tile_b as neighbor in given direction.
 
-        Args:
-            tile_a: Source tile ID
-            direction: Direction from tile_a to tile_b
-            tile_b: Neighbor tile ID
-
-        Returns:
-            True if combination appears in neighbor frequency data
-            with count >= threshold
+        Uses frequency threshold to filter out spurious/accidental adjacencies
+        from the training data.
         """
         neighbors = self.neighbor_freq.get(tile_a, {}).get(direction, {})
         return neighbors.get(tile_b, 0) >= self.freq_threshold
 
     def _arc_consistency_filter(
-        self, candidates: list[set[int]], path: list[tuple[int, int]]
+        self,
+        candidates: list[set[int]],
+        path: list[tuple[int, int]]
     ) -> None:
         """
         Filter candidates using arc consistency (AC-3 algorithm).
 
-        Iteratively removes incompatible candidates until a fixed point is reached.
-        Modifies candidates in place.
+        Iteratively removes candidates that have no compatible neighbor
+        in the adjacent position, until reaching a fixed point.
 
-        Args:
-            candidates: List of candidate sets for each position
-            path: Path positions (for direction calculation)
+        Modifies candidates list in place.
         """
         n = len(candidates)
         changed = True
@@ -432,47 +429,47 @@ class FringeGenerator:
             for i in range(n):
                 j = (i + 1) % n
                 dir_i_to_j = direction_to(path[i], path[j])
-                dir_j_to_i = opposite(dir_i_to_j)
 
-                # Filter candidates[i]: keep only tiles with at least one compatible neighbor in candidates[j]
-                valid_i = set()
-                for tile_i in candidates[i]:
-                    for tile_j in candidates[j]:
-                        if self._is_compatible(tile_i, dir_i_to_j, tile_j):
-                            valid_i.add(tile_i)
-                            break
-
+                # Filter candidates[i]: keep tiles with at least one compatible neighbor in j
+                valid_i = {
+                    tile_i for tile_i in candidates[i]
+                    if any(
+                        self._is_compatible(tile_i, dir_i_to_j, tile_j)
+                        for tile_j in candidates[j]
+                    )
+                }
                 if valid_i < candidates[i]:
                     candidates[i] = valid_i
                     changed = True
 
-                # Filter candidates[j]: keep only tiles with at least one compatible neighbor in candidates[i]
-                valid_j = set()
-                for tile_j in candidates[j]:
-                    for tile_i in candidates[i]:
-                        if self._is_compatible(tile_i, dir_i_to_j, tile_j):
-                            valid_j.add(tile_j)
-                            break
-
+                # Filter candidates[j]: keep tiles with at least one compatible neighbor in i
+                valid_j = {
+                    tile_j for tile_j in candidates[j]
+                    if any(
+                        self._is_compatible(tile_i, dir_i_to_j, tile_j)
+                        for tile_i in candidates[i]
+                    )
+                }
                 if valid_j < candidates[j]:
                     candidates[j] = valid_j
                     changed = True
 
-    def _greedy_assignment(
-        self, candidates: list[set[int]], path: list[tuple[int, int]]
+    def _greedy_assign(
+        self,
+        candidates: list[set[int]],
+        path: list[tuple[int, int]]
     ) -> list[int]:
         """
-        Assign tiles greedily with random selection.
+        Assign tiles greedily, randomly selecting from compatible candidates.
 
-        Args:
-            candidates: Filtered candidate sets for each position
-            path: Path positions (for direction calculation)
+        Starts with first position, then each subsequent position must be
+        compatible with the previous assignment.
 
         Returns:
-            List of assigned tile IDs
+            List of tile IDs in path order
 
         Raises:
-            ValueError: If no valid assignment found
+            ValueError: If no compatible tile found for some position
         """
         n = len(candidates)
         assignment: list[int] = []
@@ -480,11 +477,9 @@ class FringeGenerator:
         for i in range(n):
             if i == 0:
                 # First position: random choice from candidates
-                if not candidates[0]:
-                    raise ValueError("No candidates for first position")
                 tile = random.choice(list(candidates[0]))
             else:
-                # Subsequent positions: choose tile compatible with previous
+                # Subsequent positions: must be compatible with previous
                 prev_tile = assignment[-1]
                 prev_dir = direction_to(path[i - 1], path[i])
 
@@ -495,24 +490,21 @@ class FringeGenerator:
 
                 if not valid:
                     raise ValueError(
-                        f"No valid tile found for position {i} ({path[i]}) "
-                        f"compatible with previous tile {prev_tile:02x}"
+                        f"No compatible tile for position {i} ({path[i]}) "
+                        f"following tile {prev_tile:#04x}"
                     )
 
                 tile = random.choice(valid)
 
             assignment.append(tile)
 
-        # Verify closure: last tile compatible with first
-        # (Should be guaranteed by arc consistency, but worth checking)
-        last_tile = assignment[-1]
-        first_tile = assignment[0]
+        # Verify path closure: last tile must be compatible with first
         last_to_first_dir = direction_to(path[-1], path[0])
-
-        # if not self._is_compatible(last_tile, last_to_first_dir, first_tile):
-        #     raise ValueError(
-        #         f"Closure check failed: last tile {last_tile:02x} not compatible "
-        #         f"with first tile {first_tile:02x} in direction {last_to_first_dir}"
-        #     )
+        if not self._is_compatible(assignment[-1], last_to_first_dir, assignment[0]):
+            raise ValueError(
+                f"Path closure failed: tile {assignment[-1]:#04x} at end "
+                f"not compatible with tile {assignment[0]:#04x} at start "
+                f"in direction {last_to_first_dir}"
+            )
 
         return assignment

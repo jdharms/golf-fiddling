@@ -272,8 +272,11 @@ class SimpleTileBank:
             if tile_y + tile_size < clip_rect.y or tile_y > clip_rect.bottom:
                 continue
 
-            # Render tile
-            tile_surf = tileset.render_tile(tile_idx, palette_idx, self.tile_scale)
+            # Render tile (special handling for 0x100 placeholder)
+            if tile_idx == 0x100:
+                tile_surf = _render_placeholder_tile(TILE_SIZE * self.tile_scale)
+            else:
+                tile_surf = tileset.render_tile(tile_idx, palette_idx, self.tile_scale)
             screen.blit(tile_surf, (tile_x, tile_y))
 
             # Selection highlight
