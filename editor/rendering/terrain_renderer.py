@@ -13,6 +13,7 @@ from pygame import Surface
 from editor.controllers.highlight_state import HighlightState
 from editor.controllers.view_state import ViewState
 from editor.core.constants import TERRAIN_WIDTH, TILE_SIZE
+from editor.core.pygame_rendering import render_placeholder_tile
 from golf.formats.hole_data import HoleData
 
 from .grid_renderer import GridRenderer
@@ -20,23 +21,6 @@ from .highlight_utils import INVALID_NEIGHBOR_COLOR, draw_tile_border
 from .render_context import RenderContext
 from .selection_renderer import SelectionRenderer
 from .sprite_renderer import SpriteRenderer
-
-
-def _render_placeholder_tile(size: int) -> Surface:
-    """Render the placeholder tile (0x100) with a distinctive pattern."""
-    surf = Surface((size, size))
-    # Gray checkerboard pattern to indicate meta/placeholder tile
-    gray1 = (100, 100, 100)
-    gray2 = (140, 140, 140)
-    checker_size = size // 4
-
-    for row in range(4):
-        for col in range(4):
-            color = gray1 if (row + col) % 2 == 0 else gray2
-            rect = (col * checker_size, row * checker_size, checker_size, checker_size)
-            pygame.draw.rect(surf, color, rect)
-
-    return surf
 
 
 class TerrainRenderer:
@@ -91,7 +75,7 @@ class TerrainRenderer:
 
                 # Render tile - use special rendering for placeholder (0x100)
                 if tile_idx == 0x100:
-                    tile_surf = _render_placeholder_tile(tile_size)
+                    tile_surf = render_placeholder_tile(tile_size)
                 else:
                     palette_idx = hole_data.get_attribute(row_idx, col_idx)
                     tile_surf = tileset.render_tile(tile_idx, palette_idx, canvas_scale)
@@ -235,7 +219,7 @@ class TerrainRenderer:
 
             # Render the transformed tile - use special rendering for placeholder (0x100)
             if transformed_tile_idx == 0x100:
-                tile_surf = _render_placeholder_tile(tile_size)
+                tile_surf = render_placeholder_tile(tile_size)
             else:
                 palette_idx = hole_data.get_attribute(row, col)
                 tile_surf = tileset.render_tile(

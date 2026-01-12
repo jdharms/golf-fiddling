@@ -2,18 +2,13 @@
 Greens-specific tile picker panel.
 """
 
-import pygame
-from pygame import Rect, Surface
+from pygame import Rect
 
-from editor.core.constants import (
-    COLOR_GRID,
-    COLOR_PICKER_BG,
-    COLOR_SELECTION,
-    COLOR_TEXT,
-    TILE_SIZE,
+from .tile_banks import (
+    SimpleTileBankGreens,
+    GroupedTileBankGreens,
+    TileSubBankGreens,
 )
-
-from .tile_banks import SimpleTileBank, range_to_list
 from .tile_picker import TilePicker
 
 
@@ -24,36 +19,59 @@ class GreensTilePicker(TilePicker):
         super().__init__(tileset, rect, on_hover_change, on_tile_selected)
 
         # Override banks with greens-specific tiles organized by type
+        # Fringe groups organized by path direction
+        fringe_groups = [
+            ("Down-Left 1", [0x4B, 0x51, 0x5D, 0x7D, 0x83]),
+            ("Down-Left 2", [0x5A, 0x6A, 0x6D, 0x75, 0x79]),
+            ("Down-Right 1", [0x48, 0x50, 0x5C, 0x7C, 0x82]),
+            ("Down-Right 2", [0x5B, 0x6B, 0x6C, 0x74, 0x78]),
+            ("Down-Up 1", [0x53, 0x55, 0x61, 0x67]),
+            ("Down-Up 2", [0x52, 0x54, 0x60, 0x66]),
+            ("Left-Right 1", [0x49, 0x4A, 0x62, 0x64]),
+            ("Left-Right 2", [0x4D, 0x4E, 0x63, 0x65]),
+            ("Left-Up 1", [0x58, 0x68, 0x6F, 0x77, 0x7B]),
+            ("Left-Up 2", [0x4F, 0x57, 0x5F, 0x7F, 0x81]),
+            ("Right-Up 1", [0x59, 0x69, 0x6E, 0x76, 0x7A]),
+            ("Right-Up 2", [0x4C, 0x56, 0x5E, 0x7E, 0x80]),
+        ]
+
+        # Slopes split into two groups
+        slopes_tiles = list(range(0x30, 0x48)) + list(range(0x88, 0xA0))
+        mid = len(slopes_tiles) // 2
+
         self.banks = [
-            SimpleTileBank(
+            SimpleTileBankGreens(
                 "Placeholder",
                 [0x100],
                 self.tiles_per_row,
                 self.tile_scale,
                 self.tile_spacing,
             ),
-            SimpleTileBank(
+            SimpleTileBankGreens(
                 "Rough",
                 [0x29, 0x2C],
                 self.tiles_per_row,
                 self.tile_scale,
                 self.tile_spacing,
             ),
-            SimpleTileBank(
+            GroupedTileBankGreens(
                 "Fringe",
-                range_to_list(0x48, 0x88),
+                [TileSubBankGreens(label, tiles) for label, tiles in fringe_groups],
                 self.tiles_per_row,
                 self.tile_scale,
                 self.tile_spacing,
             ),
-            SimpleTileBank(
+            GroupedTileBankGreens(
                 "Slopes",
-                range_to_list(0x30, 0x48) + range_to_list(0x88, 0xA0),
+                [
+                    TileSubBankGreens("Group One", slopes_tiles[:mid]),
+                    TileSubBankGreens("Group Two", slopes_tiles[mid:]),
+                ],
                 self.tiles_per_row,
                 self.tile_scale,
                 self.tile_spacing,
             ),
-            SimpleTileBank(
+            SimpleTileBankGreens(
                 "Flat", [0xB0], self.tiles_per_row, self.tile_scale, self.tile_spacing
             ),
         ]
@@ -61,23 +79,32 @@ class GreensTilePicker(TilePicker):
 
         self.selected_tile = 0x30
 
-    def find_tile_position(self, tile_value: int) -> tuple[int, int] | None:
+    def find_tile_position(self, tile_value: int) -> tuple[int, int] | tuple[int, int, int] | None:  # type: ignore[override]
         """Find position of tile in bank hierarchy.
 
         Returns:
-            (bank_idx, position_in_bank) or None if not found
+            - (bank_idx, subbank_idx, position) for GroupedTileBankGreens
+            - (bank_idx, position) for SimpleTileBankGreens
+            - None if not found
         """
         for bank_idx, bank in enumerate(self.banks):
-            if tile_value in bank.tile_indices:
-                position = bank.tile_indices.index(tile_value)
-                return (bank_idx, position)
+            if isinstance(bank, GroupedTileBankGreens):
+                # Search subbanks, return (bank_idx, subbank_idx, position)
+                for subbank_idx, subbank in enumerate(bank.subbanks):
+                    if tile_value in subbank.tile_indices:
+                        position = subbank.tile_indices.index(tile_value)
+                        return (bank_idx, subbank_idx, position)
+            else:  # SimpleTileBankGreens
+                if tile_value in bank.tile_indices:
+                    position = bank.tile_indices.index(tile_value)
+                    return (bank_idx, position)
         return None
 
     def get_next_tile_in_subbank(self, tile_value: int) -> int | None:
-        """Get next tile in same bank with circular wrapping.
+        """Get next tile in same bank/subbank with circular wrapping.
 
-        Note: Method name uses 'subbank' for consistency with TilePicker,
-        but SimpleTileBank has no sub-banks - this cycles within the bank.
+        For SimpleTileBankGreens: cycles within the bank
+        For GroupedTileBankGreens: cycles within the subbank
 
         Returns:
             Next tile value or None if tile not found in any bank
@@ -86,15 +113,25 @@ class GreensTilePicker(TilePicker):
         if not position:
             return None
 
-        bank_idx, pos = position
-        bank = self.banks[bank_idx]
+        bank = self.banks[position[0]]
 
-        # Circular wrapping
-        next_pos = (pos + 1) % len(bank.tile_indices)
-        return bank.tile_indices[next_pos]
+        if isinstance(bank, GroupedTileBankGreens):
+            # 3-tuple: (bank_idx, subbank_idx, position)
+            _, subbank_idx, pos = position  # type: ignore[misc]
+            subbank = bank.subbanks[subbank_idx]
+            next_pos = (pos + 1) % len(subbank.tile_indices)
+            return subbank.tile_indices[next_pos]
+        else:  # SimpleTileBankGreens
+            # 2-tuple: (bank_idx, position)
+            _, pos = position  # type: ignore[misc]
+            next_pos = (pos + 1) % len(bank.tile_indices)
+            return bank.tile_indices[next_pos]
 
     def get_previous_tile_in_subbank(self, tile_value: int) -> int | None:
-        """Get previous tile in same bank with circular wrapping.
+        """Get previous tile in same bank/subbank with circular wrapping.
+
+        For SimpleTileBankGreens: cycles within the bank
+        For GroupedTileBankGreens: cycles within the subbank
 
         Returns:
             Previous tile value or None if tile not found in any bank
@@ -103,80 +140,16 @@ class GreensTilePicker(TilePicker):
         if not position:
             return None
 
-        bank_idx, pos = position
-        bank = self.banks[bank_idx]
+        bank = self.banks[position[0]]
 
-        # Circular wrapping
-        prev_pos = (pos - 1) % len(bank.tile_indices)
-        return bank.tile_indices[prev_pos]
-
-    def render(self, screen: Surface, palette_idx: int = 1):
-        """Render the tile picker with greens palette."""
-        # Background
-        pygame.draw.rect(screen, COLOR_PICKER_BG, self.rect)
-
-        # Create clipping rect for scrolling
-        clip_rect = self.rect.copy()
-        clip_rect.y += 5
-        clip_rect.height -= 10
-
-        # Render each bank (greens-specific rendering)
-        picker_width = self.rect.width - 20  # 10px margin on each side
-
-        for i, bank in enumerate(self.banks):
-            bank_y = self.rect.y + self._bank_positions[i] - self.scroll_y
-            bank_x = self.rect.x + 10
-
-            # Skip banks completely outside visible area
-            bank_height = bank.get_height()
-            if bank_y + bank_height < clip_rect.y or bank_y > clip_rect.bottom:
-                continue
-
-            # Draw label background
-            label_rect = Rect(bank_x, bank_y, picker_width, bank.label_height)
-            pygame.draw.rect(screen, COLOR_GRID, label_rect)
-
-            # Render label text (centered)
-            font = pygame.font.SysFont("monospace", 12)
-            text_surf = font.render(bank.label, True, COLOR_TEXT)
-            text_x = bank_x + (picker_width - text_surf.get_width()) // 2
-            text_y = bank_y + (bank.label_height - text_surf.get_height()) // 2
-            screen.blit(text_surf, (text_x, text_y))
-
-            # Draw bank border
-            border_rect = Rect(bank_x, bank_y, picker_width, bank_height)
-            pygame.draw.rect(screen, COLOR_GRID, border_rect, bank.border_width)
-
-            # Render tiles directly from SimpleTileBank
-            tile_y_start = bank_y + bank.label_height + bank.padding
-            tile_x_start = bank_x + bank.padding
-            tile_size = TILE_SIZE * self.tile_scale + self.tile_spacing
-
-            for tile_i, tile_idx in enumerate(bank.tile_indices):
-                col = tile_i % self.tiles_per_row
-                row = tile_i // self.tiles_per_row
-
-                tile_x = tile_x_start + col * tile_size
-                tile_y = tile_y_start + row * tile_size
-
-                # Skip if outside clip rect
-                if tile_y + tile_size < clip_rect.y or tile_y > clip_rect.bottom:
-                    continue
-
-                # Render tile using greens palette
-                tile_surf = self.tileset.render_tile_greens(tile_idx, self.tile_scale)
-                screen.blit(tile_surf, (tile_x, tile_y))
-
-                # Selection highlight
-                if tile_idx == self.selected_tile:
-                    pygame.draw.rect(
-                        screen,
-                        COLOR_SELECTION,
-                        (
-                            tile_x - 1,
-                            tile_y - 1,
-                            TILE_SIZE * self.tile_scale + 2,
-                            TILE_SIZE * self.tile_scale + 2,
-                        ),
-                        2,
-                    )
+        if isinstance(bank, GroupedTileBankGreens):
+            # 3-tuple: (bank_idx, subbank_idx, position)
+            _, subbank_idx, pos = position  # type: ignore[misc]
+            subbank = bank.subbanks[subbank_idx]
+            prev_pos = (pos - 1) % len(subbank.tile_indices)
+            return subbank.tile_indices[prev_pos]
+        else:  # SimpleTileBankGreens
+            # 2-tuple: (bank_idx, position)
+            _, pos = position  # type: ignore[misc]
+            prev_pos = (pos - 1) % len(bank.tile_indices)
+            return bank.tile_indices[prev_pos]

@@ -15,24 +15,7 @@ from editor.core.constants import (
     COLOR_TEXT,
     TILE_SIZE,
 )
-from editor.core.pygame_rendering import Tileset
-
-
-def _render_placeholder_tile(size: int) -> Surface:
-    """Render the placeholder tile (0x100) with a distinctive pattern."""
-    surf = Surface((size, size))
-    # Gray checkerboard pattern to indicate meta/placeholder tile
-    gray1 = (100, 100, 100)
-    gray2 = (140, 140, 140)
-    checker_size = size // 4
-
-    for row in range(4):
-        for col in range(4):
-            color = gray1 if (row + col) % 2 == 0 else gray2
-            rect = (col * checker_size, row * checker_size, checker_size, checker_size)
-            pygame.draw.rect(surf, color, rect)
-
-    return surf
+from editor.core.pygame_rendering import Tileset, render_placeholder_tile
 
 
 def range_to_list(min: int, max: int) -> list[int]:
@@ -135,9 +118,92 @@ class TileSubBank:
 
             # Render tile (special handling for 0x100 placeholder)
             if tile_idx == 0x100:
-                tile_surf = _render_placeholder_tile(TILE_SIZE * tile_scale)
+                tile_surf = render_placeholder_tile(TILE_SIZE * tile_scale)
             else:
                 tile_surf = tileset.render_tile(tile_idx, palette_idx, tile_scale)
+            screen.blit(tile_surf, (tile_x, tile_y))
+
+            # Selection highlight
+            if tile_idx == selected_tile:
+                pygame.draw.rect(
+                    screen,
+                    COLOR_SELECTION,
+                    (
+                        tile_x - 1,
+                        tile_y - 1,
+                        TILE_SIZE * tile_scale + 2,
+                        TILE_SIZE * tile_scale + 2,
+                    ),
+                    2,
+                )
+
+        return self.get_height(tiles_per_row, tile_scale, tile_spacing)
+
+
+class TileSubBankGreens(TileSubBank):
+    """TileSubBank variant that uses greens palette rendering."""
+
+    def render(
+        self,
+        screen: Surface,
+        x: int,
+        y: int,
+        width: int,
+        tileset: Tileset,
+        palette_idx: int,  # Ignored for greens, kept for API compatibility
+        selected_tile: int | None,
+        tiles_per_row: int,
+        tile_scale: int,
+        tile_spacing: int,
+        clip_rect: Rect,
+    ) -> int:
+        """
+        Render this subbank at the specified position using greens palette.
+
+        Args:
+            screen: Pygame surface to draw on
+            x: Left edge x coordinate
+            y: Top edge y coordinate (includes spacing before)
+            width: Total width available
+            tileset: Tileset for rendering tiles
+            palette_idx: Palette index (ignored for greens, kept for API compatibility)
+            selected_tile: Currently selected tile value (for highlight)
+            tiles_per_row: Number of tiles per row
+            tile_scale: Tile rendering scale
+            tile_spacing: Spacing between tiles
+            clip_rect: Clipping rectangle for scrolling
+
+        Returns:
+            Height consumed by this subbank
+        """
+        current_y = y + self.spacing_before
+
+        # 1. Render label text (left-aligned, smaller font)
+        font = pygame.font.SysFont("monospace", 10)
+        text_surf = font.render(self.label, True, COLOR_GRID)  # Subtle gray color
+        screen.blit(text_surf, (x, current_y))
+
+        current_y += self.label_height
+
+        # 2. Render tiles in grid
+        tile_size = TILE_SIZE * tile_scale + tile_spacing
+
+        for i, tile_idx in enumerate(self.tile_indices):
+            col = i % tiles_per_row
+            row = i // tiles_per_row
+
+            tile_x = x + col * tile_size
+            tile_y = current_y + row * tile_size
+
+            # Skip if outside clip rect
+            if tile_y + tile_size < clip_rect.y or tile_y > clip_rect.bottom:
+                continue
+
+            # Render tile using greens palette (special handling for 0x100 placeholder)
+            if tile_idx == 0x100:
+                tile_surf = render_placeholder_tile(TILE_SIZE * tile_scale)
+            else:
+                tile_surf = tileset.render_tile_greens(tile_idx, tile_scale)
             screen.blit(tile_surf, (tile_x, tile_y))
 
             # Selection highlight
@@ -274,7 +340,7 @@ class SimpleTileBank:
 
             # Render tile (special handling for 0x100 placeholder)
             if tile_idx == 0x100:
-                tile_surf = _render_placeholder_tile(TILE_SIZE * self.tile_scale)
+                tile_surf = render_placeholder_tile(TILE_SIZE * self.tile_scale)
             else:
                 tile_surf = tileset.render_tile(tile_idx, palette_idx, self.tile_scale)
             screen.blit(tile_surf, (tile_x, tile_y))
@@ -328,6 +394,89 @@ class SimpleTileBank:
             return self.tile_indices[tile_idx]
 
         return None
+
+
+class SimpleTileBankGreens(SimpleTileBank):
+    """SimpleTileBank variant that uses greens palette rendering."""
+
+    def render(
+        self,
+        screen: Surface,
+        x: int,
+        y: int,
+        width: int,
+        tileset: Tileset,
+        palette_idx: int,  # Ignored for greens, kept for API compatibility
+        selected_tile: int | None,
+        hovered_tile: int | None,
+        clip_rect: Rect,
+    ):
+        """
+        Render this bank at the specified position using greens palette.
+
+        Args:
+            screen: Pygame surface to draw on
+            x: Left edge x coordinate
+            y: Top edge y coordinate (includes label)
+            width: Total width of bank
+            tileset: Tileset for rendering tiles
+            palette_idx: Palette index (ignored for greens, kept for API compatibility)
+            selected_tile: Currently selected tile value (for highlight)
+            hovered_tile: Currently hovered tile value (for highlight)
+            clip_rect: Clipping rectangle for scrolling
+        """
+        # 1. Draw label background
+        label_rect = Rect(x, y, width, self.label_height)
+        pygame.draw.rect(screen, COLOR_GRID, label_rect)
+
+        # 2. Render label text (centered)
+        font = pygame.font.SysFont("monospace", 12)
+        text_surf = font.render(self.label, True, COLOR_TEXT)
+        text_x = x + (width - text_surf.get_width()) // 2
+        text_y = y + (self.label_height - text_surf.get_height()) // 2
+        screen.blit(text_surf, (text_x, text_y))
+
+        # 3. Draw bank border (around entire bank including label)
+        bank_height = self.get_height()
+        border_rect = Rect(x, y, width, bank_height)
+        pygame.draw.rect(screen, COLOR_GRID, border_rect, self.border_width)
+
+        # 4. Render tiles in grid
+        tile_y_start = y + self.label_height + self.padding
+        tile_x_start = x + self.padding
+        tile_size = TILE_SIZE * self.tile_scale + self.tile_spacing
+
+        for i, tile_idx in enumerate(self.tile_indices):
+            col = i % self.tiles_per_row
+            row = i // self.tiles_per_row
+
+            tile_x = tile_x_start + col * tile_size
+            tile_y = tile_y_start + row * tile_size
+
+            # Skip if outside clip rect
+            if tile_y + tile_size < clip_rect.y or tile_y > clip_rect.bottom:
+                continue
+
+            # Render tile using greens palette (special handling for 0x100 placeholder)
+            if tile_idx == 0x100:
+                tile_surf = render_placeholder_tile(TILE_SIZE * self.tile_scale)
+            else:
+                tile_surf = tileset.render_tile_greens(tile_idx, self.tile_scale)
+            screen.blit(tile_surf, (tile_x, tile_y))
+
+            # Selection highlight
+            if tile_idx == selected_tile:
+                pygame.draw.rect(
+                    screen,
+                    COLOR_SELECTION,
+                    (
+                        tile_x - 1,
+                        tile_y - 1,
+                        TILE_SIZE * self.tile_scale + 2,
+                        TILE_SIZE * self.tile_scale + 2,
+                    ),
+                    2,
+                )
 
 
 class GroupedTileBank:
@@ -504,3 +653,29 @@ class GroupedTileBank:
             current_subbank_y += subbank_height
 
         return None  # Outside all subbanks
+
+
+class GroupedTileBankGreens(GroupedTileBank):
+    """GroupedTileBank variant that uses TileSubBankGreens for greens palette rendering."""
+
+    def __init__(
+        self,
+        label: str,
+        subbanks: list[TileSubBankGreens],  # Use greens-specific subbanks
+        tiles_per_row: int,
+        tile_scale: int,
+        tile_spacing: int = 2,
+    ):
+        """
+        Initialize with TileSubBankGreens instead of TileSubBank.
+
+        Args:
+            label: Display name for this bank (e.g., "Fringe", "Slopes")
+            subbanks: List of TileSubBankGreens objects organizing tiles into labeled groups
+            tiles_per_row: Number of tiles rendered per row (calculated from picker width)
+            tile_scale: Tile rendering scale factor
+            tile_spacing: Pixel spacing between tiles (default 2)
+        """
+        # Call parent __init__ - it will work with greens subbanks
+        # since they inherit from TileSubBank and only override render()
+        super().__init__(label, subbanks, tiles_per_row, tile_scale, tile_spacing)  # type: ignore[arg-type]

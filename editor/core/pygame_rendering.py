@@ -19,6 +19,23 @@ from .constants import (
 )
 
 
+def render_placeholder_tile(size: int) -> Surface:
+    """Render the placeholder tile (0x100) with a distinctive pattern."""
+    surf = Surface((size, size))
+    # Gray checkerboard pattern to indicate meta/placeholder tile
+    gray1 = (100, 100, 100)
+    gray2 = (140, 140, 140)
+    checker_size = size // 4
+
+    for row in range(4):
+        for col in range(4):
+            color = gray1 if (row + col) % 2 == 0 else gray2
+            rect = (col * checker_size, row * checker_size, checker_size, checker_size)
+            pygame.draw.rect(surf, color, rect)
+
+    return surf
+
+
 class Tileset:
     """Loads and renders NES CHR tile data using pygame."""
 
@@ -65,7 +82,7 @@ class Tileset:
             return self._cache[cache_key]
 
         if tile_idx == 0x100:
-            surf = _render_placeholder_tile(TILE_SIZE * scale)
+            surf = render_placeholder_tile(TILE_SIZE * scale)
         else:
             pixels = self.decode_tile(tile_idx)
 
@@ -80,22 +97,6 @@ class Tileset:
 
         self._cache[cache_key] = surf
         return surf
-
-def _render_placeholder_tile(size: int) -> Surface:
-    """Render the placeholder tile (0x100) with a distinctive pattern."""
-    surf = Surface((size, size))
-    # Gray checkerboard pattern to indicate meta/placeholder tile
-    gray1 = (100, 100, 100)
-    gray2 = (140, 140, 140)
-    checker_size = size // 4
-
-    for row in range(4):
-        for col in range(4):
-            color = gray1 if (row + col) % 2 == 0 else gray2
-            rect = (col * checker_size, row * checker_size, checker_size, checker_size)
-            pygame.draw.rect(surf, color, rect)
-
-    return surf
 
 
 class Sprite:
