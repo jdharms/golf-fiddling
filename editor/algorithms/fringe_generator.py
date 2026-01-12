@@ -451,7 +451,6 @@ class FringeGenerator:
                     )
                 }
                 if valid_j < candidates[j]:
-                    print(f"replacing {candidates[j]} with {valid_j}")
                     candidates[j] = valid_j
                     changed = True
 

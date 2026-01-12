@@ -257,8 +257,8 @@ def build_rectangle_test_data():
                 "left": {"0x48": 50, "0x49": 50},
             },
             "0x4E": {  # (left,right) interior=up
-                "right": {"0x4C": 50, "0x4E": 50},
-                "left": {"0x4F": 50, "0x4E": 50},
+                "right": {"0x4C": 50, "0x4E": 50, "0x4F": 50},
+                "left": {"0x4F": 50, "0x4E": 50, "0x4C": 50},
             },
 
             # Vertical straights
