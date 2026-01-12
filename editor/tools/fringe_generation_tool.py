@@ -339,7 +339,4 @@ class FringeGenerationTool:
         context.highlight_state.fringe_initial_pos = None
         context.highlight_state.fringe_current_pos = None
 
-        # Revert to paint tool
-        context.request_revert_to_previous_tool()
-
         return ToolResult.modified(message="Fringe path cancelled")
