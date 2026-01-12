@@ -48,7 +48,6 @@ class MeasureTool:
             return "Measure: 1 point - Click to add more points"
         else:
             total_distance = self._calculate_cumulative_distance()
-            num_segments = num_points - 1
             return f"Total Distance: {total_distance:.1f}y"
 
     def handle_mouse_down(self, pos, button, modifiers, context):
