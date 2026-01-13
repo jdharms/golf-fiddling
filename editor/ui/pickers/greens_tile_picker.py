@@ -8,6 +8,7 @@ from .tile_banks import (
     SimpleTileBankGreens,
     GroupedTileBankGreens,
     TileSubBankGreens,
+    range_to_list,
 )
 from .tile_picker import TilePicker
 
@@ -35,10 +36,6 @@ class GreensTilePicker(TilePicker):
             ("Right-Up 2", [0x4C, 0x56, 0x5E, 0x7E, 0x80]),
         ]
 
-        # Slopes split into two groups
-        slopes_tiles = list(range(0x30, 0x48)) + list(range(0x88, 0xA0))
-        mid = len(slopes_tiles) // 2
-
         self.banks = [
             SimpleTileBankGreens(
                 "Placeholder",
@@ -64,8 +61,12 @@ class GreensTilePicker(TilePicker):
             GroupedTileBankGreens(
                 "Slopes",
                 [
-                    TileSubBankGreens("Group One", slopes_tiles[:mid]),
-                    TileSubBankGreens("Group Two", slopes_tiles[mid:]),
+                    TileSubBankGreens("Gentle Dark", range_to_list(0x30, 0x38)),
+                    TileSubBankGreens("Moderate Dark", range_to_list(0x38, 0x40)),
+                    TileSubBankGreens("Steep Dark", range_to_list(0x40, 0x48)),
+                    TileSubBankGreens("Gentle Light", range_to_list(0x90, 0x98)),
+                    TileSubBankGreens("Moderate Light", range_to_list(0x98, 0xA0)),
+                    TileSubBankGreens("Steep Light", range_to_list(0x88, 0x90)),
                 ],
                 self.tiles_per_row,
                 self.tile_scale,
