@@ -10,9 +10,8 @@ Todos:
 * Should right click in transform send us back to paint + eyedropper?
   * How would that work?  How does paint get that right click event?
 * F1 through F4 keys should send us to flag 1 through flag 4
-* Sub-bank fringe tiles according to classifications
-* Picker/banks code doesn't look great
 * Green rough fill, green putting surface fill
+* G should cycle through grid sizes, alter palette tool
 
 Bugs:
 * scroll state should be separate for terrain and green if possible
@@ -37,3 +36,4 @@ Done:
 * Palette tile crashes on out of range paint
 * clean up status bar a bit
 * Greens compression is extremely messed up?
+* Sub-bank fringe tiles according to classifications

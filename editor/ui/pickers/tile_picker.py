@@ -85,8 +85,10 @@ class TilePicker:
                 [
                     TileSubBank("Border", range_to_list(0x80, 0x9C)),
                     TileSubBank("Inner Border", [0x3F]),
-                    TileSubBank("Forest fill", range_to_list(0xA0, 0xA4)),
-                    TileSubBank("Forest border", range_to_list(0xA4, 0xBC)),
+                    TileSubBank("Forest 0", [0xA0] + range_to_list(0xA4, 0xAA)),
+                    TileSubBank("Forest 1", [0xA1] + range_to_list(0xAA, 0xB0)),
+                    TileSubBank("Forest 2", [0xA2] + range_to_list(0xB0, 0xB6)),
+                    TileSubBank("Forest 3", [0xA3] + range_to_list(0xB6, 0xBC)),
                 ],
                 self.tiles_per_row,
                 self.tile_scale,
