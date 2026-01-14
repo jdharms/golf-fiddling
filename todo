@@ -7,11 +7,13 @@ Investigate:
 Todos:
 * Invalid neighbor indicator should be a single border per pairing
 * Add lie chart to rangefinder
+* Add greens to rangefinder?
 * Should right click in transform send us back to paint + eyedropper?
   * How would that work?  How does paint get that right click event?
 * F1 through F4 keys should send us to flag 1 through flag 4
 * Green rough fill, green putting surface fill
 * G should cycle through grid sizes, alter palette tool
+* Locking of some sort?
 
 Bugs:
 * scroll state should be separate for terrain and green if possible
