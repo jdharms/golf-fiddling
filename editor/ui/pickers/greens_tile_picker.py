@@ -44,9 +44,12 @@ class GreensTilePicker(TilePicker):
                 self.tile_scale,
                 self.tile_spacing,
             ),
-            SimpleTileBankGreens(
+            GroupedTileBankGreens(
                 "Rough",
-                [0x29, 0x2C],
+                [
+                    TileSubBankGreens("Family $29", [0x29, 0x70, 0x71, 0x72, 0x73]),
+                    TileSubBankGreens("Family $2C", [0x2C, 0x84, 0x85, 0x86, 0x87])
+                ],
                 self.tiles_per_row,
                 self.tile_scale,
                 self.tile_spacing,
