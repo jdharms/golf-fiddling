@@ -16,6 +16,7 @@ from editor.core.constants import (
     TILE_SIZE,
 )
 from editor.core.pygame_rendering import Tileset, render_placeholder_tile
+from editor.rendering.font_cache import get_font
 
 
 def range_to_list(min: int, max: int) -> list[int]:
@@ -96,7 +97,7 @@ class TileSubBank:
         current_y = y + self.spacing_before
 
         # 1. Render label text (left-aligned, smaller font)
-        font = pygame.font.SysFont("monospace", 10)
+        font = get_font("monospace", 10)
         text_surf = font.render(self.label, True, COLOR_GRID)  # Subtle gray color
         screen.blit(text_surf, (x, current_y))
 
@@ -179,7 +180,7 @@ class TileSubBankGreens(TileSubBank):
         current_y = y + self.spacing_before
 
         # 1. Render label text (left-aligned, smaller font)
-        font = pygame.font.SysFont("monospace", 10)
+        font = get_font("monospace", 10)
         text_surf = font.render(self.label, True, COLOR_GRID)  # Subtle gray color
         screen.blit(text_surf, (x, current_y))
 
@@ -311,7 +312,7 @@ class SimpleTileBank:
         pygame.draw.rect(screen, COLOR_GRID, label_rect)
 
         # 2. Render label text (centered)
-        font = pygame.font.SysFont("monospace", 12)
+        font = get_font("monospace", 12)
         text_surf = font.render(self.label, True, COLOR_TEXT)
         text_x = x + (width - text_surf.get_width()) // 2
         text_y = y + (self.label_height - text_surf.get_height()) // 2
@@ -430,7 +431,7 @@ class SimpleTileBankGreens(SimpleTileBank):
         pygame.draw.rect(screen, COLOR_GRID, label_rect)
 
         # 2. Render label text (centered)
-        font = pygame.font.SysFont("monospace", 12)
+        font = get_font("monospace", 12)
         text_surf = font.render(self.label, True, COLOR_TEXT)
         text_x = x + (width - text_surf.get_width()) // 2
         text_y = y + (self.label_height - text_surf.get_height()) // 2
@@ -566,7 +567,7 @@ class GroupedTileBank:
         pygame.draw.rect(screen, COLOR_GRID, label_rect)
 
         # 2. Render label text (centered)
-        font = pygame.font.SysFont("monospace", 12)
+        font = get_font("monospace", 12)
         text_surf = font.render(self.label, True, COLOR_TEXT)
         text_x = x + (width - text_surf.get_width()) // 2
         text_y = y + (self.label_height - text_surf.get_height()) // 2

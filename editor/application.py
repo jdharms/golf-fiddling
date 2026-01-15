@@ -21,6 +21,7 @@ from .controllers.transform_logic import TransformLogic
 from .controllers.view_state import ViewState
 from .core.constants import *
 from .core.pygame_rendering import Sprite, Tileset
+from .rendering.font_cache import get_font
 from .rendering.greens_renderer import GreensRenderer
 from .rendering.render_context import RenderContext
 from .rendering.terrain_renderer import TerrainRenderer
@@ -59,8 +60,8 @@ class EditorApplication:
         )
         pygame.display.set_caption("NES Open Golf Course Editor")
 
-        self.font = pygame.font.SysFont("monospace", 14)
-        self.font_small = pygame.font.SysFont("monospace", 12)
+        self.font = get_font("monospace", 14)
+        self.font_small = get_font("monospace", 12)
 
         # Track previous tool for revert behavior (used by dialog tools)
         self.previous_tool_name: str | None = None
