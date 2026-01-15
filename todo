@@ -14,6 +14,8 @@ Todos:
 * Green rough fill, green putting surface fill
 * G should cycle through grid sizes, alter palette tool
 * Locking of some sort?
+* Greens writeup
+* release bundling
 
 Bugs:
 * scroll state should be separate for terrain and green if possible
