@@ -19,10 +19,14 @@ from .constants import (
 )
 
 
+_placeholder_cache: dict[int, Surface] = {}
+
 def render_placeholder_tile(size: int) -> Surface:
     """Render the placeholder tile (0x100) with a distinctive pattern."""
+    if size in _placeholder_cache:
+        return _placeholder_cache[size]
+
     surf = Surface((size, size))
-    # Gray checkerboard pattern to indicate meta/placeholder tile
     gray1 = (100, 100, 100)
     gray2 = (140, 140, 140)
     checker_size = size // 4
@@ -33,6 +37,8 @@ def render_placeholder_tile(size: int) -> Surface:
             rect = (col * checker_size, row * checker_size, checker_size, checker_size)
             pygame.draw.rect(surf, color, rect)
 
+    surf = surf.convert()
+    _placeholder_cache[size] = surf
     return surf
 
 
@@ -72,6 +78,7 @@ class Tileset:
                 else:
                     pygame.draw.rect(surf, color, (x * scale, y * scale, scale, scale))
 
+        surf = surf.convert()
         self._cache[cache_key] = surf
         return surf
 
@@ -95,6 +102,7 @@ class Tileset:
                     else:
                         pygame.draw.rect(surf, color, (x * scale, y * scale, scale, scale))
 
+        surf = surf.convert()
         self._cache[cache_key] = surf
         return surf
 

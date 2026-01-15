@@ -6,6 +6,8 @@ Opens a modal dialog when activated.
 
 import pygame
 
+from editor.rendering import font_cache
+
 from editor.ui.metadata_dialog import MetadataDialog
 
 from .base_tool import ToolContext, ToolResult
@@ -61,12 +63,14 @@ class MetadataEditorTool:
             context.state.undo_manager.push_state(context.hole_data)
             self.undo_pushed = True
 
+        font = font_cache.get_font(None, 24)
+
         # Create dialog
         self.dialog = MetadataDialog(
             context.screen_width,
             context.screen_height,
             context.hole_data,
-            pygame.font.Font(None, 24),  # Use default font
+            font,  # Use default font
         )
 
     def on_deactivated(self, context):

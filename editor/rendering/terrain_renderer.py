@@ -14,11 +14,13 @@ from editor.controllers.highlight_state import HighlightState
 from editor.controllers.view_state import ViewState
 from editor.core.constants import TERRAIN_WIDTH, TILE_SIZE
 from editor.core.pygame_rendering import render_placeholder_tile
+
 from golf.formats.hole_data import HoleData
 
 from .grid_renderer import GridRenderer
 from .highlight_utils import INVALID_NEIGHBOR_COLOR, draw_tile_border
 from .render_context import RenderContext
+from .font_cache import get_font
 from .selection_renderer import SelectionRenderer
 from .sprite_renderer import SpriteRenderer
 
@@ -60,18 +62,21 @@ class TerrainRenderer:
         show_invalid_tiles = highlight_state.show_invalid_tiles
         invalid_terrain_tiles = highlight_state.invalid_terrain_tiles
 
-        # Render terrain tiles (only up to terrain_height)
+        # Render terrain tiles (only visible ones)
         visible_height = hole_data.get_terrain_height()
-        for row_idx in range(visible_height):
+
+        # Calculate visible tile range
+        start_col = max(0, int(canvas_offset_x // tile_size))
+        end_col = min(TERRAIN_WIDTH, int((canvas_offset_x + canvas_rect.width) // tile_size) + 2)
+        start_row = max(0, int(canvas_offset_y // tile_size))
+        end_row = min(visible_height, int((canvas_offset_y + canvas_rect.height) // tile_size) + 2)
+
+        for row_idx in range(start_row, end_row):
             row = hole_data.terrain[row_idx]
-            for col_idx, tile_idx in enumerate(row):
+            for col_idx in range(start_col, end_col):
+                tile_idx = row[col_idx]
                 x = canvas_rect.x + col_idx * tile_size - canvas_offset_x
                 y = canvas_rect.y + row_idx * tile_size - canvas_offset_y
-
-                if x + tile_size < canvas_rect.x or x > canvas_rect.right:
-                    continue
-                if y + tile_size < canvas_rect.y or y > canvas_rect.bottom:
-                    continue
 
                 # Render tile - use special rendering for placeholder (0x100)
                 if tile_idx == 0x100:
@@ -332,7 +337,7 @@ class TerrainRenderer:
             screen_points.append(screen_pos)
 
         # Draw lines between consecutive pairs
-        font = pygame.font.SysFont("monospace", 12)
+        font = get_font("monospace", 12)
 
         for i in range(len(screen_points) - 1):
             p1_screen = screen_points[i]

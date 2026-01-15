@@ -39,6 +39,7 @@ class ToolPicker:
         self.rect = rect
         self.on_tool_change = on_tool_change
         self.selected_tool = "paint"  # Default
+        self.icon_font = pygame.font.Font('data/fonts/NotoEmoji.ttf', 36)
         self.buttons: list[ToolButton] = []
 
     def register_tool(self, tool_name: str, label: str, icon: str, is_action: bool = False):
@@ -107,7 +108,7 @@ class ToolPicker:
             pygame.draw.rect(screen, COLOR_TEXT, button.rect, 1)  # Border
 
             # Render icon (centered, larger font)
-            icon_font = pygame.font.Font('data/fonts/NotoEmoji.ttf', 36)
+            icon_font = self.icon_font
             icon_surface = icon_font.render(button.icon_char, True, COLOR_TEXT)
             icon_rect = icon_surface.get_rect(
                 centerx=button.rect.centerx, centery=button.rect.centery - 10
