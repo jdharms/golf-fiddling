@@ -16,6 +16,8 @@ Todos:
 * Locking of some sort?
 * Greens writeup
 * release bundling
+* Remove "Flag n/4" from status bar
+* Create stamp library
 
 Bugs:
 * scroll state should be separate for terrain and green if possible
