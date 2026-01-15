@@ -15,6 +15,7 @@ from editor.controllers.view_state import ViewState
 from editor.core.constants import GREENS_HEIGHT, GREENS_WIDTH, TILE_SIZE
 from golf.formats.hole_data import HoleData
 
+from .font_cache import get_font
 from .grid_renderer import GridRenderer
 from .highlight_utils import draw_tile_border
 from .render_context import RenderContext
@@ -279,7 +280,7 @@ class GreensRenderer:
             screen_points.append(screen_pos)
 
         # Draw lines between consecutive pairs
-        font = pygame.font.SysFont("monospace", 12)
+        font = get_font("monospace", 12)
 
         for i in range(len(screen_points) - 1):
             p1_screen = screen_points[i]
