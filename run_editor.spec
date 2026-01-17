@@ -6,7 +6,13 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ('data/*', 'data'),
+        ('data/chr-ram.bin', 'data'),
+        ('data/green-ram.bin', 'data'),
+        ('data/sprites', 'data/sprites'),
+        ('data/tables', 'data/tables'),
+        ('data/statistics', 'data/statistics'),
+        ('data/fonts', 'data/fonts'),
+        ('data/stamps/built-in', 'data/stamps/built-in'),
     ],
     hiddenimports=[
         'plyer.platforms.linux.filechooser',

@@ -8,6 +8,7 @@ from pathlib import Path
 
 from editor.data import StampData
 from editor.data.category_tree import CategoryTree
+from editor.resources import get_resource_path
 
 
 class StampLibrary:
@@ -20,7 +21,7 @@ class StampLibrary:
         self.category_tree = CategoryTree()  # Hierarchical category tree
 
         # Paths
-        self.built_in_path = Path("data/stamps/built-in")
+        self.built_in_path = get_resource_path("data/stamps/built-in")
         self.user_path = Path.home() / ".config" / "golf-editor" / "stamps"
 
         # Ensure user directory exists

@@ -23,13 +23,14 @@ from editor.core.constants import (
     COLOR_SELECTION,
     COLOR_TEXT,
 )
+from editor.resources import get_resource_path
 from golf.formats.hole_data import HoleData
 from golf.formats.putting_surface import count_putting_surface_tiles
 
 
 def _load_vanilla_sizes() -> list[int]:
     """Load pre-computed putting surface sizes from data file."""
-    data_path = Path(__file__).parent.parent.parent / "data" / "statistics" / "putting_surface_sizes.json"
+    data_path = get_resource_path("data/statistics/putting_surface_sizes.json")
     if data_path.exists():
         with open(data_path) as f:
             data = json.load(f)

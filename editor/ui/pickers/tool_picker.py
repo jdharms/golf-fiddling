@@ -14,6 +14,7 @@ from editor.core.constants import (
     COLOR_PICKER_BG,
     COLOR_TEXT,
 )
+from editor.resources import get_resource_path
 
 
 class ToolButton:
@@ -39,7 +40,7 @@ class ToolPicker:
         self.rect = rect
         self.on_tool_change = on_tool_change
         self.selected_tool = "paint"  # Default
-        self.icon_font = pygame.font.Font('data/fonts/NotoEmoji.ttf', 36)
+        self.icon_font = pygame.font.Font(str(get_resource_path('data/fonts/NotoEmoji.ttf')), 36)
         self.buttons: list[ToolButton] = []
 
     def register_tool(self, tool_name: str, label: str, icon: str, is_action: bool = False):
