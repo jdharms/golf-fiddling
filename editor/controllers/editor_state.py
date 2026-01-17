@@ -6,12 +6,22 @@ Manages application state including editing mode, view settings, and canvas posi
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from editor.data import ClipboardData
 
 from .undo_manager import UndoManager
+
+
+@dataclass
+class CanvasState:
+    """Per-mode canvas viewport state."""
+
+    offset_x: int = 0
+    offset_y: int = 0
+    scale: int = 4
 
 
 class EditorState:
@@ -25,10 +35,11 @@ class EditorState:
         self.show_grid: bool = True
         self.show_invalid_tiles: bool = False
 
-        # Canvas position and zoom
-        self.canvas_offset_x: int = 0
-        self.canvas_offset_y: int = 0
-        self.canvas_scale: int = 4
+        # Canvas position and zoom (per-mode)
+        self._canvas_states: dict[str, CanvasState] = {
+            "terrain": CanvasState(),
+            "greens": CanvasState(),
+        }
 
         # Tool settings
         self.selected_palette: int = 1  # For palette mode
@@ -41,6 +52,31 @@ class EditorState:
 
         # Undo/redo support
         self.undo_manager: UndoManager = UndoManager(max_undo_levels=50)
+
+    # Property accessors for per-mode canvas state
+    @property
+    def canvas_offset_x(self) -> int:
+        return self._canvas_states[self.mode].offset_x
+
+    @canvas_offset_x.setter
+    def canvas_offset_x(self, value: int) -> None:
+        self._canvas_states[self.mode].offset_x = value
+
+    @property
+    def canvas_offset_y(self) -> int:
+        return self._canvas_states[self.mode].offset_y
+
+    @canvas_offset_y.setter
+    def canvas_offset_y(self, value: int) -> None:
+        self._canvas_states[self.mode].offset_y = value
+
+    @property
+    def canvas_scale(self) -> int:
+        return self._canvas_states[self.mode].scale
+
+    @canvas_scale.setter
+    def canvas_scale(self, value: int) -> None:
+        self._canvas_states[self.mode].scale = value
 
     def set_mode(self, mode: str):
         """Set the editing mode."""
@@ -61,6 +97,7 @@ class EditorState:
             self.selected_flag_index = index
 
     def reset_canvas_position(self):
-        """Reset canvas to origin."""
-        self.canvas_offset_x = 0
-        self.canvas_offset_y = 0
+        """Reset canvas to origin for both modes."""
+        for canvas_state in self._canvas_states.values():
+            canvas_state.offset_x = 0
+            canvas_state.offset_y = 0
