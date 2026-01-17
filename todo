@@ -23,10 +23,6 @@ Todos:
 
 Bugs:
 * scroll state should be separate for terrain and green if possible
-* Carpet tool semantics wrt editor state
-  * Clicking a picker tile should keep us in Carpet
-  * What should clicking into terrain mode do? Paint?
-  * Status bar could probably help a little
 
 
 Thoughts:
@@ -51,3 +47,7 @@ Done:
 * Sub-bank fringe tiles according to classifications
 * missing fringe tiles
 * Green rough fill, green putting surface fill
+* Carpet tool semantics wrt editor state
+  * Clicking a picker tile should keep us in Carpet
+  * What should clicking into terrain mode do? Paint?
+  * Status bar could probably help a little

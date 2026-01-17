@@ -262,6 +262,12 @@ class EditorApplication:
     def _set_mode(self, mode: str):
         """Set editing mode."""
         self.state.set_mode(mode)
+
+        # If switching to terrain mode with carpet_paint active, switch to paint tool
+        if mode == "terrain" and self.tool_manager.get_active_tool_name() == "carpet_paint":
+            self.tool_manager.set_active_tool("paint", self.event_handler.tool_context)
+            self.tool_picker.selected_tool = "paint"
+
         self._update_mode_buttons()
 
     def _on_tool_change(self, tool_name: str | None = None):
@@ -420,7 +426,15 @@ class EditorApplication:
             self.highlight_state.clear_picker_hover()
 
     def _on_greens_tile_selected(self, tile_value: int):
-        """Called when a tile is selected in greens picker - auto-switch to paint tool."""
+        """Called when a tile is selected in greens picker - auto-switch to paint tool.
+
+        If carpet_paint is active, keep it active instead of switching to paint.
+        """
+        active_tool = self.tool_manager.get_active_tool_name()
+        if active_tool == "carpet_paint":
+            # Keep carpet paint active
+            return
+
         self.tool_manager.set_active_tool("paint", self.event_handler.tool_context)
         self.tool_picker.selected_tool = "paint"
 
