@@ -21,6 +21,7 @@ from .controllers.transform_logic import TransformLogic
 from .controllers.view_state import ViewState
 from .core.constants import *
 from .core.pygame_rendering import Sprite, Tileset
+from .resources import get_resource_path
 from .rendering.font_cache import get_font
 from .rendering.greens_renderer import GreensRenderer
 from .rendering.render_context import RenderContext
@@ -75,16 +76,16 @@ class EditorApplication:
         # Load sprites
         self.sprites: dict[str, Sprite | None] = {}
         sprite_files = {
-            "flag": "data/sprites/flag.json",
-            "tee": "data/sprites/tee-block.json",
-            "ball": "data/sprites/ball.json",
-            "green-cup": "data/sprites/green-cup.json",
-            "green-flag": "data/sprites/green-flag.json",
+            "flag": get_resource_path("data/sprites/flag.json"),
+            "tee": get_resource_path("data/sprites/tee-block.json"),
+            "ball": get_resource_path("data/sprites/ball.json"),
+            "green-cup": get_resource_path("data/sprites/green-cup.json"),
+            "green-flag": get_resource_path("data/sprites/green-flag.json"),
         }
 
         for sprite_name, sprite_path in sprite_files.items():
             try:
-                self.sprites[sprite_name] = Sprite(sprite_path)
+                self.sprites[sprite_name] = Sprite(str(sprite_path))
             except FileNotFoundError:
                 print(f"Warning: Sprite file not found: {sprite_path}")
                 self.sprites[sprite_name] = None
@@ -93,14 +94,16 @@ class EditorApplication:
                 self.sprites[sprite_name] = None
 
         # Load compression tables for transform drag feature
-        self.compression_tables = load_compression_tables()
+        tables_path = str(get_resource_path("data/tables/compression_tables.json"))
+        self.compression_tables = load_compression_tables(tables_path)
         self.transform_logic = TransformLogic(self.compression_tables)
 
         # Load terrain neighbor validator
         try:
             from golf.core.neighbor_validator import TerrainNeighborValidator
 
-            self.terrain_neighbor_validator = TerrainNeighborValidator()
+            neighbors_path = str(get_resource_path("data/tables/terrain_neighbors.json"))
+            self.terrain_neighbor_validator = TerrainNeighborValidator(neighbors_path)
         except FileNotFoundError:
             print(
                 "Warning: terrain_neighbors.json not found, neighbor validation disabled"

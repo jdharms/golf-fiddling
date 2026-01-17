@@ -12,6 +12,7 @@ Defaults to data/chr-ram.bin and data/green-ram.bin if CHR files not specified.
 import sys
 
 from .application import EditorApplication
+from .resources import get_resource_path
 
 
 def parse_arguments():
@@ -27,9 +28,9 @@ def parse_arguments():
         golf-editor terrain.bin greens.bin       # custom CHR, no hole
         golf-editor terrain.bin greens.bin hole.json  # all explicit
     """
-    # Default CHR paths
-    DEFAULT_TERRAIN_CHR = "data/chr-ram.bin"
-    DEFAULT_GREENS_CHR = "data/green-ram.bin"
+    # Default CHR paths (resolved for PyInstaller bundling)
+    DEFAULT_TERRAIN_CHR = str(get_resource_path("data/chr-ram.bin"))
+    DEFAULT_GREENS_CHR = str(get_resource_path("data/green-ram.bin"))
 
     args = sys.argv[1:]  # Exclude program name
 
