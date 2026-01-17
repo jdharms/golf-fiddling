@@ -674,9 +674,6 @@ class EditorApplication:
 
         status_parts: list[str] = []
 
-        if self.state.mode == "terrain" and self.hole_data.metadata:
-            status_parts.append(f"Flag: {self.state.selected_flag_index + 1}/4")
-
         # Check picker hover first (priority over canvas)
         picker_hover_tile = None
         if self.state.mode == "greens":

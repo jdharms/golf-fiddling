@@ -17,12 +17,11 @@ Todos:
 * Greens writeup
 * Greens stats
 * release bundling
-* Remove "Flag n/4" from status bar
 * Create stamp library
 
 
 Bugs:
-* scroll state should be separate for terrain and green if possible
+
 
 
 Thoughts:
@@ -51,3 +50,5 @@ Done:
   * Clicking a picker tile should keep us in Carpet
   * What should clicking into terrain mode do? Paint?
   * Status bar could probably help a little
+* Remove "Flag n/4" from status bar
+* scroll state should be separate for terrain and green if possible
