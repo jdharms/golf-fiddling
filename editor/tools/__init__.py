@@ -5,6 +5,7 @@ Editor tools for painting, transforming, and modifying hole data.
 """
 
 from .base_tool import Tool, ToolContext, ToolResult
+from .carpet_paint_tool import CarpetPaintTool
 from .eyedropper_tool import EyedropperTool
 from .forest_fill_tool import ForestFillTool
 from .measure_tool import MeasureTool
@@ -18,6 +19,7 @@ __all__ = [
     "ToolContext",
     "ToolResult",
     "ToolManager",
+    "CarpetPaintTool",
     "PaintTool",
     "TransformTool",
     "EyedropperTool",

@@ -8,18 +8,18 @@ Todos:
 * Invalid neighbor indicator should be a single border per pairing
 * Add lie chart to rangefinder
 * Add greens to rangefinder?
-* Should right click in transform send us back to paint + eyedropper?
-  * How would that work?  How does paint get that right click event?
 * F1 through F4 keys should send us to flag 1 through flag 4
-* Green rough fill, green putting surface fill
-* G should cycle through grid sizes, alter palette tool
-* Locking of some sort?
+* G should cycle through grid sizes, alter palette tool?
 * Greens writeup
 * Greens stats
 * release bundling
 
 Bugs:
 * scroll state should be separate for terrain and green if possible
+* Carpet tool semantics wrt editor state
+  * Clicking a picker tile should keep us in Carpet
+  * What should clicking into terrain mode do? Paint?
+  * Status bar could probably help a little
 
 
 Thoughts:
@@ -43,3 +43,4 @@ Done:
 * Greens compression is extremely messed up?
 * Sub-bank fringe tiles according to classifications
 * missing fringe tiles
+* Green rough fill, green putting surface fill

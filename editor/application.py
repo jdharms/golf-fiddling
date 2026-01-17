@@ -26,6 +26,7 @@ from .rendering.greens_renderer import GreensRenderer
 from .rendering.render_context import RenderContext
 from .rendering.terrain_renderer import TerrainRenderer
 from .tools.add_row_tool import AddRowTool
+from .tools.carpet_paint_tool import CarpetPaintTool
 from .tools.cycle_tool import CycleTool
 from .tools.eyedropper_tool import EyedropperTool
 from .tools.forest_fill_tool import ForestFillTool
@@ -159,10 +160,11 @@ class EditorApplication:
         self.tool_picker.register_tool("selection", "Select", "✂")
         self.tool_picker.register_tool("stamp", "Stamp", "📋")
         self.tool_picker.register_tool("transform", "Transform", "↔")
-        self.tool_picker.register_tool("forest_fill", "Forest Fill", "🌲")
-        self.tool_picker.register_tool("rough_fill", "Rough Fill", "🌾", is_action=True)
-        self.tool_picker.register_tool("fringe_generation", "Fringe Gen", "🌊")
         self.tool_picker.register_tool("cycle", "Cycle", "🔄")
+        self.tool_picker.register_tool("forest_fill", "Forest Fill", "🌲")
+        self.tool_picker.register_tool("fringe_generation", "Fringe Gen", "🌊")
+        self.tool_picker.register_tool("rough_fill", "Rough Fill", "🌾", is_action=True)
+        self.tool_picker.register_tool("carpet_paint", "Carpet", "⛳")
         self.tool_picker.register_tool("measure", "Measure", "📏")
         self.tool_picker.register_tool("metadata_editor", "Metadata", "📝")
         self.tool_picker.register_tool("position", "Position", "🎯")
@@ -184,6 +186,7 @@ class EditorApplication:
         # Create tool manager and register tools
         self.tool_manager = ToolManager()
         self.tool_manager.register_tool("paint", PaintTool())
+        self.tool_manager.register_tool("carpet_paint", CarpetPaintTool())
         self.tool_manager.register_tool("selection", SelectionTool())
         self.tool_manager.register_tool("stamp", StampTool())
         self.tool_manager.register_tool("palette", PaletteTool())
