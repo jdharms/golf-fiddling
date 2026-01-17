@@ -8,7 +8,11 @@ a = Analysis(
     datas=[
         ('data/*', 'data'),
     ],
-    hiddenimports=[],
+    hiddenimports=[
+        'plyer.platforms.linux.filechooser',
+        'plyer.platforms.win.filechooser',
+        'plyer.platforms.macosx.filechooser',
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
