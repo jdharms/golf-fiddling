@@ -23,6 +23,7 @@ golf-analyze-transform = "tools.analyze_transform:main"
 golf-analyze-neighbors = "tools.analyze_neighbors:main"
 golf-analyze-greens-neighbors = "tools.analyze_greens_neighbors:main"
 golf-render-web = "tools.render_web:main"
+golf-analyze-putting = "tools.analyze_putting_surface:main"
 
 [tool.uv]
 package = true

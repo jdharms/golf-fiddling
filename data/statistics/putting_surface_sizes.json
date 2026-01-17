@@ -1,0 +1,276 @@
+{
+  "description": "Putting surface tile counts for vanilla holes",
+  "holes": [
+    {
+      "course": "japan",
+      "hole": 1,
+      "size": 258
+    },
+    {
+      "course": "japan",
+      "hole": 2,
+      "size": 167
+    },
+    {
+      "course": "japan",
+      "hole": 3,
+      "size": 244
+    },
+    {
+      "course": "japan",
+      "hole": 4,
+      "size": 175
+    },
+    {
+      "course": "japan",
+      "hole": 5,
+      "size": 250
+    },
+    {
+      "course": "japan",
+      "hole": 6,
+      "size": 181
+    },
+    {
+      "course": "japan",
+      "hole": 7,
+      "size": 188
+    },
+    {
+      "course": "japan",
+      "hole": 8,
+      "size": 251
+    },
+    {
+      "course": "japan",
+      "hole": 9,
+      "size": 234
+    },
+    {
+      "course": "japan",
+      "hole": 10,
+      "size": 167
+    },
+    {
+      "course": "japan",
+      "hole": 11,
+      "size": 250
+    },
+    {
+      "course": "japan",
+      "hole": 12,
+      "size": 221
+    },
+    {
+      "course": "japan",
+      "hole": 13,
+      "size": 142
+    },
+    {
+      "course": "japan",
+      "hole": 14,
+      "size": 260
+    },
+    {
+      "course": "japan",
+      "hole": 15,
+      "size": 197
+    },
+    {
+      "course": "japan",
+      "hole": 16,
+      "size": 128
+    },
+    {
+      "course": "japan",
+      "hole": 17,
+      "size": 243
+    },
+    {
+      "course": "japan",
+      "hole": 18,
+      "size": 148
+    },
+    {
+      "course": "us",
+      "hole": 1,
+      "size": 190
+    },
+    {
+      "course": "us",
+      "hole": 2,
+      "size": 237
+    },
+    {
+      "course": "us",
+      "hole": 3,
+      "size": 280
+    },
+    {
+      "course": "us",
+      "hole": 4,
+      "size": 235
+    },
+    {
+      "course": "us",
+      "hole": 5,
+      "size": 166
+    },
+    {
+      "course": "us",
+      "hole": 6,
+      "size": 237
+    },
+    {
+      "course": "us",
+      "hole": 7,
+      "size": 242
+    },
+    {
+      "course": "us",
+      "hole": 8,
+      "size": 207
+    },
+    {
+      "course": "us",
+      "hole": 9,
+      "size": 254
+    },
+    {
+      "course": "us",
+      "hole": 10,
+      "size": 255
+    },
+    {
+      "course": "us",
+      "hole": 11,
+      "size": 255
+    },
+    {
+      "course": "us",
+      "hole": 12,
+      "size": 274
+    },
+    {
+      "course": "us",
+      "hole": 13,
+      "size": 246
+    },
+    {
+      "course": "us",
+      "hole": 14,
+      "size": 186
+    },
+    {
+      "course": "us",
+      "hole": 15,
+      "size": 256
+    },
+    {
+      "course": "us",
+      "hole": 16,
+      "size": 224
+    },
+    {
+      "course": "us",
+      "hole": 17,
+      "size": 226
+    },
+    {
+      "course": "us",
+      "hole": 18,
+      "size": 260
+    },
+    {
+      "course": "uk",
+      "hole": 1,
+      "size": 266
+    },
+    {
+      "course": "uk",
+      "hole": 2,
+      "size": 280
+    },
+    {
+      "course": "uk",
+      "hole": 3,
+      "size": 247
+    },
+    {
+      "course": "uk",
+      "hole": 4,
+      "size": 258
+    },
+    {
+      "course": "uk",
+      "hole": 5,
+      "size": 277
+    },
+    {
+      "course": "uk",
+      "hole": 6,
+      "size": 239
+    },
+    {
+      "course": "uk",
+      "hole": 7,
+      "size": 211
+    },
+    {
+      "course": "uk",
+      "hole": 8,
+      "size": 221
+    },
+    {
+      "course": "uk",
+      "hole": 9,
+      "size": 273
+    },
+    {
+      "course": "uk",
+      "hole": 10,
+      "size": 173
+    },
+    {
+      "course": "uk",
+      "hole": 11,
+      "size": 260
+    },
+    {
+      "course": "uk",
+      "hole": 12,
+      "size": 264
+    },
+    {
+      "course": "uk",
+      "hole": 13,
+      "size": 293
+    },
+    {
+      "course": "uk",
+      "hole": 14,
+      "size": 204
+    },
+    {
+      "course": "uk",
+      "hole": 15,
+      "size": 238
+    },
+    {
+      "course": "uk",
+      "hole": 16,
+      "size": 268
+    },
+    {
+      "course": "uk",
+      "hole": 17,
+      "size": 208
+    },
+    {
+      "course": "uk",
+      "hole": 18,
+      "size": 272
+    }
+  ],
+  "sizes": [258, 167, 244, 175, 250, 181, 188, 251, 234, 167, 250, 221, 142, 260, 197, 128, 243, 148, 190, 237, 280, 235, 166, 237, 242, 207, 254, 255, 255, 274, 246, 186, 256, 224, 226, 260, 266, 280, 247, 258, 277, 239, 211, 221, 273, 173, 260, 264, 293, 204, 238, 268, 208, 272]
+}

@@ -15,7 +15,6 @@ Todos:
 * F1 through F4 keys should send us to flag 1 through flag 4
 * G should cycle through grid sizes, alter palette tool?
 * Greens writeup
-* Greens stats
 * release bundling
 * Create stamp library
 
@@ -52,3 +51,4 @@ Done:
   * Status bar could probably help a little
 * Remove "Flag n/4" from status bar
 * scroll state should be separate for terrain and green if possible
+* Greens stats
