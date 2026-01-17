@@ -1,6 +1,10 @@
 Investigate:
 * Wooden signs?
 * Scorecard course name?
+
+
+Non-editor:
+* "missed" shots
 * Does SuperShot! do anything?
 
 
@@ -15,6 +19,7 @@ Todos:
 * release bundling
 * Remove "Flag n/4" from status bar
 * Create stamp library
+
 
 Bugs:
 * scroll state should be separate for terrain and green if possible
