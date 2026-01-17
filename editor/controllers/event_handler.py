@@ -37,6 +37,7 @@ class EventHandler:
         tool_picker: ToolPicker,
         stamp_browser,
         on_load: Callable[[], None],
+        on_load_file: Callable[[str], None],
         on_save: Callable[[], None],
         on_mode_change: Callable[[], None],
         on_flag_change: Callable[[], None],
@@ -59,6 +60,7 @@ class EventHandler:
             tool_manager: Tool manager for handling tools
             stamp_browser: Stamp browser widget
             on_load: Callback for load action
+            on_load_file: Callback for loading a specific file (drag-and-drop)
             on_save: Callback for save action
             on_mode_change: Callback when mode changes
             on_flag_change: Callback when flag selection changes
@@ -77,6 +79,7 @@ class EventHandler:
         self.screen_height = screen_height
         self.tool_manager = tool_manager
         self.on_load = on_load
+        self.on_load_file = on_load_file
         self.on_save = on_save
         self.on_mode_change = on_mode_change
         self.on_create_stamp = on_create_stamp
@@ -204,6 +207,11 @@ class EventHandler:
 
             elif event.type == pygame.VIDEORESIZE:
                 self.on_resize(event.w, event.h)
+
+            elif event.type == pygame.DROPFILE:
+                # Handle drag-and-drop file loading
+                if event.file.lower().endswith('.json'):
+                    self.on_load_file(event.file)
 
         return True
 

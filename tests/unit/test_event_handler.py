@@ -57,6 +57,7 @@ def event_handler(editor_state, hole_data, tool_manager):
 
     # Create mock callbacks
     mock_on_load = Mock()
+    mock_on_load_file = Mock()
     mock_on_save = Mock()
     mock_on_mode_change = Mock()
     mock_on_flag_change = Mock()
@@ -76,6 +77,7 @@ def event_handler(editor_state, hole_data, tool_manager):
         tool_picker=mock_tool_picker,
         stamp_browser=mock_stamp_browser,
         on_load=mock_on_load,
+        on_load_file=mock_on_load_file,
         on_save=mock_on_save,
         on_mode_change=mock_on_mode_change,
         on_flag_change=mock_on_flag_change,

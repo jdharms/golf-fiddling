@@ -60,6 +60,7 @@ def editor_setup():
         mock_tool_picker,
         mock_stamp_browser,
         on_load=lambda: None,
+        on_load_file=lambda path: None,
         on_save=lambda: None,
         on_mode_change=lambda: None,
         on_flag_change=lambda: None,

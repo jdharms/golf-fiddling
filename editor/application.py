@@ -216,6 +216,7 @@ class EditorApplication:
             self.tool_picker,
             self.stamp_browser,
             on_load=self._on_load,
+            on_load_file=self._on_load_file,
             on_save=self._on_save,
             on_mode_change=self._update_mode_buttons,
             on_flag_change=self._update_flag_buttons,
@@ -373,6 +374,14 @@ class EditorApplication:
             self.state.undo_manager.set_initial_state(self.hole_data)
             # Invalidate cache when loading new hole
             self.invalidate_terrain_validation_cache()
+
+    def _on_load_file(self, path: str):
+        """Load a hole file from a specific path (e.g., drag-and-drop)."""
+        if not path.lower().endswith('.json'):
+            return
+        self.load_hole(path)
+        # Invalidate cache when loading new hole
+        self.invalidate_terrain_validation_cache()
 
     def _on_save(self):
         """Save the current hole."""
