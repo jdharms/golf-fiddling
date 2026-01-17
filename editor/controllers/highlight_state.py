@@ -41,6 +41,9 @@ class HighlightState:
         self.fringe_initial_pos: tuple[int, int] | None = None
         self.fringe_current_pos: tuple[int, int] | None = None
 
+        # Carpet paint tool active state (for visual dimming)
+        self.carpet_paint_active: bool = False
+
     def set_picker_hover(self, tile_value: int | None):
         """
         Update the shift-hover tile highlight.

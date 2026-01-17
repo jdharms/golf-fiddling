@@ -13,6 +13,7 @@ from pygame import Surface
 from editor.controllers.highlight_state import HighlightState
 from editor.controllers.view_state import ViewState
 from editor.core.constants import GREENS_HEIGHT, GREENS_WIDTH, TILE_SIZE
+from editor.tools.carpet_paint_tool import PROTECTED_TILES
 from golf.formats.hole_data import HoleData
 
 from .font_cache import get_font
@@ -59,6 +60,9 @@ class GreensRenderer:
         transform_state = highlight_state.transform_state
         shift_hover_tile = highlight_state.shift_hover_tile
 
+        # Check if carpet paint tool is active (for dimming protected tiles)
+        carpet_paint_active = highlight_state.carpet_paint_active
+
         # Render greens tiles
         for row_idx, row in enumerate(hole_data.greens):
             for col_idx, tile_idx in enumerate(row):
@@ -72,6 +76,12 @@ class GreensRenderer:
 
                 tile_surf = tileset.render_tile_greens(tile_idx, canvas_scale)
                 screen.blit(tile_surf, (x, y))
+
+                # Apply dimming overlay for protected tiles when carpet paint is active
+                if carpet_paint_active and tile_idx in PROTECTED_TILES:
+                    dim_surf = pygame.Surface((tile_size, tile_size), pygame.SRCALPHA)
+                    dim_surf.fill((0, 0, 0, 128))  # 50% black overlay
+                    screen.blit(dim_surf, (x, y))
 
         # Render shift-hover highlights (AFTER base tiles, BEFORE transform preview)
         if shift_hover_tile is not None:
