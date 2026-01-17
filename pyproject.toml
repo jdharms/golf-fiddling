@@ -52,6 +52,7 @@ dev = [
     "pytest-cov>=4.1.0",
     "pyright>=1.1.407",
     "ruff>=0.14.10",
+    "pyinstaller>=6.18.0",
 ]
 
 [tool.hatch.build.targets.wheel]
