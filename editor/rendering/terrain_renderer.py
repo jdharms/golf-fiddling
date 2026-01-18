@@ -35,7 +35,6 @@ class TerrainRenderer:
         hole_data: HoleData,
         render_ctx: RenderContext,
         highlight_state: HighlightState,
-        active_tool_name: str | None = None,
     ):
         """
         Render terrain canvas view.
@@ -46,7 +45,6 @@ class TerrainRenderer:
             hole_data: Hole data to render
             render_ctx: Rendering resources and settings
             highlight_state: Visual highlights and preview state
-            active_tool_name: Name of currently active tool (for grid rendering)
         """
         canvas_rect = view_state.canvas_rect
         canvas_offset_x = view_state.offset_x
@@ -55,7 +53,7 @@ class TerrainRenderer:
         tile_size = view_state.tile_size
         tileset = render_ctx.tileset
         sprites = render_ctx.sprites
-        show_grid = render_ctx.show_grid
+        grid_mode = render_ctx.grid_mode
         selected_flag_index = render_ctx.selected_flag_index
         transform_state = highlight_state.transform_state
         shift_hover_tile = highlight_state.shift_hover_tile
@@ -190,11 +188,9 @@ class TerrainRenderer:
             )
 
         # Render grid
-        if show_grid:
-            supertile_mode = (active_tool_name == "palette")
-            GridRenderer.render(
-                screen, view_state, TERRAIN_WIDTH, hole_data.get_terrain_height(), supertile_mode
-            )
+        GridRenderer.render(
+            screen, view_state, TERRAIN_WIDTH, hole_data.get_terrain_height(), grid_mode
+        )
 
     @staticmethod
     def _render_transform_preview(

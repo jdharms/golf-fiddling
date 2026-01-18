@@ -13,7 +13,7 @@ from golf.core.compressor import load_compression_tables
 from golf.formats.hole_data import HoleData
 
 from .controllers.better_forest_fill import BetterForestFiller
-from .controllers.editor_state import EditorState
+from .controllers.editor_state import EditorState, GridMode
 from .controllers.event_handler import EventHandler
 from .controllers.highlight_state import HighlightState
 from .controllers.stamp_library import StampLibrary
@@ -246,7 +246,7 @@ class EditorApplication:
             on_load=self._on_load,
             on_save=self._on_save,
             on_set_mode=self._set_mode,
-            on_toggle_grid=self.state.toggle_grid,
+            on_toggle_grid=self.state.cycle_grid_mode,
             on_select_flag=self._select_flag,
             on_set_palette=self._set_palette,
         )
@@ -293,6 +293,10 @@ class EditorApplication:
             else:
                 # Normal tool switch - track previous tool for revert
                 self.previous_tool_name = current_tool
+
+        # Auto-switch to supertile grid when palette tool activates
+        if tool_name == "palette":
+            self.state.grid_mode = GridMode.SUPERTILE
 
     def _revert_to_previous_tool(self):
         """Revert to the previously active tool.
@@ -644,7 +648,7 @@ class EditorApplication:
                 self.greens_tileset,
                 self.sprites,
                 self.state.mode,
-                self.state.show_grid,
+                self.state.grid_mode,
                 self.state.selected_flag_index,
                 self.state,  # Add state for clipboard/paste preview access
             )
@@ -660,18 +664,16 @@ class EditorApplication:
                 self.terrain_tileset,
                 self.sprites,
                 self.state.mode,
-                self.state.show_grid,
+                self.state.grid_mode,
                 self.state.selected_flag_index,
                 self.state,  # Add state for clipboard/paste preview access
             )
-            active_tool_name = self.tool_manager.get_active_tool_name()
             TerrainRenderer.render(
                 self.screen,
                 view_state,
                 self.hole_data,
                 render_ctx,
                 self.highlight_state,
-                active_tool_name,
             )
 
     def _render_status(self):

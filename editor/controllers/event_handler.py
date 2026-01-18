@@ -226,7 +226,7 @@ class EventHandler:
     def _handle_global_keys(self, event) -> bool:
         """Handle keyboard input."""
         if event.key == pygame.K_g:
-            self.state.toggle_grid()
+            self.state.cycle_grid_mode()
 
         elif event.key == pygame.K_1:
             self.state.selected_palette = 1

@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import pygame
 import pytest
 
-from editor.controllers.editor_state import EditorState
+from editor.controllers.editor_state import EditorState, GridMode
 from editor.controllers.event_handler import EventHandler
 from editor.tools.forest_fill_tool import ForestFillTool
 from editor.tools.paint_tool import PaintTool
@@ -210,14 +210,24 @@ class TestOtherGlobalShortcuts:
             # After undo, should not be able to undo again (only had 1 state)
             assert not event_handler.state.undo_manager.can_undo()
 
-    def test_g_toggles_grid(self, mock_pygame, event_handler):
-        """G key should toggle grid visibility."""
-        initial_grid_state = event_handler.state.show_grid
+    def test_g_cycles_grid_mode(self, mock_pygame, event_handler):
+        """G key should cycle through grid modes: TILE -> SUPERTILE -> OFF -> TILE."""
+        # Start at TILE (default)
+        assert event_handler.state.grid_mode == GridMode.TILE
         event = MockEvent(pygame.KEYDOWN, key=pygame.K_g)
 
         with patch("pygame.key.get_mods", return_value=0):
+            # First press: TILE -> SUPERTILE
             event_handler.handle_events([event])
-            assert event_handler.state.show_grid == (not initial_grid_state)
+            assert event_handler.state.grid_mode == GridMode.SUPERTILE
+
+            # Second press: SUPERTILE -> OFF
+            event_handler.handle_events([event])
+            assert event_handler.state.grid_mode == GridMode.OFF
+
+            # Third press: OFF -> TILE
+            event_handler.handle_events([event])
+            assert event_handler.state.grid_mode == GridMode.TILE
 
 
 class TestEventHandlerDelegation:

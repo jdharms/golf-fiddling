@@ -55,7 +55,7 @@ class GreensRenderer:
         tile_size = view_state.tile_size
         tileset = render_ctx.tileset
         sprites = render_ctx.sprites
-        show_grid = render_ctx.show_grid
+        grid_mode = render_ctx.grid_mode
         selected_flag_index = render_ctx.selected_flag_index
         transform_state = highlight_state.transform_state
         shift_hover_tile = highlight_state.shift_hover_tile
@@ -178,8 +178,7 @@ class GreensRenderer:
             )
 
         # Render grid
-        if show_grid:
-            GridRenderer.render(screen, view_state, GREENS_WIDTH, GREENS_HEIGHT)
+        GridRenderer.render(screen, view_state, GREENS_WIDTH, GREENS_HEIGHT, grid_mode)
 
     @staticmethod
     def _render_transform_preview(

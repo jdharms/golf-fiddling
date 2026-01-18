@@ -7,6 +7,7 @@ Renders grid overlay on the canvas for tile alignment.
 import pygame
 from pygame import Surface
 
+from editor.controllers.editor_state import GridMode
 from editor.controllers.view_state import ViewState
 from editor.core.constants import COLOR_GRID, COLOR_GRID_SUPER
 
@@ -20,7 +21,7 @@ class GridRenderer:
         view_state: ViewState,
         width: int,
         height: int,
-        supertile_mode: bool = False,
+        grid_mode: GridMode = GridMode.TILE,
     ):
         """
         Render grid overlay.
@@ -30,14 +31,17 @@ class GridRenderer:
             view_state: Viewport camera and coordinate transformations
             width: Grid width in tiles
             height: Grid height in tiles
-            supertile_mode: If True, render 2x2 supertile grid instead of 1x1 tile grid
+            grid_mode: Grid display mode (OFF, TILE, or SUPERTILE)
         """
+        # Early return if grid is off
+        if grid_mode == GridMode.OFF:
+            return
         canvas_rect = view_state.canvas_rect
         tile_size = view_state.tile_size
         offset_x = view_state.offset_x
         offset_y = view_state.offset_y
 
-        if supertile_mode:
+        if grid_mode == GridMode.SUPERTILE:
             # Render 2x2 supertile grid
             supertile_size = tile_size * 2
             super_width = (width + 1) // 2

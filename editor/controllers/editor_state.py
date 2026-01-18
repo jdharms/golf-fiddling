@@ -7,12 +7,21 @@ Manages application state including editing mode, view settings, and canvas posi
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from editor.data import ClipboardData
 
 from .undo_manager import UndoManager
+
+
+class GridMode(Enum):
+    """Grid display mode."""
+
+    OFF = auto()  # No grid displayed
+    TILE = auto()  # Standard 1x1 tile grid
+    SUPERTILE = auto()  # 2x2 supertile grid
 
 
 @dataclass
@@ -32,7 +41,7 @@ class EditorState:
         self.mode: str = "terrain"  # "terrain" or "greens"
 
         # View settings
-        self.show_grid: bool = True
+        self.grid_mode: GridMode = GridMode.TILE
         self.show_invalid_tiles: bool = False
 
         # Canvas position and zoom (per-mode)
@@ -83,9 +92,19 @@ class EditorState:
         if mode in ("terrain", "greens"):
             self.mode = mode
 
-    def toggle_grid(self):
-        """Toggle grid visibility."""
-        self.show_grid = not self.show_grid
+    def cycle_grid_mode(self):
+        """Cycle through grid modes: OFF -> TILE -> SUPERTILE -> OFF."""
+        if self.grid_mode == GridMode.OFF:
+            self.grid_mode = GridMode.TILE
+        elif self.grid_mode == GridMode.TILE:
+            self.grid_mode = GridMode.SUPERTILE
+        else:
+            self.grid_mode = GridMode.OFF
+
+    @property
+    def show_grid(self) -> bool:
+        """Backward compatibility: returns True if grid is visible."""
+        return self.grid_mode != GridMode.OFF
 
     def toggle_invalid_tiles(self):
         """Toggle invalid tile highlighting."""

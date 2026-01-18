@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from editor.controllers.editor_state import EditorState
 
+from editor.controllers.editor_state import GridMode
 from editor.core.pygame_rendering import Sprite, Tileset
 
 
@@ -22,7 +23,7 @@ class RenderContext:
         tileset: Tileset,
         sprites: dict[str, Sprite | None],
         mode: str,
-        show_grid: bool = True,
+        grid_mode: GridMode = GridMode.TILE,
         selected_flag_index: int = 0,
         state: EditorState | None = None,
     ):
@@ -33,13 +34,13 @@ class RenderContext:
             tileset: Tileset to use (terrain or greens)
             sprites: Dictionary of sprite objects
             mode: Current editing mode ("terrain", "palette", "greens")
-            show_grid: Whether to show grid overlay
+            grid_mode: Grid display mode (OFF, TILE, or SUPERTILE)
             selected_flag_index: Which flag position to render (0-3)
             state: EditorState for clipboard/paste preview access
         """
         self.tileset = tileset
         self.sprites = sprites
         self.mode = mode
-        self.show_grid = show_grid
+        self.grid_mode = grid_mode
         self.selected_flag_index = selected_flag_index
         self.state = state
