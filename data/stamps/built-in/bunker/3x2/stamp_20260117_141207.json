@@ -1,0 +1,22 @@
+{
+  "id": "stamp_20260117_141207",
+  "name": "",
+  "description": "",
+  "created": "2026-01-17T14:12:07.234156",
+  "category": "bunker/3x2",
+  "tags": [],
+  "mode": "terrain",
+  "width": 3,
+  "height": 2,
+  "tiles": {
+    "rows": [
+      "52 4A 41",
+      "-- -- 55"
+    ]
+  },
+  "attributes": {
+    "rows": [
+      [2, 2]
+    ]
+  }
+}

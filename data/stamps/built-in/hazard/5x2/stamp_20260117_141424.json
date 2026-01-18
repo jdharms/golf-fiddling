@@ -1,0 +1,22 @@
+{
+  "id": "stamp_20260117_141424",
+  "name": "",
+  "description": "",
+  "created": "2026-01-17T14:14:24.354149",
+  "category": "hazard/5x2",
+  "tags": [],
+  "mode": "terrain",
+  "width": 5,
+  "height": 2,
+  "tiles": {
+    "rows": [
+      "40 4A 4A 44 45",
+      "58 71 71 72 73"
+    ]
+  },
+  "attributes": {
+    "rows": [
+      [0, 0, 0]
+    ]
+  }
+}

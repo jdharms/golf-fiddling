@@ -1,0 +1,22 @@
+{
+  "id": "stamp_20260117_201217",
+  "name": "tree",
+  "description": "",
+  "created": "2026-01-17T20:12:17.954628",
+  "category": "terrain",
+  "tags": [],
+  "mode": "terrain",
+  "width": 1,
+  "height": 2,
+  "tiles": {
+    "rows": [
+      "9C",
+      "9D"
+    ]
+  },
+  "attributes": {
+    "rows": [
+      [3]
+    ]
+  }
+}
