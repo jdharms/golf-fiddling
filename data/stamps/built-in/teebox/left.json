@@ -1,0 +1,22 @@
+{
+  "id": "stamp_20260117_134558",
+  "name": "left",
+  "description": "",
+  "created": "2026-01-17T13:45:58.165427",
+  "category": "teebox",
+  "tags": [],
+  "mode": "terrain",
+  "width": 3,
+  "height": 2,
+  "tiles": {
+    "rows": [
+      "39 3C 37",
+      "3B 35 35"
+    ]
+  },
+  "attributes": {
+    "rows": [
+      [1, 1]
+    ]
+  }
+}
