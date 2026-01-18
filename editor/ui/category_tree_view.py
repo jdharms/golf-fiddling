@@ -22,7 +22,7 @@ class CategoryTreeView:
     # Visual constants
     ITEM_HEIGHT = 24
     INDENT_SIZE = 16
-    FOLDER_ICON_EXPANDED = "▼"
+    FOLDER_ICON_EXPANDED = "🔻"
     FOLDER_ICON_COLLAPSED = "▶"
 
     def __init__(
@@ -108,7 +108,7 @@ class CategoryTreeView:
         if 0 <= item_index < len(flattened):
             node, depth = flattened[item_index]
             icon_x_start = depth * self.INDENT_SIZE + 5
-            icon_x_end = icon_x_start + 12
+            icon_x_end = icon_x_start + 18
 
             if icon_x_start <= local_x < icon_x_end:
                 return (node.path, "icon")
@@ -161,7 +161,7 @@ class CategoryTreeView:
                 icon = self.FOLDER_ICON_EXPANDED if node.is_expanded else self.FOLDER_ICON_COLLAPSED
                 icon_surf = self.icon_font.render(icon, True, COLOR_TEXT)
                 screen.blit(icon_surf, (indent_x, item_y + 4))
-                label_x = indent_x + 16
+                label_x = indent_x + 24
             else:
                 label_x = indent_x + 8
 
