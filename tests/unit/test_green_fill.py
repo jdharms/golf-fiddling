@@ -1,5 +1,5 @@
 """
-Unit tests for RoughFill algorithm.
+Unit tests for GreenFill algorithm.
 """
 
 import json
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from editor.algorithms.rough_fill import RoughFill
+from editor.algorithms.green_fill import GreenFill
 
 
 # =============================================================================
@@ -25,7 +25,7 @@ def parse_greens_hex(hex_rows: list[str]) -> list[list[int]]:
 
 def replace_rough_with_placeholder(greens: list[list[int]], placeholder: int = 0x100) -> list[list[int]]:
     """Replace all rough tiles with placeholder value."""
-    rough_tiles = RoughFill.ROUGH_TILES
+    rough_tiles = GreenFill.ROUGH_TILES
     result = []
     for row in greens:
         new_row = [placeholder if tile in rough_tiles else tile for tile in row]
@@ -51,7 +51,7 @@ class TestActiveSetDetection:
 
     @pytest.fixture
     def filler(self):
-        return RoughFill()
+        return GreenFill()
 
     def test_empty_grid_returns_empty_set(self, filler):
         """Empty grid should return empty active set."""
@@ -61,7 +61,7 @@ class TestActiveSetDetection:
 
     def test_single_placeholder_at_origin(self, filler):
         """Single placeholder at (0,0) should be in active set."""
-        greens = [[RoughFill.PLACEHOLDER]]
+        greens = [[GreenFill.PLACEHOLDER]]
         active = filler._find_active_set(greens, 1, 1)
         assert active == {(0, 0)}
 
@@ -74,7 +74,7 @@ class TestActiveSetDetection:
     def test_connected_placeholders_all_found(self, filler):
         """All placeholders connected to (0,0) should be found."""
         # 3x3 grid, all placeholders
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         greens = [
             [p, p, p],
             [p, p, p],
@@ -89,7 +89,7 @@ class TestActiveSetDetection:
     def test_interior_placeholders_excluded(self, filler):
         """Placeholders not connected to exterior should be excluded."""
         # Grid with island of placeholders surrounded by non-placeholders
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         x = 0x50  # some non-placeholder tile
         greens = [
             [p, p, p, p, p],
@@ -111,7 +111,7 @@ class TestActiveSetDetection:
 
     def test_diagonal_not_connected(self, filler):
         """Diagonal adjacency should not connect placeholders."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         x = 0x50
         greens = [
             [p, x],
@@ -123,7 +123,7 @@ class TestActiveSetDetection:
 
     def test_l_shaped_region(self, filler):
         """L-shaped placeholder region should be fully found."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         x = 0x50
         greens = [
             [p, p, p],
@@ -145,7 +145,7 @@ class TestParityCalculation:
 
     @pytest.fixture
     def filler(self):
-        return RoughFill()
+        return GreenFill()
 
     def test_origin_is_even(self, filler):
         """(0,0) should have even parity (0)."""
@@ -183,105 +183,105 @@ class TestEdgeFilling:
 
     @pytest.fixture
     def filler(self):
-        return RoughFill()
+        return GreenFill()
 
     def test_left_of_fringe_left_even(self, filler):
         """Tile LEFT of FRINGE_LEFT at even position gets EDGE_LEFT[0]."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         greens = [
-            [p, RoughFill.FRINGE_LEFT],
+            [p, GreenFill.FRINGE_LEFT],
         ]
         result = filler.fill(greens)
         # Position (0,0) is LEFT of FRINGE_LEFT at (0,1), parity is even
-        assert result[0][0] == RoughFill.EDGE_LEFT[0]  # 0x70
+        assert result[0][0] == GreenFill.EDGE_LEFT[0]  # 0x70
 
     def test_left_of_fringe_left_odd(self, filler):
         """Tile LEFT of FRINGE_LEFT at odd position gets EDGE_LEFT[1]."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         x = 0x50  # non-placeholder
         greens = [
-            [p, p, RoughFill.FRINGE_LEFT],
+            [p, p, GreenFill.FRINGE_LEFT],
         ]
         result = filler.fill(greens)
         # Position (0,1) is LEFT of FRINGE_LEFT at (0,2), parity is odd
-        assert result[0][1] == RoughFill.EDGE_LEFT[1]  # 0x84
+        assert result[0][1] == GreenFill.EDGE_LEFT[1]  # 0x84
 
     def test_above_fringe_up_even(self, filler):
         """Tile ABOVE FRINGE_UP at even position gets EDGE_UP[0]."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         greens = [
             [p],
-            [RoughFill.FRINGE_UP],
+            [GreenFill.FRINGE_UP],
         ]
         result = filler.fill(greens)
         # Position (0,0) is ABOVE FRINGE_UP at (1,0), parity is even
-        assert result[0][0] == RoughFill.EDGE_UP[0]  # 0x71
+        assert result[0][0] == GreenFill.EDGE_UP[0]  # 0x71
 
     def test_above_fringe_up_odd(self, filler):
         """Tile ABOVE FRINGE_UP at odd position gets EDGE_UP[1]."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         greens = [
             [p, p],
-            [p, RoughFill.FRINGE_UP],
+            [p, GreenFill.FRINGE_UP],
         ]
         result = filler.fill(greens)
         # Position (0,1) is ABOVE FRINGE_UP at (1,1), parity is odd
-        assert result[0][1] == RoughFill.EDGE_UP[1]  # 0x85
+        assert result[0][1] == GreenFill.EDGE_UP[1]  # 0x85
 
     def test_right_of_fringe_right_even(self, filler):
         """Tile RIGHT of FRINGE_RIGHT at even position gets EDGE_RIGHT[0]."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         # Need path around FRINGE_RIGHT for BFS connectivity
         # Position (1,2) is RIGHT of FRINGE_RIGHT at (1,1), parity is odd
         # Let's use position (2,2) which has even parity (2+2=4)
         greens = [
             [p, p, p],
             [p, p, p],
-            [p, RoughFill.FRINGE_RIGHT, p],
+            [p, GreenFill.FRINGE_RIGHT, p],
         ]
         result = filler.fill(greens)
         # Position (2,2) is RIGHT of FRINGE_RIGHT at (2,1), parity is even
-        assert result[2][2] == RoughFill.EDGE_RIGHT[0]  # 0x73
+        assert result[2][2] == GreenFill.EDGE_RIGHT[0]  # 0x73
 
     def test_right_of_fringe_right_odd(self, filler):
         """Tile RIGHT of FRINGE_RIGHT at odd position gets EDGE_RIGHT[1]."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         # Position (1,2) is RIGHT of FRINGE_RIGHT at (1,1), parity is odd (1+2=3)
         greens = [
             [p, p, p],
-            [p, RoughFill.FRINGE_RIGHT, p],
+            [p, GreenFill.FRINGE_RIGHT, p],
         ]
         result = filler.fill(greens)
         # Position (1,2) is RIGHT of FRINGE_RIGHT at (1,1), parity is odd
-        assert result[1][2] == RoughFill.EDGE_RIGHT[1]  # 0x87
+        assert result[1][2] == GreenFill.EDGE_RIGHT[1]  # 0x87
 
     def test_below_fringe_down_even(self, filler):
         """Tile BELOW FRINGE_DOWN at even position gets EDGE_DOWN[0]."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         # Need path from (0,0) to target at (2,0) via (1,0) placeholder then FRINGE_DOWN
         # Actually, if (0,0) is FRINGE_DOWN, then (1,0) needs to be placeholder connected
         # Let's use a different layout: origin is placeholder, connects down
         greens = [
             [p, p],
-            [p, RoughFill.FRINGE_DOWN],
+            [p, GreenFill.FRINGE_DOWN],
             [p, p],
         ]
         result = filler.fill(greens)
         # Position (2,1) is BELOW FRINGE_DOWN at (1,1), parity is odd
-        assert result[2][1] == RoughFill.EDGE_DOWN[1]  # 0x86
+        assert result[2][1] == GreenFill.EDGE_DOWN[1]  # 0x86
 
     def test_below_fringe_down_odd(self, filler):
         """Tile BELOW FRINGE_DOWN at odd position gets EDGE_DOWN[1]."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         # Position with even parity below FRINGE_DOWN
         greens = [
             [p, p, p],
-            [p, p, RoughFill.FRINGE_DOWN],
+            [p, p, GreenFill.FRINGE_DOWN],
             [p, p, p],
         ]
         result = filler.fill(greens)
         # Position (2,2) is BELOW FRINGE_DOWN at (1,2), parity is even
-        assert result[2][2] == RoughFill.EDGE_DOWN[0]  # 0x72
+        assert result[2][2] == GreenFill.EDGE_DOWN[0]  # 0x72
 
 
 # =============================================================================
@@ -293,25 +293,25 @@ class TestBaseFilling:
 
     @pytest.fixture
     def filler(self):
-        return RoughFill()
+        return GreenFill()
 
     def test_even_position_gets_base_even(self, filler):
         """Position with even parity gets BASE_ROUGH[0]."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         greens = [[p]]  # (0,0) is even parity
         result = filler.fill(greens)
-        assert result[0][0] == RoughFill.BASE_ROUGH[0]  # 0x29
+        assert result[0][0] == GreenFill.BASE_ROUGH[0]  # 0x29
 
     def test_odd_position_gets_base_odd(self, filler):
         """Position with odd parity gets BASE_ROUGH[1]."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         greens = [[p, p]]  # (0,1) is odd parity
         result = filler.fill(greens)
-        assert result[0][1] == RoughFill.BASE_ROUGH[1]  # 0x2C
+        assert result[0][1] == GreenFill.BASE_ROUGH[1]  # 0x2C
 
     def test_checkerboard_pattern_3x3(self, filler):
         """3x3 grid of placeholders should produce checkerboard."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         greens = [
             [p, p, p],
             [p, p, p],
@@ -331,7 +331,7 @@ class TestBaseFilling:
 
     def test_non_placeholder_tiles_unchanged(self, filler):
         """Non-placeholder tiles should not be modified."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         other = 0x50
         # Create a layout where some placeholders are connected and some aren't
         greens = [
@@ -348,8 +348,133 @@ class TestBaseFilling:
         assert result[1][0] == 0x2C  # filled (odd parity)
         assert result[1][1] == 0x50  # unchanged
         assert result[1][2] == 0x50  # unchanged
-        # (2,2) is a placeholder but NOT connected to (0,0) - should remain unchanged
-        assert result[2][2] == p  # NOT filled - not connected to origin
+        # (2,2) is a placeholder but NOT connected to (0,0) - should become FLAT
+        assert result[2][2] == GreenFill.FLAT_TILE  # filled as interior
+
+
+# =============================================================================
+# Interior Filling Tests
+# =============================================================================
+
+class TestInteriorFilling:
+    """Tests for interior placeholder filling with flat tiles."""
+
+    @pytest.fixture
+    def filler(self):
+        return GreenFill()
+
+    def test_interior_placeholder_becomes_flat(self, filler):
+        """Interior placeholder (not connected to origin) becomes flat tile."""
+        p = GreenFill.PLACEHOLDER
+        x = 0x50  # non-placeholder boundary
+        greens = [
+            [p, p, p, p, p],
+            [p, x, x, x, p],
+            [p, x, p, x, p],  # interior placeholder at (2,2)
+            [p, x, x, x, p],
+            [p, p, p, p, p],
+        ]
+        result = filler.fill(greens)
+
+        # Interior placeholder should become flat tile
+        assert result[2][2] == GreenFill.FLAT_TILE
+
+        # Exterior placeholders should become rough (checkerboard)
+        assert result[0][0] == GreenFill.BASE_ROUGH[0]  # even parity
+
+    def test_existing_flat_tile_preserved(self, filler):
+        """Existing flat tiles inside fringe are preserved."""
+        p = GreenFill.PLACEHOLDER
+        x = 0x50  # non-placeholder boundary
+        flat = GreenFill.FLAT_TILE
+        greens = [
+            [p, p, p, p, p],
+            [p, x, x, x, p],
+            [p, x, flat, x, p],  # existing flat tile at (2,2)
+            [p, x, x, x, p],
+            [p, p, p, p, p],
+        ]
+        result = filler.fill(greens)
+
+        # Existing flat tile should be unchanged
+        assert result[2][2] == GreenFill.FLAT_TILE
+
+    def test_existing_slope_tile_preserved(self, filler):
+        """Existing slope tiles inside fringe are preserved."""
+        p = GreenFill.PLACEHOLDER
+        x = 0x50  # non-placeholder boundary
+        slope = 0x30  # a slope tile
+        greens = [
+            [p, p, p, p, p],
+            [p, x, x, x, p],
+            [p, x, slope, x, p],  # existing slope tile at (2,2)
+            [p, x, x, x, p],
+            [p, p, p, p, p],
+        ]
+        result = filler.fill(greens)
+
+        # Existing slope tile should be unchanged
+        assert result[2][2] == slope
+
+    def test_multiple_interior_regions_all_filled(self, filler):
+        """Multiple disconnected interior regions all get flat tiles."""
+        p = GreenFill.PLACEHOLDER
+        x = 0x50  # non-placeholder boundary
+        # Two isolated interior regions - each completely surrounded by non-placeholders
+        greens = [
+            [p, p, p, p, p, p, p, p, p],
+            [p, x, x, x, p, x, x, x, p],
+            [p, x, p, x, p, x, p, x, p],  # interior placeholders at (2,2) and (2,6)
+            [p, x, x, x, p, x, x, x, p],
+            [p, p, p, p, p, p, p, p, p],
+        ]
+        result = filler.fill(greens)
+
+        # Both interior placeholders should become flat
+        assert result[2][2] == GreenFill.FLAT_TILE
+        assert result[2][6] == GreenFill.FLAT_TILE
+
+    def test_no_fringe_all_exterior(self, filler):
+        """When no fringe (all exterior), no interior fill happens."""
+        p = GreenFill.PLACEHOLDER
+        greens = [
+            [p, p, p],
+            [p, p, p],
+            [p, p, p],
+        ]
+        result = filler.fill(greens)
+
+        # All should be rough, no flat tiles
+        for row in result:
+            for tile in row:
+                assert tile != GreenFill.FLAT_TILE
+                assert tile in GreenFill.ROUGH_TILES
+
+    def test_interior_with_fringe_boundary(self, filler):
+        """Interior placeholders bounded by fringe tiles become flat."""
+        p = GreenFill.PLACEHOLDER
+        # Simplified fringe boundary
+        fl = GreenFill.FRINGE_LEFT
+        fr = GreenFill.FRINGE_RIGHT
+        fu = GreenFill.FRINGE_UP
+        fd = GreenFill.FRINGE_DOWN
+        greens = [
+            [p, p, p, p, p],
+            [p, fd, fd, fd, p],
+            [p, fr, p, fl, p],  # interior placeholder at (2,2)
+            [p, fu, fu, fu, p],
+            [p, p, p, p, p],
+        ]
+        result = filler.fill(greens)
+
+        # Interior placeholder should become flat
+        assert result[2][2] == GreenFill.FLAT_TILE
+
+        # Fringe tiles should be unchanged
+        assert result[1][1] == fd
+        assert result[2][1] == fr
+        assert result[2][3] == fl
+        assert result[3][1] == fu
 
 
 # =============================================================================
@@ -361,23 +486,23 @@ class TestPriorityOrder:
 
     @pytest.fixture
     def filler(self):
-        return RoughFill()
+        return GreenFill()
 
     def test_left_takes_priority_over_up(self, filler):
         """When adjacent to both FRINGE_LEFT and FRINGE_UP, LEFT wins."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         greens = [
-            [p, RoughFill.FRINGE_LEFT],
-            [RoughFill.FRINGE_UP, 0x50],
+            [p, GreenFill.FRINGE_LEFT],
+            [GreenFill.FRINGE_UP, 0x50],
         ]
         result = filler.fill(greens)
         # (0,0) is both LEFT of FRINGE_LEFT and ABOVE FRINGE_UP
         # LEFT should win (priority 1 vs 2)
-        assert result[0][0] == RoughFill.EDGE_LEFT[0]  # 0x70
+        assert result[0][0] == GreenFill.EDGE_LEFT[0]  # 0x70
 
     def test_up_takes_priority_over_right(self, filler):
         """When adjacent to both FRINGE_UP and FRINGE_RIGHT, UP wins."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         # Need a placeholder at (0,1) that is both:
         # - ABOVE FRINGE_UP at (1,1)
         # - RIGHT of FRINGE_RIGHT at (0,0)
@@ -386,7 +511,7 @@ class TestPriorityOrder:
         # Let's make (0,0) placeholder, (0,1) placeholder that we test
         greens = [
             [p, p, p],
-            [p, RoughFill.FRINGE_UP, p],
+            [p, GreenFill.FRINGE_UP, p],
         ]
         # First, add FRINGE_RIGHT such that (0,2) is RIGHT of it
         # Actually, we need position to be BOTH right of FRINGE_RIGHT AND above FRINGE_UP
@@ -395,8 +520,8 @@ class TestPriorityOrder:
         # Solution: Test a position that CAN be connected - (1,2)
         greens = [
             [p, p, p],
-            [p, RoughFill.FRINGE_UP, p],
-            [RoughFill.FRINGE_RIGHT, p, p],
+            [p, GreenFill.FRINGE_UP, p],
+            [GreenFill.FRINGE_RIGHT, p, p],
         ]
         result = filler.fill(greens)
         # (0,1) is ABOVE FRINGE_UP at (1,1), parity is odd
@@ -404,11 +529,11 @@ class TestPriorityOrder:
         # Here, (1,2) is RIGHT of 0x50(no), (2,1) is RIGHT of FRINGE_RIGHT at (2,0)
         # Let me simplify: just test that UP check happens before RIGHT check
         # (0,1) is ABOVE FRINGE_UP at (1,1), and not adjacent to any FRINGE_RIGHT
-        assert result[0][1] == RoughFill.EDGE_UP[1]  # 0x85 (odd parity)
+        assert result[0][1] == GreenFill.EDGE_UP[1]  # 0x85 (odd parity)
 
     def test_right_takes_priority_over_down(self, filler):
         """When adjacent to both FRINGE_RIGHT and FRINGE_DOWN, RIGHT wins."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         # Position (2,2) that is:
         # - RIGHT of FRINGE_RIGHT at (2,1)
         # - BELOW FRINGE_DOWN at (1,2)
@@ -416,8 +541,8 @@ class TestPriorityOrder:
         # Path: (0,0) -> (0,1) -> (0,2) -> (0,3) -> (1,3) -> (2,3) -> (2,2)
         greens = [
             [p, p, p, p],
-            [p, p, RoughFill.FRINGE_DOWN, p],
-            [p, RoughFill.FRINGE_RIGHT, p, p],
+            [p, p, GreenFill.FRINGE_DOWN, p],
+            [p, GreenFill.FRINGE_RIGHT, p, p],
         ]
         result = filler.fill(greens)
         # (2,2) is both:
@@ -425,7 +550,7 @@ class TestPriorityOrder:
         # - BELOW FRINGE_DOWN at (1,2)
         # RIGHT has priority 3, DOWN has priority 4, so RIGHT wins
         # (2,2) has even parity (2+2=4)
-        assert result[2][2] == RoughFill.EDGE_RIGHT[0]  # 0x73 (even parity)
+        assert result[2][2] == GreenFill.EDGE_RIGHT[0]  # 0x73 (even parity)
 
 
 # =============================================================================
@@ -437,7 +562,7 @@ class TestRoundTrip:
 
     @pytest.fixture
     def filler(self):
-        return RoughFill()
+        return GreenFill()
 
     @pytest.mark.parametrize("country,hole_num", [
         ("japan", 1),
@@ -507,7 +632,7 @@ class TestRoundTrip:
         }
 
         for (row, col), parity in expected_parity.items():
-            expected_tile = RoughFill.BASE_ROUGH[parity]
+            expected_tile = GreenFill.BASE_ROUGH[parity]
             assert filled[row][col] == expected_tile, (
                 f"Position ({row}, {col}) should have {expected_tile:#04x} "
                 f"based on parity, got {filled[row][col]:#04x}"
@@ -534,7 +659,7 @@ class TestInputValidation:
 
     @pytest.fixture
     def filler(self):
-        return RoughFill()
+        return GreenFill()
 
     def test_empty_grid_returns_empty(self, filler):
         """Empty input should return empty output."""
@@ -548,7 +673,7 @@ class TestInputValidation:
 
     def test_does_not_modify_input(self, filler):
         """Fill should not modify the input grid."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         original = [[p, p], [p, p]]
         original_copy = [[p, p], [p, p]]
 
@@ -558,7 +683,7 @@ class TestInputValidation:
 
     def test_handles_24x24_grid(self, filler):
         """Standard 24x24 greens grid should work correctly."""
-        p = RoughFill.PLACEHOLDER
+        p = GreenFill.PLACEHOLDER
         greens = [[p] * 24 for _ in range(24)]
 
         result = filler.fill(greens)
@@ -569,7 +694,7 @@ class TestInputValidation:
         for row_idx, row in enumerate(result):
             for col_idx, tile in enumerate(row):
                 expected_parity = (row_idx + col_idx) % 2
-                assert tile == RoughFill.BASE_ROUGH[expected_parity]
+                assert tile == GreenFill.BASE_ROUGH[expected_parity]
 
 
 # =============================================================================
@@ -580,22 +705,25 @@ class TestConstants:
     """Tests verifying constant values match expected tile IDs."""
 
     def test_placeholder_value(self):
-        assert RoughFill.PLACEHOLDER == 0x100
+        assert GreenFill.PLACEHOLDER == 0x100
+
+    def test_flat_tile_value(self):
+        assert GreenFill.FLAT_TILE == 0xB0
 
     def test_fringe_tiles(self):
-        assert RoughFill.FRINGE_LEFT == 0x66
-        assert RoughFill.FRINGE_UP == 0x64
-        assert RoughFill.FRINGE_RIGHT == 0x67
-        assert RoughFill.FRINGE_DOWN == 0x65
+        assert GreenFill.FRINGE_LEFT == 0x66
+        assert GreenFill.FRINGE_UP == 0x64
+        assert GreenFill.FRINGE_RIGHT == 0x67
+        assert GreenFill.FRINGE_DOWN == 0x65
 
     def test_edge_tiles(self):
-        assert RoughFill.EDGE_LEFT == (0x70, 0x84)
-        assert RoughFill.EDGE_UP == (0x71, 0x85)
-        assert RoughFill.EDGE_RIGHT == (0x73, 0x87)
-        assert RoughFill.EDGE_DOWN == (0x72, 0x86)
+        assert GreenFill.EDGE_LEFT == (0x70, 0x84)
+        assert GreenFill.EDGE_UP == (0x71, 0x85)
+        assert GreenFill.EDGE_RIGHT == (0x73, 0x87)
+        assert GreenFill.EDGE_DOWN == (0x72, 0x86)
 
     def test_base_rough_tiles(self):
-        assert RoughFill.BASE_ROUGH == (0x29, 0x2C)
+        assert GreenFill.BASE_ROUGH == (0x29, 0x2C)
 
     def test_rough_tiles_set_contains_all(self):
         """ROUGH_TILES should contain all rough tile values."""
@@ -604,4 +732,4 @@ class TestConstants:
             0x70, 0x71, 0x72, 0x73,  # edge even
             0x84, 0x85, 0x86, 0x87,  # edge odd
         }
-        assert RoughFill.ROUGH_TILES == expected
+        assert GreenFill.ROUGH_TILES == expected

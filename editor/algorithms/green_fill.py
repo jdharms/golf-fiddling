@@ -1,16 +1,16 @@
 """
-NES Open Tournament Golf - Rough Fill Algorithm
+NES Open Tournament Golf - Green Fill Algorithm
 
 Fills tiles outside the greens fringe with appropriate rough tiles
-based on parity and adjacency rules.
+and interior placeholders with flat putting surface tiles.
 """
 
 from collections import deque
 
 
-class RoughFill:
+class GreenFill:
     """
-    Fills rough tiles in a 24x24 greens grid.
+    Fills rough and putting surface tiles in a 24x24 greens grid.
 
     Algorithm:
         1. Find active set via BFS from (0,0) - all placeholder tiles
@@ -18,10 +18,14 @@ class RoughFill:
         2. Calculate parity for each tile: (col + row) % 2
         3. Apply adjacency rules for tiles adjacent to fringe edges
         4. Fill remaining active tiles with base rough (checkerboard)
+        5. Fill remaining interior placeholders with flat putting surface
     """
 
     # Placeholder value for tiles to be filled
     PLACEHOLDER = 0x100
+
+    # Flat putting surface tile
+    FLAT_TILE = 0xB0
 
     # Fringe edge tiles - these indicate which direction the rough goes
     FRINGE_LEFT = 0x66    # rough goes to LEFT of this tile
@@ -47,14 +51,15 @@ class RoughFill:
 
     def fill(self, greens: list[list[int]]) -> list[list[int]]:
         """
-        Fill rough tiles in a 24x24 greens grid.
+        Fill rough and putting surface tiles in a 24x24 greens grid.
 
         Args:
             greens: 24x24 grid of tile values. Tiles with value PLACEHOLDER
-                    (0x100) will be filled with appropriate rough tiles.
+                    (0x100) will be filled with appropriate rough tiles
+                    (exterior) or flat putting surface tiles (interior).
 
         Returns:
-            Modified copy of greens with placeholders replaced by rough tiles.
+            Modified copy of greens with placeholders replaced.
         """
         # Make a deep copy to avoid modifying the input
         result = [row[:] for row in greens]
@@ -64,11 +69,17 @@ class RoughFill:
         # Step 1: Find active set via BFS from (0,0)
         active_set = self._find_active_set(result, width, height)
 
-        # Step 2 & 3: Apply adjacency rules, then fill remaining
+        # Step 2-4: Apply adjacency rules, then fill remaining exterior tiles
         for row, col in active_set:
             parity = self._get_parity(row, col)
             tile = self._determine_tile(result, row, col, parity, width, height)
             result[row][col] = tile
+
+        # Step 5: Fill remaining interior placeholders with flat tile
+        for row in range(height):
+            for col in range(width):
+                if result[row][col] == self.PLACEHOLDER:
+                    result[row][col] = self.FLAT_TILE
 
         return result
 
