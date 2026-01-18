@@ -360,6 +360,7 @@ class EventHandler:
     def _restore_hole_data(self, snapshot: HoleData):
         """Restore hole data from snapshot."""
         self.hole_data.terrain = snapshot.terrain
+        self.hole_data.terrain_height = snapshot.terrain_height
         self.hole_data.attributes = snapshot.attributes
         self.hole_data.greens = snapshot.greens
         self.hole_data.green_x = snapshot.green_x

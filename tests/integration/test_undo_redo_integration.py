@@ -234,6 +234,35 @@ class TestRowOperationUndo:
         restored = state.undo_manager.undo(hole_data)
         assert restored.terrain_height == initial_height
 
+    def test_add_row_undo_restores_hole_data_terrain_height(self, editor_setup):
+        """Undoing add row should restore terrain_height on the live hole_data object.
+
+        Regression test for bug where _restore_hole_data() didn't restore terrain_height,
+        causing IndexError in terrain renderer.
+        """
+        state = editor_setup["state"]
+        hole_data = editor_setup["hole_data"]
+        event_handler = editor_setup["event_handler"]
+        row_operations_tool = editor_setup["row_operations_tool"]
+
+        initial_height = hole_data.terrain_height
+        initial_terrain_len = len(hole_data.terrain)
+
+        # Add row (adds 2 rows)
+        row_operations_tool.add_row(event_handler.tool_context, False)
+
+        assert hole_data.terrain_height == initial_height + 2
+        assert len(hole_data.terrain) == initial_terrain_len + 2
+
+        # Call undo via event handler (not just undo_manager.undo())
+        # This tests _restore_hole_data() which had the bug
+        event_handler._undo()
+
+        # Verify live hole_data has terrain_height restored (the bug!)
+        assert hole_data.terrain_height == initial_height
+        # Also verify terrain data was restored
+        assert len(hole_data.terrain) == initial_terrain_len
+
     def test_add_multiple_rows_separate_undos(self, editor_setup):
         """Each row add should be separate undo action (adds 2 rows each time)."""
         state = editor_setup["state"]
