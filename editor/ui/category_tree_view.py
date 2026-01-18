@@ -3,6 +3,7 @@
 import pygame
 from pygame import Rect, Surface
 
+from editor.resources import get_resource_path
 from editor.core.constants import (
     COLOR_BUTTON,
     COLOR_BUTTON_ACTIVE,
@@ -43,6 +44,7 @@ class CategoryTreeView:
         self.rect = rect
         self.category_tree = category_tree
         self.font = font
+        self.icon_font = pygame.font.Font(str(get_resource_path('data/fonts/NotoEmoji.ttf')), 16)
         self.on_category_selected = on_category_selected
 
         # State
@@ -157,7 +159,7 @@ class CategoryTreeView:
             # Folder icon (if has children)
             if node.children:
                 icon = self.FOLDER_ICON_EXPANDED if node.is_expanded else self.FOLDER_ICON_COLLAPSED
-                icon_surf = self.font.render(icon, True, COLOR_TEXT)
+                icon_surf = self.icon_font.render(icon, True, COLOR_TEXT)
                 screen.blit(icon_surf, (indent_x, item_y + 4))
                 label_x = indent_x + 16
             else:

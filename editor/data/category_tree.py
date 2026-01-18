@@ -11,7 +11,7 @@ class CategoryNode:
     path: str  # Full path (e.g., "terrain/water")
     children: dict[str, "CategoryNode"] = field(default_factory=dict)
     stamp_ids: list[str] = field(default_factory=list)  # Stamps directly in this category
-    is_expanded: bool = True  # UI state: is folder expanded?
+    is_expanded: bool = False  # UI state: is folder expanded?
 
     def get_all_stamp_ids(self) -> list[str]:
         """Get all stamp IDs in this category and all subcategories (recursive)."""
