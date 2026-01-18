@@ -19,6 +19,9 @@ from editor.data import ClipboardData
 from .base_tool import ToolContext, ToolResult
 
 
+DEFAULT_TILE = 0x100
+
+
 class SelectionToolState:
     """State for selection drag operation and paste mode."""
 
@@ -278,16 +281,16 @@ class SelectionTool:
 
         # Fill selection with default tile
         start_row, start_col, end_row, end_col = sel_rect
-        default_tile = 0x100 if context.state.mode == "terrain" else 0xB0
+
 
         for row in range(start_row, end_row + 1):
             for col in range(start_col, end_col + 1):
                 if context.state.mode == "terrain":
                     if 0 <= row < len(context.hole_data.terrain) and 0 <= col < TERRAIN_WIDTH:
-                        context.hole_data.set_terrain_tile(row, col, default_tile)
+                        context.hole_data.set_terrain_tile(row, col, DEFAULT_TILE)
                 else:  # greens
                     if 0 <= row < GREENS_HEIGHT and 0 <= col < GREENS_WIDTH:
-                        context.hole_data.set_greens_tile(row, col, default_tile)
+                        context.hole_data.set_greens_tile(row, col, DEFAULT_TILE)
 
         width = context.state.clipboard.width if context.state.clipboard else 0
         height = context.state.clipboard.height if context.state.clipboard else 0
@@ -308,16 +311,15 @@ class SelectionTool:
 
         # Fill selection with default tile
         start_row, start_col, end_row, end_col = sel_rect
-        default_tile = 0x100 if context.state.mode == "terrain" else 0x29
 
         for row in range(start_row, end_row + 1):
             for col in range(start_col, end_col + 1):
                 if context.state.mode == "terrain":
                     if 0 <= row < len(context.hole_data.terrain) and 0 <= col < TERRAIN_WIDTH:
-                        context.hole_data.set_terrain_tile(row, col, default_tile)
+                        context.hole_data.set_terrain_tile(row, col, DEFAULT_TILE)
                 else:  # greens
                     if 0 <= row < GREENS_HEIGHT and 0 <= col < GREENS_WIDTH:
-                        context.hole_data.set_greens_tile(row, col, default_tile)
+                        context.hole_data.set_greens_tile(row, col, DEFAULT_TILE)
 
         width = end_col - start_col + 1
         height = end_row - start_row + 1
