@@ -38,7 +38,7 @@ from .tools.paint_tool import PaintTool
 from .tools.palette_tool import PaletteTool
 from .tools.position_tool import PositionTool
 from .tools.remove_row_tool import RemoveRowTool
-from .tools.rough_fill_tool import RoughFillTool
+from .tools.green_fill_tool import GreenFillTool
 from .tools.row_operations_tool import RowOperationsTool
 from .tools.selection_tool import SelectionTool
 from .tools.stamp_tool import StampTool
@@ -166,7 +166,7 @@ class EditorApplication:
         self.tool_picker.register_tool("cycle", "Cycle", "🔄")
         self.tool_picker.register_tool("forest_fill", "Forest Fill", "🌲")
         self.tool_picker.register_tool("fringe_generation", "Fringe Gen", "🌊")
-        self.tool_picker.register_tool("rough_fill", "Rough Fill", "🌾", is_action=True)
+        self.tool_picker.register_tool("green_fill", "Green Fill", "🌿", is_action=True)
         self.tool_picker.register_tool("carpet_paint", "Carpet", "⛳")
         self.tool_picker.register_tool("measure", "Measure", "📏")
         self.tool_picker.register_tool("metadata_editor", "Metadata", "📝")
@@ -196,7 +196,7 @@ class EditorApplication:
         self.tool_manager.register_tool("transform", TransformTool())
         self.tool_manager.register_tool("eyedropper", EyedropperTool())
         self.tool_manager.register_tool("forest_fill", ForestFillTool())
-        self.tool_manager.register_tool("rough_fill", RoughFillTool())
+        self.tool_manager.register_tool("green_fill", GreenFillTool())
         self.tool_manager.register_tool("fringe_generation", FringeGenerationTool())
         self.tool_manager.register_tool("cycle", CycleTool())
         self.tool_manager.register_tool("measure", MeasureTool())

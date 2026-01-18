@@ -555,7 +555,7 @@ The dialog tool pattern:
 
 **Hotkey Conflicts**: ToolManager validates uniqueness on registration and throws ValueError on conflicts.
 
-**Reserved Keys**: G (grid), Tab (mode), 1-3 (flags), Ctrl+Z/Y (undo/redo), Ctrl+S (save), Ctrl+X (invalid tiles), P/T/F/C/S/M/D (tool hotkeys), = (add row), - (remove row)
+**Reserved Keys**: G (grid), Tab (mode), 1-3 (flags), Ctrl+Z/Y (undo/redo), Ctrl+S (save), Ctrl+X (invalid tiles), P/T/F/C/S/M/D/U (tool hotkeys), = (add row), - (remove row)
 
 **Tool Best Practices:**
 - Return `ToolResult.modified()` when data changes (triggers re-render)

@@ -1,19 +1,19 @@
 """
-Rough fill tool - fills exterior rough tiles in greens with correct pattern.
+Green fill tool - fills exterior with rough tiles and interior with flat putting surface.
 """
 
 import pygame
 
-from editor.algorithms.rough_fill import RoughFill
+from editor.algorithms.green_fill import GreenFill
 
 from .base_tool import ToolResult
 
 
-class RoughFillTool:
-    """Rough fill tool - fills rough tiles outside the fringe in greens."""
+class GreenFillTool:
+    """Green fill tool - fills rough tiles outside fringe and flat tiles inside."""
 
     def __init__(self):
-        self._filler = RoughFill()
+        self._filler = GreenFill()
 
     def handle_mouse_down(self, pos, button, modifiers, context):
         return ToolResult.not_handled()
@@ -31,7 +31,7 @@ class RoughFillTool:
         return ToolResult.not_handled()
 
     def on_activated(self, context):
-        """Execute rough fill when tool is activated (action tool)."""
+        """Execute green fill when tool is activated (action tool)."""
         # Only works in greens mode
         if context.state.mode != "greens":
             return
@@ -70,7 +70,7 @@ class RoughFillTool:
         pass
 
     def get_hotkey(self) -> int | None:
-        """Return 'U' key for Rough Fill tool."""
+        """Return 'U' key for Green Fill tool."""
         return pygame.K_u
 
     def is_action_tool(self) -> bool:
@@ -84,7 +84,7 @@ class RoughFillTool:
         result = []
         for row in greens:
             new_row = [
-                RoughFill.PLACEHOLDER if tile in RoughFill.ROUGH_TILES else tile
+                GreenFill.PLACEHOLDER if tile in GreenFill.ROUGH_TILES else tile
                 for tile in row
             ]
             result.append(new_row)
