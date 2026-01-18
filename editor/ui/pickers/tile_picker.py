@@ -71,8 +71,13 @@ class TilePicker:
             GroupedTileBank(
                 "Features",
                 [
-                    TileSubBank("Borders With Depth", range_to_list(0x40, 0x55)),
-                    TileSubBank("Borders, Flat", range_to_list(0x55, 0x80)),
+                    TileSubBank("Border With Depth", range_to_list(0x40, 0x56)),
+                    # TileSubBank("Borders, Flat", range_to_list(0x56, 0x80)),
+                    TileSubBank("Border, Top", [0x5B] + range_to_list(0x60, 0x68)),
+                    TileSubBank("Border, Right", [0x5D, 0x5F, 0x69, 0x6B, 0x6D, 0x6F, 0x79, 0x7B, 0x7D, 0x7F]),
+                    TileSubBank("Border, Bottom", [0x5A] + range_to_list(0x70, 0x78)),
+                    TileSubBank("Border, Left", [0x5C, 0x5E, 0x68, 0x6A, 0x6C, 0x6E, 0x78, 0x7A, 0x7C, 0x7E]),
+                    TileSubBank("Corner", range_to_list(0x56, 0x5A)),
                     TileSubBank("w/ Treetop", [0xBC, 0xBE]),
                     TileSubBank("w/ Treebase", [0xBD, 0xBF]),
                 ],
@@ -83,7 +88,12 @@ class TilePicker:
             GroupedTileBank(
                 "Out of bounds",
                 [
-                    TileSubBank("Border", range_to_list(0x80, 0x9C)),
+                    # TileSubBank("Border", range_to_list(0x80, 0x9C)),
+                    TileSubBank("Border, Top", range_to_list(0x8C, 0x90) + [0x95, 0x99]),
+                    TileSubBank("Border, Right", [0x88, 0x89, 0x90, 0x91, 0x97, 0x9A]),
+                    TileSubBank("Border, Bottom", range_to_list(0x84, 0x88) + [0x94, 0x98]),
+                    TileSubBank("Border, Left", [0x8A, 0x8B, 0x92, 0x93, 0x96, 0x9B]),
+                    TileSubBank("Corner", range_to_list(0x80, 0x84)),
                     TileSubBank("Inner Border", [0x3F]),
                     TileSubBank("Forest 0", [0xA0] + range_to_list(0xA4, 0xAA)),
                     TileSubBank("Forest 1", [0xA1] + range_to_list(0xAA, 0xB0)),
