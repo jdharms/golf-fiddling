@@ -52,7 +52,7 @@ The codebase is organized into three main packages:
 | `golf-editor` | Launch the interactive course editor |
 | `golf-dump <rom> <output_dir>` | Extract course data from ROM to JSON files |
 | `golf-write <rom> <course_dir>` | Write course data from JSON back to ROM |
-| `golf-analyze <rom>` | Analyze ROM structure and show technical details |
+| `golf-analyze <course_dir>` | Analyze hole data patterns and statistics |
 | `golf-visualize <tileset> <hole.json>` | Render a hole as a PNG image |
 | `golf-expand-dict <meta.json>` | Expand dictionary codes into transition sequences |
 | `golf-hex2bin` | Convert hex string to binary file |
