@@ -65,10 +65,10 @@ class GreensTilePicker(TilePicker):
                 "Slopes",
                 [
                     TileSubBankGreens("Gentle Dark", range_to_list(0x30, 0x38)),
-                    TileSubBankGreens("Moderate Dark", range_to_list(0x38, 0x40)),
+                    TileSubBankGreens("Moderate Dark", [0x38, 0x39, 0x3B, 0x3A, 0x3C, 0x3D, 0x3E, 0x3F]),
                     TileSubBankGreens("Steep Dark", range_to_list(0x40, 0x48)),
                     TileSubBankGreens("Gentle Light", range_to_list(0x90, 0x98)),
-                    TileSubBankGreens("Moderate Light", range_to_list(0x98, 0xA0)),
+                    TileSubBankGreens("Moderate Light", [0x98, 0x99, 0x9B, 0x9A, 0x9C, 0x9D, 0x9E, 0x9F]),
                     TileSubBankGreens("Steep Light", range_to_list(0x88, 0x90)),
                 ],
                 self.tiles_per_row,
