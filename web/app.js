@@ -76,6 +76,15 @@ function setupEventListeners() {
   container.addEventListener('mouseleave', () => {
     handleMouseLeave();
   });
+
+  // Arrow keys: Navigate between holes
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') {
+      ui.previousHole();
+    } else if (e.key === 'ArrowRight') {
+      ui.nextHole();
+    }
+  });
 }
 
 /**
