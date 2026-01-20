@@ -9,6 +9,7 @@
 export class MeasurementState {
   constructor() {
     this.points = [];  // Array of {x, y} in game pixels
+    this.previewPoint = null;  // {x, y} in game pixels, or null
     this.courseId = 'japan';
     this.holeNumber = 1;
   }
@@ -79,5 +80,35 @@ export class MeasurementState {
   setLocation(courseId, holeNumber) {
     this.courseId = courseId;
     this.holeNumber = holeNumber;
+  }
+
+  /**
+   * Set preview point position in game pixel coordinates
+   */
+  setPreviewPoint(gamePixelX, gamePixelY) {
+    this.previewPoint = { x: gamePixelX, y: gamePixelY };
+  }
+
+  /**
+   * Clear preview point
+   */
+  clearPreviewPoint() {
+    this.previewPoint = null;
+  }
+
+  /**
+   * Get distance from last waypoint to preview point
+   * Returns 0 if no preview or no waypoints
+   */
+  getPreviewDistance() {
+    if (!this.previewPoint || this.points.length === 0) {
+      return 0;
+    }
+
+    const lastPoint = this.points[this.points.length - 1];
+    const dx = this.previewPoint.x - lastPoint.x;
+    const dy = this.previewPoint.y - lastPoint.y;
+    // CRITICAL: Factor of 2 converts game pixels to yards
+    return Math.sqrt(dx * dx + dy * dy) * 2;
   }
 }

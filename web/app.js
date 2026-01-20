@@ -64,6 +64,18 @@ function setupEventListeners() {
       handleRightClick();
     }
   });
+
+  // Mouse move: Update preview waypoint
+  container.addEventListener('mousemove', (e) => {
+    if (e.target.id === 'hole-image') {
+      handleMouseMove(e);
+    }
+  });
+
+  // Mouse leave: Clear preview waypoint
+  container.addEventListener('mouseleave', () => {
+    handleMouseLeave();
+  });
 }
 
 /**
@@ -98,6 +110,35 @@ function handleClick(e) {
 function handleRightClick() {
   state.clearPoints();
   ui.updateDisplay();
+}
+
+/**
+ * Handle mouse move to update preview waypoint
+ */
+function handleMouseMove(e) {
+  const img = document.getElementById('hole-image');
+  const rect = img.getBoundingClientRect();
+
+  // Get mouse position relative to image
+  const displayX = e.clientX - rect.left;
+  const displayY = e.clientY - rect.top;
+
+  // Convert to game pixels
+  const currentHole = ui.getCurrentHole();
+  if (!currentHole) return;
+
+  const gameX = (displayX / rect.width) * currentHole.width;
+  const gameY = (displayY / rect.height) * currentHole.height;
+
+  // Update preview
+  ui.updatePreview(gameX, gameY);
+}
+
+/**
+ * Handle mouse leave to clear preview waypoint
+ */
+function handleMouseLeave() {
+  ui.clearPreview();
 }
 
 // Start the application when DOM is ready
