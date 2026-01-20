@@ -66,6 +66,10 @@ export class UIController {
       this.setZoom(2);  // Reset to 2x
     });
 
+    document.getElementById('clear-waypoints').addEventListener('click', () => {
+      this.clearWaypoints();
+    });
+
     // Image load handler
     this.holeImage.addEventListener('load', () => {
       this.resizeCanvas();
@@ -158,10 +162,8 @@ export class UIController {
     const totalDistance = this.state.calculateTotalDistance();
     const pointCount = this.state.getPointCount();
 
-    if (pointCount === 0) {
-      this.distanceDisplay.textContent = 'Distance: 0.0y';
-    } else if (pointCount === 1) {
-      this.distanceDisplay.textContent = '1 point';
+    if (pointCount < 2) {
+      this.distanceDisplay.textContent = 'Distance: --';
     } else {
       this.distanceDisplay.textContent = `Distance: ${totalDistance.toFixed(1)}y`;
     }
@@ -262,6 +264,34 @@ export class UIController {
    */
   getCurrentHole() {
     return this.currentHole;
+  }
+
+  /**
+   * Clear all waypoints
+   */
+  clearWaypoints() {
+    this.state.clearPoints();
+    this.updateDisplay();
+  }
+
+  /**
+   * Navigate to previous hole (no-op at hole 1)
+   */
+  previousHole() {
+    const currentNumber = this.state.holeNumber;
+    if (currentNumber > 1) {
+      this.selectHole(currentNumber - 1);
+    }
+  }
+
+  /**
+   * Navigate to next hole (no-op at hole 18)
+   */
+  nextHole() {
+    const currentNumber = this.state.holeNumber;
+    if (currentNumber < 18) {
+      this.selectHole(currentNumber + 1);
+    }
   }
 
   /**
