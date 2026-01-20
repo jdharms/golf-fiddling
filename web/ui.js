@@ -263,4 +263,38 @@ export class UIController {
   getCurrentHole() {
     return this.currentHole;
   }
+
+  /**
+   * Update preview point position and re-render
+   * @param {number} gameX - X position in game pixels
+   * @param {number} gameY - Y position in game pixels
+   */
+  updatePreview(gameX, gameY) {
+    this.state.setPreviewPoint(gameX, gameY);
+
+    // Re-render overlay with preview
+    if (this.currentHole) {
+      this.renderer.render(
+        this.state,
+        this.currentHole.width,
+        this.currentHole.height
+      );
+    }
+  }
+
+  /**
+   * Clear preview point and re-render
+   */
+  clearPreview() {
+    this.state.clearPreviewPoint();
+
+    // Re-render overlay without preview
+    if (this.currentHole) {
+      this.renderer.render(
+        this.state,
+        this.currentHole.width,
+        this.currentHole.height
+      );
+    }
+  }
 }

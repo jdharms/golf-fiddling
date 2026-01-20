@@ -15,6 +15,7 @@ export class OverlayRenderer {
     this.pointColor = '#FFFF00';   // Yellow
     this.textColor = '#FFFFFF';    // White
     this.bgColor = '#000000';      // Black
+    this.previewColor = '#FFA500'; // Orange for preview
   }
 
   /**
@@ -58,6 +59,23 @@ export class OverlayRenderer {
       this._drawLabel(midX, midY, `${distance.toFixed(1)}y`);
     }
 
+    // Draw preview segment (dashed orange line from last waypoint to cursor)
+    if (state.previewPoint && state.points.length > 0) {
+      const lastPoint = displayPoints[displayPoints.length - 1];
+      const previewDisplay = this._gamePixelToDisplay(
+        state.previewPoint, imageWidth, imageHeight
+      );
+
+      // Draw dashed orange line
+      this._drawDashedLine(lastPoint, previewDisplay, this.previewColor);
+
+      // Draw preview distance label at midpoint
+      const midX = (lastPoint.x + previewDisplay.x) / 2;
+      const midY = (lastPoint.y + previewDisplay.y) / 2;
+      const previewDistance = state.getPreviewDistance();
+      this._drawLabel(midX, midY, `${previewDistance.toFixed(1)}y`, this.previewColor);
+    }
+
     // Draw points (on top of lines)
     for (const p of displayPoints) {
       // Yellow filled circle
@@ -75,8 +93,12 @@ export class OverlayRenderer {
 
   /**
    * Draw a distance label with background
+   * @param {number} x - Center x position
+   * @param {number} y - Center y position
+   * @param {string} text - Label text
+   * @param {string} borderColor - Border color (defaults to lineColor)
    */
-  _drawLabel(x, y, text) {
+  _drawLabel(x, y, text, borderColor = null) {
     this.ctx.font = '12px monospace';
     const metrics = this.ctx.measureText(text);
 
@@ -94,8 +116,8 @@ export class OverlayRenderer {
       height
     );
 
-    // Draw cyan border
-    this.ctx.strokeStyle = this.lineColor;
+    // Draw border (cyan for confirmed, custom color for preview)
+    this.ctx.strokeStyle = borderColor || this.lineColor;
     this.ctx.lineWidth = 1;
     this.ctx.strokeRect(
       x - width / 2,
@@ -109,6 +131,20 @@ export class OverlayRenderer {
     this.ctx.textAlign = 'center';
     this.ctx.textBaseline = 'middle';
     this.ctx.fillText(text, x, y);
+  }
+
+  /**
+   * Draw a dashed line between two display points
+   */
+  _drawDashedLine(p1, p2, color, dashLength = 8) {
+    this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = 2;
+    this.ctx.setLineDash([dashLength, dashLength]);
+    this.ctx.beginPath();
+    this.ctx.moveTo(p1.x, p1.y);
+    this.ctx.lineTo(p2.x, p2.y);
+    this.ctx.stroke();
+    this.ctx.setLineDash([]);  // Reset to solid
   }
 
   /**
