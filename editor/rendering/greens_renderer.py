@@ -18,7 +18,7 @@ from golf.formats.hole_data import HoleData
 
 from .font_cache import get_font
 from .grid_renderer import GridRenderer
-from .highlight_utils import draw_tile_border
+from .highlight_utils import draw_dashed_line, draw_tile_border
 from .render_context import RenderContext
 from .selection_renderer import SelectionRenderer
 from .sprite_renderer import SpriteRenderer
@@ -128,6 +128,8 @@ class GreensRenderer:
                 view_state.scale,
                 view_state.offset_x,
                 view_state.offset_y,
+                highlight_state.measure_preview_point,
+                highlight_state.measure_tool_active,
             )
 
         # Render selection rectangle
@@ -270,6 +272,8 @@ class GreensRenderer:
         canvas_scale,
         canvas_offset_x,
         canvas_offset_y,
+        preview_point=None,
+        tool_active=False,
     ):
         """Render measurement lines and distance labels."""
         if not measure_points or len(measure_points) == 0:
@@ -277,6 +281,7 @@ class GreensRenderer:
 
         # Line and point colors for visibility
         line_color = (0, 255, 255)  # Cyan
+        preview_color = (255, 165, 0)  # Orange
         point_color = (255, 255, 0)  # Yellow
 
         # Create ViewState for coordinate conversion
@@ -332,6 +337,45 @@ class GreensRenderer:
             pygame.draw.rect(screen, line_color, bg_rect, 1)
 
             screen.blit(label_surf, label_rect)
+
+        # Draw preview line (dashed orange) from last point to preview point
+        if tool_active and preview_point and len(screen_points) > 0:
+            last_screen = screen_points[-1]
+            last_game = measure_points[-1]
+            preview_screen = view_state.game_pixels_to_screen(preview_point)
+
+            # Check if preview line is visible
+            last_visible = (
+                canvas_rect.left <= last_screen[0] <= canvas_rect.right
+                and canvas_rect.top <= last_screen[1] <= canvas_rect.bottom
+            )
+            preview_visible = (
+                canvas_rect.left <= preview_screen[0] <= canvas_rect.right
+                and canvas_rect.top <= preview_screen[1] <= canvas_rect.bottom
+            )
+
+            if last_visible or preview_visible:
+                # Draw dashed preview line
+                draw_dashed_line(screen, preview_color, last_screen, preview_screen, 2, 8)
+
+                # Calculate preview distance
+                dx = preview_point[0] - last_game[0]
+                dy = preview_point[1] - last_game[1]
+                preview_distance = math.sqrt(dx * dx + dy * dy) * 2
+
+                # Draw preview label at midpoint
+                mid_x = (last_screen[0] + preview_screen[0]) // 2
+                mid_y = (last_screen[1] + preview_screen[1]) // 2
+
+                label_text = f"{preview_distance:.1f}y"
+                label_surf = font.render(label_text, True, (255, 255, 255))
+
+                label_rect = label_surf.get_rect(center=(mid_x, mid_y))
+                bg_rect = label_rect.inflate(4, 2)
+                pygame.draw.rect(screen, (0, 0, 0), bg_rect)
+                pygame.draw.rect(screen, preview_color, bg_rect, 1)
+
+                screen.blit(label_surf, label_rect)
 
         # Draw points (on top of lines)
         for screen_x, screen_y in screen_points:

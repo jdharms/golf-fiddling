@@ -23,6 +23,8 @@ class HighlightState:
         self.show_invalid_tiles: bool = False
         self.invalid_terrain_tiles: set | None = None
         self.measure_points: list[tuple[int, int]] | None = None
+        self.measure_preview_point: tuple[int, int] | None = None  # Preview endpoint in game pixels
+        self.measure_tool_active: bool = False  # Whether measure tool is currently active
 
         # Selection and paste/stamp preview state
         self.selection_rect: tuple[int, int, int, int] | None = (

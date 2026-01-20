@@ -22,6 +22,7 @@ class MeasureTool:
     def __init__(self):
         """Initialize measure tool with empty points list."""
         self.points: list[tuple[int, int]] = []  # Game pixel coordinates
+        self.preview_point: tuple[int, int] | None = None  # Preview endpoint in game pixels
 
     def _calculate_cumulative_distance(self) -> float:
         """Calculate cumulative distance in yards between all consecutive points."""
@@ -58,6 +59,7 @@ class MeasureTool:
         # Right click - clear all points
         if button == 3:
             self.points.clear()
+            self.preview_point = None
             message = self._get_status_message()
             return ToolResult(handled=True, message=message)
 
@@ -96,8 +98,37 @@ class MeasureTool:
         return ToolResult.not_handled()
 
     def handle_mouse_motion(self, pos, context):
-        """Handle mouse motion - not used by measure tool."""
-        return ToolResult.not_handled()
+        """Handle mouse motion - track preview point when tool has waypoints."""
+        if context.state.mode != "terrain":
+            return ToolResult.not_handled()
+
+        # Only track preview when we have at least one point
+        if not self.points:
+            self.preview_point = None
+            return ToolResult.not_handled()
+
+        # Create view state for coordinate conversion
+        canvas_rect = Rect(
+            CANVAS_OFFSET_X,
+            CANVAS_OFFSET_Y,
+            context.screen_width - CANVAS_OFFSET_X,
+            context.screen_height - CANVAS_OFFSET_Y - STATUS_HEIGHT,
+        )
+        view_state = ViewState(
+            canvas_rect,
+            context.state.canvas_offset_x,
+            context.state.canvas_offset_y,
+            context.state.canvas_scale,
+        )
+
+        # Convert screen position to game pixel coordinates
+        game_pixel_pos = view_state.screen_to_game_pixels(pos)
+        if game_pixel_pos:
+            self.preview_point = game_pixel_pos
+        else:
+            self.preview_point = None
+
+        return ToolResult.handled()
 
     def handle_key_down(self, key, modifiers, context):
         """Handle key press - not used by measure tool."""
@@ -112,13 +143,14 @@ class MeasureTool:
         context.state.tool_message = self._get_status_message()
 
     def on_deactivated(self, context):
-        """Called when tool is deactivated - clear points and status message."""
-        self.reset()
+        """Called when tool is deactivated - clear preview but preserve points."""
+        self.preview_point = None
         context.state.tool_message = None
 
     def reset(self):
-        """Reset tool state - clear all measurement points."""
+        """Reset tool state - clear all measurement points and preview."""
         self.points.clear()
+        self.preview_point = None
 
     def get_hotkey(self) -> int | None:
         """Return 'M' key for Measure tool."""

@@ -636,11 +636,21 @@ class EditorApplication:
 
         # Get measure points from measure tool
         measure_tool = self.tool_manager.get_tool("measure")
-        # Only measure in terrain mode
+        is_measure_active = self.tool_manager.get_active_tool_name() == "measure"
+
         if measure_tool:
+            # Always pass points for persistent rendering (terrain mode only)
             self.highlight_state.measure_points = (
                 measure_tool.points if measure_tool.points and self.state.mode == "terrain" else None
             )
+
+            # Preview only when tool is active and has points
+            if is_measure_active and measure_tool.points and self.state.mode == "terrain":
+                self.highlight_state.measure_preview_point = measure_tool.preview_point
+            else:
+                self.highlight_state.measure_preview_point = None
+
+            self.highlight_state.measure_tool_active = is_measure_active
 
         # Render based on mode
         if self.state.mode == "greens":

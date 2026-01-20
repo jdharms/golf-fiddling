@@ -39,3 +39,50 @@ def draw_tile_border(
         tile_size + border_width * 2,
     )
     pygame.draw.rect(screen, color, border_rect, border_width)
+
+
+def draw_dashed_line(
+    surface,
+    color: tuple[int, int, int],
+    start_pos: tuple[int, int],
+    end_pos: tuple[int, int],
+    width: int = 1,
+    dash_length: int = 5,
+):
+    """
+    Draw a dashed line between two points.
+
+    Args:
+        surface: Pygame surface to draw on
+        color: Line color (RGB tuple)
+        start_pos: Starting position (x, y)
+        end_pos: Ending position (x, y)
+        width: Line width in pixels (default: 1)
+        dash_length: Length of each dash in pixels (default: 5)
+    """
+    import math
+
+    x1, y1 = start_pos
+    x2, y2 = end_pos
+    dx = x2 - x1
+    dy = y2 - y1
+    distance = math.sqrt(dx * dx + dy * dy)
+
+    if distance == 0:
+        return
+
+    # Normalize direction
+    dx /= distance
+    dy /= distance
+
+    # Draw dashes
+    pos = 0
+    drawing = True
+    while pos < distance:
+        next_pos = min(pos + dash_length, distance)
+        if drawing:
+            start = (int(x1 + dx * pos), int(y1 + dy * pos))
+            end = (int(x1 + dx * next_pos), int(y1 + dy * next_pos))
+            pygame.draw.line(surface, color, start, end, width)
+        drawing = not drawing
+        pos = next_pos
