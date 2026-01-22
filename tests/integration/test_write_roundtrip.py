@@ -15,6 +15,7 @@ from golf.core.decompressor import (
     bcd_to_int,
     unpack_attributes,
 )
+from golf.core.course_writer import CourseWriter
 from golf.core.rom_reader import (
     HOLES_PER_COURSE,
     TABLE_DISTANCE_1,
@@ -70,7 +71,8 @@ def test_simple_roundtrip(rom_path, japan_course_dir, tmp_path):
     output_rom = tmp_path / "test_output.nes"
 
     # Write to ROM
-    writer = RomWriter(rom_path, str(output_rom))
+    rom_writer = RomWriter(rom_path, str(output_rom))
+    course_writer = CourseWriter(rom_writer)
 
     # Load all 18 holes from Japan course
     holes = []
@@ -80,8 +82,8 @@ def test_simple_roundtrip(rom_path, japan_course_dir, tmp_path):
         holes.append(hd)
 
     # Write the course
-    writer.write_course(0, holes)  # Course 0 = Japan
-    writer.save()
+    course_writer.write_course(0, holes)  # Course 0 = Japan
+    rom_writer.save()
 
     # Read back from new ROM and verify
     new_rom = RomReader(str(output_rom))
@@ -139,9 +141,10 @@ def test_full_japan_course_roundtrip(rom_path, japan_course_dir, tmp_path):
     output_rom = tmp_path / "japan_roundtrip.nes"
 
     # Write course to ROM
-    writer = RomWriter(rom_path, str(output_rom))
-    stats = writer.write_course(0, holes)  # Course 0 = Japan
-    writer.save()
+    rom_writer = RomWriter(rom_path, str(output_rom))
+    course_writer = CourseWriter(rom_writer)
+    stats = course_writer.write_course(0, holes)  # Course 0 = Japan
+    rom_writer.save()
 
     # Verify statistics
     assert stats["course"] == "Japan"
@@ -203,7 +206,8 @@ def test_terrain_decompression_matches(rom_path, japan_course_dir, tmp_path):
 
     # Create writer and write course
     output_rom = tmp_path / "terrain_test.nes"
-    writer = RomWriter(rom_path, str(output_rom))
+    rom_writer = RomWriter(rom_path, str(output_rom))
+    course_writer = CourseWriter(rom_writer)
 
     # Load all 18 holes
     holes = []
@@ -212,8 +216,8 @@ def test_terrain_decompression_matches(rom_path, japan_course_dir, tmp_path):
         hd.load(str(japan_course_dir / f"hole_{hole_num:02d}.json"))
         holes.append(hd)
 
-    writer.write_course(0, holes)
-    writer.save()
+    course_writer.write_course(0, holes)
+    rom_writer.save()
 
     # Read back and decompress
     new_rom = RomReader(str(output_rom))
@@ -249,7 +253,8 @@ def test_attributes_match(rom_path, japan_course_dir, tmp_path):
 
     # Write to ROM
     output_rom = tmp_path / "attr_test.nes"
-    writer = RomWriter(rom_path, str(output_rom))
+    rom_writer = RomWriter(rom_path, str(output_rom))
+    course_writer = CourseWriter(rom_writer)
 
     # Load all 18 holes
     holes = []
@@ -258,8 +263,8 @@ def test_attributes_match(rom_path, japan_course_dir, tmp_path):
         hd.load(str(japan_course_dir / f"hole_{hole_num:02d}.json"))
         holes.append(hd)
 
-    writer.write_course(0, holes)
-    writer.save()
+    course_writer.write_course(0, holes)
+    rom_writer.save()
 
     # Read back attributes
     new_rom = RomReader(str(output_rom))
@@ -287,7 +292,8 @@ def test_greens_decompression_matches(rom_path, japan_course_dir, tmp_path):
 
     # Write to ROM
     output_rom = tmp_path / "greens_test.nes"
-    writer = RomWriter(rom_path, str(output_rom))
+    rom_writer = RomWriter(rom_path, str(output_rom))
+    course_writer = CourseWriter(rom_writer)
 
     # Load all 18 holes
     holes = []
@@ -296,8 +302,8 @@ def test_greens_decompression_matches(rom_path, japan_course_dir, tmp_path):
         hd.load(str(japan_course_dir / f"hole_{hole_num:02d}.json"))
         holes.append(hd)
 
-    writer.write_course(0, holes)
-    writer.save()
+    course_writer.write_course(0, holes)
+    rom_writer.save()
 
     # Read back and decompress greens
     new_rom = RomReader(str(output_rom))

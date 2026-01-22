@@ -5,6 +5,7 @@ NES Open Tournament Golf - Course Data Dumper
 Extracts course data from ROM and saves as human-readable JSON files.
 """
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -55,8 +56,12 @@ def dump_course(
     course_dir.mkdir(parents=True, exist_ok=True)
 
     # Read course-level data
-    hole_offset = rom.read_fixed_byte(TABLE_COURSE_HOLE_OFFSET + course_idx)
-    terrain_bank = rom.read_fixed_byte(TABLE_COURSE_BANK_TERRAIN + course_idx)
+    hole_offset = rom.annotate(
+        f"course {course_idx} hole offset"
+    ).read_fixed_byte(TABLE_COURSE_HOLE_OFFSET + course_idx)
+    terrain_bank = rom.annotate(
+        f"course {course_idx} terrain bank"
+    ).read_fixed_byte(TABLE_COURSE_BANK_TERRAIN + course_idx)
 
     # Greens use bank 3 based on the code analysis
     greens_bank = 3
@@ -94,44 +99,74 @@ def dump_course(
         print(f"  Hole {hole_num}...", end=" ")
 
         # Read metadata from fixed bank tables
-        par = rom.read_fixed_byte(TABLE_PAR + hole_idx)
-        handicap = rom.read_fixed_byte(TABLE_HANDICAP + hole_idx)
+        par = rom.annotate(f"hole {hole_num} par").read_fixed_byte(TABLE_PAR + hole_idx)
+        handicap = rom.annotate(f"hole {hole_num} handicap").read_fixed_byte(
+            TABLE_HANDICAP + hole_idx
+        )
 
-        dist_100 = rom.read_fixed_byte(TABLE_DISTANCE_100 + hole_idx)
-        dist_10 = rom.read_fixed_byte(TABLE_DISTANCE_10 + hole_idx)
-        dist_1 = rom.read_fixed_byte(TABLE_DISTANCE_1 + hole_idx)
+        dist_100 = rom.annotate(f"hole {hole_num} distance (100s)").read_fixed_byte(
+            TABLE_DISTANCE_100 + hole_idx
+        )
+        dist_10 = rom.annotate(f"hole {hole_num} distance (10s)").read_fixed_byte(
+            TABLE_DISTANCE_10 + hole_idx
+        )
+        dist_1 = rom.annotate(f"hole {hole_num} distance (1s)").read_fixed_byte(
+            TABLE_DISTANCE_1 + hole_idx
+        )
         distance = bcd_to_int(dist_100, dist_10, dist_1)
 
-        scroll_limit = rom.read_fixed_byte(TABLE_SCROLL_LIMIT + hole_idx)
-        green_x = rom.read_fixed_byte(TABLE_GREEN_X + hole_idx)
-        green_y = rom.read_fixed_byte(TABLE_GREEN_Y + hole_idx)
-        tee_x = rom.read_fixed_byte(TABLE_TEE_X + hole_idx)
-        tee_y = rom.read_fixed_word(TABLE_TEE_Y + (hole_idx * 2))
+        scroll_limit = rom.annotate(f"hole {hole_num} scroll limit").read_fixed_byte(
+            TABLE_SCROLL_LIMIT + hole_idx
+        )
+        green_x = rom.annotate(f"hole {hole_num} green X").read_fixed_byte(
+            TABLE_GREEN_X + hole_idx
+        )
+        green_y = rom.annotate(f"hole {hole_num} green Y").read_fixed_byte(
+            TABLE_GREEN_Y + hole_idx
+        )
+        tee_x = rom.annotate(f"hole {hole_num} tee X").read_fixed_byte(
+            TABLE_TEE_X + hole_idx
+        )
+        tee_y = rom.annotate(f"hole {hole_num} tee Y").read_fixed_word(
+            TABLE_TEE_Y + (hole_idx * 2)
+        )
 
         # Read flag positions (4 per hole)
         flag_positions = []
         for i in range(4):
-            flag_y_off = rom.read_fixed_byte(TABLE_FLAG_Y_OFFSET + (hole_idx * 4) + i)
-            flag_x_off = rom.read_fixed_byte(TABLE_FLAG_X_OFFSET + (hole_idx * 4) + i)
+            flag_y_off = rom.annotate(
+                f"hole {hole_num} flag {i + 1} Y offset"
+            ).read_fixed_byte(TABLE_FLAG_Y_OFFSET + (hole_idx * 4) + i)
+            flag_x_off = rom.annotate(
+                f"hole {hole_num} flag {i + 1} X offset"
+            ).read_fixed_byte(TABLE_FLAG_X_OFFSET + (hole_idx * 4) + i)
             flag_positions.append({"x_offset": flag_x_off, "y_offset": flag_y_off})
 
         # Read pointers
-        terrain_start_ptr = rom.read_fixed_word(
-            TABLE_TERRAIN_START_PTR + (hole_idx * 2)
+        terrain_start_ptr = rom.annotate(
+            f"hole {hole_num} terrain start ptr"
+        ).read_fixed_word(TABLE_TERRAIN_START_PTR + (hole_idx * 2))
+        terrain_end_ptr = rom.annotate(
+            f"hole {hole_num} terrain end ptr"
+        ).read_fixed_word(TABLE_TERRAIN_END_PTR + (hole_idx * 2))
+        greens_ptr = rom.annotate(f"hole {hole_num} greens ptr").read_fixed_word(
+            TABLE_GREENS_PTR + (hole_idx * 2)
         )
-        terrain_end_ptr = rom.read_fixed_word(TABLE_TERRAIN_END_PTR + (hole_idx * 2))
-        greens_ptr = rom.read_fixed_word(TABLE_GREENS_PTR + (hole_idx * 2))
 
         # Calculate compressed terrain size
         terrain_compressed_size = terrain_end_ptr - terrain_start_ptr
 
         # Read compressed terrain data
         terrain_prg = rom.cpu_to_prg_switched(terrain_start_ptr, terrain_bank)
-        terrain_compressed = rom.read_prg(terrain_prg, terrain_compressed_size)
+        terrain_compressed = rom.annotate(
+            f"hole {hole_num} terrain data ({terrain_compressed_size} bytes)"
+        ).read_prg(terrain_prg, terrain_compressed_size)
 
         # Read attribute data (72 bytes after terrain)
         attr_prg = rom.cpu_to_prg_switched(terrain_end_ptr, terrain_bank)
-        attr_bytes = rom.read_prg(attr_prg, ATTR_TOTAL_BYTES)
+        attr_bytes = rom.annotate(
+            f"hole {hole_num} attributes ({ATTR_TOTAL_BYTES} bytes)"
+        ).read_prg(attr_prg, ATTR_TOTAL_BYTES)
 
         # Decompress terrain
         terrain_rows = terrain_decomp.decompress(
@@ -149,9 +184,9 @@ def dump_course(
         # In the game itself this routine runs until the *output* buffer is filled.
         # So we'll grab a generous buffer to pass to the decompress function.
         if hole_idx < TOTAL_HOLES - 1:
-            next_greens_ptr = rom.read_fixed_word(
-                TABLE_GREENS_PTR + ((hole_idx + 1) * 2)
-            )
+            next_greens_ptr = rom.annotate(
+                f"hole {hole_num + 1} greens ptr (for size calc)"
+            ).read_fixed_word(TABLE_GREENS_PTR + ((hole_idx + 1) * 2))
             # Handle course boundaries where pointer table wraps
             if next_greens_ptr > greens_ptr:
                 greens_size = next_greens_ptr - greens_ptr
@@ -161,7 +196,9 @@ def dump_course(
             greens_size = 576  # Conservative fallback for last hole
 
         greens_prg = rom.cpu_to_prg_switched(greens_ptr, greens_bank)
-        greens_compressed = rom.read_prg(greens_prg, greens_size)
+        greens_compressed = rom.annotate(
+            f"hole {hole_num} greens data ({greens_size} bytes)"
+        ).read_prg(greens_prg, greens_size)
 
         try:
             greens_rows = greens_decomp.decompress(
@@ -216,18 +253,34 @@ def dump_course(
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python dump.py <rom_file> [output_dir]")
-        print(
-            "\nDumps all course data from NES Open Tournament Golf ROM to JSON files."
-        )
-        sys.exit(1)
+    parser = argparse.ArgumentParser(
+        description="Dump all course data from NES Open Tournament Golf ROM to JSON files"
+    )
+    parser.add_argument("rom_file", help="Source ROM file")
+    parser.add_argument(
+        "output_dir",
+        nargs="?",
+        default="courses",
+        help="Output directory (default: courses)",
+    )
+    parser.add_argument(
+        "--trace-io",
+        action="store_true",
+        help="Output ROM read trace to read_trace.json",
+    )
 
-    rom_path = sys.argv[1]
-    output_dir = Path(sys.argv[2]) if len(sys.argv) > 2 else Path("courses")
+    args = parser.parse_args()
+
+    rom_path = args.rom_file
+    output_dir = Path(args.output_dir)
 
     print(f"Loading ROM: {rom_path}")
-    rom = RomReader(rom_path)
+    if args.trace_io:
+        from golf.core.instrumented_io import InstrumentedRomReader
+
+        rom = InstrumentedRomReader(rom_path)
+    else:
+        rom = RomReader(rom_path)
 
     print(f"Output directory: {output_dir}")
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -259,6 +312,12 @@ def main():
         json.dump(global_meta, f, indent=2)
 
     print(f"\nWrote statistics to {output_dir}/meta.json")
+
+    # Write trace if instrumented
+    if args.trace_io and hasattr(rom, "write_trace"):
+        trace_path = str(output_dir / "read_trace.json")
+        rom.write_trace(trace_path)
+
     print("\nDone!")
 
 

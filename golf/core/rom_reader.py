@@ -186,3 +186,18 @@ class RomReader:
             Requested bytes
         """
         return self.read_prg(self.cpu_to_prg_switched(cpu_addr, bank), length)
+
+    def annotate(self, description: str) -> "RomReader":
+        """
+        Annotate the next read operation.
+
+        This is a no-op in the base class. The instrumented subclass
+        overrides this to record annotations for tracing.
+
+        Args:
+            description: Human-readable description of the operation
+
+        Returns:
+            self (for method chaining)
+        """
+        return self
