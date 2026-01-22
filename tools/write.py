@@ -9,6 +9,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from golf.core.course_writer import CourseWriter
 from golf.core.rom_reader import COURSES, HOLES_PER_COURSE, PRG_BANK_SIZE
 from golf.core.rom_writer import BankOverflowError, RomWriter
 from golf.formats import compact_json as json
@@ -91,11 +92,12 @@ def validate_only(
         # Load course data
         holes = load_course_data(course_dir)
 
-        # Create writer
-        writer = RomWriter(rom_path, "/dev/null")  # Dummy output
+        # Create writers
+        rom_writer = RomWriter(rom_path, "/dev/null")  # Dummy output
+        course_writer = CourseWriter(rom_writer)
 
         # Attempt to write (this compresses and validates)
-        stats = writer.write_course(course_idx, holes)
+        stats = course_writer.write_course(course_idx, holes)
 
         # Report statistics
         print(f"Course: {stats['course']}")
@@ -157,6 +159,11 @@ def main():
     parser.add_argument(
         "--verbose", action="store_true", help="Show detailed compression statistics"
     )
+    parser.add_argument(
+        "--trace-io",
+        action="store_true",
+        help="Output ROM write trace to write_trace.json",
+    )
 
     args = parser.parse_args()
 
@@ -201,12 +208,18 @@ def main():
         holes = load_course_data(course_dir)
         print(f"Loaded {len(holes)} holes")
 
-        # Create writer
-        writer = RomWriter(str(rom_path), output_path)
+        # Create writers
+        if args.trace_io:
+            from golf.core.instrumented_io import InstrumentedRomWriter
+
+            rom_writer = InstrumentedRomWriter(str(rom_path), output_path)
+        else:
+            rom_writer = RomWriter(str(rom_path), output_path)
+        course_writer = CourseWriter(rom_writer)
 
         # Compress and write course
         print("Compressing course data...")
-        stats = writer.write_course(course_idx, holes)
+        stats = course_writer.write_course(course_idx, holes)
 
         if args.verbose:
             print()
@@ -229,7 +242,13 @@ def main():
 
         # Save ROM
         print()
-        writer.save()
+        rom_writer.save()
+
+        # Write trace if instrumented
+        if args.trace_io and hasattr(rom_writer, "write_trace"):
+            trace_path = str(Path(output_path).parent / "write_trace.json")
+            rom_writer.write_trace(trace_path)
+
         print()
         print("Done!")
 
