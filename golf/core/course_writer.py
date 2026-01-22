@@ -123,24 +123,23 @@ class CourseWriter:
             zip(terrain_pointers, greens_pointers)
         ):
             abs_hole_idx = hole_offset + i
-            hole_num = (abs_hole_idx % HOLES_PER_COURSE) + 1
             self._write_pointer(
                 TABLE_TERRAIN_START_PTR,
                 abs_hole_idx,
                 terrain_ptr["start"],
-                f"hole {hole_num} terrain start ptr",
+                f"global hole {abs_hole_idx} terrain start ptr",
             )
             self._write_pointer(
                 TABLE_TERRAIN_END_PTR,
                 abs_hole_idx,
                 terrain_ptr["end"],
-                f"hole {hole_num} terrain end ptr",
+                f"global hole {abs_hole_idx} terrain end ptr",
             )
             self._write_pointer(
                 TABLE_GREENS_PTR,
                 abs_hole_idx,
                 greens_ptr,
-                f"hole {hole_num} greens ptr",
+                f"global hole {abs_hole_idx} greens ptr",
             )
 
         # Update metadata for each hole
@@ -205,12 +204,12 @@ class CourseWriter:
         pointers = []
 
         for i, data in enumerate(compressed_data):
-            hole_num = (hole_offset + i) % HOLES_PER_COURSE + 1
+            abs_hole_idx = hole_offset + i
 
             # Write terrain
             terrain_start = current_offset
             self.writer.annotate(
-                f"hole {hole_num} terrain data ({len(data['terrain'])} bytes)"
+                f"global hole {abs_hole_idx} terrain data ({len(data['terrain'])} bytes)"
             ).write_prg(current_offset, data["terrain"])
             current_offset += len(data["terrain"])
 
@@ -219,7 +218,7 @@ class CourseWriter:
 
             # Write attributes (72 bytes)
             self.writer.annotate(
-                f"hole {hole_num} attributes ({len(data['attributes'])} bytes)"
+                f"global hole {abs_hole_idx} attributes ({len(data['attributes'])} bytes)"
             ).write_prg(current_offset, data["attributes"])
             current_offset += len(data["attributes"])
 
@@ -261,7 +260,7 @@ class CourseWriter:
         all_greens_ptrs = []
         for hole_idx in range(54):
             ptr = self.writer.annotate(
-                f"greens ptr for hole {hole_idx + 1}"
+                f"global hole {hole_idx} greens ptr (read for defrag)"
             ).read_fixed_word(TABLE_GREENS_PTR + hole_idx * 2)
             all_greens_ptrs.append(ptr)
 
@@ -322,20 +321,18 @@ class CourseWriter:
             cpu_addr = self.writer.prg_to_cpu_switched(current_offset)
             all_ptrs.append(cpu_addr)
 
-            hole_num = hole_idx + 1
             self.writer.annotate(
-                f"hole {hole_num} greens data ({len(data)} bytes)"
+                f"global hole {hole_idx} greens data ({len(data)} bytes)"
             ).write_prg(current_offset, data)
             current_offset += len(data)
 
         # Update ALL greens pointers (since we defragmented entire bank)
         for hole_idx, ptr in enumerate(all_ptrs):
-            hole_num = hole_idx + 1
             self._write_pointer(
                 TABLE_GREENS_PTR,
                 hole_idx,
                 ptr,
-                f"hole {hole_num} greens ptr (defrag)",
+                f"global hole {hole_idx} greens ptr (defrag)",
             )
 
         # Return pointers for this course only
@@ -350,50 +347,49 @@ class CourseWriter:
             hole_data: HoleData object
         """
         metadata = hole_data.metadata
-        hole_num = (hole_idx % HOLES_PER_COURSE) + 1
 
         # Write par
-        self.writer.annotate(f"hole {hole_num} par").write_fixed_byte(
+        self.writer.annotate(f"global hole {hole_idx} par").write_fixed_byte(
             TABLE_PAR + hole_idx, metadata.get("par", 4)
         )
 
         # Write handicap
-        self.writer.annotate(f"hole {hole_num} handicap").write_fixed_byte(
+        self.writer.annotate(f"global hole {hole_idx} handicap").write_fixed_byte(
             TABLE_HANDICAP + hole_idx, metadata.get("handicap", 1)
         )
 
         # Write distance (BCD encoded)
         distance = metadata.get("distance", 400)
         dist_100, dist_10, dist_1 = int_to_bcd(distance)
-        self.writer.annotate(f"hole {hole_num} distance (100s)").write_fixed_byte(
+        self.writer.annotate(f"global hole {hole_idx} distance (100s)").write_fixed_byte(
             TABLE_DISTANCE_100 + hole_idx, dist_100
         )
-        self.writer.annotate(f"hole {hole_num} distance (10s)").write_fixed_byte(
+        self.writer.annotate(f"global hole {hole_idx} distance (10s)").write_fixed_byte(
             TABLE_DISTANCE_10 + hole_idx, dist_10
         )
-        self.writer.annotate(f"hole {hole_num} distance (1s)").write_fixed_byte(
+        self.writer.annotate(f"global hole {hole_idx} distance (1s)").write_fixed_byte(
             TABLE_DISTANCE_1 + hole_idx, dist_1
         )
 
         # Write scroll limit
-        self.writer.annotate(f"hole {hole_num} scroll limit").write_fixed_byte(
+        self.writer.annotate(f"global hole {hole_idx} scroll limit").write_fixed_byte(
             TABLE_SCROLL_LIMIT + hole_idx, metadata.get("scroll_limit", 32)
         )
 
         # Write green position
-        self.writer.annotate(f"hole {hole_num} green X").write_fixed_byte(
+        self.writer.annotate(f"global hole {hole_idx} green X").write_fixed_byte(
             TABLE_GREEN_X + hole_idx, hole_data.green_x
         )
-        self.writer.annotate(f"hole {hole_num} green Y").write_fixed_byte(
+        self.writer.annotate(f"global hole {hole_idx} green Y").write_fixed_byte(
             TABLE_GREEN_Y + hole_idx, hole_data.green_y
         )
 
         # Write tee position
         tee = metadata.get("tee", {"x": 0, "y": 0})
-        self.writer.annotate(f"hole {hole_num} tee X").write_fixed_byte(
+        self.writer.annotate(f"global hole {hole_idx} tee X").write_fixed_byte(
             TABLE_TEE_X + hole_idx, tee["x"]
         )
-        self.writer.annotate(f"hole {hole_num} tee Y").write_fixed_word(
+        self.writer.annotate(f"global hole {hole_idx} tee Y").write_fixed_word(
             TABLE_TEE_Y + hole_idx * 2, tee["y"]
         )
 
@@ -409,10 +405,10 @@ class CourseWriter:
                 x_offset = 0
 
             self.writer.annotate(
-                f"hole {hole_num} flag {i + 1} Y offset"
+                f"global hole {hole_idx} flag {i + 1} Y offset"
             ).write_fixed_byte(TABLE_FLAG_Y_OFFSET + hole_idx * 4 + i, y_offset)
             self.writer.annotate(
-                f"hole {hole_num} flag {i + 1} X offset"
+                f"global hole {hole_idx} flag {i + 1} X offset"
             ).write_fixed_byte(TABLE_FLAG_X_OFFSET + hole_idx * 4 + i, x_offset)
 
     def _write_pointer(

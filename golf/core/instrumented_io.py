@@ -40,7 +40,7 @@ class InstrumentedRomReader(RomReader):
 
     Usage:
         rom = InstrumentedRomReader("game.nes")
-        data = rom.annotate("hole 1 terrain ptr").read_fixed_word(0xDBC1)
+        data = rom.annotate("global hole 0 terrain ptr").read_fixed_word(0xDBC1)
         rom.write_trace("read_trace.json")
     """
 
@@ -174,7 +174,7 @@ class InstrumentedRomWriter(RomWriter):
 
     Usage:
         writer = InstrumentedRomWriter("game.nes", "output.nes")
-        writer.annotate("hole 1 terrain data").write_prg(0x0000, data)
+        writer.annotate("global hole 0 terrain data").write_prg(0x0000, data)
         writer.write_trace("write_trace.json")
     """
 
@@ -193,6 +193,7 @@ class InstrumentedRomWriter(RomWriter):
         self._pending_annotation: str | None = None
         self._require_annotations = require_annotations
         self._trace: list[dict] = []
+        self._suppress_logging = False
 
     def annotate(self, description: str) -> "InstrumentedRomWriter":
         """
@@ -207,6 +208,23 @@ class InstrumentedRomWriter(RomWriter):
         self._pending_annotation = description
         return self
 
+    def _suppress_nested_logging(self):
+        """Context manager to suppress logging from nested operations."""
+        class SuppressContext:
+            def __init__(ctx, writer):
+                ctx.writer = writer
+                ctx.old_value = writer._suppress_logging
+
+            def __enter__(ctx):
+                ctx.writer._suppress_logging = True
+                return ctx
+
+            def __exit__(ctx, exc_type, exc_val, exc_tb):
+                ctx.writer._suppress_logging = ctx.old_value
+                return False
+
+        return SuppressContext(self)
+
     def _log_operation(
         self,
         op_type: str,
@@ -217,6 +235,9 @@ class InstrumentedRomWriter(RomWriter):
         bank: int | None = None,
     ):
         """Log an operation to the trace."""
+        if self._suppress_logging:
+            return
+
         annotation = self._pending_annotation or "[no annotation]"
         if self._pending_annotation is None and self._require_annotations:
             raise RuntimeError(
@@ -259,7 +280,8 @@ class InstrumentedRomWriter(RomWriter):
         """Write 16-bit word to PRG ROM with logging."""
         data = bytes([value & 0xFF, (value >> 8) & 0xFF])
         self._log_operation("write", prg_offset, 2, data)
-        super().write_prg_word(prg_offset, value)
+        with self._suppress_nested_logging():
+            super().write_prg_word(prg_offset, value)
 
     def write_fixed(self, cpu_addr: int, data: bytes):
         """Write bytes to fixed bank with logging."""
@@ -279,7 +301,8 @@ class InstrumentedRomWriter(RomWriter):
         prg_offset = self.cpu_to_prg_fixed(cpu_addr)
         data = bytes([value & 0xFF, (value >> 8) & 0xFF])
         self._log_operation("write", prg_offset, 2, data, cpu_addr=cpu_addr)
-        super().write_fixed_word(cpu_addr, value)
+        with self._suppress_nested_logging():
+            super().write_fixed_word(cpu_addr, value)
 
     def write_switched(self, cpu_addr: int, bank: int, data: bytes):
         """Write bytes to switched bank with logging."""
@@ -304,7 +327,8 @@ class InstrumentedRomWriter(RomWriter):
 
     def read_prg_word(self, prg_offset: int) -> int:
         """Read 16-bit word from PRG ROM with logging."""
-        value = super().read_prg_word(prg_offset)
+        with self._suppress_nested_logging():
+            value = super().read_prg_word(prg_offset)
         data = bytes([value & 0xFF, (value >> 8) & 0xFF])
         self._log_operation("read", prg_offset, 2, data)
         return value
@@ -320,7 +344,8 @@ class InstrumentedRomWriter(RomWriter):
     def read_fixed_word(self, cpu_addr: int) -> int:
         """Read 16-bit word from fixed bank with logging."""
         prg_offset = self.cpu_to_prg_fixed(cpu_addr)
-        value = super().read_fixed_word(cpu_addr)
+        with self._suppress_nested_logging():
+            value = super().read_fixed_word(cpu_addr)
         data = bytes([value & 0xFF, (value >> 8) & 0xFF])
         self._log_operation("read", prg_offset, 2, data, cpu_addr=cpu_addr)
         return value
