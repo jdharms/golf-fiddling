@@ -104,6 +104,19 @@ The codebase is organized into three main packages:
 
 **ROM Memory Model**: NES ROMs use bank switching. The game has a fixed bank ($C000-$FFFF, bank 15) containing pointer tables and lookup data, plus switchable banks ($8000-$BFFF) containing compressed course data. The `RomReader` class handles CPU address translation to PRG ROM offsets.
 
+**Bank Layout Constraints**: The switchable banks contain not just course data but also critical lookup tables and code that must be preserved:
+
+| Bank | Contents | Course Data Region | Available Space |
+|------|----------|-------------------|-----------------|
+| 0 | Japan terrain + tables | $8000-$A23D | 8,766 bytes |
+| 1 | US terrain + tables | $8000-$A1E5 | 8,678 bytes |
+| 2 | UK terrain + tables | $837F-$A553 | 8,661 bytes |
+| 3 | All greens + code | $81C0-$A773 | 9,652 bytes |
+
+**Important**: Bank 2 (UK) has tables BEFORE terrain at $8000-$837E. Bank 3 has decompression tables at $8000-$81BF and executable code at $A774-$BFFF. The `CourseWriter` class enforces these boundaries when writing course data.
+
+For complete ROM layout details (all pointer table addresses, metadata tables, etc.), use the `nes-open-golf-rom-layout` skill.
+
 **Decompression**: Course terrain and greens use a custom compression scheme with three stages:
 1. RLE + dictionary expansion (codes $E0+ expand to multiple bytes)
 2. Horizontal transitions (low byte values trigger table lookups)
