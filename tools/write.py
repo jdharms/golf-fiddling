@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 from golf.core.course_writer import CourseWriter
+from golf.core.patches import AVAILABLE_PATCHES, PatchError
 from golf.core.rom_reader import COURSES, HOLES_PER_COURSE, PRG_BANK_SIZE
 from golf.core.rom_writer import BankOverflowError, RomWriter
 
@@ -74,6 +75,55 @@ def detect_course_index(course_dir: Path) -> int:
             hole_offset = meta.get("hole_offset", 0)
             return hole_offset // HOLES_PER_COURSE
     return 0
+
+
+def list_patches() -> None:
+    """Print available patches and exit."""
+    print("Available patches:")
+    print()
+    for name, patch in AVAILABLE_PATCHES.items():
+        print(f"  {name}")
+        print(f"    {patch.description}")
+        print()
+
+
+def apply_patches(rom_writer: RomWriter, patch_names: list[str]) -> list[str]:
+    """
+    Apply selected patches to ROM.
+
+    Args:
+        rom_writer: ROM writer to modify
+        patch_names: List of patch names to apply
+
+    Returns:
+        List of patches that were applied (excludes already-applied)
+
+    Raises:
+        ValueError: If patch name is not recognized
+        PatchError: If patch cannot be applied
+    """
+    applied = []
+
+    for name in patch_names:
+        if name not in AVAILABLE_PATCHES:
+            raise ValueError(
+                f"Unknown patch: '{name}'. Use --list-patches to see available patches."
+            )
+
+        patch = AVAILABLE_PATCHES[name]
+
+        if patch.is_applied(rom_writer):
+            print(f"Patch already applied: {name}")
+        elif patch.can_apply(rom_writer):
+            patch.apply(rom_writer)
+            print(f"Applied patch: {name}")
+            applied.append(name)
+        else:
+            raise PatchError(
+                f"Cannot apply patch '{name}': ROM is in unexpected state"
+            )
+
+    return applied
 
 
 def validate_only(
@@ -143,9 +193,11 @@ def main():
         description="Write course data from JSON files back to NES ROM"
     )
 
-    parser.add_argument("rom_file", help="Source ROM file (read-only)")
+    parser.add_argument("rom_file", nargs="?", help="Source ROM file (read-only)")
     parser.add_argument(
-        "course_dir", help="Course directory containing hole_01.json through hole_18.json"
+        "course_dir",
+        nargs="?",
+        help="Course directory containing hole_01.json through hole_18.json",
     )
     parser.add_argument(
         "-o",
@@ -173,8 +225,32 @@ def main():
         action="store_true",
         help="Output ROM write trace to write_trace.json",
     )
+    parser.add_argument(
+        "-p",
+        "--patch",
+        action="append",
+        dest="patches",
+        metavar="NAME",
+        help="Apply a ROM patch by name (can be repeated)",
+    )
+    parser.add_argument(
+        "--list-patches",
+        action="store_true",
+        help="List available patches and exit",
+    )
 
     args = parser.parse_args()
+
+    # Handle --list-patches early exit
+    if args.list_patches:
+        list_patches()
+        sys.exit(0)
+
+    # Validate required arguments for normal operation
+    if not args.rom_file:
+        parser.error("the following arguments are required: rom_file")
+    if not args.course_dir:
+        parser.error("the following arguments are required: course_dir")
 
     # Validate inputs
     rom_path = Path(args.rom_file)
@@ -224,6 +300,13 @@ def main():
             rom_writer = InstrumentedRomWriter(str(rom_path), output_path)
         else:
             rom_writer = RomWriter(str(rom_path), output_path)
+
+        # Apply patches if requested
+        if args.patches:
+            print("Applying patches...")
+            apply_patches(rom_writer, args.patches)
+            print()
+
         course_writer = CourseWriter(rom_writer)
 
         # Compress and write course
@@ -270,6 +353,9 @@ def main():
         print()
         print("Course data is too large to fit in ROM bank.")
         print("Try simplifying course designs to reduce compressed size.")
+        sys.exit(1)
+    except PatchError as e:
+        print(f"Patch error: {e}")
         sys.exit(1)
     except ValueError as e:
         print(f"Error: {e}")
