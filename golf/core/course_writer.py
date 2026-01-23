@@ -6,6 +6,7 @@ Uses RomWriter for low-level byte operations.
 """
 
 from .compressor import GreensCompressor, TerrainCompressor
+from .decompressor import GreensDecompressor
 from .packing import int_to_bcd, pack_attributes
 from .rom_reader import (
     COURSES,
@@ -32,6 +33,46 @@ from .rom_writer import BankOverflowError, RomWriter
 from ..formats.hole_data import HoleData
 
 
+# Greens decompress to 24x24 = 576 tiles
+GREENS_TOTAL_TILES = 576
+
+
+def find_actual_greens_size(
+    compressed_data: bytes, decompressor: GreensDecompressor, max_size: int = 400
+) -> int:
+    """
+    Find the actual compressed size of greens data by binary search.
+
+    The game's decompressor reads until it fills a 24x24 buffer (576 tiles),
+    so we need to find exactly how many compressed bytes produce that.
+
+    Args:
+        compressed_data: Buffer containing compressed greens (may have extra bytes)
+        decompressor: GreensDecompressor instance
+        max_size: Maximum size to search (default 400, typical greens are 150-250)
+
+    Returns:
+        Exact number of compressed bytes needed to decompress to 576 tiles
+    """
+    max_size = min(max_size, len(compressed_data))
+
+    # Binary search for minimum bytes needed
+    lo, hi = 1, max_size
+    while lo < hi:
+        mid = (lo + hi) // 2
+        try:
+            result = decompressor.decompress(compressed_data[:mid])
+            total_tiles = sum(len(row) for row in result)
+            if total_tiles >= GREENS_TOTAL_TILES:
+                hi = mid
+            else:
+                lo = mid + 1
+        except Exception:
+            lo = mid + 1
+
+    return lo
+
+
 class CourseWriter:
     """
     Writes course data to ROM with compression and pointer management.
@@ -50,6 +91,7 @@ class CourseWriter:
         self.writer = writer
         self.terrain_compressor = TerrainCompressor()
         self.greens_compressor = GreensCompressor()
+        self.greens_decompressor: GreensDecompressor | None = None
 
     def write_course(self, course_idx: int, hole_data_list: list[HoleData]) -> dict:
         """
@@ -186,20 +228,37 @@ class CourseWriter:
         Raises:
             BankOverflowError: If data doesn't fit in bank
         """
+        # IMPORTANT: Each terrain bank contains lookup tables that must be preserved.
+        # The terrain data region is bounded by these tables:
+        #   Bank 0 (Japan): $8000-$A23D for terrain, $A23E-$BFFF for tables
+        #   Bank 1 (US):    $8000-$A1E5 for terrain, $A1E6-$BFFF for tables
+        #   Bank 2 (UK):    $8000-$837E for tables, $837F-$A553 for terrain,
+        #                   $A554-$BFFF for tables
+        TERRAIN_BOUNDS = {
+            0: (0x8000, 0xA23E),  # Japan: terrain starts at $8000, ends before $A23E
+            1: (0x8000, 0xA1E6),  # US: terrain starts at $8000, ends before $A1E6
+            2: (0x837F, 0xA554),  # UK: terrain starts at $837F, ends before $A554
+        }
+
+        terrain_start_addr, terrain_end_addr = TERRAIN_BOUNDS[bank]
+        available_space = terrain_end_addr - terrain_start_addr
+
         # Calculate total size needed
         total_size = sum(
             len(d["terrain"]) + len(d["attributes"]) for d in compressed_data
         )
 
-        if total_size > PRG_BANK_SIZE:
+        if total_size > available_space:
             raise BankOverflowError(
                 f"Terrain data ({total_size} bytes) exceeds "
-                f"bank size ({PRG_BANK_SIZE} bytes)"
+                f"available space ({available_space} bytes) in bank {bank} "
+                f"(terrain region ${terrain_start_addr:04X}-${terrain_end_addr - 1:04X})"
             )
 
-        # Start writing at beginning of bank
+        # Start writing at the terrain region start (not bank start for UK)
         bank_start_prg = bank * PRG_BANK_SIZE
-        current_offset = bank_start_prg
+        terrain_region_offset = terrain_start_addr - 0x8000
+        current_offset = bank_start_prg + terrain_region_offset
 
         pointers = []
 
@@ -265,23 +324,39 @@ class CourseWriter:
             all_greens_ptrs.append(ptr)
 
         # Read all existing greens data from ORIGINAL bank before modifying
+        # Use decompression to find actual compressed sizes (not pointer differences)
+        # because the game's decompressor reads until 576 tiles, not until a pointer
         all_existing_greens = []
+
+        # Lazily initialize decompressor for finding actual sizes
+        if self.greens_decompressor is None:
+            # Create a temporary RomReader from the original bank data
+            # We can use the decompressor with the original bank's tables
+            from .rom_reader import RomReader
+
+            # Create decompressor using tables from original bank
+            self.greens_decompressor = GreensDecompressor(None, bank)
+            # Manually load tables from original_greens_bank
+            self.greens_decompressor.horiz_table = list(original_greens_bank[0:192])
+            self.greens_decompressor.vert_table = list(original_greens_bank[192:384])
+            self.greens_decompressor.dict_table = list(original_greens_bank[384:448])
+
         for hole_idx in range(54):
             ptr = all_greens_ptrs[hole_idx]
             offset_in_bank = ptr - 0x8000
 
-            # Read until next hole's pointer or conservative fallback
-            if hole_idx < 53:
-                next_ptr = all_greens_ptrs[hole_idx + 1]
-                if next_ptr > ptr:
-                    size = next_ptr - ptr
-                else:
-                    size = 576  # Conservative fallback
-            else:
-                size = 576  # Last hole
+            # Read a buffer large enough for any compressed greens (max ~400 bytes)
+            # Typical greens are 150-250 bytes compressed
+            max_read = min(400, len(original_greens_bank) - offset_in_bank)
+            buffer = original_greens_bank[offset_in_bank : offset_in_bank + max_read]
+
+            # Find actual compressed size by decompression
+            actual_size = find_actual_greens_size(
+                bytes(buffer), self.greens_decompressor, max_read
+            )
 
             existing_data = original_greens_bank[
-                offset_in_bank : offset_in_bank + size
+                offset_in_bank : offset_in_bank + actual_size
             ]
             all_existing_greens.append(existing_data)
 
@@ -302,7 +377,11 @@ class CourseWriter:
         # Account for decompression tables at start of bank
         # Tables: horiz(192) + vert(192) + dict(64) = 448 bytes ($8000-$81BF)
         GREENS_TABLES_SIZE = 0x1C0  # 448 bytes
-        available_space = PRG_BANK_SIZE - GREENS_TABLES_SIZE
+
+        # IMPORTANT: Bank 3 contains executable code starting at $A774
+        # The greens data region is $81C0-$A773, code is $A774-$BFFF
+        GREENS_CODE_START = 0xA774  # CPU address where code begins
+        available_space = GREENS_CODE_START - 0x8000 - GREENS_TABLES_SIZE
 
         if total_size > available_space:
             raise BankOverflowError(

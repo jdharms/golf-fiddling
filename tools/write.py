@@ -12,6 +12,14 @@ from pathlib import Path
 from golf.core.course_writer import CourseWriter
 from golf.core.rom_reader import COURSES, HOLES_PER_COURSE, PRG_BANK_SIZE
 from golf.core.rom_writer import BankOverflowError, RomWriter
+
+# Terrain bank boundaries - must match course_writer.py TERRAIN_BOUNDS
+# Each bank contains lookup tables that limit the terrain region
+TERRAIN_AVAILABLE_SPACE = {
+    0: 0xA23E - 0x8000,  # Japan: 8766 bytes
+    1: 0xA1E6 - 0x8000,  # US: 8678 bytes
+    2: 0xA554 - 0x837F,  # UK: 8661 bytes (starts at $837F, not $8000)
+}
 from golf.formats import compact_json as json
 from golf.formats.hole_data import HoleData
 
@@ -100,10 +108,11 @@ def validate_only(
         stats = course_writer.write_course(course_idx, holes)
 
         # Report statistics
+        terrain_available = TERRAIN_AVAILABLE_SPACE[course_idx]
         print(f"Course: {stats['course']}")
         print(
-            f"Terrain bank usage: {stats['terrain_bank_usage']:,} / {PRG_BANK_SIZE:,} bytes "
-            f"({stats['terrain_bank_usage'] / PRG_BANK_SIZE * 100:.1f}%)"
+            f"Terrain bank usage: {stats['terrain_bank_usage']:,} / {terrain_available:,} bytes "
+            f"({stats['terrain_bank_usage'] / terrain_available * 100:.1f}%)"
         )
         print(f"Greens bank usage (this course): {stats['greens_bytes']:,} bytes")
         print()
@@ -232,9 +241,10 @@ def main():
                 )
 
         print()
+        terrain_available = TERRAIN_AVAILABLE_SPACE[course_idx]
         print(
-            f"Total terrain bank usage: {stats['terrain_bank_usage']:,} / {PRG_BANK_SIZE:,} bytes "
-            f"({stats['terrain_bank_usage'] / PRG_BANK_SIZE * 100:.1f}%)"
+            f"Total terrain bank usage: {stats['terrain_bank_usage']:,} / {terrain_available:,} bytes "
+            f"({stats['terrain_bank_usage'] / terrain_available * 100:.1f}%)"
         )
         print(
             f"Total greens bank usage (this course): {stats['greens_bytes']:,} bytes"

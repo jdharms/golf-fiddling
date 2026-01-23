@@ -12,3 +12,15 @@ wheels/
 
 # Sensitive files
 *.nes
+
+# AI stuff lmao
+*.skill
+
+# Ensure only built-in courses get committed
+/courses/*
+!/courses/japan
+!/courses/japan/**
+!/courses/uk
+!/courses/uk/**
+!/courses/us
+!/courses/us/**
