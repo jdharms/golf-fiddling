@@ -21,7 +21,7 @@ from .byte_patch import BytePatch
 MULTI_BANK_CODE_PATCH = BytePatch(
     name="multi_bank_lookup",
     description="Change terrain bank lookup from course-based to hole-based",
-    prg_offset=0x1DB78,
+    prg_offset=0x3DB68,  # CPU $DB68 in fixed bank (bank 15)
     original=bytes([0xAE, 0x02, 0x01, 0xBD, 0xBE, 0xDB, 0x20, 0x52, 0xD3]),
     patched=bytes([0xA6, 0x31, 0xBD, 0x00, 0xA7, 0x20, 0x52, 0xD3, 0xEA]),
 )
@@ -37,7 +37,7 @@ MULTI_BANK_CODE_PATCH = BytePatch(
 COURSE3_MIRROR_PATCH = BytePatch(
     name="course3_mirror",
     description="Make course 3 (UK) mirror course 1 (Japan)",
-    prg_offset=0x1DBCD,
+    prg_offset=0x3DBBD,  # CPU $DBBD in fixed bank (CourseHoleOffsetTable + 2)
     original=bytes([0x24]),
     patched=bytes([0x00]),
 )

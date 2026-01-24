@@ -25,12 +25,14 @@ The project provides several command-line tools via entry points (defined in `py
 golf-dump <rom_file.nes> <output_dir>
 
 # Write course data from JSON files back to ROM (inverse of golf-dump)
-golf-write <rom_file.nes> <course_dir> [options]
+# Default: Packed mode - writes 1-2 courses across 3 banks with auto-patching
+golf-write <rom_file.nes> <course_dir> [course_dir2] [options]
 # Options:
 #   -o, --output PATH    Output ROM file (default: <rom>.modified.nes)
-#   -c, --course INDEX   Course index 0-2 (default: auto-detect from course.json)
 #   --validate-only      Compress and validate without writing
 #   --verbose            Show compression statistics
+#   --legacy             Use legacy single-bank mode (no patches)
+#   -c, --course INDEX   Course index 0-2 (legacy mode only)
 
 # Analyze ROM structure and show technical details
 golf-analyze <rom_file.nes> [hole_number]
@@ -59,11 +61,17 @@ golf-dump nes_open_us.nes courses/
 # Edit a hole using the course editor
 golf-editor courses/japan/hole_01.json
 
-# Write edited course back to ROM
+# Write 1 course in packed mode (default, UK mirrors Japan)
 golf-write nes_open_us.nes courses/japan/ -o modified.nes
 
-# Validate course will fit without writing
-golf-write nes_open_us.nes courses/japan/ --validate-only --verbose
+# Write 2 courses in packed mode (uses all 3 terrain banks)
+golf-write nes_open_us.nes courses/japan/ courses/us/ -o modified.nes
+
+# Validate courses will fit without writing
+golf-write nes_open_us.nes courses/japan/ courses/us/ --validate-only --verbose
+
+# Legacy mode: write single course to specific bank (no patches)
+golf-write nes_open_us.nes courses/japan/ --legacy -c 0 -o modified.nes
 
 # Visualize a specific hole
 golf-visualize data/chr-ram.bin courses/japan/hole_01.json output.png
@@ -114,6 +122,12 @@ The codebase is organized into three main packages:
 | 3 | All greens + code | $81C0-$A773 | 9,652 bytes |
 
 **Important**: Bank 2 (UK) has tables BEFORE terrain at $8000-$837E. Bank 3 has decompression tables at $8000-$81BF and executable code at $A774-$BFFF. The `CourseWriter` class enforces these boundaries when writing course data.
+
+**Multi-Bank Mode (PackedCourseWriter)**: The default write mode packs 1-2 courses across all 3 terrain banks using per-hole bank lookup instead of per-course. This provides ~26,100 bytes total for 36 holes (~725 bytes/hole average), a 50% increase over vanilla. Key changes:
+- ROM code patch changes bank lookup from course-based to hole-based
+- Per-hole bank table written at $A700 in bank 3 (72 bytes for 36 holes)
+- Course 3 (UK) mirrors Course 1 (Japan) to support 2-course mode
+- Greens region shrinks slightly to accommodate bank table
 
 For complete ROM layout details (all pointer table addresses, metadata tables, etc.), use the `nes-open-golf-rom-layout` skill.
 
