@@ -41,7 +41,7 @@ $DB70  EA          NOP                           ; 1 byte
 
 ### Patch Bytes
 
-At file offset `$1DB78` (CPU `$DB68` in fixed bank):
+At PRG offset `$3DB68` (CPU `$DB68` in fixed bank):
 ```
 Original: AE 02 01 BD BE DB 20 52 D3
 Patched:  A6 31 BD 00 A7 20 52 D3 EA
@@ -49,7 +49,7 @@ Patched:  A6 31 BD 00 A7 20 52 D3 EA
 
 ## Per-Hole Bank Table
 
-Located at `$A700` in bank 3 (file offset `$CA710`). Uses doubled indexing, so entries are at even offsets:
+Located at `$A700` in bank 3 (PRG offset `$E700`). Uses doubled indexing, so entries are at even offsets:
 
 | Offset | Hole | Value |
 |--------|------|-------|
@@ -75,7 +75,7 @@ Original: 00 12 24  (offsets 0, 18, 36)
 Patched:  00 12 00  (offsets 0, 18, 0)
 ```
 
-Single byte change at file offset `$1DBCD`: `24` → `00`
+Single byte change at PRG offset `$3DBBD` (CPU `$DBBD`): `24` → `00`
 
 When "UK" is selected, the game uses hole offset 0, accessing the same holes as Japan. All pointer tables and metadata are indexed by the computed hole number, so everything works automatically.
 
@@ -91,27 +91,54 @@ Bank 2 ($837F-$A553): Course 2 remainder (~8,661 bytes)
 
 Note: Bank 2 has pre-terrain tables at `$8000-$837E` that must be preserved.
 
-## Implementation Checklist
+## Implementation
 
-### ROM Patches (one-time, applied by patcher)
+The multi-bank terrain feature is implemented in `golf/core/packed_course_writer.py` as the `PackedCourseWriter` class. This is now the **default behavior** for `golf-write`.
 
-1. **Code patch at `$DB68`**: 9 bytes to change bank lookup from course-based to hole-based
-2. **CourseHoleOffsetTable patch at `$DBBD`**: 1 byte to make course 3 mirror course 1
+### Usage
 
-### Per-Write Updates (CourseWriter responsibilities)
+```bash
+# Write 1 course (UK mirrors Japan)
+golf-write rom.nes courses/japan/ -o output.nes
 
-1. **Pack terrain across banks**: Compress each hole, fill bank 0 first, overflow to bank 1, then bank 2
-2. **Generate per-hole bank table**: Record which bank each hole's terrain landed in
-3. **Write bank table to `$A700` in bank 3**: 72+ bytes
-4. **Update terrain pointers**: `$DBC1` (start) and `$DC2D` (end/attribute start) for each hole
-5. **Update greens pointers**: `$DC99` for each hole (all still in bank 3)
-6. **Update metadata tables**: Par, distance, positions, etc. for each hole
+# Write 2 courses
+golf-write rom.nes courses/japan/ courses/us/ -o output.nes
+
+# Validate without writing
+golf-write rom.nes courses/japan/ courses/us/ --validate-only --verbose
+
+# Legacy single-bank mode (no patches)
+golf-write rom.nes courses/japan/ --legacy -c 0 -o output.nes
+```
+
+### ROM Patches (auto-applied in packed mode)
+
+1. **`multi_bank_lookup`** at `$DB68`: 9 bytes to change bank lookup from course-based to hole-based
+2. **`course3_mirror`** at `$DBBD`: 1 byte to make course 3 mirror course 1
+
+Patches are defined in `golf/core/patches/multi_bank.py` and auto-applied by `PackedCourseWriter`.
+
+### PackedCourseWriter Responsibilities
+
+1. **Compress all holes**: Terrain, attributes, and greens for 18 or 36 holes
+2. **Pack terrain across banks**: Greedy first-fit algorithm fills bank 0, then 1, then 2
+3. **Generate per-hole bank table**: 72 bytes at `$A700` in bank 3 (doubled indexing)
+4. **Write all data**: Terrain to assigned banks, greens to bank 3, pointers to fixed bank
+5. **Update metadata**: Par, distance, positions for all written holes
 
 ### Validation
 
-- Total terrain for course 1 + course 2 must fit in combined bank 0+1+2 space (~26,100 bytes)
-- Total greens for 36 holes must fit in bank 3 greens region (~9,652 bytes, plenty of room)
-- Each hole's terrain must not cross a bank boundary (compressed data is contiguous)
+- Total terrain must fit in combined bank 0+1+2 space (~26,100 bytes)
+- Total greens must fit in bank 3 region ($81C0-$A6FF = ~9,536 bytes after bank table)
+- Each hole's terrain is contiguous within its assigned bank
+
+## Testing
+
+```bash
+# Run packed course writer tests
+pytest tests/unit/test_packed_course_writer.py -v
+pytest tests/integration/test_packed_course_write.py -v
+```
 
 ## Future Work
 
@@ -122,4 +149,5 @@ Note: Bank 2 has pre-terrain tables at `$8000-$837E` that must be preserved.
 ## References
 
 - Use the `nes-open-golf-rom-layout` skill for complete pointer table addresses and bank layouts
-- See `golf/core/course_writer.py` for current single-bank writing implementation
+- `golf/core/packed_course_writer.py` - Multi-bank writer implementation
+- `golf/core/course_writer.py` - Legacy single-bank writer

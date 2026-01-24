@@ -33,11 +33,13 @@ def create_test_rom_with_original_bytes() -> bytearray:
     prg_size = 16 * 16384  # 16 banks * 16KB
     prg_rom = bytearray(prg_size)
 
-    # Place original bytes for multi_bank_lookup patch at PRG offset 0x1DB78
-    prg_rom[0x1DB78 : 0x1DB78 + 9] = MULTI_BANK_CODE_PATCH.original
+    # Place original bytes for multi_bank_lookup patch at PRG offset 0x3DB68
+    # (CPU $DB68 in fixed bank = bank 15)
+    prg_rom[0x3DB68 : 0x3DB68 + 9] = MULTI_BANK_CODE_PATCH.original
 
-    # Place original bytes for course3_mirror patch at PRG offset 0x1DBCD
-    prg_rom[0x1DBCD : 0x1DBCD + 1] = COURSE3_MIRROR_PATCH.original
+    # Place original bytes for course3_mirror patch at PRG offset 0x3DBBD
+    # (CPU $DBBD in fixed bank)
+    prg_rom[0x3DBBD : 0x3DBBD + 1] = COURSE3_MIRROR_PATCH.original
 
     return header + prg_rom
 
@@ -70,7 +72,7 @@ class TestMultiBankPatchApplication:
         assert MULTI_BANK_CODE_PATCH.is_applied(rom_writer)
 
         # Verify actual bytes
-        patched_bytes = rom_writer.read_prg(0x1DB78, 9)
+        patched_bytes = rom_writer.read_prg(0x3DB68, 9)
         assert patched_bytes == MULTI_BANK_CODE_PATCH.patched
 
     def test_course3_mirror_patch_applies(self, test_rom_path, tmp_path):
@@ -90,7 +92,7 @@ class TestMultiBankPatchApplication:
         assert COURSE3_MIRROR_PATCH.is_applied(rom_writer)
 
         # Verify actual byte
-        patched_byte = rom_writer.read_prg(0x1DBCD, 1)
+        patched_byte = rom_writer.read_prg(0x3DBBD, 1)
         assert patched_byte == COURSE3_MIRROR_PATCH.patched
 
     def test_both_patches_apply_together(self, test_rom_path, tmp_path):
@@ -117,7 +119,7 @@ class TestMultiBankPatchApplication:
 
         # Should still be applied correctly
         assert MULTI_BANK_CODE_PATCH.is_applied(rom_writer)
-        patched_bytes = rom_writer.read_prg(0x1DB78, 9)
+        patched_bytes = rom_writer.read_prg(0x3DB68, 9)
         assert patched_bytes == MULTI_BANK_CODE_PATCH.patched
 
     def test_patches_persisted_to_disk(self, test_rom_path, tmp_path):
@@ -171,8 +173,8 @@ class TestPatchOnUnexpectedRom:
         prg_rom = bytearray(prg_size)
 
         # Place WRONG bytes at patch locations
-        prg_rom[0x1DB78 : 0x1DB78 + 9] = bytes([0xFF] * 9)
-        prg_rom[0x1DBCD : 0x1DBCD + 1] = bytes([0xFF])
+        prg_rom[0x3DB68 : 0x3DB68 + 9] = bytes([0xFF] * 9)
+        prg_rom[0x3DBBD : 0x3DBBD + 1] = bytes([0xFF])
 
         rom_path = tmp_path / "corrupted.nes"
         rom_path.write_bytes(header + prg_rom)
