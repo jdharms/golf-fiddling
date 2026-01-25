@@ -9,7 +9,14 @@
           "distance": 400,
           "image": "images/japan/hole_01.png",
           "width": 176,
-          "height": 304
+          "height": 304,
+          "green_image": "images/japan/hole_01_green.png",
+          "flag_images": [
+            "images/japan/hole_01_flag_0.png",
+            "images/japan/hole_01_flag_1.png",
+            "images/japan/hole_01_flag_2.png",
+            "images/japan/hole_01_flag_3.png"
+          ]
         },
         {
           "number": 2,
@@ -17,7 +24,14 @@
           "distance": 392,
           "image": "images/japan/hole_02.png",
           "width": 176,
-          "height": 256
+          "height": 256,
+          "green_image": "images/japan/hole_02_green.png",
+          "flag_images": [
+            "images/japan/hole_02_flag_0.png",
+            "images/japan/hole_02_flag_1.png",
+            "images/japan/hole_02_flag_2.png",
+            "images/japan/hole_02_flag_3.png"
+          ]
         },
         {
           "number": 3,
@@ -25,7 +39,14 @@
           "distance": 534,
           "image": "images/japan/hole_03.png",
           "width": 176,
-          "height": 336
+          "height": 336,
+          "green_image": "images/japan/hole_03_green.png",
+          "flag_images": [
+            "images/japan/hole_03_flag_0.png",
+            "images/japan/hole_03_flag_1.png",
+            "images/japan/hole_03_flag_2.png",
+            "images/japan/hole_03_flag_3.png"
+          ]
         },
         {
           "number": 4,
@@ -33,7 +54,14 @@
           "distance": 202,
           "image": "images/japan/hole_04.png",
           "width": 176,
-          "height": 240
+          "height": 240,
+          "green_image": "images/japan/hole_04_green.png",
+          "flag_images": [
+            "images/japan/hole_04_flag_0.png",
+            "images/japan/hole_04_flag_1.png",
+            "images/japan/hole_04_flag_2.png",
+            "images/japan/hole_04_flag_3.png"
+          ]
         },
         {
           "number": 5,
@@ -41,7 +69,14 @@
           "distance": 410,
           "image": "images/japan/hole_05.png",
           "width": 176,
-          "height": 288
+          "height": 288,
+          "green_image": "images/japan/hole_05_green.png",
+          "flag_images": [
+            "images/japan/hole_05_flag_0.png",
+            "images/japan/hole_05_flag_1.png",
+            "images/japan/hole_05_flag_2.png",
+            "images/japan/hole_05_flag_3.png"
+          ]
         },
         {
           "number": 6,
@@ -49,7 +84,14 @@
           "distance": 166,
           "image": "images/japan/hole_06.png",
           "width": 176,
-          "height": 240
+          "height": 240,
+          "green_image": "images/japan/hole_06_green.png",
+          "flag_images": [
+            "images/japan/hole_06_flag_0.png",
+            "images/japan/hole_06_flag_1.png",
+            "images/japan/hole_06_flag_2.png",
+            "images/japan/hole_06_flag_3.png"
+          ]
         },
         {
           "number": 7,
@@ -57,7 +99,14 @@
           "distance": 535,
           "image": "images/japan/hole_07.png",
           "width": 176,
-          "height": 352
+          "height": 352,
+          "green_image": "images/japan/hole_07_green.png",
+          "flag_images": [
+            "images/japan/hole_07_flag_0.png",
+            "images/japan/hole_07_flag_1.png",
+            "images/japan/hole_07_flag_2.png",
+            "images/japan/hole_07_flag_3.png"
+          ]
         },
         {
           "number": 8,
@@ -65,7 +114,14 @@
           "distance": 464,
           "image": "images/japan/hole_08.png",
           "width": 176,
-          "height": 240
+          "height": 240,
+          "green_image": "images/japan/hole_08_green.png",
+          "flag_images": [
+            "images/japan/hole_08_flag_0.png",
+            "images/japan/hole_08_flag_1.png",
+            "images/japan/hole_08_flag_2.png",
+            "images/japan/hole_08_flag_3.png"
+          ]
         },
         {
           "number": 9,
@@ -73,7 +129,14 @@
           "distance": 418,
           "image": "images/japan/hole_09.png",
           "width": 176,
-          "height": 288
+          "height": 288,
+          "green_image": "images/japan/hole_09_green.png",
+          "flag_images": [
+            "images/japan/hole_09_flag_0.png",
+            "images/japan/hole_09_flag_1.png",
+            "images/japan/hole_09_flag_2.png",
+            "images/japan/hole_09_flag_3.png"
+          ]
         },
         {
           "number": 10,
@@ -81,7 +144,14 @@
           "distance": 350,
           "image": "images/japan/hole_10.png",
           "width": 176,
-          "height": 256
+          "height": 256,
+          "green_image": "images/japan/hole_10_green.png",
+          "flag_images": [
+            "images/japan/hole_10_flag_0.png",
+            "images/japan/hole_10_flag_1.png",
+            "images/japan/hole_10_flag_2.png",
+            "images/japan/hole_10_flag_3.png"
+          ]
         },
         {
           "number": 11,
@@ -89,7 +159,14 @@
           "distance": 368,
           "image": "images/japan/hole_11.png",
           "width": 176,
-          "height": 256
+          "height": 256,
+          "green_image": "images/japan/hole_11_green.png",
+          "flag_images": [
+            "images/japan/hole_11_flag_0.png",
+            "images/japan/hole_11_flag_1.png",
+            "images/japan/hole_11_flag_2.png",
+            "images/japan/hole_11_flag_3.png"
+          ]
         },
         {
           "number": 12,
@@ -97,7 +174,14 @@
           "distance": 535,
           "image": "images/japan/hole_12.png",
           "width": 176,
-          "height": 336
+          "height": 336,
+          "green_image": "images/japan/hole_12_green.png",
+          "flag_images": [
+            "images/japan/hole_12_flag_0.png",
+            "images/japan/hole_12_flag_1.png",
+            "images/japan/hole_12_flag_2.png",
+            "images/japan/hole_12_flag_3.png"
+          ]
         },
         {
           "number": 13,
@@ -105,7 +189,14 @@
           "distance": 160,
           "image": "images/japan/hole_13.png",
           "width": 176,
-          "height": 240
+          "height": 240,
+          "green_image": "images/japan/hole_13_green.png",
+          "flag_images": [
+            "images/japan/hole_13_flag_0.png",
+            "images/japan/hole_13_flag_1.png",
+            "images/japan/hole_13_flag_2.png",
+            "images/japan/hole_13_flag_3.png"
+          ]
         },
         {
           "number": 14,
@@ -113,7 +204,14 @@
           "distance": 464,
           "image": "images/japan/hole_14.png",
           "width": 176,
-          "height": 288
+          "height": 288,
+          "green_image": "images/japan/hole_14_green.png",
+          "flag_images": [
+            "images/japan/hole_14_flag_0.png",
+            "images/japan/hole_14_flag_1.png",
+            "images/japan/hole_14_flag_2.png",
+            "images/japan/hole_14_flag_3.png"
+          ]
         },
         {
           "number": 15,
@@ -121,7 +219,14 @@
           "distance": 410,
           "image": "images/japan/hole_15.png",
           "width": 176,
-          "height": 272
+          "height": 272,
+          "green_image": "images/japan/hole_15_green.png",
+          "flag_images": [
+            "images/japan/hole_15_flag_0.png",
+            "images/japan/hole_15_flag_1.png",
+            "images/japan/hole_15_flag_2.png",
+            "images/japan/hole_15_flag_3.png"
+          ]
         },
         {
           "number": 16,
@@ -129,7 +234,14 @@
           "distance": 192,
           "image": "images/japan/hole_16.png",
           "width": 176,
-          "height": 240
+          "height": 240,
+          "green_image": "images/japan/hole_16_green.png",
+          "flag_images": [
+            "images/japan/hole_16_flag_0.png",
+            "images/japan/hole_16_flag_1.png",
+            "images/japan/hole_16_flag_2.png",
+            "images/japan/hole_16_flag_3.png"
+          ]
         },
         {
           "number": 17,
@@ -137,7 +249,14 @@
           "distance": 432,
           "image": "images/japan/hole_17.png",
           "width": 176,
-          "height": 320
+          "height": 320,
+          "green_image": "images/japan/hole_17_green.png",
+          "flag_images": [
+            "images/japan/hole_17_flag_0.png",
+            "images/japan/hole_17_flag_1.png",
+            "images/japan/hole_17_flag_2.png",
+            "images/japan/hole_17_flag_3.png"
+          ]
         },
         {
           "number": 18,
@@ -145,7 +264,14 @@
           "distance": 605,
           "image": "images/japan/hole_18.png",
           "width": 176,
-          "height": 336
+          "height": 336,
+          "green_image": "images/japan/hole_18_green.png",
+          "flag_images": [
+            "images/japan/hole_18_flag_0.png",
+            "images/japan/hole_18_flag_1.png",
+            "images/japan/hole_18_flag_2.png",
+            "images/japan/hole_18_flag_3.png"
+          ]
         }
       ]
     },
@@ -158,7 +284,14 @@
           "distance": 328,
           "image": "images/us/hole_01.png",
           "width": 176,
-          "height": 288
+          "height": 288,
+          "green_image": "images/us/hole_01_green.png",
+          "flag_images": [
+            "images/us/hole_01_flag_0.png",
+            "images/us/hole_01_flag_1.png",
+            "images/us/hole_01_flag_2.png",
+            "images/us/hole_01_flag_3.png"
+          ]
         },
         {
           "number": 2,
@@ -166,7 +299,14 @@
           "distance": 481,
           "image": "images/us/hole_02.png",
           "width": 176,
-          "height": 352
+          "height": 352,
+          "green_image": "images/us/hole_02_green.png",
+          "flag_images": [
+            "images/us/hole_02_flag_0.png",
+            "images/us/hole_02_flag_1.png",
+            "images/us/hole_02_flag_2.png",
+            "images/us/hole_02_flag_3.png"
+          ]
         },
         {
           "number": 3,
@@ -174,7 +314,14 @@
           "distance": 446,
           "image": "images/us/hole_03.png",
           "width": 176,
-          "height": 272
+          "height": 272,
+          "green_image": "images/us/hole_03_green.png",
+          "flag_images": [
+            "images/us/hole_03_flag_0.png",
+            "images/us/hole_03_flag_1.png",
+            "images/us/hole_03_flag_2.png",
+            "images/us/hole_03_flag_3.png"
+          ]
         },
         {
           "number": 4,
@@ -182,7 +329,14 @@
           "distance": 154,
           "image": "images/us/hole_04.png",
           "width": 176,
-          "height": 240
+          "height": 240,
+          "green_image": "images/us/hole_04_green.png",
+          "flag_images": [
+            "images/us/hole_04_flag_0.png",
+            "images/us/hole_04_flag_1.png",
+            "images/us/hole_04_flag_2.png",
+            "images/us/hole_04_flag_3.png"
+          ]
         },
         {
           "number": 5,
@@ -190,7 +344,14 @@
           "distance": 392,
           "image": "images/us/hole_05.png",
           "width": 176,
-          "height": 288
+          "height": 288,
+          "green_image": "images/us/hole_05_green.png",
+          "flag_images": [
+            "images/us/hole_05_flag_0.png",
+            "images/us/hole_05_flag_1.png",
+            "images/us/hole_05_flag_2.png",
+            "images/us/hole_05_flag_3.png"
+          ]
         },
         {
           "number": 6,
@@ -198,7 +359,14 @@
           "distance": 400,
           "image": "images/us/hole_06.png",
           "width": 176,
-          "height": 288
+          "height": 288,
+          "green_image": "images/us/hole_06_green.png",
+          "flag_images": [
+            "images/us/hole_06_flag_0.png",
+            "images/us/hole_06_flag_1.png",
+            "images/us/hole_06_flag_2.png",
+            "images/us/hole_06_flag_3.png"
+          ]
         },
         {
           "number": 7,
@@ -206,7 +374,14 @@
           "distance": 167,
           "image": "images/us/hole_07.png",
           "width": 176,
-          "height": 240
+          "height": 240,
+          "green_image": "images/us/hole_07_green.png",
+          "flag_images": [
+            "images/us/hole_07_flag_0.png",
+            "images/us/hole_07_flag_1.png",
+            "images/us/hole_07_flag_2.png",
+            "images/us/hole_07_flag_3.png"
+          ]
         },
         {
           "number": 8,
@@ -214,7 +389,14 @@
           "distance": 560,
           "image": "images/us/hole_08.png",
           "width": 176,
-          "height": 336
+          "height": 336,
+          "green_image": "images/us/hole_08_green.png",
+          "flag_images": [
+            "images/us/hole_08_flag_0.png",
+            "images/us/hole_08_flag_1.png",
+            "images/us/hole_08_flag_2.png",
+            "images/us/hole_08_flag_3.png"
+          ]
         },
         {
           "number": 9,
@@ -222,7 +404,14 @@
           "distance": 410,
           "image": "images/us/hole_09.png",
           "width": 176,
-          "height": 304
+          "height": 304,
+          "green_image": "images/us/hole_09_green.png",
+          "flag_images": [
+            "images/us/hole_09_flag_0.png",
+            "images/us/hole_09_flag_1.png",
+            "images/us/hole_09_flag_2.png",
+            "images/us/hole_09_flag_3.png"
+          ]
         },
         {
           "number": 10,
@@ -230,7 +419,14 @@
           "distance": 217,
           "image": "images/us/hole_10.png",
           "width": 176,
-          "height": 240
+          "height": 240,
+          "green_image": "images/us/hole_10_green.png",
+          "flag_images": [
+            "images/us/hole_10_flag_0.png",
+            "images/us/hole_10_flag_1.png",
+            "images/us/hole_10_flag_2.png",
+            "images/us/hole_10_flag_3.png"
+          ]
         },
         {
           "number": 11,
@@ -238,7 +434,14 @@
           "distance": 421,
           "image": "images/us/hole_11.png",
           "width": 176,
-          "height": 304
+          "height": 304,
+          "green_image": "images/us/hole_11_green.png",
+          "flag_images": [
+            "images/us/hole_11_flag_0.png",
+            "images/us/hole_11_flag_1.png",
+            "images/us/hole_11_flag_2.png",
+            "images/us/hole_11_flag_3.png"
+          ]
         },
         {
           "number": 12,
@@ -246,7 +449,14 @@
           "distance": 642,
           "image": "images/us/hole_12.png",
           "width": 176,
-          "height": 320
+          "height": 320,
+          "green_image": "images/us/hole_12_green.png",
+          "flag_images": [
+            "images/us/hole_12_flag_0.png",
+            "images/us/hole_12_flag_1.png",
+            "images/us/hole_12_flag_2.png",
+            "images/us/hole_12_flag_3.png"
+          ]
         },
         {
           "number": 13,
@@ -254,7 +464,14 @@
           "distance": 420,
           "image": "images/us/hole_13.png",
           "width": 176,
-          "height": 304
+          "height": 304,
+          "green_image": "images/us/hole_13_green.png",
+          "flag_images": [
+            "images/us/hole_13_flag_0.png",
+            "images/us/hole_13_flag_1.png",
+            "images/us/hole_13_flag_2.png",
+            "images/us/hole_13_flag_3.png"
+          ]
         },
         {
           "number": 14,
@@ -262,7 +479,14 @@
           "distance": 400,
           "image": "images/us/hole_14.png",
           "width": 176,
-          "height": 256
+          "height": 256,
+          "green_image": "images/us/hole_14_green.png",
+          "flag_images": [
+            "images/us/hole_14_flag_0.png",
+            "images/us/hole_14_flag_1.png",
+            "images/us/hole_14_flag_2.png",
+            "images/us/hole_14_flag_3.png"
+          ]
         },
         {
           "number": 15,
@@ -270,7 +494,14 @@
           "distance": 428,
           "image": "images/us/hole_15.png",
           "width": 176,
-          "height": 304
+          "height": 304,
+          "green_image": "images/us/hole_15_green.png",
+          "flag_images": [
+            "images/us/hole_15_flag_0.png",
+            "images/us/hole_15_flag_1.png",
+            "images/us/hole_15_flag_2.png",
+            "images/us/hole_15_flag_3.png"
+          ]
         },
         {
           "number": 16,
@@ -278,7 +509,14 @@
           "distance": 230,
           "image": "images/us/hole_16.png",
           "width": 176,
-          "height": 240
+          "height": 240,
+          "green_image": "images/us/hole_16_green.png",
+          "flag_images": [
+            "images/us/hole_16_flag_0.png",
+            "images/us/hole_16_flag_1.png",
+            "images/us/hole_16_flag_2.png",
+            "images/us/hole_16_flag_3.png"
+          ]
         },
         {
           "number": 17,
@@ -286,7 +524,14 @@
           "distance": 435,
           "image": "images/us/hole_17.png",
           "width": 176,
-          "height": 304
+          "height": 304,
+          "green_image": "images/us/hole_17_green.png",
+          "flag_images": [
+            "images/us/hole_17_flag_0.png",
+            "images/us/hole_17_flag_1.png",
+            "images/us/hole_17_flag_2.png",
+            "images/us/hole_17_flag_3.png"
+          ]
         },
         {
           "number": 18,
@@ -294,7 +539,14 @@
           "distance": 571,
           "image": "images/us/hole_18.png",
           "width": 176,
-          "height": 336
+          "height": 336,
+          "green_image": "images/us/hole_18_green.png",
+          "flag_images": [
+            "images/us/hole_18_flag_0.png",
+            "images/us/hole_18_flag_1.png",
+            "images/us/hole_18_flag_2.png",
+            "images/us/hole_18_flag_3.png"
+          ]
         }
       ]
     },
@@ -307,7 +559,14 @@
           "distance": 418,
           "image": "images/uk/hole_01.png",
           "width": 176,
-          "height": 288
+          "height": 288,
+          "green_image": "images/uk/hole_01_green.png",
+          "flag_images": [
+            "images/uk/hole_01_flag_0.png",
+            "images/uk/hole_01_flag_1.png",
+            "images/uk/hole_01_flag_2.png",
+            "images/uk/hole_01_flag_3.png"
+          ]
         },
         {
           "number": 2,
@@ -315,7 +574,14 @@
           "distance": 393,
           "image": "images/uk/hole_02.png",
           "width": 176,
-          "height": 272
+          "height": 272,
+          "green_image": "images/uk/hole_02_green.png",
+          "flag_images": [
+            "images/uk/hole_02_flag_0.png",
+            "images/uk/hole_02_flag_1.png",
+            "images/uk/hole_02_flag_2.png",
+            "images/uk/hole_02_flag_3.png"
+          ]
         },
         {
           "number": 3,
@@ -323,7 +589,14 @@
           "distance": 550,
           "image": "images/uk/hole_03.png",
           "width": 176,
-          "height": 336
+          "height": 336,
+          "green_image": "images/uk/hole_03_green.png",
+          "flag_images": [
+            "images/uk/hole_03_flag_0.png",
+            "images/uk/hole_03_flag_1.png",
+            "images/uk/hole_03_flag_2.png",
+            "images/uk/hole_03_flag_3.png"
+          ]
         },
         {
           "number": 4,
@@ -331,7 +604,14 @@
           "distance": 221,
           "image": "images/uk/hole_04.png",
           "width": 176,
-          "height": 240
+          "height": 240,
+          "green_image": "images/uk/hole_04_green.png",
+          "flag_images": [
+            "images/uk/hole_04_flag_0.png",
+            "images/uk/hole_04_flag_1.png",
+            "images/uk/hole_04_flag_2.png",
+            "images/uk/hole_04_flag_3.png"
+          ]
         },
         {
           "number": 5,
@@ -339,7 +619,14 @@
           "distance": 431,
           "image": "images/uk/hole_05.png",
           "width": 176,
-          "height": 336
+          "height": 336,
+          "green_image": "images/uk/hole_05_green.png",
+          "flag_images": [
+            "images/uk/hole_05_flag_0.png",
+            "images/uk/hole_05_flag_1.png",
+            "images/uk/hole_05_flag_2.png",
+            "images/uk/hole_05_flag_3.png"
+          ]
         },
         {
           "number": 6,
@@ -347,7 +634,14 @@
           "distance": 357,
           "image": "images/uk/hole_06.png",
           "width": 176,
-          "height": 304
+          "height": 304,
+          "green_image": "images/uk/hole_06_green.png",
+          "flag_images": [
+            "images/uk/hole_06_flag_0.png",
+            "images/uk/hole_06_flag_1.png",
+            "images/uk/hole_06_flag_2.png",
+            "images/uk/hole_06_flag_3.png"
+          ]
         },
         {
           "number": 7,
@@ -355,7 +649,14 @@
           "distance": 428,
           "image": "images/uk/hole_07.png",
           "width": 176,
-          "height": 288
+          "height": 288,
+          "green_image": "images/uk/hole_07_green.png",
+          "flag_images": [
+            "images/uk/hole_07_flag_0.png",
+            "images/uk/hole_07_flag_1.png",
+            "images/uk/hole_07_flag_2.png",
+            "images/uk/hole_07_flag_3.png"
+          ]
         },
         {
           "number": 8,
@@ -363,7 +664,14 @@
           "distance": 201,
           "image": "images/uk/hole_08.png",
           "width": 176,
-          "height": 256
+          "height": 256,
+          "green_image": "images/uk/hole_08_green.png",
+          "flag_images": [
+            "images/uk/hole_08_flag_0.png",
+            "images/uk/hole_08_flag_1.png",
+            "images/uk/hole_08_flag_2.png",
+            "images/uk/hole_08_flag_3.png"
+          ]
         },
         {
           "number": 9,
@@ -371,7 +679,14 @@
           "distance": 528,
           "image": "images/uk/hole_09.png",
           "width": 176,
-          "height": 368
+          "height": 368,
+          "green_image": "images/uk/hole_09_green.png",
+          "flag_images": [
+            "images/uk/hole_09_flag_0.png",
+            "images/uk/hole_09_flag_1.png",
+            "images/uk/hole_09_flag_2.png",
+            "images/uk/hole_09_flag_3.png"
+          ]
         },
         {
           "number": 10,
@@ -379,7 +694,14 @@
           "distance": 325,
           "image": "images/uk/hole_10.png",
           "width": 176,
-          "height": 288
+          "height": 288,
+          "green_image": "images/uk/hole_10_green.png",
+          "flag_images": [
+            "images/uk/hole_10_flag_0.png",
+            "images/uk/hole_10_flag_1.png",
+            "images/uk/hole_10_flag_2.png",
+            "images/uk/hole_10_flag_3.png"
+          ]
         },
         {
           "number": 11,
@@ -387,7 +709,14 @@
           "distance": 424,
           "image": "images/uk/hole_11.png",
           "width": 176,
-          "height": 352
+          "height": 352,
+          "green_image": "images/uk/hole_11_green.png",
+          "flag_images": [
+            "images/uk/hole_11_flag_0.png",
+            "images/uk/hole_11_flag_1.png",
+            "images/uk/hole_11_flag_2.png",
+            "images/uk/hole_11_flag_3.png"
+          ]
         },
         {
           "number": 12,
@@ -395,7 +724,14 @@
           "distance": 162,
           "image": "images/uk/hole_12.png",
           "width": 176,
-          "height": 240
+          "height": 240,
+          "green_image": "images/uk/hole_12_green.png",
+          "flag_images": [
+            "images/uk/hole_12_flag_0.png",
+            "images/uk/hole_12_flag_1.png",
+            "images/uk/hole_12_flag_2.png",
+            "images/uk/hole_12_flag_3.png"
+          ]
         },
         {
           "number": 13,
@@ -403,7 +739,14 @@
           "distance": 571,
           "image": "images/uk/hole_13.png",
           "width": 176,
-          "height": 352
+          "height": 352,
+          "green_image": "images/uk/hole_13_green.png",
+          "flag_images": [
+            "images/uk/hole_13_flag_0.png",
+            "images/uk/hole_13_flag_1.png",
+            "images/uk/hole_13_flag_2.png",
+            "images/uk/hole_13_flag_3.png"
+          ]
         },
         {
           "number": 14,
@@ -411,7 +754,14 @@
           "distance": 403,
           "image": "images/uk/hole_14.png",
           "width": 176,
-          "height": 240
+          "height": 240,
+          "green_image": "images/uk/hole_14_green.png",
+          "flag_images": [
+            "images/uk/hole_14_flag_0.png",
+            "images/uk/hole_14_flag_1.png",
+            "images/uk/hole_14_flag_2.png",
+            "images/uk/hole_14_flag_3.png"
+          ]
         },
         {
           "number": 15,
@@ -419,7 +769,14 @@
           "distance": 410,
           "image": "images/uk/hole_15.png",
           "width": 176,
-          "height": 304
+          "height": 304,
+          "green_image": "images/uk/hole_15_green.png",
+          "flag_images": [
+            "images/uk/hole_15_flag_0.png",
+            "images/uk/hole_15_flag_1.png",
+            "images/uk/hole_15_flag_2.png",
+            "images/uk/hole_15_flag_3.png"
+          ]
         },
         {
           "number": 16,
@@ -427,7 +784,14 @@
           "distance": 571,
           "image": "images/uk/hole_16.png",
           "width": 176,
-          "height": 336
+          "height": 336,
+          "green_image": "images/uk/hole_16_green.png",
+          "flag_images": [
+            "images/uk/hole_16_flag_0.png",
+            "images/uk/hole_16_flag_1.png",
+            "images/uk/hole_16_flag_2.png",
+            "images/uk/hole_16_flag_3.png"
+          ]
         },
         {
           "number": 17,
@@ -435,7 +799,14 @@
           "distance": 196,
           "image": "images/uk/hole_17.png",
           "width": 176,
-          "height": 240
+          "height": 240,
+          "green_image": "images/uk/hole_17_green.png",
+          "flag_images": [
+            "images/uk/hole_17_flag_0.png",
+            "images/uk/hole_17_flag_1.png",
+            "images/uk/hole_17_flag_2.png",
+            "images/uk/hole_17_flag_3.png"
+          ]
         },
         {
           "number": 18,
@@ -443,7 +814,14 @@
           "distance": 460,
           "image": "images/uk/hole_18.png",
           "width": 176,
-          "height": 352
+          "height": 352,
+          "green_image": "images/uk/hole_18_green.png",
+          "flag_images": [
+            "images/uk/hole_18_flag_0.png",
+            "images/uk/hole_18_flag_1.png",
+            "images/uk/hole_18_flag_2.png",
+            "images/uk/hole_18_flag_3.png"
+          ]
         }
       ]
     }

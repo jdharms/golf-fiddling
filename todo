@@ -10,12 +10,13 @@ Non-editor:
 
 Todos:
 * Invalid neighbor indicator should be a single border per pairing
+  * Invalid neighbor indicator should probably just go away as a feature?
 * Add lie chart to rangefinder
-* Add greens to rangefinder?
 * F1 through F4 keys should send us to flag 1 through flag 4
 * Greens writeup
 * release bundling
 * Fringe gen logging upon failure
+* Ugh, CI/CD? notably around rangefinder deployment
 
 
 Bugs:
@@ -53,3 +54,4 @@ Done:
 * Greens stats
 * Create stamp library
 * G should cycle through grid sizes, alter palette tool?
+* Add greens to rangefinder?

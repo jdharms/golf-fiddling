@@ -29,6 +29,7 @@
         <span id="zoom-display">2x</span>
         <button id="zoom-in" type="button">+</button>
         <button id="zoom-reset" type="button" title="Reset to 2x">Reset Zoom</button>
+        <button id="green-view" type="button" title="View green detail (G)">Green</button>
         <button id="clear-waypoints" type="button">Clear Waypoints</button>
       </div>
       <div class="info">
@@ -47,6 +48,27 @@
     <footer class="instructions">
       <p><strong>Instructions:</strong> Left-click to add waypoint • Right-click to clear all</p>
     </footer>
+  </div>
+
+  <!-- Green View Modal -->
+  <div id="green-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title">Green View</span>
+        <span id="flag-indicator">Flag 1/4</span>
+        <button class="modal-close" type="button" title="Close (ESC)">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="green-container">
+          <img id="green-image" src="" alt="Green">
+          <img id="flag-overlay" src="" alt="Flag">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <p>&larr; &rarr; Change flag | ESC Close</p>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="app.js"></script>

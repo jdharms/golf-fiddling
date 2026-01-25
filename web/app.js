@@ -8,11 +8,13 @@
 import { MeasurementState } from './measure.js';
 import { OverlayRenderer } from './renderer.js';
 import { UIController } from './ui.js';
+import { GreenModal } from './green-modal.js';
 
 let metadata = null;
 let state = null;
 let renderer = null;
 let ui = null;
+let greenModal = null;
 
 /**
  * Initialize the application
@@ -30,6 +32,7 @@ async function init() {
     state = new MeasurementState();
     renderer = new OverlayRenderer(document.getElementById('overlay-canvas'));
     ui = new UIController(metadata, state, renderer);
+    greenModal = new GreenModal();
 
     // Set up event listeners
     setupEventListeners();
@@ -77,13 +80,33 @@ function setupEventListeners() {
     handleMouseLeave();
   });
 
-  // Arrow keys: Navigate between holes
+  // Keyboard navigation
   document.addEventListener('keydown', (e) => {
+    // When modal is open, handle modal-specific keys
+    if (greenModal.isOpen) {
+      if (e.key === 'Escape') {
+        greenModal.close();
+      } else if (e.key === 'ArrowLeft') {
+        greenModal.previousFlag();
+      } else if (e.key === 'ArrowRight') {
+        greenModal.nextFlag();
+      }
+      return;
+    }
+
+    // Normal navigation when modal is closed
     if (e.key === 'ArrowLeft') {
       ui.previousHole();
     } else if (e.key === 'ArrowRight') {
       ui.nextHole();
+    } else if (e.key === 'g' || e.key === 'G') {
+      openGreenView();
     }
+  });
+
+  // Green view button
+  document.getElementById('green-view').addEventListener('click', () => {
+    openGreenView();
   });
 }
 
@@ -148,6 +171,16 @@ function handleMouseMove(e) {
  */
 function handleMouseLeave() {
   ui.clearPreview();
+}
+
+/**
+ * Open the green view modal for the current hole
+ */
+function openGreenView() {
+  const currentHole = ui.getCurrentHole();
+  if (currentHole) {
+    greenModal.open(currentHole, ui.zoomLevel);
+  }
 }
 
 // Start the application when DOM is ready
