@@ -15,8 +15,7 @@ Todos:
 * F1 through F4 keys should send us to flag 1 through flag 4
 * Greens writeup
 * release bundling
-* Create stamp library
-* G should cycle through grid sizes, alter palette tool?
+* Fringe gen logging upon failure
 
 
 Bugs:
@@ -52,3 +51,5 @@ Done:
 * Remove "Flag n/4" from status bar
 * scroll state should be separate for terrain and green if possible
 * Greens stats
+* Create stamp library
+* G should cycle through grid sizes, alter palette tool?
