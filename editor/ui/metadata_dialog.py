@@ -188,10 +188,15 @@ class MetadataDialog:
             return False
 
     def _validate_distance(self, value_str: str) -> bool:
-        """Validate distance value (must be integer 100-999)."""
+        """
+        Validate distance value (must be integer 010-999).
+
+        Note: The game always stores these as three digit numbers,
+        but there is nothing stopping us from using a leading zero.
+        """
         try:
             distance = int(value_str)
-            return 100 <= distance <= 999
+            return 10 <= distance <= 999
         except ValueError:
             return False
 
