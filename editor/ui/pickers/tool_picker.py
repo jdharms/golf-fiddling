@@ -49,6 +49,11 @@ class ToolPicker:
         self.buttons.append(button)
         self._calculate_button_positions()
 
+    def resize(self, rect: Rect):
+        """Update picker rect and recalculate button positions."""
+        self.rect = rect
+        self._calculate_button_positions()
+
     def _calculate_button_positions(self):
         """Calculate and update button rect positions."""
         y_offset = self.rect.top + self.TOP_PADDING
