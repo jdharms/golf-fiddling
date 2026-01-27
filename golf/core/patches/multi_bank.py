@@ -26,6 +26,20 @@ MULTI_BANK_CODE_PATCH = BytePatch(
     patched=bytes([0xA6, 0x31, 0xBD, 0x00, 0xA7, 0x20, 0x52, 0xD3, 0xEA]),
 )
 
+# Course 2 mirror patch - makes US (course 2) mirror Japan (course 1)
+#
+# This patches the CourseHoleOffsetTable at $DBBB which maps course indices
+# to hole offsets: [0, 18, 36] -> [0, 0, 36]
+#
+# Used in 1-course mode so all three course slots show the same course.
+COURSE2_MIRROR_PATCH = BytePatch(
+    name="course2_mirror",
+    description="Make course 2 (US) mirror course 1 (Japan)",
+    prg_offset=0x3DBBC,  # CPU $DBBC in fixed bank (CourseHoleOffsetTable + 1)
+    original=bytes([0x12]),
+    patched=bytes([0x00]),
+)
+
 # Course 3 mirror patch - makes UK (course 3) mirror Japan (course 1)
 #
 # This patches the CourseHoleOffsetTable at $DBBB which maps course indices

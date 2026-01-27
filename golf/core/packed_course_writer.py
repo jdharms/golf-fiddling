@@ -8,10 +8,9 @@ Packs 1 or 2 courses across 3 terrain banks for maximum space efficiency.
 from dataclasses import dataclass, field
 
 from .compressor import GreensCompressor, TerrainCompressor
-from .course_writer import GREENS_TOTAL_TILES, find_actual_greens_size
 from .decompressor import GreensDecompressor
 from .packing import int_to_bcd, pack_attributes
-from .patches import COURSE3_MIRROR_PATCH, MULTI_BANK_CODE_PATCH, PatchError
+from .patches import COURSE2_MIRROR_PATCH, COURSE3_MIRROR_PATCH, MULTI_BANK_CODE_PATCH, PatchError
 from .rom_reader import (
     HOLES_PER_COURSE,
     PRG_BANK_SIZE,
@@ -150,7 +149,7 @@ class PackedCourseWriter:
                 )
 
         # Ensure patches are applied
-        self._ensure_patches_applied()
+        self._ensure_patches_applied(len(courses))
 
         # Flatten holes into single list
         all_holes: list[HoleData] = []
@@ -267,9 +266,18 @@ class PackedCourseWriter:
         except Exception as e:
             return ValidationResult(valid=False, message=f"Validation error: {e}")
 
-    def _ensure_patches_applied(self) -> None:
-        """Ensure required ROM patches are applied."""
+    def _ensure_patches_applied(self, num_courses: int) -> None:
+        """Ensure required ROM patches are applied.
+
+        Args:
+            num_courses: Number of courses being written (1 or 2)
+        """
+        # Always apply these patches
         patches = [MULTI_BANK_CODE_PATCH, COURSE3_MIRROR_PATCH]
+
+        # In 1-course mode, also mirror course 2 to course 1
+        if num_courses == 1:
+            patches.append(COURSE2_MIRROR_PATCH)
 
         for patch in patches:
             if patch.is_applied(self.writer):

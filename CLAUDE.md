@@ -25,14 +25,12 @@ The project provides several command-line tools via entry points (defined in `py
 golf-dump <rom_file.nes> <output_dir>
 
 # Write course data from JSON files back to ROM (inverse of golf-dump)
-# Default: Packed mode - writes 1-2 courses across 3 banks with auto-patching
+# Writes 1-2 courses across 3 banks with auto-patching
 golf-write <rom_file.nes> <course_dir> [course_dir2] [options]
 # Options:
 #   -o, --output PATH    Output ROM file (default: <rom>.modified.nes)
 #   --validate-only      Compress and validate without writing
 #   --verbose            Show compression statistics
-#   --legacy             Use legacy single-bank mode (no patches)
-#   -c, --course INDEX   Course index 0-2 (legacy mode only)
 
 # Analyze ROM structure and show technical details
 golf-analyze <rom_file.nes> [hole_number]
@@ -61,17 +59,14 @@ golf-dump nes_open_us.nes courses/
 # Edit a hole using the course editor
 golf-editor courses/japan/hole_01.json
 
-# Write 1 course in packed mode (default, UK mirrors Japan)
+# Write 1 course (all 3 course slots show the same course)
 golf-write nes_open_us.nes courses/japan/ -o modified.nes
 
-# Write 2 courses in packed mode (uses all 3 terrain banks)
+# Write 2 courses (Japan slot shows course 1, US slot shows course 2, UK mirrors Japan)
 golf-write nes_open_us.nes courses/japan/ courses/us/ -o modified.nes
 
 # Validate courses will fit without writing
 golf-write nes_open_us.nes courses/japan/ courses/us/ --validate-only --verbose
-
-# Legacy mode: write single course to specific bank (no patches)
-golf-write nes_open_us.nes courses/japan/ --legacy -c 0 -o modified.nes
 
 # Visualize a specific hole
 golf-visualize data/chr-ram.bin courses/japan/hole_01.json output.png
@@ -121,7 +116,7 @@ The codebase is organized into three main packages:
 | 2 | UK terrain + tables | $837F-$A553 | 8,661 bytes |
 | 3 | All greens + code | $81C0-$A773 | 9,652 bytes |
 
-**Important**: Bank 2 (UK) has tables BEFORE terrain at $8000-$837E. Bank 3 has decompression tables at $8000-$81BF and executable code at $A774-$BFFF. The `CourseWriter` class enforces these boundaries when writing course data.
+**Important**: Bank 2 (UK) has tables BEFORE terrain at $8000-$837E. Bank 3 has decompression tables at $8000-$81BF and executable code at $A774-$BFFF. The `PackedCourseWriter` class enforces these boundaries when writing course data.
 
 **Multi-Bank Mode (PackedCourseWriter)**: The default write mode packs 1-2 courses across all 3 terrain banks using per-hole bank lookup instead of per-course. This provides ~26,100 bytes total for 36 holes (~725 bytes/hole average), a 50% increase over vanilla. Key changes:
 - ROM code patch changes bank lookup from course-based to hole-based
