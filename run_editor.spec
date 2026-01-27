@@ -34,7 +34,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='run_editor',
+    name='Open Golf Editor',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
