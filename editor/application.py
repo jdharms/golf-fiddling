@@ -411,12 +411,12 @@ class EditorApplication:
         self.toolbar.resize(width)
 
         # Resize tool picker (right sidebar)
-        self.tool_picker.rect = Rect(
+        self.tool_picker.resize(Rect(
             width - TOOL_PICKER_WIDTH,
             TOOLBAR_HEIGHT,
             TOOL_PICKER_WIDTH,
             height - TOOLBAR_HEIGHT - STATUS_HEIGHT,
-        )
+        ))
 
         self.event_handler.update_screen_size(width, height)
 
