@@ -394,12 +394,14 @@ class EditorApplication:
         """Save the current hole."""
         if self.hole_data.filepath:
             self.hole_data.save()
+            self.state.tool_message = "Hole saved!"
         else:
             path = save_file_dialog(
                 "Save Hole", ".json", [("JSON files", "*.json"), ("All files", "*.*")]
             )
             if path:
                 self.hole_data.save(path)
+                self.state.tool_message = "Hole saved!"
 
     def _on_resize(self, width: int, height: int):
         """Handle window resize."""
