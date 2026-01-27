@@ -576,11 +576,11 @@ class EditorApplication:
                 )
                 self.terrain_picker.render(self.screen, palette_for_picker)
 
-        # Tool picker (right sidebar)
-        self.tool_picker.render(self.screen, self.font)
-
         # Canvas
         self._render_canvas()
+
+        # Tool picker (right sidebar)
+        self.tool_picker.render(self.screen, self.font)
 
         # Toolbar after Canvas so scrolling the Canvas
         # won't cause it to clip into the Toolbar
