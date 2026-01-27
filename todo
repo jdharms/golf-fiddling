@@ -17,6 +17,7 @@ Todos:
 * release bundling
 * Fringe gen logging upon failure
 * Ugh, CI/CD? notably around rangefinder deployment
+* linter/validator of some sort
 
 
 Bugs:
