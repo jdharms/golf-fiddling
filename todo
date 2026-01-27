@@ -18,6 +18,8 @@ Todos:
 * Fringe gen logging upon failure
 * Ugh, CI/CD? notably around rangefinder deployment
 * linter/validator of some sort
+* Investigate assigning corners to multiple banks
+  * Most of the complexity here is with the cycle tool
 
 
 Bugs:
