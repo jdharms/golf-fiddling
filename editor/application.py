@@ -742,6 +742,9 @@ class EditorApplication:
             status_parts.append(f"File: {name}{modified}")
 
         # Show tool message (e.g., from Position Tool)
+        # Clear "Hole saved!" if file has been modified since saving
+        if self.state.tool_message == "Hole saved!" and self.hole_data.modified:
+            self.state.tool_message = None
         if self.state.tool_message:
             status_parts.append(self.state.tool_message)
 
