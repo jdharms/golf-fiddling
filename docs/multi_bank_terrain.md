@@ -98,17 +98,14 @@ The multi-bank terrain feature is implemented in `golf/core/packed_course_writer
 ### Usage
 
 ```bash
-# Write 1 course (UK mirrors Japan)
+# Write 1 course (all 3 course slots show the same course)
 golf-write rom.nes courses/japan/ -o output.nes
 
-# Write 2 courses
+# Write 2 courses (Japan slot shows course 1, US slot shows course 2, UK mirrors Japan)
 golf-write rom.nes courses/japan/ courses/us/ -o output.nes
 
 # Validate without writing
 golf-write rom.nes courses/japan/ courses/us/ --validate-only --verbose
-
-# Legacy single-bank mode (no patches)
-golf-write rom.nes courses/japan/ --legacy -c 0 -o output.nes
 ```
 
 ### ROM Patches (auto-applied in packed mode)
@@ -150,4 +147,3 @@ pytest tests/integration/test_packed_course_write.py -v
 
 - Use the `nes-open-golf-rom-layout` skill for complete pointer table addresses and bank layouts
 - `golf/core/packed_course_writer.py` - Multi-bank writer implementation
-- `golf/core/course_writer.py` - Legacy single-bank writer

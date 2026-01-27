@@ -382,8 +382,8 @@ class TestPatchApplication:
         assert MULTI_BANK_CODE_PATCH.can_apply(rom_writer)
         assert COURSE3_MIRROR_PATCH.can_apply(rom_writer)
 
-        # Call ensure_patches
-        writer._ensure_patches_applied()
+        # Call ensure_patches (2 courses - applies MULTI_BANK and COURSE3_MIRROR)
+        writer._ensure_patches_applied(num_courses=2)
 
         # Verify patches are now applied
         assert MULTI_BANK_CODE_PATCH.is_applied(rom_writer)
@@ -400,7 +400,7 @@ class TestPatchApplication:
         writer = PackedCourseWriter(rom_writer, apply_patches=True)
 
         # Should not raise even though patches are already applied
-        writer._ensure_patches_applied()
+        writer._ensure_patches_applied(num_courses=2)
 
         # Patches should still be applied
         assert MULTI_BANK_CODE_PATCH.is_applied(rom_writer)

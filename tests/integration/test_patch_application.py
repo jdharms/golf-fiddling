@@ -7,6 +7,7 @@ import pytest
 
 from golf.core.patches import (
     AVAILABLE_PATCHES,
+    COURSE2_MIRROR_PATCH,
     COURSE3_MIRROR_PATCH,
     MULTI_BANK_CODE_PATCH,
     PatchError,
@@ -36,6 +37,10 @@ def create_test_rom_with_original_bytes() -> bytearray:
     # Place original bytes for multi_bank_lookup patch at PRG offset 0x3DB68
     # (CPU $DB68 in fixed bank = bank 15)
     prg_rom[0x3DB68 : 0x3DB68 + 9] = MULTI_BANK_CODE_PATCH.original
+
+    # Place original bytes for course2_mirror patch at PRG offset 0x3DBBC
+    # (CPU $DBBC in fixed bank)
+    prg_rom[0x3DBBC : 0x3DBBC + 1] = COURSE2_MIRROR_PATCH.original
 
     # Place original bytes for course3_mirror patch at PRG offset 0x3DBBD
     # (CPU $DBBD in fixed bank)
@@ -74,6 +79,26 @@ class TestMultiBankPatchApplication:
         # Verify actual bytes
         patched_bytes = rom_writer.read_prg(0x3DB68, 9)
         assert patched_bytes == MULTI_BANK_CODE_PATCH.patched
+
+    def test_course2_mirror_patch_applies(self, test_rom_path, tmp_path):
+        """course2_mirror patch applies correctly."""
+        output_path = tmp_path / "patched.nes"
+        rom_writer = RomWriter(str(test_rom_path), str(output_path))
+
+        # Verify original state
+        assert COURSE2_MIRROR_PATCH.can_apply(rom_writer)
+        assert not COURSE2_MIRROR_PATCH.is_applied(rom_writer)
+
+        # Apply patch
+        COURSE2_MIRROR_PATCH.apply(rom_writer)
+
+        # Verify patched state
+        assert not COURSE2_MIRROR_PATCH.can_apply(rom_writer)
+        assert COURSE2_MIRROR_PATCH.is_applied(rom_writer)
+
+        # Verify actual byte
+        patched_byte = rom_writer.read_prg(0x3DBBC, 1)
+        assert patched_byte == COURSE2_MIRROR_PATCH.patched
 
     def test_course3_mirror_patch_applies(self, test_rom_path, tmp_path):
         """course3_mirror patch applies correctly."""
@@ -146,11 +171,13 @@ class TestAvailablePatchesRegistry:
     def test_all_patches_registered(self):
         """All defined patches are in the registry."""
         assert "multi_bank_lookup" in AVAILABLE_PATCHES
+        assert "course2_mirror" in AVAILABLE_PATCHES
         assert "course3_mirror" in AVAILABLE_PATCHES
 
     def test_registry_contains_correct_patches(self):
         """Registry maps to correct patch instances."""
         assert AVAILABLE_PATCHES["multi_bank_lookup"] is MULTI_BANK_CODE_PATCH
+        assert AVAILABLE_PATCHES["course2_mirror"] is COURSE2_MIRROR_PATCH
         assert AVAILABLE_PATCHES["course3_mirror"] is COURSE3_MIRROR_PATCH
 
     def test_patch_names_match_registry_keys(self):

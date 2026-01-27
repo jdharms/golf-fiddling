@@ -20,6 +20,7 @@ Usage:
 from .base import PatchError, ROMPatch
 from .byte_patch import BytePatch
 from .multi_bank import (
+    COURSE2_MIRROR_PATCH,
     COURSE3_MIRROR_PATCH,
     MULTI_BANK_CODE_PATCH,
     MULTI_BANK_PATCHES,
@@ -28,6 +29,7 @@ from .multi_bank import (
 # Registry of all available patches by name
 AVAILABLE_PATCHES: dict[str, ROMPatch] = {
     MULTI_BANK_CODE_PATCH.name: MULTI_BANK_CODE_PATCH,
+    COURSE2_MIRROR_PATCH.name: COURSE2_MIRROR_PATCH,
     COURSE3_MIRROR_PATCH.name: COURSE3_MIRROR_PATCH,
 }
 
@@ -36,6 +38,7 @@ __all__ = [
     "BytePatch",
     "PatchError",
     "MULTI_BANK_CODE_PATCH",
+    "COURSE2_MIRROR_PATCH",
     "COURSE3_MIRROR_PATCH",
     "MULTI_BANK_PATCHES",
     "AVAILABLE_PATCHES",
