@@ -7,10 +7,13 @@ This class mirrors RomReader's interface for writes.
 
 from pathlib import Path
 
-from .rom_reader import (
+from .rom_utils import (
     FIXED_BANK_PRG_START,
     INES_HEADER_SIZE,
     PRG_BANK_SIZE,
+    cpu_to_prg_fixed,
+    cpu_to_prg_switched,
+    prg_to_cpu_switched,
 )
 
 
@@ -160,7 +163,7 @@ class RomWriter:
         Returns:
             Absolute PRG offset
         """
-        return FIXED_BANK_PRG_START + (cpu_addr - 0xC000)
+        return cpu_to_prg_fixed(cpu_addr)
 
     def cpu_to_prg_switched(self, cpu_addr: int, bank: int) -> int:
         """
@@ -173,8 +176,7 @@ class RomWriter:
         Returns:
             Absolute PRG offset
         """
-        offset_in_bank = cpu_addr - 0x8000
-        return bank * PRG_BANK_SIZE + offset_in_bank
+        return cpu_to_prg_switched(cpu_addr, bank)
 
     def prg_to_cpu_switched(self, prg_offset: int) -> int:
         """
@@ -186,8 +188,7 @@ class RomWriter:
         Returns:
             CPU address in switched bank range
         """
-        offset_in_bank = prg_offset % PRG_BANK_SIZE
-        return 0x8000 + offset_in_bank
+        return prg_to_cpu_switched(prg_offset)
 
     # =========================================================================
     # Annotation (no-op in base class, overridden in instrumented version)

@@ -9,29 +9,9 @@ what data is being read from and written to specific addresses.
 import json
 from pathlib import Path
 
-from .rom_reader import RomReader, PRG_BANK_SIZE, FIXED_BANK_PRG_START
+from .rom_reader import RomReader
+from .rom_utils import prg_to_bank_and_cpu
 from .rom_writer import RomWriter
-
-
-def _prg_to_bank_and_cpu(prg_offset: int) -> tuple[int, int]:
-    """
-    Convert PRG offset to bank number and CPU address.
-
-    Args:
-        prg_offset: Absolute offset into PRG ROM
-
-    Returns:
-        Tuple of (bank, cpu_addr)
-    """
-    if prg_offset >= FIXED_BANK_PRG_START:
-        # Fixed bank (bank 15, $C000-$FFFF)
-        cpu_addr = 0xC000 + (prg_offset - FIXED_BANK_PRG_START)
-        return (15, cpu_addr)
-    else:
-        # Switched bank ($8000-$BFFF)
-        bank = prg_offset // PRG_BANK_SIZE
-        cpu_addr = 0x8000 + (prg_offset % PRG_BANK_SIZE)
-        return (bank, cpu_addr)
 
 
 class InstrumentedRomReader(RomReader):
