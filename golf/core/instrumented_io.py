@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 
 from .rom_reader import RomReader
-from .rom_utils import prg_to_bank_and_cpu
+from .rom_utils import cpu_to_prg_fixed, cpu_to_prg_switched, prg_to_bank_and_cpu
 from .rom_writer import RomWriter
 
 
@@ -67,7 +67,7 @@ class InstrumentedRomReader(RomReader):
 
         # Calculate bank and cpu_addr from PRG offset if not provided
         if bank is None or cpu_addr is None:
-            calc_bank, calc_cpu = _prg_to_bank_and_cpu(prg_offset)
+            calc_bank, calc_cpu = prg_to_bank_and_cpu(prg_offset)
             if bank is None:
                 bank = calc_bank
             if cpu_addr is None:
@@ -106,28 +106,28 @@ class InstrumentedRomReader(RomReader):
 
     def read_fixed(self, cpu_addr: int, length: int = 1) -> bytes:
         """Read from fixed bank with logging."""
-        prg_offset = self.cpu_to_prg_fixed(cpu_addr)
+        prg_offset = cpu_to_prg_fixed(cpu_addr)
         data = bytes(self.data[self.prg_start + prg_offset : self.prg_start + prg_offset + length])
         self._log_read(prg_offset, length, data, cpu_addr=cpu_addr)
         return data
 
     def read_fixed_byte(self, cpu_addr: int) -> int:
         """Read a single byte from fixed bank with logging."""
-        prg_offset = self.cpu_to_prg_fixed(cpu_addr)
+        prg_offset = cpu_to_prg_fixed(cpu_addr)
         data = bytes([self.data[self.prg_start + prg_offset]])
         self._log_read(prg_offset, 1, data, cpu_addr=cpu_addr)
         return data[0]
 
     def read_fixed_word(self, cpu_addr: int) -> int:
         """Read 16-bit word from fixed bank with logging."""
-        prg_offset = self.cpu_to_prg_fixed(cpu_addr)
+        prg_offset = cpu_to_prg_fixed(cpu_addr)
         data = bytes(self.data[self.prg_start + prg_offset : self.prg_start + prg_offset + 2])
         self._log_read(prg_offset, 2, data, cpu_addr=cpu_addr)
         return data[0] | (data[1] << 8)
 
     def read_switched(self, cpu_addr: int, bank: int, length: int = 1) -> bytes:
         """Read from switched bank with logging."""
-        prg_offset = self.cpu_to_prg_switched(cpu_addr, bank)
+        prg_offset = cpu_to_prg_switched(cpu_addr, bank)
         data = bytes(self.data[self.prg_start + prg_offset : self.prg_start + prg_offset + length])
         self._log_read(prg_offset, length, data, cpu_addr=cpu_addr, bank=bank)
         return data
@@ -226,7 +226,7 @@ class InstrumentedRomWriter(RomWriter):
 
         # Calculate bank and cpu_addr from PRG offset if not provided
         if bank is None or cpu_addr is None:
-            calc_bank, calc_cpu = _prg_to_bank_and_cpu(prg_offset)
+            calc_bank, calc_cpu = prg_to_bank_and_cpu(prg_offset)
             if bank is None:
                 bank = calc_bank
             if cpu_addr is None:
@@ -265,20 +265,20 @@ class InstrumentedRomWriter(RomWriter):
 
     def write_fixed(self, cpu_addr: int, data: bytes):
         """Write bytes to fixed bank with logging."""
-        prg_offset = self.cpu_to_prg_fixed(cpu_addr)
+        prg_offset = cpu_to_prg_fixed(cpu_addr)
         self._log_operation("write", prg_offset, len(data), data, cpu_addr=cpu_addr)
         super().write_fixed(cpu_addr, data)
 
     def write_fixed_byte(self, cpu_addr: int, value: int):
         """Write a single byte to fixed bank with logging."""
-        prg_offset = self.cpu_to_prg_fixed(cpu_addr)
+        prg_offset = cpu_to_prg_fixed(cpu_addr)
         data = bytes([value])
         self._log_operation("write", prg_offset, 1, data, cpu_addr=cpu_addr)
         super().write_fixed_byte(cpu_addr, value)
 
     def write_fixed_word(self, cpu_addr: int, value: int):
         """Write 16-bit word to fixed bank with logging."""
-        prg_offset = self.cpu_to_prg_fixed(cpu_addr)
+        prg_offset = cpu_to_prg_fixed(cpu_addr)
         data = bytes([value & 0xFF, (value >> 8) & 0xFF])
         self._log_operation("write", prg_offset, 2, data, cpu_addr=cpu_addr)
         with self._suppress_nested_logging():
@@ -286,7 +286,7 @@ class InstrumentedRomWriter(RomWriter):
 
     def write_switched(self, cpu_addr: int, bank: int, data: bytes):
         """Write bytes to switched bank with logging."""
-        prg_offset = self.cpu_to_prg_switched(cpu_addr, bank)
+        prg_offset = cpu_to_prg_switched(cpu_addr, bank)
         self._log_operation("write", prg_offset, len(data), data, cpu_addr=cpu_addr, bank=bank)
         super().write_switched(cpu_addr, bank, data)
 
@@ -315,7 +315,7 @@ class InstrumentedRomWriter(RomWriter):
 
     def read_fixed_byte(self, cpu_addr: int) -> int:
         """Read a single byte from fixed bank with logging."""
-        prg_offset = self.cpu_to_prg_fixed(cpu_addr)
+        prg_offset = cpu_to_prg_fixed(cpu_addr)
         value = super().read_fixed_byte(cpu_addr)
         data = bytes([value])
         self._log_operation("read", prg_offset, 1, data, cpu_addr=cpu_addr)
@@ -323,7 +323,7 @@ class InstrumentedRomWriter(RomWriter):
 
     def read_fixed_word(self, cpu_addr: int) -> int:
         """Read 16-bit word from fixed bank with logging."""
-        prg_offset = self.cpu_to_prg_fixed(cpu_addr)
+        prg_offset = cpu_to_prg_fixed(cpu_addr)
         with self._suppress_nested_logging():
             value = super().read_fixed_word(cpu_addr)
         data = bytes([value & 0xFF, (value >> 8) & 0xFF])

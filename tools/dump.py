@@ -43,6 +43,7 @@ from golf.core.rom_reader import (
     TOTAL_HOLES,
     RomReader,
 )
+from golf.core.rom_utils import cpu_to_prg_switched
 from golf.formats import compact_json as json
 from golf.formats.hex_utils import format_hex_rows
 
@@ -157,13 +158,13 @@ def dump_course(
         terrain_compressed_size = terrain_end_ptr - terrain_start_ptr
 
         # Read compressed terrain data
-        terrain_prg = rom.cpu_to_prg_switched(terrain_start_ptr, terrain_bank)
+        terrain_prg = cpu_to_prg_switched(terrain_start_ptr, terrain_bank)
         terrain_compressed = rom.annotate(
             f"global hole {hole_idx} terrain data ({terrain_compressed_size} bytes)"
         ).read_prg(terrain_prg, terrain_compressed_size)
 
         # Read attribute data (72 bytes after terrain)
-        attr_prg = rom.cpu_to_prg_switched(terrain_end_ptr, terrain_bank)
+        attr_prg = cpu_to_prg_switched(terrain_end_ptr, terrain_bank)
         attr_bytes = rom.annotate(
             f"global hole {hole_idx} attributes ({ATTR_TOTAL_BYTES} bytes)"
         ).read_prg(attr_prg, ATTR_TOTAL_BYTES)
@@ -195,7 +196,7 @@ def dump_course(
         else:
             greens_size = 576  # Conservative fallback for last hole
 
-        greens_prg = rom.cpu_to_prg_switched(greens_ptr, greens_bank)
+        greens_prg = cpu_to_prg_switched(greens_ptr, greens_bank)
         greens_compressed = rom.annotate(
             f"global hole {hole_idx} greens data ({greens_size} bytes)"
         ).read_prg(greens_prg, greens_size)
