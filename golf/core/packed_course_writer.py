@@ -8,6 +8,7 @@ Packs 1 or 2 courses across 3 terrain banks for maximum space efficiency.
 from dataclasses import dataclass, field
 
 from .compressor import GreensCompressor, TerrainCompressor
+from .course_validation import CourseValidator
 from .decompressor import GreensDecompressor
 from .packing import int_to_bcd, pack_attributes
 from .patches import COURSE2_MIRROR_PATCH, COURSE3_MIRROR_PATCH, MULTI_BANK_CODE_PATCH, PatchError
@@ -118,6 +119,7 @@ class PackedCourseWriter:
         self.terrain_compressor = TerrainCompressor()
         self.greens_compressor = GreensCompressor()
         self.greens_decompressor: GreensDecompressor | None = None
+        self.validator = CourseValidator()
 
     def write_courses(
         self, courses: list[list[HoleData]], verbose: bool = False
@@ -300,6 +302,10 @@ class PackedCourseWriter:
         self, holes: list[HoleData]
     ) -> list[HoleCompressedData]:
         """Compress terrain, attributes, and greens for all holes."""
+        # Validate all holes before compressing any
+        for i, hole_data in enumerate(holes):
+            self.validator.validate_hole(i, hole_data)
+
         compressed = []
 
         for i, hole_data in enumerate(holes):
