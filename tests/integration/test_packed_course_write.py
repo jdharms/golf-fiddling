@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from golf.core import rom_utils
 from golf.core.decompressor import (
     GreensDecompressor,
     TerrainDecompressor,
@@ -20,25 +21,8 @@ from golf.core.packed_course_writer import (
     BANK_TABLE_SIZE,
     PackedCourseWriter,
 )
-from golf.core.rom_utils import cpu_to_prg_switched
 from golf.core.patches import COURSE3_MIRROR_PATCH, MULTI_BANK_CODE_PATCH
-from golf.core.rom_reader import (
-    HOLES_PER_COURSE,
-    TABLE_DISTANCE_1,
-    TABLE_DISTANCE_10,
-    TABLE_DISTANCE_100,
-    TABLE_GREEN_X,
-    TABLE_GREEN_Y,
-    TABLE_GREENS_PTR,
-    TABLE_HANDICAP,
-    TABLE_PAR,
-    TABLE_SCROLL_LIMIT,
-    TABLE_TERRAIN_END_PTR,
-    TABLE_TERRAIN_START_PTR,
-    TABLE_TEE_X,
-    TABLE_TEE_Y,
-    RomReader,
-)
+from golf.core.rom_reader import RomReader
 from golf.core.rom_writer import RomWriter
 from golf.formats.hole_data import HoleData
 
@@ -64,7 +48,7 @@ def us_course_dir():
 def load_course_holes(course_dir: Path) -> list[HoleData]:
     """Load all 18 holes from a course directory."""
     holes = []
-    for hole_num in range(1, HOLES_PER_COURSE + 1):
+    for hole_num in range(1, rom_utils.HOLES_PER_COURSE + 1):
         hole_data = HoleData()
         hole_data.load(str(course_dir / f"hole_{hole_num:02d}.json"))
         holes.append(hole_data)
@@ -121,13 +105,13 @@ def test_single_course_roundtrip(rom_path, japan_course_dir, tmp_path):
 
     # Verify terrain for first and last hole
     for hole_idx in [0, 17]:
-        terrain_ptr = new_rom.read_fixed_word(TABLE_TERRAIN_START_PTR + hole_idx * 2)
-        terrain_end = new_rom.read_fixed_word(TABLE_TERRAIN_END_PTR + hole_idx * 2)
+        terrain_ptr = new_rom.read_fixed_word(rom_utils.TABLE_TERRAIN_START_PTR + hole_idx * 2)
+        terrain_end = new_rom.read_fixed_word(rom_utils.TABLE_TERRAIN_END_PTR + hole_idx * 2)
 
         # Get bank from table
         bank = bank_table[hole_idx * 2]
 
-        terrain_prg = cpu_to_prg_switched(terrain_ptr, bank)
+        terrain_prg = rom_utils.cpu_to_prg_switched(terrain_ptr, bank)
         terrain_size = terrain_end - terrain_ptr
         terrain_compressed = new_rom.read_prg(terrain_prg, terrain_size)
 
@@ -142,11 +126,11 @@ def test_single_course_roundtrip(rom_path, japan_course_dir, tmp_path):
             )
 
     # Verify greens for first hole
-    greens_ptr = new_rom.read_fixed_word(TABLE_GREENS_PTR + 0)
-    greens_prg = cpu_to_prg_switched(greens_ptr, 3)
+    greens_ptr = new_rom.read_fixed_word(rom_utils.TABLE_GREENS_PTR + 0)
+    greens_prg = rom_utils.cpu_to_prg_switched(greens_ptr, 3)
 
     # Read enough for greens (they're sequential, so use next pointer)
-    next_ptr = new_rom.read_fixed_word(TABLE_GREENS_PTR + 2)
+    next_ptr = new_rom.read_fixed_word(rom_utils.TABLE_GREENS_PTR + 2)
     greens_size = next_ptr - greens_ptr if next_ptr > greens_ptr else 400
 
     greens_compressed = new_rom.read_prg(greens_prg, greens_size)
@@ -207,11 +191,11 @@ def test_two_course_roundtrip(rom_path, japan_course_dir, us_course_dir, tmp_pat
     all_holes = japan_holes + us_holes
 
     for hole_idx in [0, 17, 18, 35]:  # First/last of each course
-        terrain_ptr = new_rom.read_fixed_word(TABLE_TERRAIN_START_PTR + hole_idx * 2)
-        terrain_end = new_rom.read_fixed_word(TABLE_TERRAIN_END_PTR + hole_idx * 2)
+        terrain_ptr = new_rom.read_fixed_word(rom_utils.TABLE_TERRAIN_START_PTR + hole_idx * 2)
+        terrain_end = new_rom.read_fixed_word(rom_utils.TABLE_TERRAIN_END_PTR + hole_idx * 2)
 
         bank = bank_table[hole_idx * 2]
-        terrain_prg = cpu_to_prg_switched(terrain_ptr, bank)
+        terrain_prg = rom_utils.cpu_to_prg_switched(terrain_ptr, bank)
         terrain_size = terrain_end - terrain_ptr
         terrain_compressed = new_rom.read_prg(terrain_prg, terrain_size)
 
@@ -248,34 +232,34 @@ def test_metadata_roundtrip(rom_path, japan_course_dir, tmp_path):
         metadata = hole.metadata
 
         # Par
-        par = new_rom.read_fixed_byte(TABLE_PAR + hole_idx)
+        par = new_rom.read_fixed_byte(rom_utils.TABLE_PAR + hole_idx)
         assert par == metadata.get("par", 4), f"Hole {hole_idx} par mismatch"
 
         # Handicap
-        handicap = new_rom.read_fixed_byte(TABLE_HANDICAP + hole_idx)
+        handicap = new_rom.read_fixed_byte(rom_utils.TABLE_HANDICAP + hole_idx)
         assert handicap == metadata.get("handicap", 1), f"Hole {hole_idx} handicap mismatch"
 
         # Distance (BCD)
-        dist_100 = new_rom.read_fixed_byte(TABLE_DISTANCE_100 + hole_idx)
-        dist_10 = new_rom.read_fixed_byte(TABLE_DISTANCE_10 + hole_idx)
-        dist_1 = new_rom.read_fixed_byte(TABLE_DISTANCE_1 + hole_idx)
+        dist_100 = new_rom.read_fixed_byte(rom_utils.TABLE_DISTANCE_100 + hole_idx)
+        dist_10 = new_rom.read_fixed_byte(rom_utils.TABLE_DISTANCE_10 + hole_idx)
+        dist_1 = new_rom.read_fixed_byte(rom_utils.TABLE_DISTANCE_1 + hole_idx)
         distance = bcd_to_int(dist_100, dist_10, dist_1)
         assert distance == metadata.get("distance", 400), f"Hole {hole_idx} distance mismatch"
 
         # Scroll limit
-        scroll = new_rom.read_fixed_byte(TABLE_SCROLL_LIMIT + hole_idx)
+        scroll = new_rom.read_fixed_byte(rom_utils.TABLE_SCROLL_LIMIT + hole_idx)
         assert scroll == metadata.get("scroll_limit", 32), f"Hole {hole_idx} scroll mismatch"
 
         # Green position
-        green_x = new_rom.read_fixed_byte(TABLE_GREEN_X + hole_idx)
-        green_y = new_rom.read_fixed_byte(TABLE_GREEN_Y + hole_idx)
+        green_x = new_rom.read_fixed_byte(rom_utils.TABLE_GREEN_X + hole_idx)
+        green_y = new_rom.read_fixed_byte(rom_utils.TABLE_GREEN_Y + hole_idx)
         assert green_x == hole.green_x, f"Hole {hole_idx} green_x mismatch"
         assert green_y == hole.green_y, f"Hole {hole_idx} green_y mismatch"
 
         # Tee position
         tee = metadata.get("tee", {"x": 0, "y": 0})
-        tee_x = new_rom.read_fixed_byte(TABLE_TEE_X + hole_idx)
-        tee_y = new_rom.read_fixed_word(TABLE_TEE_Y + hole_idx * 2)
+        tee_x = new_rom.read_fixed_byte(rom_utils.TABLE_TEE_X + hole_idx)
+        tee_y = new_rom.read_fixed_word(rom_utils.TABLE_TEE_Y + hole_idx * 2)
         assert tee_x == tee["x"], f"Hole {hole_idx} tee_x mismatch"
         assert tee_y == tee["y"], f"Hole {hole_idx} tee_y mismatch"
 
@@ -363,13 +347,13 @@ def test_greens_sequential_in_bank3(rom_path, japan_course_dir, tmp_path):
     # Read all greens pointers and verify they're increasing
     prev_ptr = 0
     for hole_idx in range(18):
-        ptr = new_rom.read_fixed_word(TABLE_GREENS_PTR + hole_idx * 2)
+        ptr = new_rom.read_fixed_word(rom_utils.TABLE_GREENS_PTR + hole_idx * 2)
         assert ptr > prev_ptr, f"Greens pointer for hole {hole_idx} not increasing"
         prev_ptr = ptr
 
     # Verify greens pointers are all in valid range
     for hole_idx in range(18):
-        ptr = new_rom.read_fixed_word(TABLE_GREENS_PTR + hole_idx * 2)
+        ptr = new_rom.read_fixed_word(rom_utils.TABLE_GREENS_PTR + hole_idx * 2)
         assert ptr >= 0x81C0, f"Greens pointer {ptr:04X} before data start"
         assert ptr < BANK_TABLE_CPU_ADDR, f"Greens pointer {ptr:04X} in bank table region"
 

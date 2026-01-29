@@ -7,10 +7,8 @@ Catches issues like placeholder tiles that would cause compression failures.
 
 from dataclasses import dataclass
 
+from . import rom_utils
 from ..formats.hole_data import HoleData
-
-
-HOLES_PER_COURSE = 18
 
 
 @dataclass
@@ -37,8 +35,8 @@ class InvalidTileError(Exception):
         invalid_tiles: list[InvalidTile],
     ):
         self.hole_index = hole_index
-        self.hole_number = (hole_index % HOLES_PER_COURSE) + 1  # 1-indexed
-        self.course_number = (hole_index // HOLES_PER_COURSE) + 1  # 1-indexed
+        self.hole_number = (hole_index % rom_utils.HOLES_PER_COURSE) + 1  # 1-indexed
+        self.course_number = (hole_index // rom_utils.HOLES_PER_COURSE) + 1  # 1-indexed
         self.mode = mode
         self.invalid_tiles = invalid_tiles
         super().__init__(str(self))
@@ -94,7 +92,7 @@ class CourseValidator:
         Raises:
             InvalidTileError: If any hole has invalid tiles
         """
-        base_index = course_index * HOLES_PER_COURSE
+        base_index = course_index * rom_utils.HOLES_PER_COURSE
         for i, hole_data in enumerate(holes):
             self.validate_hole(base_index + i, hole_data)
 

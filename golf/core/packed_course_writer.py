@@ -7,30 +7,12 @@ Packs 1 or 2 courses across 3 terrain banks for maximum space efficiency.
 
 from dataclasses import dataclass, field
 
+from . import rom_utils
 from .compressor import GreensCompressor, TerrainCompressor
 from .course_validation import CourseValidator
 from .decompressor import GreensDecompressor
 from .packing import int_to_bcd, pack_attributes
 from .patches import COURSE2_MIRROR_PATCH, COURSE3_MIRROR_PATCH, MULTI_BANK_CODE_PATCH, PatchError
-from .rom_reader import (
-    HOLES_PER_COURSE,
-    TABLE_DISTANCE_1,
-    TABLE_DISTANCE_10,
-    TABLE_DISTANCE_100,
-    TABLE_FLAG_X_OFFSET,
-    TABLE_FLAG_Y_OFFSET,
-    TABLE_GREEN_X,
-    TABLE_GREEN_Y,
-    TABLE_GREENS_PTR,
-    TABLE_HANDICAP,
-    TABLE_PAR,
-    TABLE_SCROLL_LIMIT,
-    TABLE_TERRAIN_END_PTR,
-    TABLE_TERRAIN_START_PTR,
-    TABLE_TEE_X,
-    TABLE_TEE_Y,
-)
-from .rom_utils import PRG_BANK_SIZE, cpu_to_prg_switched
 from .rom_writer import BankOverflowError, RomWriter
 from ..formats.hole_data import HoleData
 
@@ -145,9 +127,9 @@ class PackedCourseWriter:
             raise ValueError(f"Expected 1 or 2 courses, got {len(courses)}")
 
         for i, course in enumerate(courses):
-            if len(course) != HOLES_PER_COURSE:
+            if len(course) != rom_utils.HOLES_PER_COURSE:
                 raise ValueError(
-                    f"Course {i+1} has {len(course)} holes, expected {HOLES_PER_COURSE}"
+                    f"Course {i+1} has {len(course)} holes, expected {rom_utils.HOLES_PER_COURSE}"
                 )
 
         # Ensure patches are applied
@@ -223,10 +205,10 @@ class PackedCourseWriter:
                 )
 
             for i, course in enumerate(courses):
-                if len(course) != HOLES_PER_COURSE:
+                if len(course) != rom_utils.HOLES_PER_COURSE:
                     return ValidationResult(
                         valid=False,
-                        message=f"Course {i+1} has {len(course)} holes, expected {HOLES_PER_COURSE}",
+                        message=f"Course {i+1} has {len(course)} holes, expected {rom_utils.HOLES_PER_COURSE}",
                     )
 
             # Flatten and compress
@@ -401,8 +383,8 @@ class PackedCourseWriter:
         """Write terrain and attributes to assigned banks."""
         for hole, alloc in zip(compressed, allocations):
             bank = alloc.bank
-            terrain_prg = cpu_to_prg_switched(alloc.terrain_start, bank)
-            attr_prg = cpu_to_prg_switched(alloc.terrain_end, bank)
+            terrain_prg = rom_utils.cpu_to_prg_switched(alloc.terrain_start, bank)
+            attr_prg = rom_utils.cpu_to_prg_switched(alloc.terrain_end, bank)
 
             # Write terrain
             self.writer.annotate(
@@ -431,7 +413,7 @@ class PackedCourseWriter:
                 table[offset] = alloc.bank
 
         # Write to bank 3
-        table_prg = cpu_to_prg_switched(BANK_TABLE_CPU_ADDR, 3)
+        table_prg = rom_utils.cpu_to_prg_switched(BANK_TABLE_CPU_ADDR, 3)
         self.writer.annotate(
             f"per-hole bank table ({BANK_TABLE_SIZE} bytes)"
         ).write_prg(table_prg, bytes(table))
@@ -449,7 +431,7 @@ class PackedCourseWriter:
         Returns list of 54 CPU addresses (pointers for unused holes point to hole 0).
         """
         bank = 3
-        bank_start_prg = bank * PRG_BANK_SIZE
+        bank_start_prg = bank * rom_utils.PRG_BANK_SIZE
         num_new_holes = len(compressed)
 
         # Calculate total size needed (only for holes we're writing)
@@ -491,7 +473,7 @@ class PackedCourseWriter:
             self.writer.annotate(
                 f"hole {alloc.hole_index} terrain start ptr"
             ).write_fixed_word(
-                TABLE_TERRAIN_START_PTR + alloc.hole_index * 2,
+                rom_utils.TABLE_TERRAIN_START_PTR + alloc.hole_index * 2,
                 alloc.terrain_start,
             )
 
@@ -499,7 +481,7 @@ class PackedCourseWriter:
             self.writer.annotate(
                 f"hole {alloc.hole_index} terrain end ptr"
             ).write_fixed_word(
-                TABLE_TERRAIN_END_PTR + alloc.hole_index * 2,
+                rom_utils.TABLE_TERRAIN_END_PTR + alloc.hole_index * 2,
                 alloc.terrain_end,
             )
 
@@ -509,7 +491,7 @@ class PackedCourseWriter:
             self.writer.annotate(
                 f"hole {hole_idx} greens ptr"
             ).write_fixed_word(
-                TABLE_GREENS_PTR + hole_idx * 2,
+                rom_utils.TABLE_GREENS_PTR + hole_idx * 2,
                 ptr,
             )
 
@@ -519,47 +501,47 @@ class PackedCourseWriter:
 
         # Write par
         self.writer.annotate(f"hole {hole_idx} par").write_fixed_byte(
-            TABLE_PAR + hole_idx, metadata.get("par", 4)
+            rom_utils.TABLE_PAR + hole_idx, metadata.get("par", 4)
         )
 
         # Write handicap
         self.writer.annotate(f"hole {hole_idx} handicap").write_fixed_byte(
-            TABLE_HANDICAP + hole_idx, metadata.get("handicap", 1)
+            rom_utils.TABLE_HANDICAP + hole_idx, metadata.get("handicap", 1)
         )
 
         # Write distance (BCD encoded)
         distance = metadata.get("distance", 400)
         dist_100, dist_10, dist_1 = int_to_bcd(distance)
         self.writer.annotate(f"hole {hole_idx} distance (100s)").write_fixed_byte(
-            TABLE_DISTANCE_100 + hole_idx, dist_100
+            rom_utils.TABLE_DISTANCE_100 + hole_idx, dist_100
         )
         self.writer.annotate(f"hole {hole_idx} distance (10s)").write_fixed_byte(
-            TABLE_DISTANCE_10 + hole_idx, dist_10
+            rom_utils.TABLE_DISTANCE_10 + hole_idx, dist_10
         )
         self.writer.annotate(f"hole {hole_idx} distance (1s)").write_fixed_byte(
-            TABLE_DISTANCE_1 + hole_idx, dist_1
+            rom_utils.TABLE_DISTANCE_1 + hole_idx, dist_1
         )
 
         # Write scroll limit
         self.writer.annotate(f"hole {hole_idx} scroll limit").write_fixed_byte(
-            TABLE_SCROLL_LIMIT + hole_idx, metadata.get("scroll_limit", 32)
+            rom_utils.TABLE_SCROLL_LIMIT + hole_idx, metadata.get("scroll_limit", 32)
         )
 
         # Write green position
         self.writer.annotate(f"hole {hole_idx} green X").write_fixed_byte(
-            TABLE_GREEN_X + hole_idx, hole_data.green_x
+            rom_utils.TABLE_GREEN_X + hole_idx, hole_data.green_x
         )
         self.writer.annotate(f"hole {hole_idx} green Y").write_fixed_byte(
-            TABLE_GREEN_Y + hole_idx, hole_data.green_y
+            rom_utils.TABLE_GREEN_Y + hole_idx, hole_data.green_y
         )
 
         # Write tee position
         tee = metadata.get("tee", {"x": 0, "y": 0})
         self.writer.annotate(f"hole {hole_idx} tee X").write_fixed_byte(
-            TABLE_TEE_X + hole_idx, tee["x"]
+            rom_utils.TABLE_TEE_X + hole_idx, tee["x"]
         )
         self.writer.annotate(f"hole {hole_idx} tee Y").write_fixed_word(
-            TABLE_TEE_Y + hole_idx * 2, tee["y"]
+            rom_utils.TABLE_TEE_Y + hole_idx * 2, tee["y"]
         )
 
         # Write flag positions (4 per hole)
@@ -575,10 +557,10 @@ class PackedCourseWriter:
 
             self.writer.annotate(
                 f"hole {hole_idx} flag {i + 1} Y offset"
-            ).write_fixed_byte(TABLE_FLAG_Y_OFFSET + hole_idx * 4 + i, y_offset)
+            ).write_fixed_byte(rom_utils.TABLE_FLAG_Y_OFFSET + hole_idx * 4 + i, y_offset)
             self.writer.annotate(
                 f"hole {hole_idx} flag {i + 1} X offset"
-            ).write_fixed_byte(TABLE_FLAG_X_OFFSET + hole_idx * 4 + i, x_offset)
+            ).write_fixed_byte(rom_utils.TABLE_FLAG_X_OFFSET + hole_idx * 4 + i, x_offset)
 
     def _calculate_stats(
         self,

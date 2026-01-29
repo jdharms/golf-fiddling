@@ -9,6 +9,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from golf.core import rom_utils
 from golf.core.decompressor import (
     DecompressionStats,
     GreensDecompressor,
@@ -20,30 +21,7 @@ from golf.core.palettes import (
     ATTR_TOTAL_BYTES,
     TERRAIN_ROW_WIDTH,
 )
-from golf.core.rom_reader import (
-    COURSES,
-    HOLES_PER_COURSE,
-    TABLE_COURSE_BANK_TERRAIN,
-    TABLE_COURSE_HOLE_OFFSET,
-    TABLE_DISTANCE_1,
-    TABLE_DISTANCE_10,
-    TABLE_DISTANCE_100,
-    TABLE_FLAG_X_OFFSET,
-    TABLE_FLAG_Y_OFFSET,
-    TABLE_GREEN_X,
-    TABLE_GREEN_Y,
-    TABLE_GREENS_PTR,
-    TABLE_HANDICAP,
-    TABLE_PAR,
-    TABLE_SCROLL_LIMIT,
-    TABLE_TEE_X,
-    TABLE_TEE_Y,
-    TABLE_TERRAIN_END_PTR,
-    TABLE_TERRAIN_START_PTR,
-    TOTAL_HOLES,
-    RomReader,
-)
-from golf.core.rom_utils import cpu_to_prg_switched
+from golf.core.rom_reader import RomReader
 from golf.formats import compact_json as json
 from golf.formats.hex_utils import format_hex_rows
 
@@ -52,17 +30,17 @@ def dump_course(
     rom: RomReader, course_idx: int, output_dir: Path
 ) -> tuple[DecompressionStats, DecompressionStats]:
     """Dump all holes for a single course. Returns (terrain_stats, greens_stats)."""
-    course = COURSES[course_idx]
+    course = rom_utils.COURSES[course_idx]
     course_dir = output_dir / course["name"]
     course_dir.mkdir(parents=True, exist_ok=True)
 
     # Read course-level data
     hole_offset = rom.annotate(
         f"course {course_idx} hole offset"
-    ).read_fixed_byte(TABLE_COURSE_HOLE_OFFSET + course_idx)
+    ).read_fixed_byte(rom_utils.TABLE_COURSE_HOLE_OFFSET + course_idx)
     terrain_bank = rom.annotate(
         f"course {course_idx} terrain bank"
-    ).read_fixed_byte(TABLE_COURSE_BANK_TERRAIN + course_idx)
+    ).read_fixed_byte(rom_utils.TABLE_COURSE_BANK_TERRAIN + course_idx)
 
     # Greens use bank 3 based on the code analysis
     greens_bank = 3
@@ -89,7 +67,7 @@ def dump_course(
     greens_stats = DecompressionStats()
 
     # Dump each hole
-    for hole_in_course in range(HOLES_PER_COURSE):
+    for hole_in_course in range(rom_utils.HOLES_PER_COURSE):
         hole_idx = hole_offset + hole_in_course  # Absolute hole index 0-53
         hole_num = hole_in_course + 1  # Display number 1-18
 
@@ -100,36 +78,36 @@ def dump_course(
         print(f"  Hole {hole_num}...", end=" ")
 
         # Read metadata from fixed bank tables
-        par = rom.annotate(f"global hole {hole_idx} par").read_fixed_byte(TABLE_PAR + hole_idx)
+        par = rom.annotate(f"global hole {hole_idx} par").read_fixed_byte(rom_utils.TABLE_PAR + hole_idx)
         handicap = rom.annotate(f"global hole {hole_idx} handicap").read_fixed_byte(
-            TABLE_HANDICAP + hole_idx
+            rom_utils.TABLE_HANDICAP + hole_idx
         )
 
         dist_100 = rom.annotate(f"global hole {hole_idx} distance (100s)").read_fixed_byte(
-            TABLE_DISTANCE_100 + hole_idx
+            rom_utils.TABLE_DISTANCE_100 + hole_idx
         )
         dist_10 = rom.annotate(f"global hole {hole_idx} distance (10s)").read_fixed_byte(
-            TABLE_DISTANCE_10 + hole_idx
+            rom_utils.TABLE_DISTANCE_10 + hole_idx
         )
         dist_1 = rom.annotate(f"global hole {hole_idx} distance (1s)").read_fixed_byte(
-            TABLE_DISTANCE_1 + hole_idx
+            rom_utils.TABLE_DISTANCE_1 + hole_idx
         )
         distance = bcd_to_int(dist_100, dist_10, dist_1)
 
         scroll_limit = rom.annotate(f"global hole {hole_idx} scroll limit").read_fixed_byte(
-            TABLE_SCROLL_LIMIT + hole_idx
+            rom_utils.TABLE_SCROLL_LIMIT + hole_idx
         )
         green_x = rom.annotate(f"global hole {hole_idx} green X").read_fixed_byte(
-            TABLE_GREEN_X + hole_idx
+            rom_utils.TABLE_GREEN_X + hole_idx
         )
         green_y = rom.annotate(f"global hole {hole_idx} green Y").read_fixed_byte(
-            TABLE_GREEN_Y + hole_idx
+            rom_utils.TABLE_GREEN_Y + hole_idx
         )
         tee_x = rom.annotate(f"global hole {hole_idx} tee X").read_fixed_byte(
-            TABLE_TEE_X + hole_idx
+            rom_utils.TABLE_TEE_X + hole_idx
         )
         tee_y = rom.annotate(f"global hole {hole_idx} tee Y").read_fixed_word(
-            TABLE_TEE_Y + (hole_idx * 2)
+            rom_utils.TABLE_TEE_Y + (hole_idx * 2)
         )
 
         # Read flag positions (4 per hole)
@@ -137,34 +115,34 @@ def dump_course(
         for i in range(4):
             flag_y_off = rom.annotate(
                 f"global hole {hole_idx} flag {i + 1} Y offset"
-            ).read_fixed_byte(TABLE_FLAG_Y_OFFSET + (hole_idx * 4) + i)
+            ).read_fixed_byte(rom_utils.TABLE_FLAG_Y_OFFSET + (hole_idx * 4) + i)
             flag_x_off = rom.annotate(
                 f"global hole {hole_idx} flag {i + 1} X offset"
-            ).read_fixed_byte(TABLE_FLAG_X_OFFSET + (hole_idx * 4) + i)
+            ).read_fixed_byte(rom_utils.TABLE_FLAG_X_OFFSET + (hole_idx * 4) + i)
             flag_positions.append({"x_offset": flag_x_off, "y_offset": flag_y_off})
 
         # Read pointers
         terrain_start_ptr = rom.annotate(
             f"global hole {hole_idx} terrain start ptr"
-        ).read_fixed_word(TABLE_TERRAIN_START_PTR + (hole_idx * 2))
+        ).read_fixed_word(rom_utils.TABLE_TERRAIN_START_PTR + (hole_idx * 2))
         terrain_end_ptr = rom.annotate(
             f"global hole {hole_idx} terrain end ptr"
-        ).read_fixed_word(TABLE_TERRAIN_END_PTR + (hole_idx * 2))
+        ).read_fixed_word(rom_utils.TABLE_TERRAIN_END_PTR + (hole_idx * 2))
         greens_ptr = rom.annotate(f"global hole {hole_idx} greens ptr").read_fixed_word(
-            TABLE_GREENS_PTR + (hole_idx * 2)
+            rom_utils.TABLE_GREENS_PTR + (hole_idx * 2)
         )
 
         # Calculate compressed terrain size
         terrain_compressed_size = terrain_end_ptr - terrain_start_ptr
 
         # Read compressed terrain data
-        terrain_prg = cpu_to_prg_switched(terrain_start_ptr, terrain_bank)
+        terrain_prg = rom_utils.cpu_to_prg_switched(terrain_start_ptr, terrain_bank)
         terrain_compressed = rom.annotate(
             f"global hole {hole_idx} terrain data ({terrain_compressed_size} bytes)"
         ).read_prg(terrain_prg, terrain_compressed_size)
 
         # Read attribute data (72 bytes after terrain)
-        attr_prg = cpu_to_prg_switched(terrain_end_ptr, terrain_bank)
+        attr_prg = rom_utils.cpu_to_prg_switched(terrain_end_ptr, terrain_bank)
         attr_bytes = rom.annotate(
             f"global hole {hole_idx} attributes ({ATTR_TOTAL_BYTES} bytes)"
         ).read_prg(attr_prg, ATTR_TOTAL_BYTES)
@@ -184,10 +162,10 @@ def dump_course(
         # Read and decompress greens
         # In the game itself this routine runs until the *output* buffer is filled.
         # So we'll grab a generous buffer to pass to the decompress function.
-        if hole_idx < TOTAL_HOLES - 1:
+        if hole_idx < rom_utils.TOTAL_HOLES - 1:
             next_greens_ptr = rom.annotate(
                 f"global hole {hole_idx + 1} greens ptr (for size calc)"
-            ).read_fixed_word(TABLE_GREENS_PTR + ((hole_idx + 1) * 2))
+            ).read_fixed_word(rom_utils.TABLE_GREENS_PTR + ((hole_idx + 1) * 2))
             # Handle course boundaries where pointer table wraps
             if next_greens_ptr > greens_ptr:
                 greens_size = next_greens_ptr - greens_ptr
@@ -196,7 +174,7 @@ def dump_course(
         else:
             greens_size = 576  # Conservative fallback for last hole
 
-        greens_prg = cpu_to_prg_switched(greens_ptr, greens_bank)
+        greens_prg = rom_utils.cpu_to_prg_switched(greens_ptr, greens_bank)
         greens_compressed = rom.annotate(
             f"global hole {hole_idx} greens data ({greens_size} bytes)"
         ).read_prg(greens_prg, greens_size)
@@ -291,7 +269,7 @@ def main():
     global_greens_stats = DecompressionStats()
 
     # Dump all three courses
-    for course_idx in range(len(COURSES)):
+    for course_idx in range(len(rom_utils.COURSES)):
         terrain_stats, greens_stats = dump_course(rom, course_idx, output_dir)
 
         # Merge into global stats
@@ -301,8 +279,8 @@ def main():
     # Write global metadata
     global_meta = {
         "rom": rom_path,
-        "total_courses": len(COURSES),
-        "total_holes": TOTAL_HOLES,
+        "total_courses": len(rom_utils.COURSES),
+        "total_holes": rom_utils.TOTAL_HOLES,
         "statistics": {
             "terrain": global_terrain_stats.to_dict(),
             "greens": global_greens_stats.to_dict(),
