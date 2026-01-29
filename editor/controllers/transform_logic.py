@@ -5,7 +5,6 @@ Applies compression table transformations to tile values.
 """
 
 
-
 class TransformLogic:
     """Applies compression table transformations."""
 
