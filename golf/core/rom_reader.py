@@ -13,40 +13,6 @@ from .rom_utils import (
     cpu_to_prg_switched,
 )
 
-# Pointer tables (CPU addresses in fixed bank $C000-$FFFF)
-# These are relative to $C000, so we calculate PRG offset
-TABLE_COURSE_HOLE_OFFSET = 0xDBBB  # 3 bytes: 0, 18, 36
-TABLE_COURSE_BANK_TERRAIN = 0xDBBE  # 3 bytes: bank numbers
-TABLE_TERRAIN_START_PTR = 0xDBC1  # 54 x 2-byte pointers
-TABLE_TERRAIN_END_PTR = 0xDC2D  # 54 x 2-byte pointers (also attr start)
-TABLE_GREENS_PTR = 0xDC99  # 54 x 2-byte pointers
-TABLE_PAR = 0xDD05  # 54 bytes
-TABLE_HANDICAP = 0xDDDD  # 54 bytes
-TABLE_DISTANCE_100 = 0xDD3B  # 54 bytes (BCD)
-TABLE_DISTANCE_10 = 0xDD71  # 54 bytes (BCD)
-TABLE_DISTANCE_1 = 0xDDA7  # 54 bytes (BCD)
-TABLE_SCROLL_LIMIT = 0xDE13  # 54 bytes
-TABLE_GREEN_X = 0xDE49  # 54 bytes
-TABLE_GREEN_Y = 0xDE7F  # 54 bytes
-TABLE_TEE_X = 0xDEB5  # 54 bytes
-TABLE_TEE_Y = 0xDEEB  # 54 x 2-byte values
-TABLE_FLAG_Y_OFFSET = 0xE02F  # 54 x 4 bytes (4 positions per hole)
-TABLE_FLAG_X_OFFSET = 0xDF57  # 54 x 4 bytes
-
-# Decompression tables (also in fixed bank)
-TABLE_HORIZ_TRANSITION = 0xE1AC  # 224 bytes
-TABLE_VERT_CONTINUATION = 0xE28C  # 224 bytes
-TABLE_DICTIONARY = 0xE36C  # 64 bytes (32 x 2-byte pairs)
-
-# Course info (Japan first - original development order)
-COURSES = [
-    {"name": "japan", "display_name": "Japan"},
-    {"name": "us", "display_name": "US"},
-    {"name": "uk", "display_name": "UK"},
-]
-HOLES_PER_COURSE = 18
-TOTAL_HOLES = 54
-
 
 class RomReader:
     """

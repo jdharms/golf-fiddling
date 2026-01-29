@@ -14,10 +14,10 @@ import argparse
 import sys
 from pathlib import Path
 
+from golf.core import rom_utils
 from golf.core.course_validation import InvalidTileError
 from golf.core.packed_course_writer import PackedCourseWriter
 from golf.core.patches import PatchError
-from golf.core.rom_reader import HOLES_PER_COURSE
 from golf.core.rom_writer import BankOverflowError, RomWriter
 from golf.formats.hole_data import HoleData
 
@@ -38,7 +38,7 @@ def load_course_data(course_dir: Path) -> list[HoleData]:
     holes = []
     missing_files = []
 
-    for hole_num in range(1, HOLES_PER_COURSE + 1):
+    for hole_num in range(1, rom_utils.HOLES_PER_COURSE + 1):
         hole_file = course_dir / f"hole_{hole_num:02d}.json"
         if not hole_file.exists():
             missing_files.append(f"hole_{hole_num:02d}.json")
