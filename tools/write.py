@@ -14,6 +14,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from golf.core.course_validation import InvalidTileError
 from golf.core.packed_course_writer import PackedCourseWriter
 from golf.core.patches import PatchError
 from golf.core.rom_reader import HOLES_PER_COURSE
@@ -246,6 +247,9 @@ Examples:
         )
 
     except FileNotFoundError as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+    except InvalidTileError as e:
         print(f"Error: {e}")
         sys.exit(1)
     except BankOverflowError as e:
