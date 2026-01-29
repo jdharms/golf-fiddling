@@ -111,37 +111,6 @@ class RomReader:
         data = self.read_prg(prg_offset, 2)
         return data[0] | (data[1] << 8)
 
-    def cpu_to_prg_fixed(self, cpu_addr: int) -> int:
-        """
-        Convert CPU address in fixed bank ($C000-$FFFF) to PRG offset.
-
-        Args:
-            cpu_addr: CPU address in range $C000-$FFFF
-
-        Returns:
-            PRG ROM offset
-
-        Raises:
-            ValueError: If address is not in fixed bank range
-        """
-        return cpu_to_prg_fixed(cpu_addr)
-
-    def cpu_to_prg_switched(self, cpu_addr: int, bank: int) -> int:
-        """
-        Convert CPU address in switched bank ($8000-$BFFF) to PRG offset.
-
-        Args:
-            cpu_addr: CPU address in range $8000-$BFFF
-            bank: Bank number to use
-
-        Returns:
-            PRG ROM offset
-
-        Raises:
-            ValueError: If address is not in switchable bank range
-        """
-        return cpu_to_prg_switched(cpu_addr, bank)
-
     def read_fixed(self, cpu_addr: int, length: int = 1) -> bytes:
         """
         Read from fixed bank using CPU address.
@@ -153,7 +122,7 @@ class RomReader:
         Returns:
             Requested bytes
         """
-        return self.read_prg(self.cpu_to_prg_fixed(cpu_addr), length)
+        return self.read_prg(cpu_to_prg_fixed(cpu_addr), length)
 
     def read_fixed_byte(self, cpu_addr: int) -> int:
         """Read a single byte from fixed bank."""
@@ -184,7 +153,7 @@ class RomReader:
         Returns:
             Requested bytes
         """
-        return self.read_prg(self.cpu_to_prg_switched(cpu_addr, bank), length)
+        return self.read_prg(cpu_to_prg_switched(cpu_addr, bank), length)
 
     def annotate(self, description: str) -> "RomReader":
         """

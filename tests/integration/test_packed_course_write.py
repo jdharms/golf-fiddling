@@ -20,6 +20,7 @@ from golf.core.packed_course_writer import (
     BANK_TABLE_SIZE,
     PackedCourseWriter,
 )
+from golf.core.rom_utils import cpu_to_prg_switched
 from golf.core.patches import COURSE3_MIRROR_PATCH, MULTI_BANK_CODE_PATCH
 from golf.core.rom_reader import (
     HOLES_PER_COURSE,
@@ -126,7 +127,7 @@ def test_single_course_roundtrip(rom_path, japan_course_dir, tmp_path):
         # Get bank from table
         bank = bank_table[hole_idx * 2]
 
-        terrain_prg = new_rom.cpu_to_prg_switched(terrain_ptr, bank)
+        terrain_prg = cpu_to_prg_switched(terrain_ptr, bank)
         terrain_size = terrain_end - terrain_ptr
         terrain_compressed = new_rom.read_prg(terrain_prg, terrain_size)
 
@@ -142,7 +143,7 @@ def test_single_course_roundtrip(rom_path, japan_course_dir, tmp_path):
 
     # Verify greens for first hole
     greens_ptr = new_rom.read_fixed_word(TABLE_GREENS_PTR + 0)
-    greens_prg = new_rom.cpu_to_prg_switched(greens_ptr, 3)
+    greens_prg = cpu_to_prg_switched(greens_ptr, 3)
 
     # Read enough for greens (they're sequential, so use next pointer)
     next_ptr = new_rom.read_fixed_word(TABLE_GREENS_PTR + 2)
@@ -210,7 +211,7 @@ def test_two_course_roundtrip(rom_path, japan_course_dir, us_course_dir, tmp_pat
         terrain_end = new_rom.read_fixed_word(TABLE_TERRAIN_END_PTR + hole_idx * 2)
 
         bank = bank_table[hole_idx * 2]
-        terrain_prg = new_rom.cpu_to_prg_switched(terrain_ptr, bank)
+        terrain_prg = cpu_to_prg_switched(terrain_ptr, bank)
         terrain_size = terrain_end - terrain_ptr
         terrain_compressed = new_rom.read_prg(terrain_prg, terrain_size)
 

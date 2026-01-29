@@ -85,12 +85,12 @@ class RomWriter:
             cpu_addr: CPU address in range $C000-$FFFF
             data: Bytes to write
         """
-        prg_offset = self.cpu_to_prg_fixed(cpu_addr)
+        prg_offset = cpu_to_prg_fixed(cpu_addr)
         self.write_prg(prg_offset, data)
 
     def write_fixed_byte(self, cpu_addr: int, value: int):
         """Write a single byte to fixed bank."""
-        prg_offset = self.cpu_to_prg_fixed(cpu_addr)
+        prg_offset = cpu_to_prg_fixed(cpu_addr)
         self.rom_data[self.prg_start + prg_offset] = value
 
     def write_fixed_word(self, cpu_addr: int, value: int):
@@ -107,7 +107,7 @@ class RomWriter:
             bank: Bank number
             data: Bytes to write
         """
-        prg_offset = self.cpu_to_prg_switched(cpu_addr, bank)
+        prg_offset = cpu_to_prg_switched(cpu_addr, bank)
         self.write_prg(prg_offset, data)
 
     # =========================================================================
@@ -140,7 +140,7 @@ class RomWriter:
 
     def read_fixed_byte(self, cpu_addr: int) -> int:
         """Read a single byte from fixed bank."""
-        prg_offset = self.cpu_to_prg_fixed(cpu_addr)
+        prg_offset = cpu_to_prg_fixed(cpu_addr)
         return self.rom_data[self.prg_start + prg_offset]
 
     def read_fixed_word(self, cpu_addr: int) -> int:
@@ -148,47 +148,6 @@ class RomWriter:
         low = self.read_fixed_byte(cpu_addr)
         high = self.read_fixed_byte(cpu_addr + 1)
         return low | (high << 8)
-
-    # =========================================================================
-    # Address translation
-    # =========================================================================
-
-    def cpu_to_prg_fixed(self, cpu_addr: int) -> int:
-        """
-        Convert fixed bank CPU address ($C000-$FFFF) to PRG offset.
-
-        Args:
-            cpu_addr: CPU address in fixed bank
-
-        Returns:
-            Absolute PRG offset
-        """
-        return cpu_to_prg_fixed(cpu_addr)
-
-    def cpu_to_prg_switched(self, cpu_addr: int, bank: int) -> int:
-        """
-        Convert CPU address in switched bank to PRG offset.
-
-        Args:
-            cpu_addr: CPU address ($8000-$BFFF)
-            bank: Bank number
-
-        Returns:
-            Absolute PRG offset
-        """
-        return cpu_to_prg_switched(cpu_addr, bank)
-
-    def prg_to_cpu_switched(self, prg_offset: int) -> int:
-        """
-        Convert PRG offset to CPU address in switched bank ($8000-$BFFF).
-
-        Args:
-            prg_offset: Absolute PRG offset
-
-        Returns:
-            CPU address in switched bank range
-        """
-        return prg_to_cpu_switched(prg_offset)
 
     # =========================================================================
     # Annotation (no-op in base class, overridden in instrumented version)

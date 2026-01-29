@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 from golf.core.rom_reader import RomReader
+from golf.core.rom_utils import cpu_to_prg_fixed, cpu_to_prg_switched
 
 
 def compute_dict_expansions(dict_table, horiz_table):
@@ -87,13 +88,13 @@ def extract_terrain_tables(rom):
         Dict with terrain tables and metadata
     """
     # Read raw tables
-    horiz_prg = rom.cpu_to_prg_fixed(0xE1AC)
+    horiz_prg = cpu_to_prg_fixed(0xE1AC)
     horiz_table = list(rom.read_prg(horiz_prg, 224))
 
-    vert_prg = rom.cpu_to_prg_fixed(0xE28C)
+    vert_prg = cpu_to_prg_fixed(0xE28C)
     vert_table = list(rom.read_prg(vert_prg, 224))
 
-    dict_prg = rom.cpu_to_prg_fixed(0xE36C)
+    dict_prg = cpu_to_prg_fixed(0xE36C)
     dict_table = list(rom.read_prg(dict_prg, 64))
 
     # Compute dictionary expansions
@@ -133,13 +134,13 @@ def extract_greens_tables(rom, bank=3):
         Dict with greens tables and metadata
     """
     # Read raw tables
-    horiz_prg = rom.cpu_to_prg_switched(0x8000, bank)
+    horiz_prg = cpu_to_prg_switched(0x8000, bank)
     horiz_table = list(rom.read_prg(horiz_prg, 192))
 
-    vert_prg = rom.cpu_to_prg_switched(0x80C0, bank)
+    vert_prg = cpu_to_prg_switched(0x80C0, bank)
     vert_table = list(rom.read_prg(vert_prg, 192))
 
-    dict_prg = rom.cpu_to_prg_switched(0x8180, bank)
+    dict_prg = cpu_to_prg_switched(0x8180, bank)
     dict_table = list(rom.read_prg(dict_prg, 64))
 
     # Compute dictionary expansions

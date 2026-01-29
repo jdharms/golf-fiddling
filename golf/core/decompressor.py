@@ -14,6 +14,7 @@ from .rom_reader import (
     TABLE_VERT_CONTINUATION,
     RomReader,
 )
+from .rom_utils import cpu_to_prg_fixed, cpu_to_prg_switched
 
 
 class DecompressionStats:
@@ -243,13 +244,13 @@ class TerrainDecompressor:
 
         # Load decompression tables from fixed bank (only if rom is provided)
         if rom is not None:
-            prg = rom.cpu_to_prg_fixed(TABLE_HORIZ_TRANSITION)
+            prg = cpu_to_prg_fixed(TABLE_HORIZ_TRANSITION)
             self.horiz_table = list(rom.read_prg(prg, 224))
 
-            prg = rom.cpu_to_prg_fixed(TABLE_VERT_CONTINUATION)
+            prg = cpu_to_prg_fixed(TABLE_VERT_CONTINUATION)
             self.vert_table = list(rom.read_prg(prg, 224))
 
-            prg = rom.cpu_to_prg_fixed(TABLE_DICTIONARY)
+            prg = cpu_to_prg_fixed(TABLE_DICTIONARY)
             self.dict_table = list(rom.read_prg(prg, 64))
         else:
             # Initialize empty tables for testing (will be populated manually)
@@ -374,13 +375,13 @@ class GreensDecompressor:
 
         # Greens decompression tables are at $8000, $80C0, $8180 in the switched bank
         if rom is not None:
-            prg = rom.cpu_to_prg_switched(0x8000, bank)
+            prg = cpu_to_prg_switched(0x8000, bank)
             self.horiz_table = list(rom.read_prg(prg, 192))
 
-            prg = rom.cpu_to_prg_switched(0x80C0, bank)
+            prg = cpu_to_prg_switched(0x80C0, bank)
             self.vert_table = list(rom.read_prg(prg, 192))
 
-            prg = rom.cpu_to_prg_switched(0x8180, bank)
+            prg = cpu_to_prg_switched(0x8180, bank)
             self.dict_table = list(rom.read_prg(prg, 64))
         else:
             # Initialize empty tables for testing (will be populated manually)
