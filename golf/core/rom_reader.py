@@ -5,10 +5,13 @@ ROM file reading and address translation for NES Open Tournament Golf.
 Handles iNES ROM format and CPU address mapping for both fixed and switched banks.
 """
 
-# ROM layout constants
-INES_HEADER_SIZE = 0x10
-PRG_BANK_SIZE = 0x4000  # 16KB banks
-FIXED_BANK_PRG_START = 0x3C000  # Bank 15, maps to $C000-$FFFF
+from .rom_utils import (
+    FIXED_BANK_PRG_START,
+    INES_HEADER_SIZE,
+    PRG_BANK_SIZE,
+    cpu_to_prg_fixed,
+    cpu_to_prg_switched,
+)
 
 # Pointer tables (CPU addresses in fixed bank $C000-$FFFF)
 # These are relative to $C000, so we calculate PRG offset
@@ -121,9 +124,7 @@ class RomReader:
         Raises:
             ValueError: If address is not in fixed bank range
         """
-        if cpu_addr < 0xC000 or cpu_addr > 0xFFFF:
-            raise ValueError(f"Address ${cpu_addr:04X} not in fixed bank range")
-        return FIXED_BANK_PRG_START + (cpu_addr - 0xC000)
+        return cpu_to_prg_fixed(cpu_addr)
 
     def cpu_to_prg_switched(self, cpu_addr: int, bank: int) -> int:
         """
@@ -139,9 +140,7 @@ class RomReader:
         Raises:
             ValueError: If address is not in switchable bank range
         """
-        if cpu_addr < 0x8000 or cpu_addr > 0xBFFF:
-            raise ValueError(f"Address ${cpu_addr:04X} not in switchable bank range")
-        return (bank * PRG_BANK_SIZE) + (cpu_addr - 0x8000)
+        return cpu_to_prg_switched(cpu_addr, bank)
 
     def read_fixed(self, cpu_addr: int, length: int = 1) -> bytes:
         """

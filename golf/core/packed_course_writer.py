@@ -14,7 +14,6 @@ from .packing import int_to_bcd, pack_attributes
 from .patches import COURSE2_MIRROR_PATCH, COURSE3_MIRROR_PATCH, MULTI_BANK_CODE_PATCH, PatchError
 from .rom_reader import (
     HOLES_PER_COURSE,
-    PRG_BANK_SIZE,
     TABLE_DISTANCE_1,
     TABLE_DISTANCE_10,
     TABLE_DISTANCE_100,
@@ -31,6 +30,7 @@ from .rom_reader import (
     TABLE_TEE_X,
     TABLE_TEE_Y,
 )
+from .rom_utils import PRG_BANK_SIZE, cpu_to_prg_switched
 from .rom_writer import BankOverflowError, RomWriter
 from ..formats.hole_data import HoleData
 
@@ -401,8 +401,8 @@ class PackedCourseWriter:
         """Write terrain and attributes to assigned banks."""
         for hole, alloc in zip(compressed, allocations):
             bank = alloc.bank
-            terrain_prg = self._cpu_to_prg_switched(alloc.terrain_start, bank)
-            attr_prg = self._cpu_to_prg_switched(alloc.terrain_end, bank)
+            terrain_prg = cpu_to_prg_switched(alloc.terrain_start, bank)
+            attr_prg = cpu_to_prg_switched(alloc.terrain_end, bank)
 
             # Write terrain
             self.writer.annotate(
@@ -431,7 +431,7 @@ class PackedCourseWriter:
                 table[offset] = alloc.bank
 
         # Write to bank 3
-        table_prg = self._cpu_to_prg_switched(BANK_TABLE_CPU_ADDR, 3)
+        table_prg = cpu_to_prg_switched(BANK_TABLE_CPU_ADDR, 3)
         self.writer.annotate(
             f"per-hole bank table ({BANK_TABLE_SIZE} bytes)"
         ).write_prg(table_prg, bytes(table))
@@ -579,11 +579,6 @@ class PackedCourseWriter:
             self.writer.annotate(
                 f"hole {hole_idx} flag {i + 1} X offset"
             ).write_fixed_byte(TABLE_FLAG_X_OFFSET + hole_idx * 4 + i, x_offset)
-
-    def _cpu_to_prg_switched(self, cpu_addr: int, bank: int) -> int:
-        """Convert CPU address in switched bank to PRG offset."""
-        offset_in_bank = cpu_addr - 0x8000
-        return bank * PRG_BANK_SIZE + offset_in_bank
 
     def _calculate_stats(
         self,
