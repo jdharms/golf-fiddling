@@ -33,6 +33,7 @@ class TestConstants:
         assert jp_rom_utils.TABLE_COURSE_HOLE_OFFSET == 0xDC7D
         assert jp_rom_utils.TABLE_COURSE_BANK_TERRAIN == 0xDC82
         assert jp_rom_utils.TABLE_PAR == 0xDC87
+        assert jp_rom_utils.TABLE_HANDICAP == 0xDDEF
 
     def test_switched_bank_tables(self):
         assert jp_rom_utils.TABLE_TERRAIN_START_PTR == 0xB696
