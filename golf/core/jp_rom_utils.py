@@ -14,11 +14,11 @@ from .rom_utils import cpu_to_prg_switched  # noqa: F401 (re-exported for caller
 # Course Structure Constants
 # ============================================================================
 COURSES = [
-    {"name": "jp_course1", "display_name": "Japan Course 1"},
-    {"name": "jp_course2", "display_name": "Japan Course 2"},
-    {"name": "jp_course3", "display_name": "Japan Course 3"},
-    {"name": "jp_course4", "display_name": "Japan Course 4"},
-    {"name": "jp_course5", "display_name": "Japan Course 5"},
+    {"name": "jp_japan", "display_name": "Japan"},
+    {"name": "jp_australia", "display_name": "Australia"},
+    {"name": "jp_france", "display_name": "France"},
+    {"name": "jp_hawaii", "display_name": "Hawaii"},
+    {"name": "jp_uk", "display_name": "UK"},
     # Course index 5 (remix) is skipped - see Open Question 3 in docs/jp_extraction.md
 ]
 HOLES_PER_COURSE = 18
@@ -36,6 +36,7 @@ TABLE_PAR = 0xDC87  # 90 bytes
 TABLE_DISTANCE_100 = 0xDCE1  # 90 bytes (BCD)
 TABLE_DISTANCE_10 = 0xDD3B  # 90 bytes (BCD)
 TABLE_DISTANCE_1 = 0xDD95  # 90 bytes (BCD)
+TABLE_HANDICAP = 0xDDEF  # 90 bytes; verified as a 1-18 permutation per course
 
 # ============================================================================
 # Switched Bank $0B Tables ($8000-$BFFF)
