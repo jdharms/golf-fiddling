@@ -228,24 +228,33 @@ class DecompressionStats:
 class TerrainDecompressor:
     """Decompresses terrain data using the game's RLE + dictionary + vertical fill algorithm."""
 
-    def __init__(self, rom: RomReader):
+    def __init__(
+        self,
+        rom: RomReader,
+        horiz_addr: int = rom_utils.TABLE_HORIZ_TRANSITION,
+        vert_addr: int = rom_utils.TABLE_VERT_CONTINUATION,
+        dict_addr: int = rom_utils.TABLE_DICTIONARY,
+    ):
         """
         Initialize terrain decompressor with decompression tables from ROM.
 
         Args:
             rom: RomReader instance (can be None for testing with manually set tables)
+            horiz_addr: Fixed-bank CPU address of the horizontal transition table
+            vert_addr: Fixed-bank CPU address of the vertical continuation table
+            dict_addr: Fixed-bank CPU address of the dictionary table
         """
         self.rom = rom
 
         # Load decompression tables from fixed bank (only if rom is provided)
         if rom is not None:
-            prg = rom_utils.cpu_to_prg_fixed(rom_utils.TABLE_HORIZ_TRANSITION)
+            prg = rom_utils.cpu_to_prg_fixed(horiz_addr)
             self.horiz_table = list(rom.read_prg(prg, 224))
 
-            prg = rom_utils.cpu_to_prg_fixed(rom_utils.TABLE_VERT_CONTINUATION)
+            prg = rom_utils.cpu_to_prg_fixed(vert_addr)
             self.vert_table = list(rom.read_prg(prg, 224))
 
-            prg = rom_utils.cpu_to_prg_fixed(rom_utils.TABLE_DICTIONARY)
+            prg = rom_utils.cpu_to_prg_fixed(dict_addr)
             self.dict_table = list(rom.read_prg(prg, 64))
         else:
             # Initialize empty tables for testing (will be populated manually)
@@ -357,27 +366,42 @@ class TerrainDecompressor:
 class GreensDecompressor:
     """Decompresses greens data - similar algorithm but different tables in switched bank."""
 
-    def __init__(self, rom: RomReader, bank: int = 3):
+    def __init__(
+        self,
+        rom: RomReader,
+        bank: int = 3,
+        horiz_addr: int = 0x8000,
+        vert_addr: int = 0x80C0,
+        dict_addr: int = 0x8180,
+        tables_in_fixed_bank: bool = False,
+    ):
         """
         Initialize greens decompressor with decompression tables from ROM.
 
         Args:
             rom: RomReader instance (can be None for testing with manually set tables)
-            bank: Bank number containing greens decompression tables (default: 3)
+            bank: Bank number containing greens compressed data, and (when
+                tables_in_fixed_bank is False) the greens decompression tables
+            horiz_addr: CPU address of the horizontal transition table
+            vert_addr: CPU address of the vertical continuation table
+            dict_addr: CPU address of the dictionary table
+            tables_in_fixed_bank: JP stores its greens decompression tables in
+                the fixed bank ($C000-$FFFF) rather than a switched bank; set
+                True to read horiz_addr/vert_addr/dict_addr from there instead
         """
         self.rom = rom
         self.bank = bank
 
-        # Greens decompression tables are at $8000, $80C0, $8180 in the switched bank
         if rom is not None:
-            prg = rom_utils.cpu_to_prg_switched(0x8000, bank)
-            self.horiz_table = list(rom.read_prg(prg, 192))
+            to_prg = (
+                rom_utils.cpu_to_prg_fixed
+                if tables_in_fixed_bank
+                else lambda addr: rom_utils.cpu_to_prg_switched(addr, bank)
+            )
 
-            prg = rom_utils.cpu_to_prg_switched(0x80C0, bank)
-            self.vert_table = list(rom.read_prg(prg, 192))
-
-            prg = rom_utils.cpu_to_prg_switched(0x8180, bank)
-            self.dict_table = list(rom.read_prg(prg, 64))
+            self.horiz_table = list(rom.read_prg(to_prg(horiz_addr), 192))
+            self.vert_table = list(rom.read_prg(to_prg(vert_addr), 192))
+            self.dict_table = list(rom.read_prg(to_prg(dict_addr), 64))
         else:
             # Initialize empty tables for testing (will be populated manually)
             self.horiz_table = []
