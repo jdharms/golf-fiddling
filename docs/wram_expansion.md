@@ -78,6 +78,27 @@ This document plans the two patches needed to fix this:
   6F A1 6F B0 6F 64 70 0F 70 D3 6F`) confirm both the header write and the data write
   land inside this reclaimable region - the whole routine is in scope for the
   step-1/2 NOP work, not just the byte the first breakpoint hit landed on.
+- `$AD43` (bank `$02`) updates the driving-distance stats shared by `StrokePlayStats`
+  (X=0) and `StrokeTournamentStats` (X=`$2C`, the two 24-byte blocks with an identical
+  layout): the running distance total (+2..+5), drive count (+6), and longest-drive
+  record (+10/+11). Gated on not-two-player-mode, game mode 0-3, driver selected,
+  first stroke of the hole, and ball lie 0 or 6 - fires per-shot on a qualifying tee
+  shot, not just at round end (no `Par` check anywhere, despite it only having been
+  observed triggering on a par 5 so far). `$AD43` itself opens with an unconditional
+  `JSR $ADC7` unrelated to this gating, so the NOP patches at `$AD46` instead of the
+  routine's own entry point, preserving that call.
+- A whole-ROM scan for absolute/absolute-indexed `STA`/`INC`/`DEC` instructions
+  targeting any address in `$0F9C`-`$1185` turned up 23 hits beyond the two routines
+  above. 21 were scan artifacts (opcode-shaped byte sequences inside compressed
+  course data or other lookup tables, confirmed unreachable - no `JSR`/`JMP` anywhere
+  targets them). The remaining 2 (`$B061`/`$B06C`, bank `$09`) are real, uncalled-from-
+  anywhere-found code: two unconditional loops zeroing all six stats blocks in their
+  entirety (`$70D2`-`$7185`, 180 bytes), no gating at all - the shape of SRAM
+  initialization, not a per-play save. Not treated as a threat to the reclaimed
+  region (a zero-fill at init time can't corrupt an in-progress hole's terrain the
+  way a per-shot/per-round save could) and left unpatched; if this assumption ever
+  needs re-checking, a live breakpoint on PC `$B061` during new-game setup would
+  confirm when it actually fires.
 
 ## Known Free Space
 
@@ -179,20 +200,12 @@ are confirmed solid.
 - Every other reader of the terrain/greens buffers (rendering, scrolling, ball-lie
   physics) - a "find all references to `$1186`" sweep in a debugger/disassembler is the
   fastest way to get a complete list, rather than tracing call graphs by hand.
-- The stats-saving and replay-saving routines: locations and sizes, to plan the NOPs in
-  steps 1-2.
-- The stats-page read sites and the replay-presence check, for steps 3-4.
+- The stats-page read sites and the replay-presence check, for steps 3-4. Steps 1-2
+  (the save routines) are done - see `L8_9B43` and `$AD43` above, both patched in
+  `golf/core/patches/wram_expansion/`.
 
-## Infrastructure Needed First
-
-This effort will produce many small, individually-scoped patches (NOP a save routine,
-redirect a read, etc.) that only make sense applied together as one unit. We don't yet
-have a way to group multiple `ROMPatch` instances into one - `golf/core/patches/`
-currently only has `BytePatch` for single byte-range replacements, and existing
-multi-patch groups (`MULTI_BANK_PATCHES`, `ATTR_STREAMING_PATCHES`) are just plain
-lists that callers iterate manually. Before writing the patches above, add a composite
-patch class (e.g. `CompositePatch`) implementing the same `ROMPatch` interface
-(`can_apply`/`is_applied`/`apply`) over a list of sub-patches, so a whole group -
-stats NOPs, replay NOPs, buffer relocation, all of it - can be treated as a single
-named patch wherever `ROMPatch` is expected (`AVAILABLE_PATCHES`, `PackedCourseWriter`,
-etc.), the same way an individual `BytePatch` is today.
+Patches are grouped via `CompositePatch` (`golf/core/patches/composite.py`), which
+implements the same `ROMPatch` interface (`can_apply`/`is_applied`/`apply`) over a
+list of sub-patches - `WRAM_EXPANSION_PATCH` in
+`golf/core/patches/wram_expansion/__init__.py` is one, growing as each step of this
+plan lands.
