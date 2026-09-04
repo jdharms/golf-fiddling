@@ -12,6 +12,12 @@ disassembled and verified against a real ROM.
 """
 
 from ..composite import CompositePatch
+from .scroll_threshold_tables import (
+    SCROLL_THRESHOLD_HIGH_SBC_PATCH,
+    SCROLL_THRESHOLD_LOW_SBC_PATCH,
+    SCROLL_THRESHOLD_TABLE_PATCHES,
+    SCROLL_THRESHOLD_TABLES_FREE_SPACE_PATCH,
+)
 from .view_offset_tables import (
     VIEW_OFFSET_ADDR_HIGH_LDA_PATCH,
     VIEW_OFFSET_ADDR_LOW_LDA_PATCH,
@@ -28,6 +34,7 @@ WRAM_EXPANSION_PATCH = CompositePatch(
     ),
     patches=[
         *VIEW_OFFSET_TABLE_PATCHES,
+        *SCROLL_THRESHOLD_TABLE_PATCHES,
     ],
 )
 
@@ -38,4 +45,8 @@ __all__ = [
     "VIEW_OFFSET_ADDR_LOW_LDA_PATCH",
     "VIEW_OFFSET_ADDR_HIGH_LDA_PATCH",
     "VIEW_OFFSET_ATTR_INDEX_LDY_PATCH",
+    "SCROLL_THRESHOLD_TABLE_PATCHES",
+    "SCROLL_THRESHOLD_TABLES_FREE_SPACE_PATCH",
+    "SCROLL_THRESHOLD_LOW_SBC_PATCH",
+    "SCROLL_THRESHOLD_HIGH_SBC_PATCH",
 ]
