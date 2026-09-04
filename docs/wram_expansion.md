@@ -41,6 +41,45 @@ This document plans the two patches needed to fix this:
   repo - needed before we know how much headroom we actually have (264 bytes is the
   minimum; more would be worth having as margin for anything taller than 60 rows later).
 
+## Known Free Space
+
+Unused (`$FF`-filled) regions found in the fixed bank, useful for relocating
+tables or code that need more room than their current spot allows. Recorded
+here as they're found so remaining capacity stays visible at a glance.
+
+### PRG `$3CA40`-`$3CAFF` (CPU `$CA40`-`$CAFF`, 192 bytes)
+
+All `$FF` in vanilla ROM. Preceded by `$55`-filled bytes (possibly audio
+data, unconfirmed); followed immediately at `$CB00` by a half-square-wave
+table.
+
+- **Carved off - `$CA40`-`$CA72` (51 bytes):** relocated
+  `ViewOffsetToAddrLow` / `ViewOffsetToAddrHigh` / `ViewOffsetToAttrIndex`
+  tables (read by the vertical-scroll windowing routine at `LE451`,
+  CPU `$E451`), expanded from the vanilla 10 entries to 17 to support
+  scrolling through 60-row terrain.
+  - `ViewOffsetToAddrLow`: `$CA40`-`$CA50`
+  - `ViewOffsetToAddrHigh`: `$CA51`-`$CA61`
+  - `ViewOffsetToAttrIndex`: `$CA62`-`$CA72`
+- **Remaining - `$CA73`-`$CAFF` (141 bytes):** unused.
+
+### PRG `$3E4F9`-`$3E516` (CPU `$E4F9`-`$E516`, 30 bytes) - vacated, not yet reclaimed
+
+Former location of the vanilla `ViewOffsetToAddrLow`/`ViewOffsetToAddrHigh`/
+`ViewOffsetToAttrIndex` tables, relocated to `$CA40` above (see
+`wram_expansion_view_offset_*` patches in
+`golf/core/patches/wram_expansion/view_offset_tables.py`). Confirmed via
+breakpoint testing (full playthrough of a long hole, including deliberate
+camera panning) that nothing reads this region once those patches are
+applied - every known caller has been redirected to `$CA40`.
+
+Unlike the region above, this one still holds its original (now-dead) table
+bytes rather than `$FF` filler - the relocation patch never overwrote the
+old location, only the code that pointed at it. Available for reuse by a
+future patch if needed; would need a `BytePatch` (or extending
+`view_offset_tables.py`) whose `original` matches whatever the old table
+bytes still are at that point in the patch chain.
+
 ## High-Level Plan
 
 Reclaiming the stats/replay region has to happen in a way that's provably safe before

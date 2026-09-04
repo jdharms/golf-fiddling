@@ -1,0 +1,41 @@
+"""
+WRAM expansion composite patch.
+
+Groups the patches needed to reclaim the WRAM region immediately before the
+vanilla terrain buffer and relocate terrain/greens decompression into the
+enlarged space, so holes taller than 48 rows stop overflowing into the
+greens buffer. See docs/wram_expansion.md for the full plan.
+
+Sub-patches live in dedicated modules under this package and are added to
+WRAM_EXPANSION_PATCH incrementally as each step of the plan is
+disassembled and verified against a real ROM.
+"""
+
+from ..composite import CompositePatch
+from .view_offset_tables import (
+    VIEW_OFFSET_ADDR_HIGH_LDA_PATCH,
+    VIEW_OFFSET_ADDR_LOW_LDA_PATCH,
+    VIEW_OFFSET_ATTR_INDEX_LDY_PATCH,
+    VIEW_OFFSET_TABLE_PATCHES,
+    VIEW_OFFSET_TABLES_FREE_SPACE_PATCH,
+)
+
+WRAM_EXPANSION_PATCH = CompositePatch(
+    name="wram_expansion",
+    description=(
+        "Reclaim WRAM before the terrain buffer and relocate terrain/greens "
+        "decompression to support holes taller than 48 rows"
+    ),
+    patches=[
+        *VIEW_OFFSET_TABLE_PATCHES,
+    ],
+)
+
+__all__ = [
+    "WRAM_EXPANSION_PATCH",
+    "VIEW_OFFSET_TABLE_PATCHES",
+    "VIEW_OFFSET_TABLES_FREE_SPACE_PATCH",
+    "VIEW_OFFSET_ADDR_LOW_LDA_PATCH",
+    "VIEW_OFFSET_ADDR_HIGH_LDA_PATCH",
+    "VIEW_OFFSET_ATTR_INDEX_LDY_PATCH",
+]
