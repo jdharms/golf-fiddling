@@ -61,7 +61,15 @@ table.
   - `ViewOffsetToAddrLow`: `$CA40`-`$CA50`
   - `ViewOffsetToAddrHigh`: `$CA51`-`$CA61`
   - `ViewOffsetToAttrIndex`: `$CA62`-`$CA72`
-- **Remaining - `$CA73`-`$CAFF` (141 bytes):** unused.
+- **Carved off - `$CA73`-`$CA92` (32 bytes):** relocated
+  `ScrollThresholdLow` / `ScrollThresholdHigh` tables (read by the routine
+  at CPU `$8F73`, bank `$0D`, which scans `BallY` against these thresholds
+  to compute `ViewVerticalOffset`), expanded from the vanilla 9 entries to
+  16 to support scrolling through 60-row terrain. Confirmed via debugger
+  sweep that CPU `$8F81` and `$8F86` are the only two readers.
+  - `ScrollThresholdLow`: `$CA73`-`$CA82`
+  - `ScrollThresholdHigh`: `$CA83`-`$CA92`
+- **Remaining - `$CA93`-`$CAFF` (109 bytes):** unused.
 
 ### PRG `$3E4F9`-`$3E516` (CPU `$E4F9`-`$E516`, 30 bytes) - vacated, not yet reclaimed
 
@@ -79,6 +87,21 @@ old location, only the code that pointed at it. Available for reuse by a
 future patch if needed; would need a `BytePatch` (or extending
 `view_offset_tables.py`) whose `original` matches whatever the old table
 bytes still are at that point in the patch chain.
+
+### PRG `$34F91`-`$34FA2` (CPU `$8F91`-`$8FA2`, bank `$0D`, 18 bytes) - vacated, not yet reclaimed
+
+Former location of the vanilla `ScrollThresholdLow`/`ScrollThresholdHigh`
+tables, relocated to `$CA73` above (see `wram_expansion_scroll_threshold_*`
+patches in `golf/core/patches/wram_expansion/scroll_threshold_tables.py`).
+Confirmed via debugger sweep that CPU `$8F81` and `$8F86` were the only
+readers, both now redirected to `$CA73`.
+
+Unlike the two fixed-bank regions above, this one is in **switchable** bank
+`$0D` ($8000-$BFFF), not the always-mapped fixed bank - so it's only usable
+by code that executes while bank `$0D` is paged in (which is guaranteed for
+the routine at CPU `$8F73`, since that's the bank it lives in, but would need
+checking for any other prospective user). Like the `$E4F9` region, it still
+holds its original (now-dead) table bytes rather than `$FF` filler.
 
 ## High-Level Plan
 
