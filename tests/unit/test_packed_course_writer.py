@@ -13,8 +13,14 @@ from golf.core.packed_course_writer import (
     PackedCourseWriter,
     PackedWriteStats,
     ValidationResult,
+    _packed_attr_byte_count,
 )
-from golf.core.patches import COURSE3_MIRROR_PATCH, MULTI_BANK_CODE_PATCH
+from golf.core.patches import (
+    ATTR_STREAMING_PATCHES,
+    COURSE3_MIRROR_PATCH,
+    MULTI_BANK_CODE_PATCH,
+    MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING,
+)
 from golf.core.rom_writer import BankOverflowError
 
 
@@ -45,6 +51,13 @@ class MockRomWriter:
         self.data[course3_offset:course3_offset + len(COURSE3_MIRROR_PATCH.original)] = (
             COURSE3_MIRROR_PATCH.original
         )
+
+        # Write original bytes for every attr_streaming patch location too,
+        # so tests can exercise the attr-streaming trigger path
+        for patch in ATTR_STREAMING_PATCHES:
+            self.data[patch.prg_offset:patch.prg_offset + len(patch.original)] = (
+                patch.original
+            )
 
     def read_prg(self, prg_offset: int, length: int) -> bytes:
         return bytes(self.data[prg_offset:prg_offset + length])
@@ -383,7 +396,7 @@ class TestPatchApplication:
         assert COURSE3_MIRROR_PATCH.can_apply(rom_writer)
 
         # Call ensure_patches (2 courses - applies MULTI_BANK and COURSE3_MIRROR)
-        writer._ensure_patches_applied(num_courses=2)
+        writer._ensure_patches_applied(num_courses=2, holes=[])
 
         # Verify patches are now applied
         assert MULTI_BANK_CODE_PATCH.is_applied(rom_writer)
@@ -400,11 +413,40 @@ class TestPatchApplication:
         writer = PackedCourseWriter(rom_writer, apply_patches=True)
 
         # Should not raise even though patches are already applied
-        writer._ensure_patches_applied(num_courses=2)
+        writer._ensure_patches_applied(num_courses=2, holes=[])
 
         # Patches should still be applied
         assert MULTI_BANK_CODE_PATCH.is_applied(rom_writer)
         assert COURSE3_MIRROR_PATCH.is_applied(rom_writer)
+
+    def test_plain_multi_bank_when_no_tall_attributes(self):
+        """The attr-streaming variant/patches are not applied for ordinary holes."""
+        rom_writer = MockRomWriter()
+        writer = PackedCourseWriter(rom_writer, apply_patches=True)
+
+        holes = [MockHoleData(terrain_height=32)]
+        writer._ensure_patches_applied(num_courses=2, holes=holes)
+
+        assert MULTI_BANK_CODE_PATCH.is_applied(rom_writer)
+        assert not MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING.is_applied(rom_writer)
+        for patch in ATTR_STREAMING_PATCHES:
+            assert not patch.is_applied(rom_writer)
+
+    def test_attr_streaming_applied_when_hole_exceeds_72_bytes(self):
+        """A hole with >24 attribute rows triggers the attr-streaming patch set."""
+        rom_writer = MockRomWriter()
+        writer = PackedCourseWriter(rom_writer, apply_patches=True)
+
+        # 30 attribute rows -> 90 packed bytes, like a tall JP-derived hole
+        tall_hole = MockHoleData(terrain_height=60)
+        assert len(tall_hole.attributes) == 30
+
+        writer._ensure_patches_applied(num_courses=2, holes=[tall_hole])
+
+        assert MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING.is_applied(rom_writer)
+        assert not MULTI_BANK_CODE_PATCH.can_apply(rom_writer)
+        for patch in ATTR_STREAMING_PATCHES:
+            assert patch.is_applied(rom_writer)
 
 
 class TestCompression:
@@ -422,7 +464,11 @@ class TestCompression:
         for i, comp in enumerate(compressed):
             assert comp.hole_index == i
             assert len(comp.terrain) > 0
-            assert len(comp.attributes) == 72  # Packed attributes
+            # Packed attributes: exact size for the hole's real height, not
+            # padded to the vanilla 72-byte buffer size
+            assert len(comp.attributes) == _packed_attr_byte_count(
+                len(holes[i].attributes)
+            )
             assert len(comp.greens) > 0
 
     def test_respects_terrain_height(self):

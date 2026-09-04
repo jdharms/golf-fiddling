@@ -375,43 +375,53 @@ Before running full extraction:
 
 ## File Structure
 
-Suggested organization:
-
 ```
 golf/
 ├── core/
-│   ├── rom_utils.py          # US ROM constants (existing)
-│   ├── jp_rom_utils.py       # JP ROM constants + metadata read helpers (new)
-│   ├── rom_reader.py         # Generic reader, already supports switched-bank reads (existing, no changes)
-│   └── decompressor.py       # Needs parameterized table addresses + fixed/switched mode for greens (Task 3)
-├── scripts/
-│   ├── dump_courses.py       # US dumper (existing)
-│   └── dump_jp_courses.py    # JP dumper (new)
+│   ├── rom_utils.py           # US ROM constants
+│   ├── jp_rom_utils.py        # JP ROM constants + metadata read helpers
+│   ├── rom_reader.py          # Generic reader, unchanged - already bank-parameterized
+│   ├── decompressor.py        # TerrainDecompressor/GreensDecompressor take table addresses
+│   │                          # as constructor args; GreensDecompressor has a
+│   │                          # tables_in_fixed_bank mode for JP's fixed-bank greens tables
+│   ├── packing.py             # pack_attributes returns the real byte count for the
+│   │                          # given attribute row count, no fixed-size padding
+│   └── patches/
+│       ├── multi_bank.py      # MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING: use this
+│       │                      # instead of MULTI_BANK_CODE_PATCH when attr_streaming
+│       │                      # is also applied - both touch $DB68-$DB70
+│       └── attr_streaming.py  # Streams attributes from ROM instead of a fixed
+│                               # 72-byte RAM buffer copy
+tools/
+├── dump.py                    # US dumper
+└── dump_jp_courses.py         # JP dumper (golf-dump-jp)
 ```
 
 ## Open Questions
 
-1. **Handicap data**: Does JP version use handicap? If so, where is the table?
-   - Could search for sequential bytes 1-18 or similar pattern
-   - May not be needed for course extraction
+1. **Handicap data**: Resolved. `TABLE_HANDICAP = 0xDDEF` in the fixed bank, 90 bytes,
+   immediately following `TABLE_DISTANCE_1` in the same layout order as the US table.
+   Verified against the real JP ROM: each course's 18 values form a clean 1-18
+   permutation. Added to `jp_rom_utils.py`.
 
-2. **Attrs streaming patch — 90-byte verification**: `attrs_patch.py` has been generated,
-   applied to a ROM (`attrs_patch.nes`), and tested in-game against existing 72-byte US
-   holes with no regressions. Testing with actual 90-byte attribute data is blocked on
-   having a real 90-byte hole to inject, which requires the JP dumper (Task 4) and
-   attribute pipeline changes (Task 5) to exist first.
+2. **Attrs streaming patch**: Done, and no longer blocked on missing plumbing.
+   Converted to the declarative patch framework as `golf/core/patches/attr_streaming.py`,
+   plus `MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING` in `multi_bank.py` (both patches
+   touch the same bytes at `$DB68`-`$DB70`, so a merged variant replaces using both
+   independently). Verified byte-identical to the hand-tested `attrs_patch.nes` when
+   applied without multi-bank. `pack_attributes` no longer pads/truncates to 72 bytes -
+   it returns the real byte count for the hole's actual attribute row count.
+   `PackedCourseWriter` auto-detects when any hole needs more than 72 bytes and applies
+   the streaming patch set instead of the plain multi-bank patch.
 
-3. **Course 5 (remix)**: Low priority, but the remap table at $6DE7 (in cart RAM space) is interesting
-   - May be populated at runtime from another location
-   - Could search PRG for the initialization data
+   A **new** blocker turned up while testing an actual 60-row JP hole end-to-end: the
+   vanilla terrain decompression buffer in WRAM is only sized for 48 rows (1,056 bytes
+   = 22 x 48), with the greens buffer packed immediately after it. 6 of the 90 JP holes
+   exceed 48 rows (max 60). The written ROM's compressed data is correct - verified
+   byte-for-byte by decompressing it back out of the written ROM - but decompressing it
+   at runtime overflows that buffer, corrupting both the terrain past row 48 and the
+   adjacent greens buffer. See `docs/wram_expansion.md` for the follow-up plan.
 
-## Quick Start
-
-For Claude Code to begin implementation:
-
-1. Create `golf/core/jp_rom_utils.py` with constants and metadata read helpers from this document (existing `RomReader`/`rom_utils` need no changes for this)
-2. Parameterize `decompressor.py` table addresses; add fixed-vs-switched table source mode to `GreensDecompressor`
-3. Copy `dump.py` to `dump_jp_courses.py` and modify for JP tables (fixed/switched split, terrain-bank greens, 90-byte attrs)
-4. Test on JP ROM, verify output matches investigation script results
-5. Make `ATTR_TOTAL_BYTES`/`pack_attributes` height-driven instead of hardcoded to 72
-6. Apply `attrs_patch.py`'s attribute-streaming patch to a US ROM and verify a real 90-byte JP-derived hole renders correctly in an emulator
+3. **Course 5 (remix)**: Still open, low priority. The remap table at $6DE7 (in cart RAM
+   space) is interesting - may be populated at runtime from another location. Could
+   search PRG for the initialization data.

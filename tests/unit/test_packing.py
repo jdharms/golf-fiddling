@@ -73,13 +73,19 @@ class TestPackAttributes:
 
         assert unpacked == original
 
-    def test_returns_72_bytes(self):
-        """Test that pack_attributes always returns exactly 72 bytes."""
-        original = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
+    def test_returns_exact_length_no_padding(self):
+        """pack_attributes returns exactly the bytes needed, never padded."""
+        # 1 row -> 1 megatile row -> 6 bytes (not padded to 72)
+        assert len(pack_attributes([[1] * 11])) == 6
 
-        packed = pack_attributes(original)
+        # 2 rows -> 1 megatile row -> 6 bytes
+        assert len(pack_attributes([[1] * 11, [2] * 11])) == 6
 
-        assert len(packed) == 72
+        # 3 rows -> 2 megatile rows (last one duplicated) -> 12 bytes
+        assert len(pack_attributes([[1] * 11, [2] * 11, [3] * 11])) == 12
+
+        # 30 rows (JP-sized hole) -> 15 megatile rows -> 90 bytes
+        assert len(pack_attributes([[1] * 11] * 30)) == 90
 
     def test_hud_column_is_zero(self):
         """Test that HUD column (first column) is always palette 0."""

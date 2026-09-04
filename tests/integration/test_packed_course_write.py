@@ -372,8 +372,10 @@ def test_stats_bank_usage_reasonable(rom_path, japan_course_dir, us_course_dir, 
     stats = packed_writer.write_courses([japan_holes, us_holes], verbose=False)
     rom_writer.save()
 
-    # Check that total terrain bytes matches sum of per-hole
-    expected_total = sum(stats.terrain_bytes_per_hole) + len(stats.terrain_bytes_per_hole) * 72
+    # Check that total terrain bytes matches sum of per-hole terrain +
+    # attributes (attributes are packed to their real per-hole size, not
+    # padded to a fixed constant)
+    expected_total = sum(stats.terrain_bytes_per_hole) + sum(stats.attribute_bytes_per_hole)
     assert stats.total_terrain_bytes == expected_total
 
     # Check bank usage doesn't exceed capacity
