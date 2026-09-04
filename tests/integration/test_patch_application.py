@@ -6,10 +6,13 @@ from pathlib import Path
 import pytest
 
 from golf.core.patches import (
+    ATTR_STREAMING_BANK_SWITCH_PATCH,
+    ATTR_STREAMING_PATCHES,
     AVAILABLE_PATCHES,
     COURSE2_MIRROR_PATCH,
     COURSE3_MIRROR_PATCH,
     MULTI_BANK_CODE_PATCH,
+    MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING,
     PatchError,
 )
 from golf.core.rom_writer import RomWriter
@@ -47,6 +50,124 @@ def create_test_rom_with_original_bytes() -> bytearray:
     prg_rom[0x3DBBD : 0x3DBBD + 1] = COURSE3_MIRROR_PATCH.original
 
     return header + prg_rom
+
+
+def create_test_rom_with_attr_streaming_bytes() -> bytearray:
+    """
+    Create a minimal test ROM with original bytes at every attr_streaming
+    patch location, plus the merged multi-bank/attr-streaming variant's
+    location (shares MULTI_BANK_CODE_PATCH's original bytes).
+    """
+    header = bytearray(16)
+    header[0:4] = b"NES\x1a"
+    header[4] = 16
+    header[5] = 0
+
+    prg_size = 16 * 16384
+    prg_rom = bytearray(prg_size)
+
+    prg_rom[0x3DB68 : 0x3DB68 + 9] = MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING.original
+    prg_rom[0x3DBBD : 0x3DBBD + 1] = COURSE3_MIRROR_PATCH.original
+
+    for patch in ATTR_STREAMING_PATCHES:
+        prg_rom[patch.prg_offset : patch.prg_offset + len(patch.original)] = (
+            patch.original
+        )
+
+    return header + prg_rom
+
+
+class TestAttrStreamingPatchApplication:
+    """Integration tests for the attr-streaming patch set and its
+    merged multi-bank variant."""
+
+    @pytest.fixture
+    def test_rom_path(self, tmp_path):
+        rom_data = create_test_rom_with_attr_streaming_bytes()
+        rom_path = tmp_path / "test_rom.nes"
+        rom_path.write_bytes(rom_data)
+        return rom_path
+
+    def test_each_attr_streaming_patch_applies(self, test_rom_path, tmp_path):
+        """Every individual attr_streaming patch applies correctly."""
+        output_path = tmp_path / "patched.nes"
+        rom_writer = RomWriter(str(test_rom_path), str(output_path))
+
+        for patch in ATTR_STREAMING_PATCHES:
+            assert patch.can_apply(rom_writer), f"{patch.name} cannot apply"
+            patch.apply(rom_writer)
+            assert patch.is_applied(rom_writer), f"{patch.name} did not apply"
+
+    def test_merged_multi_bank_variant_applies(self, test_rom_path, tmp_path):
+        """MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING applies correctly."""
+        output_path = tmp_path / "patched.nes"
+        rom_writer = RomWriter(str(test_rom_path), str(output_path))
+
+        assert MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING.can_apply(rom_writer)
+        MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING.apply(rom_writer)
+        assert MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING.is_applied(rom_writer)
+
+        # Confirms the JSR at $DB6D now targets SaveBankAndSwitch ($E1BE)
+        patched_bytes = rom_writer.read_prg(0x3DB68, 9)
+        assert patched_bytes == bytes([0xA6, 0x31, 0xBD, 0x00, 0xA7, 0x20, 0xBE, 0xE1, 0xEA])
+
+    def test_full_bundle_applies_together_without_conflict(
+        self, test_rom_path, tmp_path
+    ):
+        """The merged bank-switch patch plus every attr_streaming patch can
+        all be applied to the same ROM - this is what PackedCourseWriter
+        does when a hole needs >72 attribute bytes."""
+        output_path = tmp_path / "patched.nes"
+        rom_writer = RomWriter(str(test_rom_path), str(output_path))
+
+        MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING.apply(rom_writer)
+        for patch in ATTR_STREAMING_PATCHES:
+            patch.apply(rom_writer)
+
+        assert MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING.is_applied(rom_writer)
+        for patch in ATTR_STREAMING_PATCHES:
+            assert patch.is_applied(rom_writer)
+
+    def test_standalone_bank_switch_patch_applies_without_multi_bank(
+        self, test_rom_path, tmp_path
+    ):
+        """attr_streaming_bank_switch applies on its own (no multi-bank),
+        matching the combination scratch/attrs_patch.py was hand-verified
+        against in-game before this patch set existed."""
+        output_path = tmp_path / "patched.nes"
+        rom_writer = RomWriter(str(test_rom_path), str(output_path))
+
+        for patch in ATTR_STREAMING_PATCHES:
+            patch.apply(rom_writer)
+        assert ATTR_STREAMING_BANK_SWITCH_PATCH.can_apply(rom_writer)
+        ATTR_STREAMING_BANK_SWITCH_PATCH.apply(rom_writer)
+
+        assert ATTR_STREAMING_BANK_SWITCH_PATCH.is_applied(rom_writer)
+        # Same region as the merged multi-bank variant, now patched
+        # differently - the two must never both apply.
+        assert not MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING.can_apply(rom_writer)
+        assert not MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING.is_applied(rom_writer)
+
+    def test_plain_multi_bank_and_attr_streaming_conflict(
+        self, test_rom_path, tmp_path
+    ):
+        """Regression guard: plain MULTI_BANK_CODE_PATCH and the attr
+        streaming LoadTerrainAndAttrs patch both touch $DB6E-$DB70 with
+        incompatible instruction boundaries. Applying plain multi-bank
+        first must NOT silently corrupt the ROM - the attr streaming
+        patch's bank-switch expectations should simply not match."""
+        output_path = tmp_path / "patched.nes"
+        rom_writer = RomWriter(str(test_rom_path), str(output_path))
+
+        MULTI_BANK_CODE_PATCH.apply(rom_writer)
+
+        # The merged variant (which shares MULTI_BANK_CODE_PATCH's original
+        # bytes) can no longer apply - the ROM is in neither its expected
+        # original nor patched state.
+        assert not MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING.can_apply(rom_writer)
+        assert not MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING.is_applied(rom_writer)
+        with pytest.raises(PatchError):
+            MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING.apply(rom_writer)
 
 
 class TestMultiBankPatchApplication:

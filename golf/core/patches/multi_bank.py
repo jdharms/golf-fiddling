@@ -9,10 +9,11 @@ See docs/multi_bank_terrain.md for full details.
 
 from .byte_patch import BytePatch
 
-# Code patch to change terrain bank lookup from course-based to hole-based
-#
 # Original code at $DB68 looks up bank by course number (3 entries):
 #   LDX CourseNumber; LDA BankNumTerrainDataTable,X; JSR BankSwitchRoutine
+_MULTI_BANK_ORIGINAL = bytes([0xAE, 0x02, 0x01, 0xBD, 0xBE, 0xDB, 0x20, 0x52, 0xD3])
+
+# Code patch to change terrain bank lookup from course-based to hole-based
 #
 # Patched code uses doubled hole index ($31) to look up per-hole table at $A700:
 #   LDX $31; LDA $A700,X; JSR BankSwitchRoutine; NOP
@@ -22,8 +23,35 @@ MULTI_BANK_CODE_PATCH = BytePatch(
     name="multi_bank_lookup",
     description="Change terrain bank lookup from course-based to hole-based",
     prg_offset=0x3DB68,  # CPU $DB68 in fixed bank (bank 15)
-    original=bytes([0xAE, 0x02, 0x01, 0xBD, 0xBE, 0xDB, 0x20, 0x52, 0xD3]),
+    original=_MULTI_BANK_ORIGINAL,
     patched=bytes([0xA6, 0x31, 0xBD, 0x00, 0xA7, 0x20, 0x52, 0xD3, 0xEA]),
+)
+
+# Same hole-based bank lookup as MULTI_BANK_CODE_PATCH, but for use together
+# with the attr_streaming patch set (see patches/attr_streaming.py).
+#
+# MULTI_BANK_CODE_PATCH's replacement shrinks the LDX+LDA sequence from 6
+# bytes to 5, which shifts the JSR BankSwitchRoutine call one byte earlier
+# (from $DB6E to $DB6D) - right through the middle of the JSR that
+# attr_streaming's LoadTerrainAndAttrs patch expects to find, byte-for-byte,
+# at $DB6E. Applying both patches to the same ROM is a genuine conflict:
+# whichever applies second won't find its expected original bytes.
+#
+# Since a JSR is 3 bytes regardless of target, the fix is to redirect that
+# already-shifted JSR to attr_streaming's SaveBankAndSwitch trampoline
+# ($E1BE) instead of BankSwitchRoutine ($D352) directly - same bank-switch
+# behavior, plus the AttrDataBank bookkeeping attr_streaming needs. This
+# patch IS that redirect; use it in place of MULTI_BANK_CODE_PATCH whenever
+# attr_streaming is also applied, never both at once.
+MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING = BytePatch(
+    name="multi_bank_lookup_attr_streaming",
+    description=(
+        "Change terrain bank lookup from course-based to hole-based, "
+        "redirected through SaveBankAndSwitch for attr streaming"
+    ),
+    prg_offset=0x3DB68,  # CPU $DB68 in fixed bank (bank 15)
+    original=_MULTI_BANK_ORIGINAL,
+    patched=bytes([0xA6, 0x31, 0xBD, 0x00, 0xA7, 0x20, 0xBE, 0xE1, 0xEA]),
 )
 
 # Course 2 mirror patch - makes US (course 2) mirror Japan (course 1)

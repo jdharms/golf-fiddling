@@ -8,6 +8,11 @@ Non-editor:
 * Does SuperShot! do anything?
 * Do bunker lips do anything?
 
+Randomizer:
+* Hole equivalence classes
+* Mirrored holes?
+* Randomize bunkers/water?
+
 Todos:
 * Invalid neighbor indicator should be a single border per pairing
   * Invalid neighbor indicator should probably just go away as a feature?

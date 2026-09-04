@@ -12,7 +12,15 @@ from .compressor import GreensCompressor, TerrainCompressor
 from .course_validation import CourseValidator
 from .decompressor import GreensDecompressor
 from .packing import int_to_bcd, pack_attributes
-from .patches import COURSE2_MIRROR_PATCH, COURSE3_MIRROR_PATCH, MULTI_BANK_CODE_PATCH, PatchError
+from .palettes import ATTR_TOTAL_BYTES
+from .patches import (
+    ATTR_STREAMING_PATCHES,
+    COURSE2_MIRROR_PATCH,
+    COURSE3_MIRROR_PATCH,
+    MULTI_BANK_CODE_PATCH,
+    MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING,
+    PatchError,
+)
 from .rom_writer import BankOverflowError, RomWriter
 from ..formats.hole_data import HoleData
 
@@ -34,6 +42,19 @@ GREENS_TABLES_SIZE = 0x1C0  # 448 bytes for decompression tables ($8000-$81BF)
 GREENS_DATA_START = 0x81C0  # First byte after tables
 GREENS_DATA_END = BANK_TABLE_CPU_ADDR  # Stop before bank table
 GREENS_CODE_START = 0xA774  # Executable code starts here (must not overwrite)
+
+
+def _packed_attr_byte_count(num_attr_rows: int) -> int:
+    """Bytes pack_attributes() produces for a given attribute row count."""
+    return ((num_attr_rows + 1) // 2) * 6
+
+
+def _needs_attr_streaming(holes: list[HoleData]) -> bool:
+    """True if any hole's attributes would overflow the vanilla 72-byte buffer."""
+    return any(
+        _packed_attr_byte_count(len(hole_data.attributes)) > ATTR_TOTAL_BYTES
+        for hole_data in holes
+    )
 
 
 @dataclass
@@ -61,6 +82,7 @@ class PackedWriteStats:
     bank_capacity: dict = field(default_factory=dict)  # bank -> total capacity
     bank_assignments: list = field(default_factory=list)  # hole -> bank
     terrain_bytes_per_hole: list = field(default_factory=list)
+    attribute_bytes_per_hole: list = field(default_factory=list)
     greens_bytes_per_hole: list = field(default_factory=list)
     total_terrain_bytes: int = 0
     total_greens_bytes: int = 0
@@ -132,13 +154,13 @@ class PackedCourseWriter:
                     f"Course {i+1} has {len(course)} holes, expected {rom_utils.HOLES_PER_COURSE}"
                 )
 
-        # Ensure patches are applied
-        self._ensure_patches_applied(len(courses))
-
         # Flatten holes into single list
         all_holes: list[HoleData] = []
         for course in courses:
             all_holes.extend(course)
+
+        # Ensure patches are applied
+        self._ensure_patches_applied(len(courses), all_holes)
 
         num_holes = len(all_holes)
         if verbose:
@@ -250,14 +272,26 @@ class PackedCourseWriter:
         except Exception as e:
             return ValidationResult(valid=False, message=f"Validation error: {e}")
 
-    def _ensure_patches_applied(self, num_courses: int) -> None:
+    def _ensure_patches_applied(
+        self, num_courses: int, holes: list[HoleData]
+    ) -> None:
         """Ensure required ROM patches are applied.
 
         Args:
             num_courses: Number of courses being written (1 or 2)
+            holes: Flattened list of holes being written, used to decide
+                whether any hole's attributes need the streaming patch set
         """
-        # Always apply these patches
-        patches = [MULTI_BANK_CODE_PATCH, COURSE3_MIRROR_PATCH]
+        attr_streaming = _needs_attr_streaming(holes)
+        bank_patch = (
+            MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING
+            if attr_streaming
+            else MULTI_BANK_CODE_PATCH
+        )
+
+        patches = [bank_patch, COURSE3_MIRROR_PATCH]
+        if attr_streaming:
+            patches.extend(ATTR_STREAMING_PATCHES)
 
         # In 1-course mode, also mirror course 2 to course 1
         if num_courses == 1:
@@ -586,6 +620,7 @@ class PackedCourseWriter:
             stats.bank_usage[alloc.bank] += hole_size
             stats.bank_assignments.append(alloc.bank)
             stats.terrain_bytes_per_hole.append(len(hole.terrain))
+            stats.attribute_bytes_per_hole.append(len(hole.attributes))
             stats.greens_bytes_per_hole.append(len(hole.greens))
 
         # Totals
