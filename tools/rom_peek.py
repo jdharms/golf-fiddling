@@ -21,6 +21,10 @@ Examples:
     golf-rom-peek rom.nes find '20 84 CE' --follow 2
     golf-rom-peek rom.nes find '20 84 CE' --follow 2 --flag-range '$E4F9-$E516'
     golf-rom-peek rom.nes addr '$E4F9' --bank 2
+    golf-rom-peek rom.nes disasm '$AD43' --bank 2 --count 15
+
+The `disasm` subcommand needs py65 (`uv pip install py65`) for opcode decoding -
+it's not a hard dependency of the rest of the project, just this one subcommand.
 """
 
 import argparse
@@ -127,6 +131,44 @@ def cmd_find(reader: RomReader, args) -> None:
         print("No matches found.")
 
 
+def cmd_disasm(reader: RomReader, args) -> None:
+    try:
+        from py65.devices.mpu6502 import MPU
+        from py65.disassembler import Disassembler
+    except ImportError:
+        print(
+            "Error: py65 is required for disasm (uv pip install py65)",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    prg_offset = parse_address(args.address, args.bank)
+    bank, cpu_addr = prg_to_bank_and_cpu(prg_offset)
+
+    # Max instruction length is 3 bytes; overshoot the read so the last
+    # decoded instruction never runs off the end of the buffer.
+    data = reader.read_prg(prg_offset, args.count * 3)
+
+    mpu = MPU()
+    region_end = min(cpu_addr + len(data), 0x10000)
+    mpu.memory[cpu_addr:region_end] = list(data[: region_end - cpu_addr])
+    dis = Disassembler(mpu)
+
+    pc = cpu_addr
+    for _ in range(args.count):
+        offset = pc - cpu_addr
+        if offset >= len(data):
+            break
+        length, text = dis.instruction_at(pc)
+        if length <= 0:
+            print(f"${pc:04X}  {data[offset]:02X}        .byte ${data[offset]:02X}  (undecoded)")
+            pc += 1
+            continue
+        raw = data[offset : offset + length]
+        print(f"${pc:04X}  {raw.hex(' ').upper():<8}  {text.upper()}")
+        pc += length
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Targeted reads/searches of ROM bytes for RE work"
@@ -168,10 +210,19 @@ def main():
     addr_parser.add_argument("address", help="'$XXXX' CPU address or raw hex PRG offset")
     addr_parser.add_argument("--bank", type=int, help="Switchable bank number (0-14)")
 
+    disasm_parser = subparsers.add_parser(
+        "disasm", help="Disassemble instructions starting at an address (needs py65)"
+    )
+    disasm_parser.add_argument("address", help="'$XXXX' CPU address or raw hex PRG offset")
+    disasm_parser.add_argument("--bank", type=int, help="Switchable bank number (0-14)")
+    disasm_parser.add_argument(
+        "--count", type=int, default=10, help="Number of instructions to decode (default: 10)"
+    )
+
     args = parser.parse_args()
     reader = RomReader(args.rom_file)
 
-    commands = {"read": cmd_read, "find": cmd_find, "addr": cmd_addr}
+    commands = {"read": cmd_read, "find": cmd_find, "addr": cmd_addr, "disasm": cmd_disasm}
     try:
         commands[args.command](reader, args)
     except ValueError as e:

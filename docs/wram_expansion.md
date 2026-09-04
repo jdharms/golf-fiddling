@@ -10,6 +10,12 @@ after it. This was discovered while testing a real 60-row JP-derived hole (see
 runtime, decompressing a hole taller than 48 rows overflows the buffer, corrupting both
 the terrain past row 48 and the adjacent greens buffer.
 
+"WRAM" here means RAM the cartridge provides (as opposed to the console's own
+internal RAM) - in practice this is battery-backed SRAM at CPU `$6000`-`$7FFF`, but
+that's an implementation detail that doesn't affect this plan, so addresses below are
+given as offsets from `$6000` (e.g. "`$1186`" means CPU `$7186`) matching how they're
+referenced in-game via the `SramPtr` pointer.
+
 This document plans the two patches needed to fix this:
 
 1. **Reclaim WRAM immediately before the vanilla terrain buffer.** That space
@@ -35,11 +41,43 @@ This document plans the two patches needed to fix this:
   and only extend backward, the new layout would be:
   - Terrain: `$107E` - `$15C6` (1,320 bytes)
   - Greens: `$15C6` - `$17E6` (576 bytes, unchanged)
-- The region immediately before `$1186` holds long-term stats (longest drive, average
-  round score, etc.) and replay data, per prior disassembly/annotation work. Exact
-  start address and total reclaimable size are not yet documented anywhere in this
-  repo - needed before we know how much headroom we actually have (264 bytes is the
-  minimum; more would be worth having as margin for anything taller than 60 rows later).
+- The region immediately before `$1186` is mapped out back to `$0F98`, per prior
+  disassembly/annotation work:
+  - `$0F98`-`$0F9B` (4 bytes): user settings (BGM on/off, swing speed default, putt
+    swing speed default, ball spin default) - **keep as-is**, not part of the
+    reclaimable region.
+  - `$0F9C`-`$1185` (490 bytes): long-term stats and replay data - the reclaimable
+    region. Fully mapped out:
+
+    | Address | Name | Size |
+    |---|---|---|
+    | `$0F9C` | `AceReplayHeaders` | 5 |
+    | `$0FA1` | `AlbaReplayHeaders` | 5 |
+    | `$0FA6` | `EagleReplayHeaders` | 5 |
+    | `$0FAB` | `BirdieReplayHeaders` | 5 |
+    | `$0FB0` | `AceReplayData` | 35 |
+    | `$0FD3` | `AlbaReplayData` | 60 |
+    | `$100F` | `EagleReplayData` | 85 |
+    | `$1064` | `BirdieReplayData` | 110 |
+    | `$10D2` | `StrokePlayStats` | 24 |
+    | `$10EA` | `MatchPlayStats` | 20 |
+    | `$10FE` | `StrokeTournamentStats` | 24 |
+    | `$1116` | `MatchPlayTournamentStats` | 32 |
+    | `$1136` | `StrokeTournamentStats18H` | 40 |
+    | `$115E` | `StrokeTournamentStats36H` | 40 |
+
+    Each row's address plus size equals the next row's address, ending exactly at
+    `$1186`.
+- 490 bytes reclaimable comfortably covers the 264-byte minimum need for 60-row
+  terrain, leaving **226 bytes** of margin for anything taller than 60 rows later.
+- `L8_9B43` (CPU `$9B43`, bank `$08`), the routine hit when a birdie is recorded,
+  appends a packed `($065D:$065E)` byte to the appropriate `*ReplayHeaders` 5-slot
+  FIFO (shifting out the oldest entry if full) and copies a corresponding block from
+  a live WRAM scratch area into the matching `*ReplayData` region. The
+  `ReplayDestPtrLoTable`/`ReplayDestPtrHiTable` pointer tables (bytes `9C 6F AB 6F A6
+  6F A1 6F B0 6F 64 70 0F 70 D3 6F`) confirm both the header write and the data write
+  land inside this reclaimable region - the whole routine is in scope for the
+  step-1/2 NOP work, not just the byte the first breakpoint hit landed on.
 
 ## Known Free Space
 
@@ -144,8 +182,6 @@ are confirmed solid.
 - The stats-saving and replay-saving routines: locations and sizes, to plan the NOPs in
   steps 1-2.
 - The stats-page read sites and the replay-presence check, for steps 3-4.
-- Exact start address and size of the reclaimable region before `$1186`, to confirm 264
-  bytes fits comfortably and see how much margin is available.
 
 ## Infrastructure Needed First
 
