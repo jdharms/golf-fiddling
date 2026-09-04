@@ -30,6 +30,7 @@ from .attr_streaming import (
 )
 from .base import PatchError, ROMPatch
 from .byte_patch import BytePatch
+from .composite import CompositePatch
 from .multi_bank import (
     COURSE2_MIRROR_PATCH,
     COURSE3_MIRROR_PATCH,
@@ -37,6 +38,7 @@ from .multi_bank import (
     MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING,
     MULTI_BANK_PATCHES,
 )
+from .wram_expansion import WRAM_EXPANSION_PATCH
 
 # Registry of all available patches by name
 AVAILABLE_PATCHES: dict[str, ROMPatch] = {
@@ -46,11 +48,13 @@ AVAILABLE_PATCHES: dict[str, ROMPatch] = {
     COURSE3_MIRROR_PATCH.name: COURSE3_MIRROR_PATCH,
     ATTR_STREAMING_BANK_SWITCH_PATCH.name: ATTR_STREAMING_BANK_SWITCH_PATCH,
     **{p.name: p for p in ATTR_STREAMING_PATCHES},
+    WRAM_EXPANSION_PATCH.name: WRAM_EXPANSION_PATCH,
 }
 
 __all__ = [
     "ROMPatch",
     "BytePatch",
+    "CompositePatch",
     "PatchError",
     "MULTI_BANK_CODE_PATCH",
     "MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING",
@@ -66,5 +70,6 @@ __all__ = [
     "ATTR_STREAMING_LOADTERRAIN_PTR_HIGH_PATCH",
     "ATTR_STREAMING_LOADTERRAIN_COPY_LOOP_NOP_PATCH",
     "ATTR_STREAMING_PATCHES",
+    "WRAM_EXPANSION_PATCH",
     "AVAILABLE_PATCHES",
 ]
