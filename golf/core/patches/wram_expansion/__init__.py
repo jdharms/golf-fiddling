@@ -12,6 +12,7 @@ disassembled and verified against a real ROM.
 """
 
 from ..composite import CompositePatch
+from .disable_replay_saving import DISABLE_REPLAY_SAVING_PATCH
 from .scroll_threshold_tables import (
     SCROLL_THRESHOLD_HIGH_SBC_PATCH,
     SCROLL_THRESHOLD_LOW_SBC_PATCH,
@@ -35,6 +36,7 @@ WRAM_EXPANSION_PATCH = CompositePatch(
     patches=[
         *VIEW_OFFSET_TABLE_PATCHES,
         *SCROLL_THRESHOLD_TABLE_PATCHES,
+        DISABLE_REPLAY_SAVING_PATCH,
     ],
 )
 
@@ -49,4 +51,5 @@ __all__ = [
     "SCROLL_THRESHOLD_TABLES_FREE_SPACE_PATCH",
     "SCROLL_THRESHOLD_LOW_SBC_PATCH",
     "SCROLL_THRESHOLD_HIGH_SBC_PATCH",
+    "DISABLE_REPLAY_SAVING_PATCH",
 ]
