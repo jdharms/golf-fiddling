@@ -162,6 +162,34 @@ the routine at CPU `$8F73`, since that's the bank it lives in, but would need
 checking for any other prospective user). Like the `$E4F9` region, it still
 holds its original (now-dead) table bytes rather than `$FF` filler.
 
+## Table Inventory
+
+Every lookup table expanded and/or relocated in this effort, in one place. All of it
+is also documented inline in "Known Free Space" and in each patch module's docstring
+(`golf/core/patches/wram_expansion/*.py`) - this table exists purely as a
+no-need-to-hunt-for-it index, since the free-space budget is getting tight enough that
+losing track of any one of these would be easy to do by accident.
+
+| Label | Purpose | Original location | Original size | New location | New size |
+|---|---|---|---|---|---|
+| `ViewOffsetToAddrLow` | Per-row byte offset (low) into the terrain buffer, read by the `LE451` windowing/scroll routine | `$E4F9` (fixed bank) | 10 entries | `$CA40` (fixed bank) | 17 entries |
+| `ViewOffsetToAddrHigh` | Same, high byte | `$E503` (fixed bank) | 10 entries | `$CA51` (fixed bank) | 17 entries |
+| `ViewOffsetToAttrIndex` | Per-row attribute-buffer index, read by the same `LE451` routine | `$E50D` (fixed bank) | 10 entries | `$CA62` (fixed bank) | 17 entries |
+| `ScrollThresholdLow` | `BallY` threshold (low) scanned by `LD_8F73` to compute `ViewVerticalOffset` | `$8F91` (bank `$0D`) | 9 entries | `$CA73` (fixed bank) | 16 entries |
+| `ScrollThresholdHigh` | Same, high byte | `$8F9A` (bank `$0D`) | 9 entries | `$CA83` (fixed bank) | 16 entries |
+| `TerrainRowOffsetsLo` | Per-row byte offset (low) into the terrain buffer, read by the ball-lie lookup `LEE9F` | `$F66E` (fixed bank) | 48 entries | `$F66E` (fixed bank, **unchanged** - grew in place) | 60 entries |
+| `TerrainRowOffsetsHi` | Same, high byte | `$F69E` (fixed bank) | 48 entries | `$CA97` (fixed bank) | 60 entries |
+| `SpriteScreenOffsetLo` (proposed - no name found in disassembly yet) | `ViewVerticalOffset` -> sprite screen-Y adjustment (low), read by ball/flag/green/tee-block positioning code (`LD_8FCC`, `LD_8ED2`, and 2 more sites, all bank `$0D`) | `$8F21` (bank `$0D`) | 10 entries | `$8F21` (bank `$0D`, **unchanged** - grew in place) | 17 entries |
+| `SpriteScreenOffsetHi` (proposed) | Same, high byte | `$8F2B` (bank `$0D`) | 10 entries | `$CAD3` (fixed bank) | 17 entries |
+
+`ViewVerticalOffset` (0-16, **17** possible values, not 16 - see `sprite_screen_offset_tables.py` for why) is the common index across four of these five pairs; `TerrainRowOffsetsLo`/`Hi` is indexed by absolute terrain row (0-59) instead, which is why it didn't need the same off-by-one fix.
+
+Free-space budget in `$CA40`-`$CAFF` (192 bytes): the table above accounts for
+51+32+60+17 = 160 bytes of relocated tables, plus 4 bytes at `$CA93`-`$CA96` for the
+stats-display zero source (`STAT_ZERO_SOURCE_PATCH` - not a relocated game table, just
+data this effort introduced, so it's not a row above, but it's carved from the same
+pool). Total used: 164 bytes. **28 bytes remain** (`$CAE4`-`$CAFF`), contiguous.
+
 ## Terrain Buffer Reference Sites
 
 Every place that hardcodes the terrain buffer's base address ($7186, i.e. WRAM
