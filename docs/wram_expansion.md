@@ -162,6 +162,83 @@ the routine at CPU `$8F73`, since that's the bank it lives in, but would need
 checking for any other prospective user). Like the `$E4F9` region, it still
 holds its original (now-dead) table bytes rather than `$FF` filler.
 
+## Terrain Buffer Reference Sites
+
+Every place that hardcodes the terrain buffer's base address ($7186, i.e. WRAM
+`$1186`) - needed for step 7, so the relocation patch has a complete list of literal
+`$86`/`$71` immediates to update in one pass. The greens buffer is **not** moving (see
+"What We Know" above - greens is staying at $75A6/`$15A6`), so its references aren't
+tracked here.
+
+Found by disassembling the two known decompression entry points and by scanning the
+whole ROM for any immediate-operand instruction pair (`LDA #`, `ADC #`, etc.) loading
+`$86` and `$71` within a few bytes of each other - the actual construction pattern
+varies per call site (two-instruction `LDA #imm`/`STA zp` pointer setup vs. a
+`CLC`/`ADC #imm` added onto a table lookup), so the earlier scan style used for the
+stats/replay work (absolute-addressed opcodes embedding the address directly) doesn't
+catch these; only 4 real hits survived, all in the fixed bank:
+
+- **`DecompressTerrain`** ($E107, PRG `0x3E107`): main write pointer. `$E107` sets
+  `SramPtr` ($22/$23) to `$7186` via `LDA #$86`/`STA $22`/`LDA #$71`/`STA $23` - every
+  byte of decompressed terrain gets written through this pointer.
+- **`DecompressTerrain`** second pass ($E168, PRG `0x3E168`): the vertical-fill stage
+  sets `$20/$21` to `$7186` (current row) and `$24/$25` to `$719C` (= `$7186 + $16`,
+  one row down - $16 is the 22-byte row width) the same way, for the 0-byte
+  copy-from-row-above transform.
+- **`LE451`** windowing routine ($E471/$E479, PRG `0x3E471`/`0x3E479`): reads a
+  per-row *offset* (not a full address) out of the `ViewOffsetToAddrLow`/`High` tables
+  (already relocated/expanded, see "Known Free Space" above) and adds the terrain base
+  directly: `LDA $E4F9,X` / `CLC` / `ADC #$86` / `STA $0414`, then the matching high
+  byte via `ADC #$71` into `$0415`, before calling `WriteNametableTiles` ($CE84). This
+  is the routine that copies the visible window of terrain into the nametable buffer
+  for display.
+- **Ball-lie tile lookup**, entry `LEE9F` ($EE9F, PRG `0x3EE9F`), base-add at
+  `$EEC4`/`$EECA` (PRG `0x3EEC4`/`0x3EECA`): converts ball position (`$9E`/`$9C`) to a
+  terrain row/col via a `LSR`x3 (row) and table lookup (`TerrainRowOffsetsLo`/
+  `TerrainRowOffsetsHi` at `$F66E`/`$F69E`), adds the terrain base the same
+  `ADC #$86`/`ADC #$71` way into `$26/$27`, then
+  `LDA ($26),Y` reads the tile under the ball into `$A0`. Called from at least one
+  other spot ($EED5) for an adjacent-tile check too, so patching the shared entry
+  point / its two `ADC #imm` sites covers all callers. Not documented anywhere else in
+  the codebase or `docs/jp_extraction.md` - genuinely new for this effort (distinct
+  from the terrain *attribute* streaming work in `attr_streaming.py`, which touches
+  `LE451` too but for a separate attribute buffer, not raw terrain tiles).
+
+Not yet checked: whether anything else reads/writes terrain tiles via a precomputed
+address table (rather than constructing the address at the point of use the way all
+four sites above do) - the scan above only catches immediate-operand address
+construction, not literal 2-byte pointers sitting in some other table as data.
+
+### Relocation (step 7/8 first pass)
+
+Both static analysis (the scan above) and live breakpoints hit diminishing returns -
+breakpoints on the shared `WriteNametableTiles` blit routine flood with hits from every
+caller (stat displays included), and the debugger's condition filtering isn't granular
+enough to isolate terrain-only calls without risking missing a genuine new one. Given
+that, the plan is to patch the 4 known sites now and let empirical playtesting (a tall
+hole, scrolling through it, checking ball-lie on every terrain type) surface anything
+missed - a wrong address there fails loud, not silent.
+
+New terrain base: greens stays fixed at CPU `$75A6`; keeping terrain's own *end*
+address unchanged there too and only extending backward to fit 1,320 bytes (60 rows)
+gives a new base of `$75A6 - 1,320 = $707E` (WRAM `$107E`) - inside the reclaimed
+region, using 264 of its 490 bytes and leaving the 226-byte margin already noted above.
+`DecompressGreen` and everything after it needs no changes at all.
+
+All 4 sites patched (lo `$86`->`$7E`, hi `$71`->`$70` everywhere, plus the
+`DecompressTerrain` row-below pointer's own literal `$719C`->`$7094`) in
+`golf/core/patches/wram_expansion/relocate_terrain_buffer.py`, verified via
+`rom_peek disasm` against a real written ROM to confirm each site computes `$707E`
+correctly - including `LE451`'s interaction with the already-relocated
+`ViewOffsetToAddrLow`/`High` tables. Not yet functionally tested (needs the offline
+debugger/playtest work only you can do).
+
+`DecompressTerrain`'s own loop bounds don't need a separate patch - both its main
+decode loop (stops when compressed input is exhausted, via `CompressedDataPtr` vs.
+`PpuWriteAddr`) and its vertical-fill pass (stops by comparing its row pointer against
+wherever `SramPtr` ended up after pass one) are already fully dynamic on the actual
+decompressed length, not hardcoded to the old 1,056-byte/48-row size.
+
 ## High-Level Plan
 
 Reclaiming the stats/replay region has to happen in a way that's provably safe before
@@ -171,7 +248,7 @@ front-loads that verification:
 
 1. Find and NOP out the routine(s) that *save* stats to this WRAM region.
 2. Find and NOP out the routine(s) that *save* replay data to this WRAM region.
-3. Change the code that *reads* stats from this region (stats/scorecard pages) to read
+3. Change the code that *reads* stats from this region (hall of fame replays and career stats) to read
    literal `#$00` instead of the real memory.
 4. Change the code that checks whether a replay is present to return early with "no
    replay present," instead of reading this region.
@@ -182,27 +259,45 @@ front-loads that verification:
 6. Once confirmed, the region is reclaimed.
 7. Change the terrain decompression routine to decompress into the new, larger region.
 8. Change every routine that *reads* decompressed terrain (rendering, scrolling,
-   ball-lie/physics - see `docs/jp_extraction.md` for the ball-lie and windowing
-   routines already touched by the attr-streaming patch) to read from the new region
-   instead of `$1186`.
+   ball-lie/physics - see "Terrain Buffer Reference Sites" above) to read from the new
+   region instead of `$1186`.
 
 Steps 1-6 are entirely about proving the reclaimed region is safe to use, without yet
 touching terrain/greens decompression at all - each is independently testable and
 revertible. Steps 7-8 are the actual buffer relocation, and should only start once 1-6
 are confirmed solid.
 
+We're currently at the point with steps 1 and 2 where we *may* have NOP'd out enough
+of the routines such that the region is completely "inert" *during* a round.  We
+don't care if a stats saving routine clobbers the terrain data after a round is finished,
+as the next round that is played will just put terrain data right back on it.
+
+Steps 3 and 4 are done for every stats/replay display found so far: Stroke Play stats
+(`StrokePlayStatsDisplay`/`LoadStatSramPointer`, $B8D9/$BA92 bank $09), Match Play
+stats (`L9_BAD4`, $BAD4 bank $09), Stroke Tournament Stats 18H/36H (the display at
+$BB96, same bank), and the shared replay-header read ($B689 bank $0E) - all patched in
+`golf/core/patches/wram_expansion/`. Stats reads are stubbed to literal `#$00`; the
+replay-header read is stubbed to `#$FF`, the "empty" sentinel for a header slot -
+`#$FF` *is* the replay-presence check, so stubbing that one read site satisfies step 4
+too, with no separate presence-check routine to find. Match Play Tournament stats is
+also confirmed stubbed with no dedicated patch of its own - it apparently reuses one of
+the routines already patched above.
+
 ## Open Items (need disassembly to proceed)
 
-- `DecompressTerrain`'s entry point (JSR target from `$3DB87`) and its full body - needed
-  to find every hardcoded reference to `$1186` (or its component bytes) so all of them
-  get patched consistently, not just the write.
-- `DecompressGreen`'s entry point (JSR target from `$3DB65`) and body, for the same reason.
-- Every other reader of the terrain/greens buffers (rendering, scrolling, ball-lie
-  physics) - a "find all references to `$1186`" sweep in a debugger/disassembler is the
-  fastest way to get a complete list, rather than tracing call graphs by hand.
-- The stats-page read sites and the replay-presence check, for steps 3-4. Steps 1-2
-  (the save routines) are done - see `L8_9B43` and `$AD43` above, both patched in
-  `golf/core/patches/wram_expansion/`.
+- `DecompressTerrain`'s entry point is `$E107` (fixed bank) and `DecompressGreen`'s is
+  `$E3AC` (fixed bank) - both found, and `DecompressTerrain`'s hardcoded terrain-base
+  references are in "Terrain Buffer Reference Sites" above. Since greens isn't moving,
+  `DecompressGreen`'s body doesn't need the same treatment.
+- Every other reader of the terrain buffer (rendering, scrolling, ball-lie physics) -
+  the windowing routine (`LE451`) and the ball-lie tile lookup (`$EE9F`) are found, see
+  "Terrain Buffer Reference Sites" above. Not yet confirmed exhaustive - that section's
+  scan only catches address construction via immediate operands, not a precomputed
+  address sitting in some other table as data.
+- Steps 1-4 are done for every stats/replay display, including Match Play Tournament
+  stats - see `L8_9B43` and `$AD43` above for steps 1-2, and the "Step 3 and 4"
+  paragraph above for the read-side patches. This is done until a gap turns up in
+  playtesting.
 
 Patches are grouped via `CompositePatch` (`golf/core/patches/composite.py`), which
 implements the same `ROMPatch` interface (`can_apply`/`is_applied`/`apply`) over a
