@@ -23,32 +23,33 @@ Examples:
     golf-rom-peek rom.nes addr '$E4F9' --bank 2
     golf-rom-peek rom.nes disasm '$AD43' --bank 2 --count 15
 
+    # Annotate output with symbol names from a Mesen .mlb label file.
+    # --labels/--sidecar must come before the subcommand (top-level options).
+    # Any "notes.sidecar.mlb" next to notes.mlb is loaded automatically and
+    # shadows notes.mlb at matching addresses - see golf-labels for adding to it.
+    golf-rom-peek rom.nes --labels notes.mlb disasm '$AD43' --bank 2 --count 15
+    golf-rom-peek rom.nes --labels notes.mlb label '$AD5D'
+    golf-rom-peek rom.nes --labels notes.mlb label '001A' --type ram
+    golf-rom-peek rom.nes --labels notes.mlb find-label ScrollX
+
 The `disasm` subcommand needs py65 (`uv pip install py65`) for opcode decoding -
 it's not a hard dependency of the rest of the project, just this one subcommand.
 """
 
 import argparse
+import re
 import sys
 
+from golf.core.mlb_labels import TYPE_ALIASES, Label, LabelStore, describe
 from golf.core.rom_reader import RomReader
 from golf.core.rom_utils import (
     FIXED_BANK_PRG_START,
     PRG_BANK_SIZE,
     cpu_to_prg_fixed,
     cpu_to_prg_switched,
+    parse_cpu_or_prg_address as parse_address,
     prg_to_bank_and_cpu,
 )
-
-
-def parse_address(address: str, bank: int | None) -> int:
-    """Parse a "$XXXX" CPU address or raw hex PRG offset into a PRG offset."""
-    address = address.strip()
-    if address.startswith("$"):
-        cpu_addr = int(address[1:], 16)
-        if bank is not None:
-            return cpu_to_prg_switched(cpu_addr, bank)
-        return cpu_to_prg_fixed(cpu_addr)
-    return int(address, 16)
 
 
 def format_bytes(data: bytes, fmt: str) -> str:
@@ -59,13 +60,17 @@ def format_bytes(data: bytes, fmt: str) -> str:
     return data.hex(" ").upper()
 
 
-def cmd_read(reader: RomReader, args) -> None:
+def cmd_read(reader: RomReader, args, labels: LabelStore | None) -> None:
     prg_offset = parse_address(args.address, args.bank)
     data = reader.read_prg(prg_offset, args.length)
     print(format_bytes(data, args.format))
+    if labels is not None:
+        label = labels.lookup("NesPrgRom", prg_offset)
+        if label is not None:
+            print(f"label: {describe(label, prg_offset)}")
 
 
-def cmd_addr(_reader: RomReader, args) -> None:
+def cmd_addr(_reader: RomReader, args, labels: LabelStore | None) -> None:
     if args.address.startswith("$"):
         cpu_addr = int(args.address[1:], 16)
         if args.bank is not None:
@@ -78,6 +83,10 @@ def cmd_addr(_reader: RomReader, args) -> None:
         prg_offset = int(args.address, 16)
         bank, cpu_addr = prg_to_bank_and_cpu(prg_offset)
     print(f"bank={bank} cpu=${cpu_addr:04X} prg=0x{prg_offset:X}")
+    if labels is not None:
+        label = labels.lookup("NesPrgRom", prg_offset)
+        if label is not None:
+            print(f"label: {describe(label, prg_offset)}")
 
 
 def _bank_region(bank: int) -> tuple[int, int]:
@@ -86,7 +95,7 @@ def _bank_region(bank: int) -> tuple[int, int]:
     return bank * PRG_BANK_SIZE, (bank + 1) * PRG_BANK_SIZE
 
 
-def cmd_find(reader: RomReader, args) -> None:
+def cmd_find(reader: RomReader, args, labels: LabelStore | None) -> None:
     pattern = bytes.fromhex(args.pattern.replace(" ", ""))
 
     flag_low = flag_high = None
@@ -124,6 +133,11 @@ def cmd_find(reader: RomReader, args) -> None:
             else:
                 line += f"  follow={follow_bytes.hex(' ').upper()}"
 
+        if labels is not None:
+            label = labels.lookup("NesPrgRom", prg_offset)
+            if label is not None:
+                line += f"  label={describe(label, prg_offset)}"
+
         print(line)
         search_from = idx + 1
 
@@ -131,7 +145,43 @@ def cmd_find(reader: RomReader, args) -> None:
         print("No matches found.")
 
 
-def cmd_disasm(reader: RomReader, args) -> None:
+_OPERAND_RE = re.compile(r"(?<!#)\$([0-9A-Fa-f]{2,4})\b")
+
+
+def _operand_label(addr: int, bank: int | None, labels: LabelStore) -> Label | None:
+    """Best-effort resolution of a disassembly operand address to a label.
+
+    Zero-page/absolute RAM and PPU/APU register addresses map straight to
+    CPU space. $8000-$FFFF operands are resolved against the bank the
+    instructions were disassembled in (disasm doesn't track bank switches
+    mid-listing, so this assumes the whole run stays in one bank).
+    """
+    if addr < 0x2000:
+        return labels.lookup("NesInternalRam", addr & 0x07FF)
+    if 0x2000 <= addr < 0x4020:
+        mapped = 0x2000 + ((addr - 0x2000) % 8) if addr < 0x4000 else addr
+        return labels.lookup("NesMemory", mapped)
+    if 0x6000 <= addr < 0x8000:
+        return labels.lookup("NesSaveRam", addr - 0x6000)
+    if 0x8000 <= addr <= 0xBFFF and bank is not None:
+        return labels.lookup("NesPrgRom", cpu_to_prg_switched(addr, bank))
+    if 0xC000 <= addr <= 0xFFFF:
+        return labels.lookup("NesPrgRom", cpu_to_prg_fixed(addr))
+    return None
+
+
+def _symbolicate(text: str, bank: int | None, labels: LabelStore) -> str:
+    def repl(m: re.Match) -> str:
+        addr = int(m.group(1), 16)
+        label = _operand_label(addr, bank, labels)
+        if label is None:
+            return m.group(0)
+        return f"{label.name}[{m.group(0)}]"
+
+    return _OPERAND_RE.sub(repl, text)
+
+
+def cmd_disasm(reader: RomReader, args, labels: LabelStore | None) -> None:
     try:
         from py65.devices.mpu6502 import MPU
         from py65.disassembler import Disassembler
@@ -165,8 +215,43 @@ def cmd_disasm(reader: RomReader, args) -> None:
             pc += 1
             continue
         raw = data[offset : offset + length]
-        print(f"${pc:04X}  {raw.hex(' ').upper():<8}  {text.upper()}")
+        display_text = text.upper()
+        if labels is not None:
+            instr_prg_offset = prg_offset + offset
+            label = labels.lookup("NesPrgRom", instr_prg_offset)
+            if label is not None and label.start == instr_prg_offset:
+                print(f"{describe(label, instr_prg_offset)}:")
+            display_text = _symbolicate(display_text, args.bank, labels)
+        print(f"${pc:04X}  {raw.hex(' ').upper():<8}  {display_text}")
         pc += length
+
+
+def cmd_label(_reader: RomReader, args, labels: LabelStore | None) -> None:
+    if labels is None:
+        print("Error: --labels PATH is required for this command", file=sys.stderr)
+        sys.exit(1)
+    type_ = TYPE_ALIASES[args.type]
+    if type_ == "NesPrgRom":
+        addr = parse_address(args.address, args.bank)
+    else:
+        addr = int(args.address.lstrip("$"), 16)
+    label = labels.lookup(type_, addr)
+    if label is None:
+        print("No label found.")
+        return
+    print(describe(label, addr))
+
+
+def cmd_find_label(_reader: RomReader, args, labels: LabelStore | None) -> None:
+    if labels is None:
+        print("Error: --labels PATH is required for this command", file=sys.stderr)
+        sys.exit(1)
+    matches = labels.search_name(args.name)
+    if not matches:
+        print("No matches found.")
+        return
+    for label in matches:
+        print(f"{label.type} {label.address_str}: {describe(label, label.start)}")
 
 
 def main():
@@ -174,6 +259,16 @@ def main():
         description="Targeted reads/searches of ROM bytes for RE work"
     )
     parser.add_argument("rom_file", help="ROM file to read")
+    parser.add_argument(
+        "--labels",
+        help="Path to a Mesen .mlb label file to annotate output with symbol names "
+        "(must appear before the subcommand)",
+    )
+    parser.add_argument(
+        "--sidecar",
+        help="Path to a sidecar .mlb overlay (defaults to '<labels>.sidecar.mlb' next to "
+        "--labels, if it exists); entries here shadow --labels at the same address",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     read_parser = subparsers.add_parser("read", help="Read bytes at an address")
@@ -219,12 +314,39 @@ def main():
         "--count", type=int, default=10, help="Number of instructions to decode (default: 10)"
     )
 
+    label_parser = subparsers.add_parser(
+        "label", help="Look up the label at an address (requires --labels)"
+    )
+    label_parser.add_argument("address", help="'$XXXX' CPU address or raw hex address/offset")
+    label_parser.add_argument(
+        "--type",
+        choices=list(TYPE_ALIASES),
+        default="prg",
+        help="Label type to search (default: prg)",
+    )
+    label_parser.add_argument(
+        "--bank", type=int, help="Switchable bank number (0-14), used when --type prg"
+    )
+
+    find_label_parser = subparsers.add_parser(
+        "find-label", help="Search labels by name substring (requires --labels)"
+    )
+    find_label_parser.add_argument("name", help="Substring to search for (case-insensitive)")
+
     args = parser.parse_args()
     reader = RomReader(args.rom_file)
+    labels = LabelStore.load(args.labels, args.sidecar) if args.labels else None
 
-    commands = {"read": cmd_read, "find": cmd_find, "addr": cmd_addr, "disasm": cmd_disasm}
+    commands = {
+        "read": cmd_read,
+        "find": cmd_find,
+        "addr": cmd_addr,
+        "disasm": cmd_disasm,
+        "label": cmd_label,
+        "find-label": cmd_find_label,
+    }
     try:
-        commands[args.command](reader, args)
+        commands[args.command](reader, args, labels)
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)

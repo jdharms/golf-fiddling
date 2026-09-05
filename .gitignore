@@ -12,6 +12,7 @@ wheels/
 
 # Sensitive files
 *.nes
+*.mlb
 
 # AI stuff lmao
 *.skill
