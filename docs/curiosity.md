@@ -68,3 +68,28 @@ Open questions:
 Not currently believed to be the cause of any known bug - flagged here purely because
 it showed up unexpectedly while looking for something else, and touches memory this
 project cares a lot about.
+
+## Follow-up (brief look, not conclusive)
+
+Found the one caller: `JSR $F6CE` at CPU `$B43D`, bank `$0E` (`golf-rom-peek find
+'20 CE F6'` turns up exactly one hit). The value loaded into A right before that call
+- which becomes `X` inside the `$F6CE` code - is `LDA $072E`.
+
+Tracing backward from there, `$B43D` sits inside a small loop (`$B425`-`$B44A`, `JMP
+$B425` closes it) that:
+- Calls `$B759` once up front, which zeroes a little block of `$07xx` RAM:
+  `$0726`-`$0728` and `$072E`-`$0730` (6 bytes total), and sets `$F4 = 6`.
+- Each iteration calls `$B453`, checks bit 0 of `$0726` (`LSR A`/`BCC`) to decide
+  whether to keep going or bail to `$B44D` (`LDA #$01` / `STA $07FF`), calls `$B54E`,
+  rechecks the same bit, then loads `$072E` and calls `$F6CE`.
+- After the call, sets `$0737 = ($F6CE returned via carry ? 0 : 1)` and loops.
+
+This has the shape of a bounded iteration over some small set of "things" (`$F4 = 6`
+suggests a max of 6), with `$072E` acting as a 0-based index/counter - consistent with
+X in `$F6CE` being a small object/marker index rather than something that could grow
+large enough to reach into where terrain now lives. Didn't trace `$B453`/`$B54E`
+(what actually increments `$072E` and sets `$0726`'s bit) or confirm when in the game
+loop this whole thing runs (hole load vs. every frame vs. something else) - stopping
+here per time-boxing this to "a brief look." Picking up next would mean tracing
+`$B453`/`$B54E`'s bodies, or just breakpointing `$B43D` live to see what `X` (`$072E`)
+actually ranges over during play.
