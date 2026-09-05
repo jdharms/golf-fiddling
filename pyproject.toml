@@ -29,6 +29,7 @@ golf-analyze-putting = "tools.analyze_putting_surface:main"
 golf-compare-traces = "tools.compare_traces:main"
 golf-patch-wram = "tools.patch_wram:main"
 golf-rom-peek = "tools.rom_peek:main"
+golf-labels = "tools.labels:main"
 
 [tool.uv]
 package = true

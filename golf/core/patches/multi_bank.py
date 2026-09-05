@@ -84,8 +84,33 @@ COURSE3_MIRROR_PATCH = BytePatch(
     patched=bytes([0x00]),
 )
 
+# Bank 2 contains its own private copy of the hole-offset table at CPU
+# $B1F1-$B1F3, used by the scorecard's eagle/birdie/par/bogey face-drawing
+# routine to index into the Par table ($DD05, fixed bank). This routine lives
+# entirely in bank 2 and reads its local copy instead of the fixed-bank
+# CourseHoleOffsetTable at $DBBB - the two tables hold identical values but
+# are patched independently. Without these, the scorecard faces still use
+# the original per-course offsets even after COURSE2/3_MIRROR_PATCH make the
+# actual course data mirror course 1.
+COURSE2_MIRROR_PATCH_SCORECARD = BytePatch(
+    name="course2_mirror_scorecard",
+    description="Make course 2 (US) mirror course 1 in the bank 2 scorecard face table",
+    prg_offset=0xB1F2,  # CPU $B1F2 in bank 2 (scorecard hole-offset table + 1)
+    original=bytes([0x12]),
+    patched=bytes([0x00]),
+)
+
+COURSE3_MIRROR_PATCH_SCORECARD = BytePatch(
+    name="course3_mirror_scorecard",
+    description="Make course 3 (UK) mirror course 1 in the bank 2 scorecard face table",
+    prg_offset=0xB1F3,  # CPU $B1F3 in bank 2 (scorecard hole-offset table + 2)
+    original=bytes([0x24]),
+    patched=bytes([0x00]),
+)
+
 # All multi-bank patches in recommended application order
 MULTI_BANK_PATCHES = [
     MULTI_BANK_CODE_PATCH,
     COURSE3_MIRROR_PATCH,
+    COURSE3_MIRROR_PATCH_SCORECARD,
 ]

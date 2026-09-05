@@ -16,7 +16,9 @@ from .palettes import ATTR_TOTAL_BYTES
 from .patches import (
     ATTR_STREAMING_PATCHES,
     COURSE2_MIRROR_PATCH,
+    COURSE2_MIRROR_PATCH_SCORECARD,
     COURSE3_MIRROR_PATCH,
+    COURSE3_MIRROR_PATCH_SCORECARD,
     MULTI_BANK_CODE_PATCH,
     MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING,
     PatchError,
@@ -289,13 +291,14 @@ class PackedCourseWriter:
             else MULTI_BANK_CODE_PATCH
         )
 
-        patches = [bank_patch, COURSE3_MIRROR_PATCH]
+        patches = [bank_patch, COURSE3_MIRROR_PATCH, COURSE3_MIRROR_PATCH_SCORECARD]
         if attr_streaming:
             patches.extend(ATTR_STREAMING_PATCHES)
 
         # In 1-course mode, also mirror course 2 to course 1
         if num_courses == 1:
             patches.append(COURSE2_MIRROR_PATCH)
+            patches.append(COURSE2_MIRROR_PATCH_SCORECARD)
 
         for patch in patches:
             if patch.is_applied(self.writer):
