@@ -51,6 +51,10 @@ golf-expand-dict <meta.json> [terrain|greens]
 golf-rom-peek <rom_file.nes> read '$E4F9' --length 10
 golf-rom-peek <rom_file.nes> find '20 84 CE' --follow 2
 
+# Seed pin positions and wind per hole so every player sees the same conditions
+# (see docs/seeded_wind.md; requires course3_mirror, which golf-write applies)
+golf-patch-seeded-wind <rom_file.nes> --seed <meta-seed> [-o out.nes] [--holes 18|36] [--forecast N] [--validate-only]
+
 # Launch the course editor (CHR files optional, defaults to data/ files)
 golf-editor [terrain_chr.bin] [greens_chr.bin] [hole.json]
 ```
