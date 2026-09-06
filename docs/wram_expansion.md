@@ -1,5 +1,7 @@
 # WRAM Expansion Plan
 
+> **Note**: This document was written by Claude, and honestly I would have been too overwhelmed to make progress on my own.
+
 ## Overview
 
 The vanilla terrain decompression buffer in WRAM is only sized for 48 rows of terrain

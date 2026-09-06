@@ -1,5 +1,7 @@
 # Curiosities
 
+> **Note**: This document was written by Claude.
+
 Side findings noticed while working on other things - not yet investigated, not
 confirmed relevant to anything, parked here so they aren't lost or conflated with
 whatever they were found alongside.

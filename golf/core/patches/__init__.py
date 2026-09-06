@@ -31,6 +31,12 @@ from .attr_streaming import (
 from .base import PatchError, ROMPatch
 from .byte_patch import BytePatch
 from .composite import CompositePatch
+from .menu_trim import (
+    RENDERABLE_CHARS,
+    menu_trim_patch,
+    menu_trim_patches,
+    random_title,
+)
 from .mercy_tap_in import mercy_tap_in_patches
 from .seeded_wind import (
     HoleWindForecast,
@@ -69,6 +75,10 @@ __all__ = [
     "CompositePatch",
     "PatchError",
     "mercy_tap_in_patches",
+    "menu_trim_patch",
+    "menu_trim_patches",
+    "random_title",
+    "RENDERABLE_CHARS",
     "seeded_wind_patch",
     "seeded_wind_patches",
     "derive_hole_seeds",
