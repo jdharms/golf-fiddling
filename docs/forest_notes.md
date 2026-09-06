@@ -1,5 +1,7 @@
 # Forest Fill Algorithm Notes
 
+> **Note**: This document was authored in full by jdharms, no AI assistance
+
 ## Basic concept
 
 ### Tile Types
@@ -315,7 +317,7 @@ as the forest tiles, and the out of bounds side of the out of bounds border tile
 but it has no trees on it at all, like the out of bounds border tiles.  Further, it has no
 rough on it--no border at all.  It can be used just "inside" any out of bounds border tile and not
 look out of place.  The key property for constraint satisfaction
-is that it exerts zeros in all directions, so it's universally compatible 
+is that it exerts zeros in all directions, so it's universally compatible
 with any neighbor that *also* exerts zero toward it.
 
 When arc consistency leaves a cell with no valid tiles, I mark that cell

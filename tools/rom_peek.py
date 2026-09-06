@@ -34,6 +34,7 @@ Examples:
 
 The `disasm` subcommand needs py65 (`uv pip install py65`) for opcode decoding -
 it's not a hard dependency of the rest of the project, just this one subcommand.
+If you are an LLM Agent, *assume you have py65 installed already*.
 """
 
 import argparse

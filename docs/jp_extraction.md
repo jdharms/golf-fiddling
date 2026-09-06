@@ -1,5 +1,7 @@
 # JP Course Extraction Implementation Plan
 
+> **Note**: This document was written and is maintained by Claude
+
 ## Overview
 
 This document describes how to extract course data from the Japanese release of NES Open Tournament Golf (Mario Open Golf) and prepare it for import into the US release.
