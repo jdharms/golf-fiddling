@@ -32,6 +32,13 @@ from .base import PatchError, ROMPatch
 from .byte_patch import BytePatch
 from .composite import CompositePatch
 from .mercy_tap_in import mercy_tap_in_patches
+from .seeded_wind import (
+    HoleWindForecast,
+    derive_hole_seeds,
+    predict_hole,
+    seeded_wind_patch,
+    seeded_wind_patches,
+)
 from .multi_bank import (
     COURSE2_MIRROR_PATCH,
     COURSE2_MIRROR_PATCH_SCORECARD,
@@ -62,6 +69,11 @@ __all__ = [
     "CompositePatch",
     "PatchError",
     "mercy_tap_in_patches",
+    "seeded_wind_patch",
+    "seeded_wind_patches",
+    "derive_hole_seeds",
+    "predict_hole",
+    "HoleWindForecast",
     "MULTI_BANK_CODE_PATCH",
     "MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING",
     "COURSE2_MIRROR_PATCH",
