@@ -1,0 +1,494 @@
+{
+  "source": "nes_open_us.nes",
+  "sha1": "c881749bded199785699f51c3925f940332efac1",
+  "engine": {
+    "duration_table": "04 05 09 1B 12 24 36 48 6C 90 0C 0C 18 18 18 30 06 06 0C 04 04 08 18 10 20 30 40 60 80 0B 0A 16 15 16 2A 05 06 0A 03 04 07 15 0E 1C 2A 38 54 70 09 0A 12 13 12 26 05 04 0A 03 03 06 12 0C 18 24 30 48 60 08 08 10 10 10 20 04 04 08 02 03 05 0F 0A 14 1E 28 3C 50 07 06 0E 0D 0E 1A 03 04 06 02 02 04 0C 08 10 18 20 30 40 05 06 0A 0A 0C 14 03 02 06 01 02 03 09 06 0C 12 18 24 30 04 04 08 08 08 10 02",
+    "period_table": "02 48 5C 0D 9C 0C E6 0B 3C 0B 9A 0A 04 0A 72 09 EA 08 6A 08 EE 07 7E 07 12 07",
+    "envelope_table": "94 94 94 94 95 95 95 95 96 96 96 96 97 98 99 9A 92 92 92 92 92 92 92 92 93 93 94 94 95 95 95 96 90 90 90 90 90 90 90 90 90 90 90 90 90 13 96 59 94 94 94 94 95 95 95 95 96 96 96 96 97 98 99 19 98 97 97 96 96 95 95 94 93 92 93 94 95 96 97 98 14 14 14 14 15 15 15 15 16 16 16 16 17 18 99 99 94 94 94 94 95 96 97 98 99 92 94 95 96 9A 98 9A 9C 9B 9A 99 98 97 96 95 94 93 93 93 95 98 DA 1B 90 90 92 92 92 92 94 94 96 96 98 98 9A 9A",
+    "noise_drum_table": "9B 9C 1F 03 18 00 15 06 38 00 15 08 38 00 15 0A 38 00 15 07 98 00 10 00 01 FF 01 FF 02 FE 02 FD 02 FD 03 FD 04 FC 04 FC",
+    "base_note_hz": 65.38
+  },
+  "course_bgm": {
+    "routine": 55806,
+    "curr_course": 258,
+    "bgm_on_flag": 28568,
+    "table": 55828,
+    "slots": [
+      {
+        "slot": 0,
+        "name": "japan",
+        "music_id": 3
+      },
+      {
+        "slot": 1,
+        "name": "us",
+        "music_id": 2
+      },
+      {
+        "slot": 2,
+        "name": "uk",
+        "music_id": 4
+      }
+    ],
+    "music_ids": {
+      "japan": 3,
+      "us": 2,
+      "uk": 4
+    },
+    "unique_music_ids": [
+      2,
+      3,
+      4
+    ]
+  },
+  "tracks": [
+    {
+      "music_id": 2,
+      "transpose": -3,
+      "loop_position": 2,
+      "order": [
+        {
+          "type": "flag",
+          "value": 2
+        },
+        {
+          "type": "pattern",
+          "index": 0
+        },
+        {
+          "type": "pattern",
+          "index": 1
+        },
+        {
+          "type": "pattern",
+          "index": 2
+        },
+        {
+          "type": "pattern",
+          "index": 0
+        },
+        {
+          "type": "pattern",
+          "index": 1
+        },
+        {
+          "type": "pattern",
+          "index": 3
+        },
+        {
+          "type": "pattern",
+          "index": 4
+        },
+        {
+          "type": "pattern",
+          "index": 5
+        },
+        {
+          "type": "pattern",
+          "index": 4
+        },
+        {
+          "type": "pattern",
+          "index": 6
+        }
+      ],
+      "patterns": [
+        {
+          "tempo": 57,
+          "section_frames": 384,
+          "pulse1_start": 29,
+          "triangle_start": 91,
+          "noise_start": 128,
+          "dmc_start": 165,
+          "pulse2_envelope": 0,
+          "pulse1_envelope": 32,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 161,
+          "stream": "84 27 26 25 85 24 25 29 27 84 30 86 2C 84 7F 84 27 26 25 85 24 2C 2B 29 87 25 84 7F 00 84 7F 7F 7F 84 2C 27 82 23 24 84 27 84 2C 27 82 23 24 84 27 84 2C 27 82 23 24 27 23 24 27 23 24 27 23 24 27 84 2C 27 82 23 24 84 27 84 29 24 82 20 22 84 24 84 2E 29 82 25 27 29 25 27 29 84 7F 7F 7F 84 20 27 7F 2C 24 2C 27 2C 84 20 27 7F 2C 24 2C 27 2C 84 20 27 7F 20 1D 24 7F 1D 84 22 29 7F 2E 25 84 02 02 02 84 16 02 16 02 16 02 16 02 84 16 02 16 02 16 02 16 02 84 16 02 16 02 16 02 16 02 84 16 02 16 02 16 84 3F 3F 3F 84 02 82 3F 3F 84 02 3D 02 3F 02 3D 84 02 82 3F 3F 84 02 3D 02 3F 02 3D 84 02 82 3F 3F 84 02 3D 02 3F 02 3D 84 02 82 3F 3F 84 02 3D 02"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 192,
+          "pulse1_start": 16,
+          "triangle_start": 49,
+          "noise_start": 68,
+          "dmc_start": 87,
+          "pulse2_envelope": 0,
+          "pulse1_envelope": 32,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 161,
+          "stream": "84 29 28 27 85 25 27 28 29 84 2E 86 29 84 7F 00 82 25 27 29 25 27 29 84 2E 29 82 25 27 84 29 84 2E 29 82 25 27 84 29 84 2E 29 82 25 27 29 25 27 29 84 2E 29 2E 84 22 29 7F 2E 25 2E 29 2E 84 22 29 7F 2E 25 84 02 16 02 84 16 02 16 02 16 02 16 02 84 16 02 16 02 16 84 3F 02 3D 84 02 82 3F 3F 84 02 3D 02 3F 02 3D 84 02 82 3F 3F 84 02 3D 02"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 192,
+          "pulse1_start": 14,
+          "triangle_start": 47,
+          "noise_start": 66,
+          "dmc_start": 85,
+          "pulse2_envelope": 0,
+          "pulse1_envelope": 32,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 161,
+          "stream": "84 29 28 27 85 25 29 30 2E 87 2B 84 7F 00 82 25 27 29 25 27 29 84 2E 29 82 25 27 84 29 84 2E 29 82 25 27 84 29 84 2B 27 82 22 24 27 7F 2B 7F 84 2E 29 2E 84 22 29 7F 2E 25 2E 29 2E 84 1B 22 7F 27 1F 84 02 16 02 84 16 02 16 02 16 02 16 02 84 16 02 16 02 16 84 3F 02 3D 84 02 82 3F 3F 84 02 3D 02 3F 02 3D 84 02 82 3F 3F 84 02 3D 02"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 204,
+          "pulse1_start": 14,
+          "triangle_start": 48,
+          "noise_start": 68,
+          "dmc_start": 88,
+          "pulse2_envelope": 0,
+          "pulse1_envelope": 32,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 161,
+          "stream": "84 29 28 29 85 2B 31 30 2B 87 2C 85 7F 00 82 25 27 29 25 27 29 84 2B 25 82 21 22 84 25 84 2B 25 82 21 22 84 25 84 2C 27 82 22 23 24 27 84 20 7F 84 2E 29 2E 84 1B 22 7F 27 1F 27 22 27 84 20 27 7F 2C 20 7F 84 02 16 02 84 16 02 16 02 16 02 16 02 84 16 02 16 02 02 16 84 3F 02 3D 84 02 82 3F 3F 84 02 3D 02 3F 02 3D 84 02 82 3F 3F 84 02 3D 3F 02"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 120,
+          "pulse1_start": 12,
+          "triangle_start": 28,
+          "noise_start": 40,
+          "dmc_start": 52,
+          "pulse2_envelope": 0,
+          "pulse1_envelope": 32,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 161,
+          "stream": "84 2C 2B 86 2C 84 24 7F 24 25 27 00 84 29 24 82 20 22 24 20 22 24 20 22 24 20 22 24 84 27 2C 84 1D 24 7F 29 1D 24 1D 29 84 02 02 84 16 02 16 02 16 02 16 02 84 3D 3F 84 02 82 3F 3F 84 02 3D 84 02 82 3F 3F 84 02 3D"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 264,
+          "pulse1_start": 18,
+          "triangle_start": 60,
+          "noise_start": 85,
+          "dmc_start": 110,
+          "pulse2_envelope": 0,
+          "pulse1_envelope": 32,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 161,
+          "stream": "88 25 84 2E 2C 86 2E 84 25 7F 25 27 25 85 24 25 27 00 84 2E 29 82 25 27 29 25 27 29 25 27 29 25 27 29 84 2B 25 82 22 24 25 22 24 25 22 24 25 22 24 25 84 2C 27 82 22 24 84 27 2C 7F 84 22 29 7F 2E 25 2E 22 2E 84 1B 22 7F 27 1F 27 22 27 84 20 27 7F 2C 24 2C 84 16 02 16 02 16 02 16 02 84 16 02 16 02 16 02 16 02 84 16 02 16 02 16 02 84 02 82 3F 3F 84 02 3D 00"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 252,
+          "pulse1_start": 14,
+          "triangle_start": 55,
+          "noise_start": 79,
+          "dmc_start": 103,
+          "pulse2_envelope": 0,
+          "pulse1_envelope": 32,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 161,
+          "stream": "85 25 27 29 2C 30 2E 29 2B 87 2C 84 7F 00 84 2E 29 82 25 27 29 25 27 29 25 27 29 25 27 29 84 2B 25 82 22 24 25 22 24 25 22 24 25 22 24 25 84 2C 27 82 22 24 84 27 20 84 22 29 7F 2E 25 2E 22 2E 84 1B 22 7F 27 1F 27 22 27 84 20 27 7F 2C 20 84 16 02 16 02 16 02 16 02 84 16 02 16 02 16 02 16 02 84 16 02 16 02 02 84 02 82 3F 3F 84 02 3D 00"
+        }
+      ],
+      "bytes": 929
+    },
+    {
+      "music_id": 3,
+      "transpose": 0,
+      "loop_position": 2,
+      "order": [
+        {
+          "type": "flag",
+          "value": 2
+        },
+        {
+          "type": "pattern",
+          "index": 0
+        },
+        {
+          "type": "pattern",
+          "index": 1
+        },
+        {
+          "type": "pattern",
+          "index": 2
+        },
+        {
+          "type": "pattern",
+          "index": 0
+        },
+        {
+          "type": "pattern",
+          "index": 1
+        },
+        {
+          "type": "pattern",
+          "index": 3
+        },
+        {
+          "type": "pattern",
+          "index": 4
+        },
+        {
+          "type": "pattern",
+          "index": 5
+        },
+        {
+          "type": "pattern",
+          "index": 4
+        },
+        {
+          "type": "pattern",
+          "index": 6
+        }
+      ],
+      "patterns": [
+        {
+          "tempo": 57,
+          "section_frames": 372,
+          "pulse1_start": 30,
+          "triangle_start": 55,
+          "noise_start": 95,
+          "dmc_start": 157,
+          "pulse2_envelope": 96,
+          "pulse1_envelope": 96,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 164,
+          "stream": "82 20 21 84 22 24 85 25 24 22 24 84 25 86 1D 84 7F 20 22 24 85 25 24 27 25 84 29 86 27 00 86 7F 85 1D 1D 1D 1D 84 1D 86 19 84 7F 1B 1B 1B 85 1D 1D 22 22 84 1E 86 1E 86 7F 84 19 85 25 84 20 19 25 1D 25 84 19 85 25 84 20 19 25 1D 25 84 19 85 25 84 20 84 22 85 2E 84 29 84 1B 85 27 84 22 82 02 02 84 16 02 84 16 82 02 02 84 16 02 84 16 82 02 02 84 16 02 84 16 82 02 02 84 16 02 84 16 82 02 02 84 16 02 84 16 82 02 02 84 16 02 84 16 82 02 02 84 16 02 84 16 82 02 02 84 16 02 82 3D 3D 84 3D 3D 84 3F 3D 3F 3D 3F 3D 3F 3D 84 3F 82 3D 3D 84 3F 3D 3F 3D 3F 3D 84 3F 3D 3F 3D 3F 3D 3F 3D 84 3F 82 3D 3D 84 3F 3D"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 240,
+          "pulse1_start": 23,
+          "triangle_start": 39,
+          "noise_start": 64,
+          "dmc_start": 73,
+          "pulse2_envelope": 96,
+          "pulse1_envelope": 96,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 164,
+          "stream": "84 7F 82 22 23 84 24 25 85 27 26 27 29 84 2A 86 22 84 7F 22 24 25 00 87 7F 85 1E 1E 1E 1E 84 22 86 1E 84 7F 1E 1E 1E 84 1B 27 1E 27 84 1B 85 27 84 22 1B 27 1E 27 84 1B 85 27 84 22 1B 27 1E 27 84 16 82 02 02 84 16 02 00 84 3F 3D 3F 3D 84 3F 3D 3F 3D 3F 3D 3F 3D 84 3F 82 3D 3D 84 3F 3D 3F 3D 3F 3D"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 156,
+          "pulse1_start": 10,
+          "triangle_start": 19,
+          "noise_start": 36,
+          "dmc_start": 45,
+          "pulse2_envelope": 96,
+          "pulse1_envelope": 96,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 164,
+          "stream": "85 27 26 27 2A 87 24 84 7F 00 85 1E 1E 1E 27 87 1E 84 7F 84 1B 85 27 84 22 1B 27 1E 27 84 20 85 2C 84 2C 7F 84 16 82 02 02 84 16 02 00 84 3F 3D 3F 3D 3F 3D 3F 3D 84 3F 82 3D 3D 84 3F 3D 00"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 192,
+          "pulse1_start": 15,
+          "triangle_start": 29,
+          "noise_start": 51,
+          "dmc_start": 60,
+          "pulse2_envelope": 96,
+          "pulse1_envelope": 96,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 164,
+          "stream": "85 28 27 84 25 86 27 87 25 84 7F 25 24 23 00 85 25 25 84 22 86 24 87 1D 84 7F 31 30 2F 84 21 85 2D 84 2D 84 20 85 2C 84 2C 84 19 85 25 84 20 19 25 1D 25 84 16 82 02 02 84 16 02 00 84 3F 3D 3F 3D 3F 3D 3F 3D 84 3F 82 3D 3D 84 3F 3D 3F 3D 3F 3D"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 192,
+          "pulse1_start": 19,
+          "triangle_start": 37,
+          "noise_start": 57,
+          "dmc_start": 66,
+          "pulse2_envelope": 0,
+          "pulse1_envelope": 0,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 164,
+          "stream": "84 22 2A 7F 25 7F 25 27 25 84 22 2A 7F 7F 7F 25 27 7F 00 84 1E 25 7F 22 7F 22 22 22 84 1E 25 7F 7F 7F 22 22 7F 84 1E 85 2A 84 25 1E 2A 22 2A 84 1E 85 2A 84 25 1E 2A 22 2A 84 16 82 02 02 84 16 02 00 84 3F 82 3D 3D 84 3F 3D 3F 3D 3F 3D 84 3F 82 3D 3D 84 3F 3D 3F 3D 3F 3D"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 192,
+          "pulse1_start": 36,
+          "triangle_start": 45,
+          "noise_start": 65,
+          "dmc_start": 74,
+          "pulse2_envelope": 80,
+          "pulse1_envelope": 80,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 164,
+          "stream": "84 29 82 25 84 29 82 25 84 29 84 2A 82 25 84 2A 82 25 84 2A 84 2B 82 25 84 2B 82 25 84 2B 84 2C 25 27 25 00 87 20 21 22 84 29 20 20 20 84 19 85 25 84 20 19 25 1D 25 84 19 85 25 84 20 19 25 1D 25 84 16 82 02 02 84 16 02 00 84 3F 82 3D 3D 84 3F 3D 3F 3D 3F 3D 84 3F 82 3D 3D 84 3F 3D 3F 3D 3F 3D"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 156,
+          "pulse1_start": 10,
+          "triangle_start": 19,
+          "noise_start": 39,
+          "dmc_start": 48,
+          "pulse2_envelope": 80,
+          "pulse1_envelope": 80,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 164,
+          "stream": "85 27 29 2B 31 87 30 84 7F 00 85 1F 1F 25 2B 87 1E 84 7F 84 1B 85 27 84 22 1B 27 1F 27 84 20 85 2C 84 27 20 2C 24 2C 84 16 82 02 02 84 16 02 00 84 3F 82 3D 3D 84 3F 3D 3F 3D 3F 3D 84 3F 82 3D 3D 84 3F 3D 3F"
+        }
+      ],
+      "bytes": 778
+    },
+    {
+      "music_id": 4,
+      "transpose": -8,
+      "loop_position": 1,
+      "order": [
+        {
+          "type": "flag",
+          "value": 2
+        },
+        {
+          "type": "pattern",
+          "index": 0
+        },
+        {
+          "type": "pattern",
+          "index": 1
+        },
+        {
+          "type": "pattern",
+          "index": 0
+        },
+        {
+          "type": "pattern",
+          "index": 2
+        },
+        {
+          "type": "pattern",
+          "index": 3
+        },
+        {
+          "type": "pattern",
+          "index": 4
+        },
+        {
+          "type": "pattern",
+          "index": 3
+        },
+        {
+          "type": "pattern",
+          "index": 5
+        },
+        {
+          "type": "pattern",
+          "index": 6
+        },
+        {
+          "type": "pattern",
+          "index": 7
+        }
+      ],
+      "patterns": [
+        {
+          "tempo": 57,
+          "section_frames": 192,
+          "pulse1_start": 19,
+          "triangle_start": 37,
+          "noise_start": 55,
+          "dmc_start": 61,
+          "pulse2_envelope": 64,
+          "pulse1_envelope": 64,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 164,
+          "stream": "84 7F 30 2C 27 26 27 7F 27 84 7F 31 2D 28 2A 28 2A 28 00 84 7F 2C 27 24 23 24 7F 24 84 7F 2D 28 25 26 25 26 25 84 20 20 27 20 7F 20 27 20 84 21 21 28 21 7F 21 28 21 84 06 06 02 06 00 84 02 82 3F 3F 84 02 3D 02 3D 02 3D 00"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 192,
+          "pulse1_start": 11,
+          "triangle_start": 21,
+          "noise_start": 39,
+          "dmc_start": 45,
+          "pulse2_envelope": 64,
+          "pulse1_envelope": 64,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 164,
+          "stream": "85 27 84 7F 87 2C 84 7F 89 7F 00 85 24 84 7F 87 24 84 7F 89 7F 84 20 20 27 20 7F 20 27 20 84 20 20 27 20 7F 20 27 20 84 06 06 02 06 00 84 02 82 3F 3F 84 02 3D 02 3D 02 3D 00"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 192,
+          "pulse1_start": 15,
+          "triangle_start": 29,
+          "noise_start": 47,
+          "dmc_start": 53,
+          "pulse2_envelope": 64,
+          "pulse1_envelope": 64,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 164,
+          "stream": "85 27 84 7F 87 2C 84 7F 87 7F 84 30 86 33 00 85 24 84 7F 87 24 84 7F 87 7F 84 2C 86 30 84 20 20 27 20 7F 20 27 20 84 20 20 27 20 7F 20 27 20 84 06 06 02 06 00 84 02 82 3F 3F 84 02 3D 02 3D 02 3D 00"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 192,
+          "pulse1_start": 9,
+          "triangle_start": 17,
+          "noise_start": 35,
+          "dmc_start": 41,
+          "pulse2_envelope": 80,
+          "pulse1_envelope": 80,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 164,
+          "stream": "89 31 87 7F 84 30 86 31 00 89 2E 87 7F 84 2C 86 2E 84 1E 1E 25 1E 7F 1E 25 1E 84 1E 1E 25 1E 7F 1E 25 1E 84 06 06 02 06 00 84 02 82 3F 3F 84 02 3D 00"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 192,
+          "pulse1_start": 15,
+          "triangle_start": 29,
+          "noise_start": 47,
+          "dmc_start": 53,
+          "pulse2_envelope": 80,
+          "pulse1_envelope": 80,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 164,
+          "stream": "85 30 84 2C 86 27 85 7F 87 7F 84 30 86 33 00 85 2C 84 27 86 24 85 7F 87 7F 84 2C 86 30 84 20 20 27 20 7F 20 27 20 84 20 20 27 20 7F 20 27 20 84 06 06 02 06 00 84 02 82 3F 3F 84 02 3D 00"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 192,
+          "pulse1_start": 14,
+          "triangle_start": 27,
+          "noise_start": 45,
+          "dmc_start": 51,
+          "pulse2_envelope": 80,
+          "pulse1_envelope": 80,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 164,
+          "stream": "85 30 84 33 87 38 84 7F 87 7F 85 38 37 00 85 2C 84 30 87 33 84 7F 87 7F 85 30 30 84 20 20 27 20 7F 20 27 20 84 20 20 27 20 7F 20 27 20 84 06 06 02 06 00 84 02 82 3F 3F 84 02 3D 00"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 384,
+          "pulse1_start": 25,
+          "triangle_start": 71,
+          "noise_start": 107,
+          "dmc_start": 113,
+          "pulse2_envelope": 0,
+          "pulse1_envelope": 0,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 164,
+          "stream": "86 36 87 33 84 7F 86 35 87 31 84 7F 86 33 87 2C 84 7F 87 7F 84 2C 86 2B 00 84 33 82 2F 2A 33 2F 2A 33 2F 2A 33 2F 2A 33 2F 2A 84 35 82 31 2C 35 31 2C 35 31 2C 35 31 2C 35 31 2C 86 30 87 27 84 7F 87 7F 84 24 86 24 84 23 23 23 23 23 23 23 23 84 25 25 25 25 25 25 25 25 84 20 20 27 20 7F 20 27 20 84 20 20 27 20 7F 20 27 20 84 06 06 02 06 00 82 3F 3F 3F 3F 84 3D 82 3F 3F 3F 3F 84 3D 82 3F 3F 3F 3F 82 3F 3F 3F 3F 84 3D 82 3F 3F 3F 3F 84 3D 82 3F 3F 3F 3F 84 02 82 3F 3F 84 02 3D 84 02 82 3F 3F 84 02 3D 84 02 82 3F 3F 84 02 3D 84 02 82 3F 3F 84 02 3D"
+        },
+        {
+          "tempo": 57,
+          "section_frames": 384,
+          "pulse1_start": 16,
+          "triangle_start": 53,
+          "noise_start": 93,
+          "dmc_start": 99,
+          "pulse2_envelope": 0,
+          "pulse1_envelope": 0,
+          "pulse2_vibrato": 164,
+          "pulse1_vibrato": 164,
+          "stream": "86 2A 87 33 84 7F 86 29 87 31 84 7F 89 30 7F 00 84 33 82 2F 2A 33 2F 2A 33 2F 2A 33 2F 2A 33 2F 2A 84 35 82 31 2C 35 31 2C 35 31 2C 35 31 2C 35 31 2C 89 27 7F 84 23 23 23 23 23 23 23 23 84 25 25 25 25 25 25 25 25 84 20 20 27 20 7F 20 27 20 84 20 20 7F 20 8A 20 20 8B 20 84 7F 20 84 06 06 02 06 00 82 3F 3F 3F 3F 84 3D 82 3F 3F 3F 3F 84 3D 82 3F 3F 3F 3F 82 3F 3F 3F 3F 84 3D 82 3F 3F 3F 3F 84 3D 82 3F 3F 3F 3F 84 02 82 3F 3F 84 02 3D 84 02 82 3F 3F 84 02 3D 84 02 82 3F 3F 84 02 3D 84 02 82 3F 3F 84 02 3D"
+        }
+      ],
+      "bytes": 810
+    }
+  ]
+}

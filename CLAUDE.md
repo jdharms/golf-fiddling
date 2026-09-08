@@ -47,6 +47,13 @@ golf-hex2bin
 # Expand dictionary codes into their complete horizontal transition sequences
 golf-expand-dict <meta.json> [terrain|greens]
 
+# Export the game's music. Works on nes_open_us.nes and mario_open_jp.nes alike -
+# the JP engine is the same code at shifted addresses, discovered at runtime.
+golf-export-music <rom_file.nes> [-o out.nsf]              # every track as an NSF
+golf-export-music <rom_file.nes> --drums -o drum_kit.nsf   # 10 DPCM drums, one song each
+golf-export-music <rom_file.nes> --dump [--tracks courses|all|N,N] [--reference other.nes]
+    # relocatable JSON: order lists, pattern headers and stream bytes for re-insertion
+
 # Targeted ROM reads/searches/disassembly for reverse-engineering work.
 # Use the nes-open-golf-rom-peek skill before inspecting a ROM.
 golf-rom-peek <rom_file.nes> read '$E4F9' --length 10
