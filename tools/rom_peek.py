@@ -41,6 +41,13 @@ import re
 import sys
 
 from golf.core.mlb_labels import TYPE_ALIASES, Label, LabelStore, describe
+from golf.core.rom_analysis import (
+    FIXED_BANK,
+    disassemble,
+    find_code_references,
+    find_data_references,
+    find_pointer_references,
+)
 from golf.core.rom_reader import RomReader
 from golf.core.rom_utils import (
     FIXED_BANK_PRG_START,
@@ -182,41 +189,142 @@ def _symbolicate(text: str, bank: int | None, labels: LabelStore) -> str:
 
 
 def cmd_disasm(reader: RomReader, args, labels: LabelStore | None) -> None:
-    from py65.devices.mpu6502 import MPU
-    from py65.disassembler import Disassembler
+    prg_offset = parse_address(args.address, args.bank)
+    listing = disassemble(
+        reader,
+        prg_offset,
+        count=None if args.routine else args.count,
+        routine=args.routine,
+        max_instructions=args.max,
+        labels=labels,
+        expand_data=not args.no_data_ranges,
+        inline_args=not args.no_inline_args,
+    )
+
+    for row in listing.rows:
+        if row.label:
+            label = labels.lookup("NesPrgRom", row.prg) if labels else None
+            print(f"{describe(label, row.prg) if label else row.label}:")
+        text = row.text
+        if row.kind == "code" and labels is not None:
+            text = _symbolicate(text, args.bank, labels)
+        elif row.kind == "inline" and row.note:
+            text = f"{text}".ljust(44) + f"; inline args for {row.note}"
+        raw = row.raw.hex(" ").upper()
+        if len(raw) > 8:
+            raw = raw[:8] + ".."
+        print(f"${row.cpu:04X}  {raw:<10}  {text}")
+
+    if args.routine or not listing.complete:
+        print()
+        marker = "" if listing.complete else "INCOMPLETE - "
+        print(f"[{marker}stopped: {listing.stop_reason}]")
+        if not listing.complete:
+            print(
+                "[the routine may continue past this point; re-run with a larger "
+                "--max or an explicit --count]"
+            )
+
+
+def _print_refs(refs, indent="  ") -> None:
+    for r in refs:
+        line = f"{indent}{r.kind:<15} bank {r.bank:2}  ${r.cpu:04X}  prg 0x{r.prg:05X}"
+        if r.detail:
+            line += f"  {r.detail}"
+        if r.in_data_range:
+            line += f"   <-- inside data range {r.in_data_range}, probably a coincidence"
+        elif r.aligned is False:
+            line += "   <-- lands mid-instruction, byte coincidence"
+        elif r.aligned is None:
+            line += "   [UNVERIFIED: no nearby code label to check alignment against]"
+        print(line)
+
+
+def cmd_find_refs(reader: RomReader, args, labels: LabelStore | None) -> None:
+    if args.type != "prg":
+        addr = int(args.address.lstrip("$"), 16)
+        direct, reaching = find_data_references(reader, addr, labels, args.reach)
+        print(f"${addr:04X} ({args.type})")
+        if direct:
+            print(f"\n  direct references ({len(direct)}):")
+            _print_refs(direct, "    ")
+        else:
+            print("\n  direct references: NONE FOUND")
+        if args.reach:
+            if reaching:
+                print(
+                    f"\n  indexed bases within {args.reach} bytes below, which could reach "
+                    "this address if the index register ranges far enough:"
+                )
+                for base in sorted(reaching):
+                    print(f"    ${base:04X},X/Y  ({len(reaching[base])} sites)")
+                    _print_refs(reaching[base], "      ")
+                print(
+                    "\n  [how far X/Y actually range is NOT determined here - read each "
+                    "site before concluding this address is safe]"
+                )
+            else:
+                print(f"\n  no indexed bases within {args.reach} bytes below")
+        if not direct:
+            _print_null_warning(reader, addr, labels, args, code=False)
+        return
 
     prg_offset = parse_address(args.address, args.bank)
     bank, cpu_addr = prg_to_bank_and_cpu(prg_offset)
+    report = find_code_references(reader, cpu_addr, bank, labels)
 
-    # Max instruction length is 3 bytes; overshoot the read so the last
-    # decoded instruction never runs off the end of the buffer.
-    data = reader.read_prg(prg_offset, args.count * 3)
+    print(f"{report.target_desc}  prg 0x{prg_offset:05X}")
+    if labels is not None:
+        label = labels.lookup("NesPrgRom", prg_offset)
+        if label is not None:
+            print(f"  {describe(label, prg_offset)}")
 
-    mpu = MPU()
-    region_end = min(cpu_addr + len(data), 0x10000)
-    mpu.memory[cpu_addr:region_end] = list(data[: region_end - cpu_addr])
-    dis = Disassembler(mpu)
+    confirmed = report.confirmed
+    suspect = [r for r in report.refs if r.suspect]
+    if confirmed:
+        unverified = len(report.unverified)
+        suffix = f", {unverified} unverified" if unverified else ""
+        print(f"\n  references ({len(confirmed)}{suffix}):")
+        _print_refs(confirmed)
+    else:
+        print("\n  references: NONE FOUND")
+    if suspect:
+        print(f"\n  discarded as coincidence ({len(suspect)}) - byte matches inside data ranges:")
+        _print_refs(suspect)
 
-    pc = cpu_addr
-    for _ in range(args.count):
-        offset = pc - cpu_addr
-        if offset >= len(data):
-            break
-        length, text = dis.instruction_at(pc)
-        if length <= 0:
-            print(f"${pc:04X}  {data[offset]:02X}        .byte ${data[offset]:02X}  (undecoded)")
-            pc += 1
-            continue
-        raw = data[offset : offset + length]
-        display_text = text.upper()
-        if labels is not None:
-            instr_prg_offset = prg_offset + offset
-            label = labels.lookup("NesPrgRom", instr_prg_offset)
-            if label is not None and label.start == instr_prg_offset:
-                print(f"{describe(label, instr_prg_offset)}:")
-            display_text = _symbolicate(display_text, args.bank, labels)
-        print(f"${pc:04X}  {raw.hex(' ').upper():<8}  {display_text}")
-        pc += length
+    print("\n  searched:")
+    for item in report.searched:
+        print(f"    - {item}")
+
+    if report.empty:
+        _print_null_warning(reader, cpu_addr, labels, args, code=True, report=report)
+
+
+def _print_null_warning(reader, addr, labels, args, code: bool, report=None) -> None:
+    print("\n  NOT COVERED by this search - a null result is NOT evidence that this")
+    print("  address is unused:")
+    items = report.not_covered if report is not None else [
+        "any access that computes the address at run time",
+        "DMA, the decompressor, and anything the PPU reads directly",
+    ]
+    for item in items:
+        print(f"    - {item}")
+
+    hits = find_pointer_references(reader, addr, labels)
+    print(f"\n  escalating: {len(hits)} raw byte-pair(s) matching ${addr:04X} in the ROM.")
+    print("  For a pointer search the usual reading is inverted - a hit inside a labelled")
+    print("  table is a LIKELY indirect reference, not a coincidence:")
+    for hit in hits[:25]:
+        where = (
+            f"in {hit.in_data_range}  <-- likely a real pointer-table entry"
+            if hit.in_data_range
+            else "not in any labelled range"
+        )
+        print(f"    bank {hit.bank:2}  ${hit.cpu:04X}  prg 0x{hit.prg:05X}  {where}")
+    if len(hits) > 25:
+        print(f"    ... and {len(hits) - 25} more")
+    print("\n  [confirm with a Mesen breakpoint before treating this address as dead,")
+    print("   then record the result in the .mlb comment or a doc so it isn't re-derived]")
 
 
 def cmd_label(_reader: RomReader, args, labels: LabelStore | None) -> None:
@@ -306,6 +414,47 @@ def main():
     disasm_parser.add_argument(
         "--count", type=int, default=10, help="Number of instructions to decode (default: 10)"
     )
+    disasm_parser.add_argument(
+        "--routine",
+        action="store_true",
+        help="Decode until the routine ends (terminator with no pending forward branch, "
+        "or the start of a labelled data range) instead of a fixed --count",
+    )
+    disasm_parser.add_argument(
+        "--max",
+        type=int,
+        default=200,
+        help="Safety cap on rows for --routine (default: 200); output says so if hit",
+    )
+    disasm_parser.add_argument(
+        "--no-inline-args",
+        action="store_true",
+        help="Decode inline arguments as instructions (the vanilla, desynchronising behaviour)",
+    )
+    disasm_parser.add_argument(
+        "--no-data-ranges",
+        action="store_true",
+        help="Decode labelled data ranges as instructions instead of .db rows",
+    )
+
+    refs_parser = subparsers.add_parser(
+        "find-refs",
+        help="Find references to an address across every encoding (JSR/JMP/branch/far call/dispatch)",
+    )
+    refs_parser.add_argument("address", help="'$XXXX' CPU address or raw hex PRG offset")
+    refs_parser.add_argument("--bank", type=int, help="Bank the target lives in, for type=prg")
+    refs_parser.add_argument(
+        "--type",
+        choices=list(TYPE_ALIASES),
+        default="prg",
+        help="What kind of address the target is (default: prg)",
+    )
+    refs_parser.add_argument(
+        "--reach",
+        type=int,
+        default=0,
+        help="For RAM: also list indexed bases up to N bytes below that could reach it",
+    )
 
     label_parser = subparsers.add_parser(
         "label", help="Look up the label at an address (requires --labels)"
@@ -337,6 +486,7 @@ def main():
         "disasm": cmd_disasm,
         "label": cmd_label,
         "find-label": cmd_find_label,
+        "find-refs": cmd_find_refs,
     }
     try:
         commands[args.command](reader, args, labels)

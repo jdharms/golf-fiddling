@@ -7,7 +7,6 @@ Non-editor:
 * Does SuperShot! do anything?
 * Do bunker lips do anything?
 * index for patch requirements/rom space usage
-* disasm should handle far calls, and other inline parameters.
 
 Randomizer:
 * Hole equivalence classes

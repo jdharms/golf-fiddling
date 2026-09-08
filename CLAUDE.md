@@ -47,9 +47,12 @@ golf-hex2bin
 # Expand dictionary codes into their complete horizontal transition sequences
 golf-expand-dict <meta.json> [terrain|greens]
 
-# Targeted ROM byte reads/searches for reverse-engineering work (see below)
+# Targeted ROM reads/searches/disassembly for reverse-engineering work.
+# Use the nes-open-golf-rom-peek skill before inspecting a ROM.
 golf-rom-peek <rom_file.nes> read '$E4F9' --length 10
 golf-rom-peek <rom_file.nes> find '20 84 CE' --follow 2
+golf-rom-peek <rom_file.nes> --labels <file.mlb> disasm '$AB16' --bank 13 --routine
+golf-rom-peek <rom_file.nes> --labels <file.mlb> find-refs '$AA09' --bank 13
 
 # Seed pin positions and wind per hole so every player sees the same conditions
 # (see docs/seeded_wind.md; requires course3_mirror, which golf-write applies)
@@ -140,10 +143,9 @@ The codebase is organized into three main packages:
 
 For complete ROM layout details (all pointer table addresses, metadata tables, etc.), use the `nes-open-golf-rom-layout` skill.
 
-**ROM Peek Tool**: `golf-rom-peek` (`tools/rom_peek.py`) does targeted ROM reads/searches for reverse-engineering work, wrapping `RomReader`/`rom_utils` address translation so investigations don't need hand-written one-off Python. Addresses are given as `$XXXX` (CPU address; fixed bank unless `--bank N` is passed) or a raw hex PRG offset. Subcommands:
-- `read <address> [--bank N] [--length N] [--format hex|python|ascii]` - read bytes; `--format python` emits a `bytes([...])` literal ready to paste into a `BytePatch`
-- `find <hex pattern> [--bank N] [--follow N] [--flag-range LOW-HIGH]` - search for a byte sequence anywhere in the ROM, reporting `bank`/`cpu`/`prg` per hit; `--follow 2` decodes the trailing bytes as a little-endian pointer (e.g. to find every caller of a routine that embeds a data pointer after the call site) and `--flag-range` marks hits whose pointer falls in a given range
-- `addr <address> [--bank N]` - convert between CPU address and PRG offset with no ROM read
+**ROM Peek Tool**: `golf-rom-peek` (`tools/rom_peek.py`, analysis logic in `golf/core/rom_analysis.py`) does targeted ROM reads, searches, disassembly and reference-finding, so investigations don't need hand-written one-off Python.
+
+**Use the `nes-open-golf-rom-peek` skill whenever inspecting a ROM** - reading bytes, disassembling, tracing what calls a routine, or looking for reclaimable space. It documents the subcommands, the three ways a naive byte search or linear disassembly silently lies about this ROM (inline-argument routines, data that decodes as convincing code, and references no byte pattern can find), and the confidence discipline for null results: a "no references found" is never proof an address is dead.
 
 **Decompression**: Course terrain and greens use a custom compression scheme with three stages:
 1. RLE + dictionary expansion (codes $E0+ expand to multiple bytes)
