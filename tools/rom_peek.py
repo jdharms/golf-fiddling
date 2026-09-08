@@ -32,9 +32,8 @@ Examples:
     golf-rom-peek rom.nes --labels notes.mlb label '001A' --type ram
     golf-rom-peek rom.nes --labels notes.mlb find-label ScrollX
 
-The `disasm` subcommand needs py65 (`uv pip install py65`) for opcode decoding -
-it's not a hard dependency of the rest of the project, just this one subcommand.
-If you are an LLM Agent, *assume you have py65 installed already*.
+The `disasm` subcommand decodes opcodes with py65, a project dependency - it is
+installed by `uv sync` along with everything else, so `disasm` always works.
 """
 
 import argparse
@@ -183,15 +182,8 @@ def _symbolicate(text: str, bank: int | None, labels: LabelStore) -> str:
 
 
 def cmd_disasm(reader: RomReader, args, labels: LabelStore | None) -> None:
-    try:
-        from py65.devices.mpu6502 import MPU
-        from py65.disassembler import Disassembler
-    except ImportError:
-        print(
-            "Error: py65 is required for disasm (uv pip install py65)",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+    from py65.devices.mpu6502 import MPU
+    from py65.disassembler import Disassembler
 
     prg_offset = parse_address(args.address, args.bank)
     bank, cpu_addr = prg_to_bank_and_cpu(prg_offset)
@@ -307,7 +299,7 @@ def main():
     addr_parser.add_argument("--bank", type=int, help="Switchable bank number (0-14)")
 
     disasm_parser = subparsers.add_parser(
-        "disasm", help="Disassemble instructions starting at an address (needs py65)"
+        "disasm", help="Disassemble instructions starting at an address"
     )
     disasm_parser.add_argument("address", help="'$XXXX' CPU address or raw hex PRG offset")
     disasm_parser.add_argument("--bank", type=int, help="Switchable bank number (0-14)")

@@ -4,9 +4,10 @@ Investigate:
 
 
 Non-editor:
-* "missed" shots
 * Does SuperShot! do anything?
 * Do bunker lips do anything?
+* index for patch requirements/rom space usage
+* disasm should handle far calls, and other inline parameters.
 
 Randomizer:
 * Hole equivalence classes
@@ -26,6 +27,7 @@ Todos:
 * linter/validator of some sort
 * Investigate assigning corners to multiple banks
   * Most of the complexity here is with the cycle tool
+* CLAUDE.md needs to be revisited
 
 
 Bugs:
@@ -35,7 +37,8 @@ Bugs:
 
 Thoughts:
 * It can be tough to know when to "cut bait"
-* I have a temptation to fix problems at the abstraction level I'm working at (claude code), even when fixing the problem is just a few changes to a few lines in a few files.
+* I have a temptation to fix problems at the abstraction level I'm working at (claude code),
+  even when fixing the problem is just a few changes to a few lines in a few files.
 
 
 Done:

@@ -38,6 +38,12 @@ from .menu_trim import (
     random_title,
 )
 from .mercy_tap_in import mercy_tap_in_patches
+from .practice_swing import (
+    DEFAULT_HOLD_FRAMES,
+    PRACTICE_SWING_OFFSET,
+    practice_swing_patch,
+    practice_swing_patches,
+)
 from .seeded_wind import (
     HoleWindForecast,
     derive_hole_seeds,
@@ -75,6 +81,10 @@ __all__ = [
     "CompositePatch",
     "PatchError",
     "mercy_tap_in_patches",
+    "practice_swing_patch",
+    "practice_swing_patches",
+    "PRACTICE_SWING_OFFSET",
+    "DEFAULT_HOLD_FRAMES",
     "menu_trim_patch",
     "menu_trim_patches",
     "random_title",
