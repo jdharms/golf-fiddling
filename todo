@@ -13,6 +13,10 @@ Randomizer:
 * Mirrored holes?
 * Randomize bunkers/water?
 * Music swap/shuffle
+* random green topography?
+* palette swaps
+* putting practice mode
+  * Notes: Need to change/fake(?) par values and get rid of the hole in one cutscene
 
 Todos:
 * Invalid neighbor indicator should be a single border per pairing
