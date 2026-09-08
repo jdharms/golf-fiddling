@@ -102,6 +102,7 @@ dependencies = [
     { name = "numpy" },
     { name = "pillow" },
     { name = "plyer" },
+    { name = "py65" },
     { name = "pygame" },
 ]
 
@@ -119,6 +120,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.4.0" },
     { name = "pillow", specifier = ">=12.0.0" },
     { name = "plyer", specifier = ">=2.1.0" },
+    { name = "py65", specifier = ">=1.2.0" },
     { name = "pygame", specifier = ">=2.6.1" },
 ]
 
@@ -325,6 +327,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/20/85/f61425aa9be1f9108eec1c13861c1e11c9a04eb786eb4832a8f7188317df/plyer-2.1.0.tar.gz", hash = "sha256:65b7dfb7e11e07af37a8487eb2aa69524276ef70dad500b07228ce64736baa61", size = 121371, upload-time = "2022-11-12T13:36:48.978Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d3/89/a41c2643fc8eabeb84791acb9d0e4d139b1e4b53473cc4dae947b5fa33ed/plyer-2.1.0-py2.py3-none-any.whl", hash = "sha256:1b1772060df8b3045ed4f08231690ec8f7de30f5a004aa1724665a9074eed113", size = 142266, upload-time = "2022-11-12T13:36:47.181Z" },
+]
+
+[[package]]
+name = "py65"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/15/de/8ceb654608a24ae247ac44443b369f70183d9a39d94e682ddb3c9767b330/py65-1.2.tar.gz", hash = "sha256:e1cb213823fc6ea8aecb219939943144b09439e5c14b3406cb5ca825d5875b93", size = 83481, upload-time = "2024-04-12T20:10:19.351Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f6/3d/7171f8401bb3cf058d233af314d3e314a348488bd22b2143b3591566a172/py65-1.2.0-py2.py3-none-any.whl", hash = "sha256:8e51f149647f2c2b44e5eb54350057771ccaef97f5f3d593fa3737e44c1ce4b7", size = 60518, upload-time = "2024-04-12T20:10:15.198Z" },
 ]
 
 [[package]]

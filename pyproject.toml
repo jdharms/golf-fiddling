@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2.4.0",
+    "py65>=1.2.0",
     "pillow>=12.0.0",
     "plyer>=2.1.0",
     "pygame>=2.6.1",
@@ -29,6 +30,7 @@ golf-analyze-putting = "tools.analyze_putting_surface:main"
 golf-compare-traces = "tools.compare_traces:main"
 golf-patch-wram = "tools.patch_wram:main"
 golf-patch-seeded-wind = "tools.patch_seeded_wind:main"
+golf-patch-practice-swing = "tools.patch_practice_swing:main"
 golf-rom-peek = "tools.rom_peek:main"
 golf-labels = "tools.labels:main"
 

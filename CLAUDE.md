@@ -55,6 +55,11 @@ golf-rom-peek <rom_file.nes> find '20 84 CE' --follow 2
 # (see docs/seeded_wind.md; requires course3_mirror, which golf-write applies)
 golf-patch-seeded-wind <rom_file.nes> --seed <meta-seed> [-o out.nes] [--holes 18|36] [--forecast N] [--validate-only]
 
+# Add a practice swing mode: Select in the "ready to swing" state steps the golfer
+# back 8px; swings then cost no stroke and launch no ball (see docs/practice_swing.md).
+# Requires wram_expansion, so apply golf-patch-wram first.
+golf-patch-practice-swing <rom_file.nes> [-o out.nes] [--hold-frames N] [--validate-only]
+
 # Launch the course editor (CHR files optional, defaults to data/ files)
 golf-editor [terrain_chr.bin] [greens_chr.bin] [hole.json]
 ```
