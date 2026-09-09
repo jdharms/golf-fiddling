@@ -206,6 +206,29 @@ def all_patterns(rom: bytes, layout: MusicLayout) -> dict:
     return out
 
 
+ENVELOPE_ROW_LEN = 16
+
+
+def envelope_rows(rom: bytes, layout: MusicLayout, patterns: list[dict]) -> dict[str, str]:
+    """The volume/duty rows the given patterns index, keyed by their header byte.
+
+    A pattern names its envelope as a base index into `MusicVolumeEnvelopeTable`,
+    and the table is a different length in each ROM - the JP one runs to row $B0
+    where the US one stops after $60. Carrying the rows with the track is what
+    makes it insertable into a ROM whose table is too short, so the inserter never
+    has to go back to the source ROM.
+
+    A row can overlap whatever follows the table (JP's $B0 borrows two bytes from
+    the noise drum table); that is what the engine reads, so it is what is dumped.
+    """
+    b = _bank14(rom)
+    bases = sorted({p[k] for p in patterns
+                    for k in ("pulse2_envelope", "pulse1_envelope")})
+    return {f"{base:02X}": " ".join(
+        f"{b(layout.envelope_table + base + i):02X}" for i in range(ENVELOPE_ROW_LEN))
+        for base in bases}
+
+
 def extract_track(rom: bytes, music_id: int, layout: MusicLayout | None = None) -> dict:
     """One track as relocatable data: order list, pattern headers, stream bytes."""
     layout = layout or discover_layout(rom)
@@ -247,6 +270,7 @@ def extract_track(rom: bytes, music_id: int, layout: MusicLayout | None = None) 
         "loop_position": loop,
         "order": entries,
         "patterns": patterns,
+        "envelope_rows": envelope_rows(rom, layout, patterns),
         "bytes": sum(len(p["stream"].split()) for p in patterns) + 11 * len(patterns),
     }
 

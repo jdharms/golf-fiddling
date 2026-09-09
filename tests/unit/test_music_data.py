@@ -180,6 +180,30 @@ def test_export_is_json_serialisable_and_complete(path):
             n = len(p["stream"].split())
             for k in ("pulse1_start", "triangle_start", "noise_start", "dmc_start"):
                 assert p[k] < n, f"{k}={p[k]} outside a {n}-byte block"
+            # the envelopes the pattern names must travel with the track
+            for k in ("pulse2_envelope", "pulse1_envelope"):
+                assert f"{p[k]:02X}" in t["envelope_rows"]
+
+
+@pytest.mark.parametrize("path", [US, JP])
+def test_exported_envelope_rows_are_the_bytes_the_engine_reads(path):
+    """A row is 16 bytes read straight from the table at the named base."""
+    rom = _load(path)
+    L = discover_layout(rom)
+    b = md._bank14(rom)
+    for mid in sorted(set(md.discover_course_bgm(rom)["music_ids"].values())):
+        for base, row in md.extract_track(rom, mid, L)["envelope_rows"].items():
+            expected = [f"{b(L.envelope_table + int(base, 16) + i):02X}" for i in range(16)]
+            assert row.split() == expected
+
+
+def test_japanese_course_themes_need_envelope_rows_the_us_rom_lacks(jp, us):
+    """Why the rows have to travel with the track: the US table stops at $60."""
+    jl, ul = discover_layout(jp), discover_layout(us)
+    used = {int(k, 16)
+            for mid in md.discover_course_bgm(jp)["unique_music_ids"]
+            for k in md.extract_track(jp, mid, jl)["envelope_rows"]}
+    assert max(used) > ul.noise_drum_table - ul.envelope_table - 16
 
 
 def test_export_records_tuning_against_a_reference(jp, us):

@@ -51,6 +51,11 @@ from .seeded_wind import (
     seeded_wind_patch,
     seeded_wind_patches,
 )
+from .music_import import (
+    COURSE_TRACKS,
+    MusicImportPatch,
+    music_import_patch,
+)
 from .multi_bank import (
     COURSE2_MIRROR_PATCH,
     COURSE2_MIRROR_PATCH_SCORECARD,
@@ -111,5 +116,8 @@ __all__ = [
     "ATTR_STREAMING_LOADTERRAIN_COPY_LOOP_NOP_PATCH",
     "ATTR_STREAMING_PATCHES",
     "WRAM_EXPANSION_PATCH",
+    "MusicImportPatch",
+    "music_import_patch",
+    "COURSE_TRACKS",
     "AVAILABLE_PATCHES",
 ]

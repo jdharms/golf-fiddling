@@ -54,6 +54,11 @@ golf-export-music <rom_file.nes> --drums -o drum_kit.nsf   # 10 DPCM drums, one 
 golf-export-music <rom_file.nes> --dump [--tracks courses|all|N,N] [--reference other.nes]
     # relocatable JSON: order lists, pattern headers and stream bytes for re-insertion
 
+# Insert course themes from a music dump into the US ROM (proof of concept).
+# Replaces music $02/$03/$04 in the space they already occupy; see
+# docs/music_format.md "Inserting a track".
+golf-patch-music <rom_file.nes> <music.json> [-o out.nes] [--transpose-adjust N] [--validate-only]
+
 # Targeted ROM reads/searches/disassembly for reverse-engineering work.
 # Use the nes-open-golf-rom-peek skill before inspecting a ROM.
 golf-rom-peek <rom_file.nes> read '$E4F9' --length 10

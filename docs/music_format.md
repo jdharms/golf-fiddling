@@ -327,9 +327,12 @@ at `$D000`. INIT clears RAM (but never the stack page, or it could not return), 
 into the fixed bank, and `$C000`+ is touched only by DPCM DMA.
 
 **Relocatable JSON** — `--dump` writes tracks as data an inserter can place anywhere:
-the order list, each pattern header with its stream pointer replaced by an index, and the
-raw stream bytes. `--tracks courses` (the default) picks the three course themes out of
-`CourseBgmTable`.
+the order list, each pattern header with its stream pointer replaced by an index, the raw
+stream bytes, and the 16-byte volume/duty rows the pattern headers index (`envelope_rows`,
+keyed by the base byte). Everything else the engine looks up — durations, periods,
+vibrato, noise drums, DPCM samples — is byte-identical between the two ROMs, so the
+envelope rows are the only table that has to travel with a track. `--tracks courses` (the
+default) picks the three course themes out of `CourseBgmTable`.
 
 ```bash
 golf-export-music mario_open_jp.nes --dump --reference nes_open_us.nes -o jp.music.json
@@ -403,7 +406,58 @@ US ones they span four different tempo bases (0, 19, 38 and 57) rather than all 
 US table's window shifted up two semitones, so the same note byte sounds a whole tone
 sharper. Adding **+2 to a JP track's transpose byte** makes it play identically in the US
 ROM — the octave arithmetic works out exactly, including across the wrap at the top of the
-table. Envelope row `$00` also sustains one volume step louder in JP, which is inaudible.
+table.
+
+The other difference a port has to carry is the envelope table. The US table runs
+`$81A4`-`$8231` (rows `$00`-`$60`); the JP one runs `$81B2`-`$826F` and its course themes
+index rows up to `$B0`, which do not exist in the US ROM. Rows `$10`-`$60` are identical
+in both; row `$00` is not (US `94 94 ...` at 50% duty against JP `55 55 ...` at 25%). A
+row may also overlap what follows the table — JP's `$B0` borrows its top two bytes from
+the noise drum table — and that is what the engine reads, so it is what a dump captures.
+
+## Inserting a track
+
+`golf-patch-music` (`tools/patch_music.py`, `golf/core/patches/music_import.py`) puts a
+dump back into a ROM. It is a **proof of concept**: it replaces music `$02`, `$03` and
+`$04` in the vanilla US ROM — exactly the three `CourseBgmTable` entries, so no code
+outside the music data changes — and it fits them into the space those three tracks
+already occupy.
+
+```bash
+golf-export-music mario_open_jp.nes --dump --reference nes_open_us.nes \
+    -o data/music/music_jp_courses.json
+golf-patch-music nes_open_us.nes data/music/music_jp_courses.json -o jp_music.nes
+```
+
+Removing the three US course themes frees four regions, and nothing else in the ROM
+reaches into any of them — their 22 pattern headers are contiguous and shared with no
+other track, and no surviving pattern's stream pointer lands inside their stream block:
+
+| Region | Extent | Bytes | JP courses need |
+|---|---|---|---|
+| Order data | `$8EC6`-`$8EEC` | 39 | 36 |
+| Pattern headers | `$8F7B`-`$906C` | 242 (22 slots) | 187 (17) |
+| Stream data | `$9379`-`$9CA3` | 2347 | 1578 |
+
+The relocated envelope table goes in what is left of the stream block: US rows
+`$00`-`$6F` verbatim, so every track that is not being replaced is untouched, then one
+appended row per imported envelope the US table does not already contain, with the
+imported pattern headers repointed at the new indices. Both readers of the table —
+`$8B31` for pulse 2 and `$8C7F` for pulse 1 — have their operands rewritten, which is why
+`discover_layout` finds the table at its new address afterwards.
+
+The one allocation constraint is that a header offset is a single byte added to a base
+chosen by music ID, so a header for track `$04` (base `$900A`) cannot sit below `$900D`.
+The allocator checks this rather than assuming it.
+
+Verified by running the game's own engine over both ROMs under py65: for all three
+imported tracks the patched US ROM emits a byte-identical APU write log to the JP ROM
+across 30 seconds of playback, and every other track's log is unchanged from vanilla
+(`tests/integration/test_music_import_rom.py`).
+
+A production version would discover the layout instead of hardcoding US addresses, and
+would need somewhere to put a track that does not fit in what it displaces — see "Space"
+below.
 
 ## Space
 
