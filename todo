@@ -16,7 +16,10 @@ Randomizer:
 * random green topography?
 * palette swaps
 * putting practice mode
-  * Notes: Need to change/fake(?) par values and get rid of the hole in one cutscene
+  * Notes: Need to change/fake(?) par values and get rid of the hole in one cutscenes.  Also reconsider rng seeding.
+* Pre-chosen SRAM init edits
+  * Club choices
+  * Player name(s)
 
 Todos:
 * Invalid neighbor indicator should be a single border per pairing

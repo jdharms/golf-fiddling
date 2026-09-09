@@ -412,11 +412,15 @@ table. Envelope row `$00` also sustains one volume step louder in JP, which is i
 | Order base table | `$8E9E`-`$8EB5` | 24 |
 | Order data | `$8EB6`-`$8F29` | 116 |
 | Pattern headers | `$8F2E`-`$913D` | 528 (48 × 11) |
-| Stream data | `$913E`-`$A647` | 5386 |
+| Stream data | `$913E`-`$A60F` | 5330 |
+| Padding | `$A610`-`$A63F` | 48 (`$FF`, unconfirmed) |
 
-Bank 14 continues past `$A647` with further audio data that this investigation did not
-identify. **Do not treat it as free** — confirm with a breakpoint before writing there, per
-the usual rule in the `nes-open-golf-rom-peek` skill.
+Bank 14 above `$A640` is **not audio at all**: it holds four menu screens — Choose Clubs
+(`$AE14`), Hall of Fame Holes (`$B420`), Clear Saved Data (`$B8C7`) and Training (`$BD04`) —
+plus their data. Each is reached only by `ExecuteFarCall bank $0E <addr>` from bank 12, so
+relocating them is a matter of retargeting four inline argument triples. That is the one
+realistic way to free a large contiguous block in the bank the sequencer can actually reach;
+see the note on addressing above.
 
 ## Confidence
 
