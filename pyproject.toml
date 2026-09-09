@@ -35,6 +35,7 @@ golf-patch-music = "tools.patch_music:main"
 golf-patch-practice-swing = "tools.patch_practice_swing:main"
 golf-rom-peek = "tools.rom_peek:main"
 golf-labels = "tools.labels:main"
+golf-golfer-export = "tools.golfer_export:main"
 
 [tool.uv]
 package = true

@@ -66,6 +66,17 @@ golf-rom-peek <rom_file.nes> find '20 84 CE' --follow 2
 golf-rom-peek <rom_file.nes> --labels <file.mlb> disasm '$AB16' --bank 13 --routine
 golf-rom-peek <rom_file.nes> --labels <file.mlb> find-refs '$AA09' --bank 13
 
+# Export a golfer's animation as layered Aseprite files for redrawing.
+# Layers: body (editable), one club layer per animation group (move to reposition,
+# don't redraw), guides (locked). A swing has four club groups (clubs 0-3, 4-7,
+# 8-11, 12-14); putting has one (club 15). Frames sharing a metasprite in the ROM
+# are written as linked cels. The palette offers every NES colour once - all 64
+# less the nine redundant blacks, which fold onto $0F - so the artist can pick
+# freely; enforcing "at most 3 on the body" is the importer's job. A JSON sidecar
+# records the canvas origin, the palette index -> NES colour map, each frame's
+# club nudge slot, and which layers share a nudge class.
+golf-golfer-export <rom_file.nes> <out_dir> [-g mario|0|all] [-c VISIBLE_CLUB] [-a swing|putt|both]
+
 # Seed pin positions and wind per hole so every player sees the same conditions
 # (see docs/seeded_wind.md; requires course3_mirror, which golf-write applies)
 golf-patch-seeded-wind <rom_file.nes> --seed <meta-seed> [-o out.nes] [--holes 18|36] [--forecast N] [--validate-only]
@@ -158,6 +169,16 @@ For complete ROM layout details (all pointer table addresses, metadata tables, e
 **ROM Peek Tool**: `golf-rom-peek` (`tools/rom_peek.py`, analysis logic in `golf/core/rom_analysis.py`) does targeted ROM reads, searches, disassembly and reference-finding, so investigations don't need hand-written one-off Python.
 
 **Use the `nes-open-golf-rom-peek` skill whenever inspecting a ROM** - reading bytes, disassembling, tracing what calls a routine, or looking for reclaimable space. It documents the subcommands, the three ways a naive byte search or linear disassembly silently lies about this ROM (inline-argument routines, data that decodes as convincing code, and references no byte pattern can find), and the confidence discipline for null results: a "no references found" is never proof an address is dead.
+
+**Two Compression Schemes**: The ROM has two unrelated codecs, and they are easy to confuse.
+Course terrain/greens use the RLE + dictionary + vertical-fill scheme described below
+(`golf/core/decompressor.py`, `compressor.py`). *Everything the PPU displays* - pattern
+data, nametables, attribute tables - uses a separate stream codec (`$D4C3`), implemented in
+`golf/core/graphics_codec.py`. The cartridge has no CHR ROM, so about a third of the PRG is
+data in that second format. See `docs/course_intro_scene.md`.
+
+**Golfer Sprites**: `golf/core/golfer_sprites.py` reads the six golfers' metasprite tables,
+per-golfer CHR, palettes and club positioning out of the ROM. See `docs/golfer_sprites.md`.
 
 **Decompression**: Course terrain and greens use a custom compression scheme with three stages:
 1. RLE + dictionary expansion (codes $E0+ expand to multiple bytes)

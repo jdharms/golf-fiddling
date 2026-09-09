@@ -1,0 +1,1005 @@
+{
+  "golfer": 2,
+  "name": "Steve",
+  "animation": "swing",
+  "clubs": [
+    0,
+    4,
+    8,
+    12
+  ],
+  "canvas": {
+    "width": 64,
+    "height": 88,
+    "origin_x": 32,
+    "origin_y": 56
+  },
+  "body_box": {
+    "x0": -24,
+    "y0": -40,
+    "x1": 8,
+    "y1": 24
+  },
+  "body_palette_nes": [
+    null,
+    40,
+    15,
+    54
+  ],
+  "club_palette_nes": [
+    null,
+    23,
+    15,
+    48
+  ],
+  "palette": {
+    "transparent_index": 0,
+    "nes_by_index": [
+      null,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      null,
+      null,
+      null,
+      null
+    ],
+    "note": "nes_by_index maps a palette index to a NES colour; null means transparent or a guide colour. The nine redundant blacks are collapsed onto $0F.",
+    "body_indices": [
+      36,
+      14,
+      48
+    ],
+    "club_indices": [
+      22,
+      14,
+      42
+    ],
+    "max_body_colours": 3
+  },
+  "body_in_front_frames": [
+    5,
+    11
+  ],
+  "layers": [
+    "body - draw here",
+    "clubs 0-3 - move only (nudge class 0)",
+    "clubs 4-7 - move only (nudge class 11)",
+    "clubs 8-11 - move only (nudge class 11)",
+    "clubs 12-14 - move only (nudge class 11)",
+    "guides - locked"
+  ],
+  "nudge_classes_shared_by": {
+    "11": [
+      "clubs 4-7 - move only (nudge class 11)",
+      "clubs 8-11 - move only (nudge class 11)",
+      "clubs 12-14 - move only (nudge class 11)"
+    ]
+  },
+  "golfer_screen_x": {
+    "0": 124,
+    "4": 128,
+    "8": 131,
+    "12": 133
+  },
+  "frames": [
+    {
+      "frame": 0,
+      "body_metasprite": "$8882",
+      "body_sprites": 22,
+      "body_linked_to": null,
+      "peak_sprites_per_scanline": 3,
+      "body_in_front": false,
+      "clubs": {
+        "0": {
+          "layer": 1,
+          "metasprite": "$98F0",
+          "canonical_pos": {
+            "x": 34,
+            "y": 60
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": 22,
+          "nudge_class": 0
+        },
+        "4": {
+          "layer": 2,
+          "metasprite": "$9964",
+          "canonical_pos": {
+            "x": 34,
+            "y": 60
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": 33,
+          "nudge_class": 11
+        },
+        "8": {
+          "layer": 3,
+          "metasprite": "$99CC",
+          "canonical_pos": {
+            "x": 34,
+            "y": 60
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": 33,
+          "nudge_class": 11
+        },
+        "12": {
+          "layer": 4,
+          "metasprite": "$9A34",
+          "canonical_pos": {
+            "x": 34,
+            "y": 60
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": 33,
+          "nudge_class": 11
+        }
+      }
+    },
+    {
+      "frame": 1,
+      "body_metasprite": "$88C5",
+      "body_sprites": 20,
+      "body_linked_to": null,
+      "peak_sprites_per_scanline": 3,
+      "body_in_front": false,
+      "clubs": {
+        "0": {
+          "layer": 1,
+          "metasprite": "$98FD",
+          "canonical_pos": {
+            "x": 29,
+            "y": 59
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": 23,
+          "nudge_class": 0
+        },
+        "4": {
+          "layer": 2,
+          "metasprite": "$996E",
+          "canonical_pos": {
+            "x": 29,
+            "y": 58
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": 34,
+          "nudge_class": 11
+        },
+        "8": {
+          "layer": 3,
+          "metasprite": "$99D6",
+          "canonical_pos": {
+            "x": 29,
+            "y": 59
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": 34,
+          "nudge_class": 11
+        },
+        "12": {
+          "layer": 4,
+          "metasprite": "$9A41",
+          "canonical_pos": {
+            "x": 29,
+            "y": 59
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": 34,
+          "nudge_class": 11
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "body_metasprite": "$8902",
+      "body_sprites": 20,
+      "body_linked_to": null,
+      "peak_sprites_per_scanline": 3,
+      "body_in_front": false,
+      "clubs": {
+        "0": {
+          "layer": 1,
+          "metasprite": "$990A",
+          "canonical_pos": {
+            "x": 11,
+            "y": 54
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 1
+          },
+          "nudge_slot": 24,
+          "nudge_class": 0
+        },
+        "4": {
+          "layer": 2,
+          "metasprite": "$9978",
+          "canonical_pos": {
+            "x": 12,
+            "y": 54
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 1
+          },
+          "nudge_slot": 35,
+          "nudge_class": 11
+        },
+        "8": {
+          "layer": 3,
+          "metasprite": "$99E0",
+          "canonical_pos": {
+            "x": 12,
+            "y": 54
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 1
+          },
+          "nudge_slot": 35,
+          "nudge_class": 11
+        },
+        "12": {
+          "layer": 4,
+          "metasprite": "$9A4B",
+          "canonical_pos": {
+            "x": 12,
+            "y": 54
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 1
+          },
+          "nudge_slot": 35,
+          "nudge_class": 11
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "body_metasprite": "$893F",
+      "body_sprites": 22,
+      "body_linked_to": null,
+      "peak_sprites_per_scanline": 4,
+      "body_in_front": false,
+      "clubs": {
+        "0": {
+          "layer": 1,
+          "metasprite": "$9911",
+          "canonical_pos": {
+            "x": 2,
+            "y": 19
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 0
+          },
+          "nudge_slot": 25,
+          "nudge_class": 0
+        },
+        "4": {
+          "layer": 2,
+          "metasprite": "$997F",
+          "canonical_pos": {
+            "x": 2,
+            "y": 20
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 0
+          },
+          "nudge_slot": 36,
+          "nudge_class": 11
+        },
+        "8": {
+          "layer": 3,
+          "metasprite": "$99E7",
+          "canonical_pos": {
+            "x": 2,
+            "y": 20
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 0
+          },
+          "nudge_slot": 36,
+          "nudge_class": 11
+        },
+        "12": {
+          "layer": 4,
+          "metasprite": "$9A52",
+          "canonical_pos": {
+            "x": 2,
+            "y": 20
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 0
+          },
+          "nudge_slot": 36,
+          "nudge_class": 11
+        }
+      }
+    },
+    {
+      "frame": 4,
+      "body_metasprite": "$8982",
+      "body_sprites": 25,
+      "body_linked_to": null,
+      "peak_sprites_per_scanline": 4,
+      "body_in_front": false,
+      "clubs": {
+        "0": {
+          "layer": 1,
+          "metasprite": "$991E",
+          "canonical_pos": {
+            "x": 6,
+            "y": 4
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": -2
+          },
+          "nudge_slot": 26,
+          "nudge_class": 0
+        },
+        "4": {
+          "layer": 2,
+          "metasprite": "$998C",
+          "canonical_pos": {
+            "x": 6,
+            "y": 4
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": -1
+          },
+          "nudge_slot": 37,
+          "nudge_class": 11
+        },
+        "8": {
+          "layer": 3,
+          "metasprite": "$99F4",
+          "canonical_pos": {
+            "x": 6,
+            "y": 4
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": -1
+          },
+          "nudge_slot": 37,
+          "nudge_class": 11
+        },
+        "12": {
+          "layer": 4,
+          "metasprite": "$9A5F",
+          "canonical_pos": {
+            "x": 6,
+            "y": 4
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": -1
+          },
+          "nudge_slot": 37,
+          "nudge_class": 11
+        }
+      }
+    },
+    {
+      "frame": 5,
+      "body_metasprite": "$89CE",
+      "body_sprites": 25,
+      "body_linked_to": null,
+      "peak_sprites_per_scanline": 4,
+      "body_in_front": true,
+      "clubs": {
+        "0": {
+          "layer": 1,
+          "metasprite": "$992B",
+          "canonical_pos": {
+            "x": 22,
+            "y": 14
+          },
+          "nudge": {
+            "dx": 1,
+            "dy": 2
+          },
+          "nudge_slot": 27,
+          "nudge_class": 0
+        },
+        "4": {
+          "layer": 2,
+          "metasprite": "$9999",
+          "canonical_pos": {
+            "x": 22,
+            "y": 15
+          },
+          "nudge": {
+            "dx": 1,
+            "dy": 2
+          },
+          "nudge_slot": 38,
+          "nudge_class": 11
+        },
+        "8": {
+          "layer": 3,
+          "metasprite": "$9A01",
+          "canonical_pos": {
+            "x": 22,
+            "y": 15
+          },
+          "nudge": {
+            "dx": 1,
+            "dy": 2
+          },
+          "nudge_slot": 38,
+          "nudge_class": 11
+        },
+        "12": {
+          "layer": 4,
+          "metasprite": "$9A6C",
+          "canonical_pos": {
+            "x": 22,
+            "y": 15
+          },
+          "nudge": {
+            "dx": 1,
+            "dy": 2
+          },
+          "nudge_slot": 38,
+          "nudge_class": 11
+        }
+      }
+    },
+    {
+      "frame": 6,
+      "body_metasprite": "$8982",
+      "body_sprites": 25,
+      "body_linked_to": 4,
+      "peak_sprites_per_scanline": 4,
+      "body_in_front": false,
+      "clubs": {
+        "0": {
+          "layer": 1,
+          "metasprite": "$991E",
+          "canonical_pos": {
+            "x": 6,
+            "y": 4,
+            "linked_to": 4
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": -2
+          },
+          "nudge_slot": 26,
+          "nudge_class": 0
+        },
+        "4": {
+          "layer": 2,
+          "metasprite": "$998C",
+          "canonical_pos": {
+            "x": 6,
+            "y": 4,
+            "linked_to": 4
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": -1
+          },
+          "nudge_slot": 37,
+          "nudge_class": 11
+        },
+        "8": {
+          "layer": 3,
+          "metasprite": "$99F4",
+          "canonical_pos": {
+            "x": 6,
+            "y": 4,
+            "linked_to": 4
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": -1
+          },
+          "nudge_slot": 37,
+          "nudge_class": 11
+        },
+        "12": {
+          "layer": 4,
+          "metasprite": "$9A5F",
+          "canonical_pos": {
+            "x": 6,
+            "y": 4,
+            "linked_to": 4
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": -1
+          },
+          "nudge_slot": 37,
+          "nudge_class": 11
+        }
+      }
+    },
+    {
+      "frame": 7,
+      "body_metasprite": "$893F",
+      "body_sprites": 22,
+      "body_linked_to": 3,
+      "peak_sprites_per_scanline": 4,
+      "body_in_front": false,
+      "clubs": {
+        "0": {
+          "layer": 1,
+          "metasprite": "$9911",
+          "canonical_pos": {
+            "x": 2,
+            "y": 19,
+            "linked_to": 3
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 0
+          },
+          "nudge_slot": 25,
+          "nudge_class": 0
+        },
+        "4": {
+          "layer": 2,
+          "metasprite": "$997F",
+          "canonical_pos": {
+            "x": 2,
+            "y": 20,
+            "linked_to": 3
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 0
+          },
+          "nudge_slot": 36,
+          "nudge_class": 11
+        },
+        "8": {
+          "layer": 3,
+          "metasprite": "$99E7",
+          "canonical_pos": {
+            "x": 2,
+            "y": 20,
+            "linked_to": 3
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 0
+          },
+          "nudge_slot": 36,
+          "nudge_class": 11
+        },
+        "12": {
+          "layer": 4,
+          "metasprite": "$9A52",
+          "canonical_pos": {
+            "x": 2,
+            "y": 20,
+            "linked_to": 3
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 0
+          },
+          "nudge_slot": 36,
+          "nudge_class": 11
+        }
+      }
+    },
+    {
+      "frame": 8,
+      "body_metasprite": "$8A1A",
+      "body_sprites": 20,
+      "body_linked_to": null,
+      "peak_sprites_per_scanline": 3,
+      "body_in_front": false,
+      "clubs": {
+        "0": {
+          "layer": 1,
+          "metasprite": "$9932",
+          "canonical_pos": {
+            "x": 14,
+            "y": 58
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 1
+          },
+          "nudge_slot": 28,
+          "nudge_class": 0
+        },
+        "4": {
+          "layer": 2,
+          "metasprite": "$99A0",
+          "canonical_pos": {
+            "x": 15,
+            "y": 58
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 1
+          },
+          "nudge_slot": 39,
+          "nudge_class": 11
+        },
+        "8": {
+          "layer": 3,
+          "metasprite": "$9A08",
+          "canonical_pos": {
+            "x": 15,
+            "y": 58
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 1
+          },
+          "nudge_slot": 39,
+          "nudge_class": 11
+        },
+        "12": {
+          "layer": 4,
+          "metasprite": "$9A73",
+          "canonical_pos": {
+            "x": 15,
+            "y": 58
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 1
+          },
+          "nudge_slot": 39,
+          "nudge_class": 11
+        }
+      }
+    },
+    {
+      "frame": 9,
+      "body_metasprite": "$8A57",
+      "body_sprites": 22,
+      "body_linked_to": null,
+      "peak_sprites_per_scanline": 3,
+      "body_in_front": false,
+      "clubs": {
+        "0": {
+          "layer": 1,
+          "metasprite": "$9939",
+          "canonical_pos": {
+            "x": 35,
+            "y": 60
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": 29,
+          "nudge_class": 0
+        },
+        "4": {
+          "layer": 2,
+          "metasprite": "$99A7",
+          "canonical_pos": {
+            "x": 35,
+            "y": 60
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": 40,
+          "nudge_class": 11
+        },
+        "8": {
+          "layer": 3,
+          "metasprite": "$9A0F",
+          "canonical_pos": {
+            "x": 35,
+            "y": 60
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": 40,
+          "nudge_class": 11
+        },
+        "12": {
+          "layer": 4,
+          "metasprite": "$9A7A",
+          "canonical_pos": {
+            "x": 35,
+            "y": 60
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": 40,
+          "nudge_class": 11
+        }
+      }
+    },
+    {
+      "frame": 10,
+      "body_metasprite": "$8A9A",
+      "body_sprites": 22,
+      "body_linked_to": null,
+      "peak_sprites_per_scanline": 3,
+      "body_in_front": false,
+      "clubs": {
+        "0": {
+          "layer": 1,
+          "metasprite": "$9946",
+          "canonical_pos": {
+            "x": 39,
+            "y": 53
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 1
+          },
+          "nudge_slot": 30,
+          "nudge_class": 0
+        },
+        "4": {
+          "layer": 2,
+          "metasprite": "$99B1",
+          "canonical_pos": {
+            "x": 39,
+            "y": 53
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 1
+          },
+          "nudge_slot": 41,
+          "nudge_class": 11
+        },
+        "8": {
+          "layer": 3,
+          "metasprite": "$9A19",
+          "canonical_pos": {
+            "x": 39,
+            "y": 53
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 1
+          },
+          "nudge_slot": 41,
+          "nudge_class": 11
+        },
+        "12": {
+          "layer": 4,
+          "metasprite": "$9A87",
+          "canonical_pos": {
+            "x": 39,
+            "y": 53
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 1
+          },
+          "nudge_slot": 41,
+          "nudge_class": 11
+        }
+      }
+    },
+    {
+      "frame": 11,
+      "body_metasprite": "$8ADD",
+      "body_sprites": 23,
+      "body_linked_to": null,
+      "peak_sprites_per_scanline": 3,
+      "body_in_front": true,
+      "clubs": {
+        "0": {
+          "layer": 1,
+          "metasprite": "$994D",
+          "canonical_pos": {
+            "x": 16,
+            "y": 5
+          },
+          "nudge": {
+            "dx": -3,
+            "dy": 2
+          },
+          "nudge_slot": 31,
+          "nudge_class": 0
+        },
+        "4": {
+          "layer": 2,
+          "metasprite": "$99B8",
+          "canonical_pos": {
+            "x": 16,
+            "y": 6
+          },
+          "nudge": {
+            "dx": -2,
+            "dy": 0
+          },
+          "nudge_slot": 42,
+          "nudge_class": 11
+        },
+        "8": {
+          "layer": 3,
+          "metasprite": "$9A20",
+          "canonical_pos": {
+            "x": 16,
+            "y": 6
+          },
+          "nudge": {
+            "dx": -2,
+            "dy": 0
+          },
+          "nudge_slot": 42,
+          "nudge_class": 11
+        },
+        "12": {
+          "layer": 4,
+          "metasprite": "$9A8E",
+          "canonical_pos": {
+            "x": 16,
+            "y": 6
+          },
+          "nudge": {
+            "dx": -2,
+            "dy": 0
+          },
+          "nudge_slot": 42,
+          "nudge_class": 11
+        }
+      }
+    },
+    {
+      "frame": 12,
+      "body_metasprite": "$8B23",
+      "body_sprites": 24,
+      "body_linked_to": null,
+      "peak_sprites_per_scanline": 3,
+      "body_in_front": false,
+      "clubs": {
+        "0": {
+          "layer": 1,
+          "metasprite": "$9957",
+          "canonical_pos": {
+            "x": 20,
+            "y": 34
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 0
+          },
+          "nudge_slot": 32,
+          "nudge_class": 0
+        },
+        "4": {
+          "layer": 2,
+          "metasprite": "$99C2",
+          "canonical_pos": {
+            "x": 20,
+            "y": 34
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 0
+          },
+          "nudge_slot": 43,
+          "nudge_class": 11
+        },
+        "8": {
+          "layer": 3,
+          "metasprite": "$9A2A",
+          "canonical_pos": {
+            "x": 20,
+            "y": 34
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 0
+          },
+          "nudge_slot": 43,
+          "nudge_class": 11
+        },
+        "12": {
+          "layer": 4,
+          "metasprite": "$9A98",
+          "canonical_pos": {
+            "x": 20,
+            "y": 34
+          },
+          "nudge": {
+            "dx": -1,
+            "dy": 0
+          },
+          "nudge_slot": 43,
+          "nudge_class": 11
+        }
+      }
+    }
+  ]
+}

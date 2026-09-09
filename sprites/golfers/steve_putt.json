@@ -1,0 +1,268 @@
+{
+  "golfer": 2,
+  "name": "Steve",
+  "animation": "putt",
+  "clubs": [
+    15
+  ],
+  "canvas": {
+    "width": 64,
+    "height": 88,
+    "origin_x": 32,
+    "origin_y": 56
+  },
+  "body_box": {
+    "x0": -16,
+    "y0": -40,
+    "x1": 8,
+    "y1": 24
+  },
+  "body_palette_nes": [
+    null,
+    40,
+    15,
+    54
+  ],
+  "club_palette_nes": [
+    null,
+    23,
+    15,
+    48
+  ],
+  "palette": {
+    "transparent_index": 0,
+    "nes_by_index": [
+      null,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      null,
+      null,
+      null,
+      null
+    ],
+    "note": "nes_by_index maps a palette index to a NES colour; null means transparent or a guide colour. The nine redundant blacks are collapsed onto $0F.",
+    "body_indices": [
+      36,
+      14,
+      48
+    ],
+    "club_indices": [
+      22,
+      14,
+      42
+    ],
+    "max_body_colours": 3
+  },
+  "body_in_front_frames": [],
+  "layers": [
+    "body - draw here",
+    "club 15 - move only (putter, no nudge)",
+    "guides - locked"
+  ],
+  "nudge_classes_shared_by": {},
+  "golfer_screen_x": {
+    "15": 139
+  },
+  "frames": [
+    {
+      "frame": 0,
+      "body_metasprite": "$88C5",
+      "body_sprites": 20,
+      "body_linked_to": null,
+      "peak_sprites_per_scanline": 3,
+      "body_in_front": false,
+      "clubs": {
+        "15": {
+          "layer": 1,
+          "metasprite": "$9AA2",
+          "canonical_pos": {
+            "x": 30,
+            "y": 58
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": null,
+          "nudge_class": null
+        }
+      }
+    },
+    {
+      "frame": 1,
+      "body_metasprite": "$8B6C",
+      "body_sprites": 20,
+      "body_linked_to": null,
+      "peak_sprites_per_scanline": 3,
+      "body_in_front": false,
+      "clubs": {
+        "15": {
+          "layer": 1,
+          "metasprite": "$9AAF",
+          "canonical_pos": {
+            "x": 19,
+            "y": 56
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": null,
+          "nudge_class": null
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "body_metasprite": "$8B6C",
+      "body_sprites": 20,
+      "body_linked_to": 1,
+      "peak_sprites_per_scanline": 3,
+      "body_in_front": false,
+      "clubs": {
+        "15": {
+          "layer": 1,
+          "metasprite": "$9AAF",
+          "canonical_pos": {
+            "x": 19,
+            "y": 56,
+            "linked_to": 1
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": null,
+          "nudge_class": null
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "body_metasprite": "$8B6C",
+      "body_sprites": 20,
+      "body_linked_to": 1,
+      "peak_sprites_per_scanline": 3,
+      "body_in_front": false,
+      "clubs": {
+        "15": {
+          "layer": 1,
+          "metasprite": "$9AAF",
+          "canonical_pos": {
+            "x": 19,
+            "y": 56,
+            "linked_to": 1
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": null,
+          "nudge_class": null
+        }
+      }
+    },
+    {
+      "frame": 4,
+      "body_metasprite": "$88C5",
+      "body_sprites": 20,
+      "body_linked_to": 0,
+      "peak_sprites_per_scanline": 3,
+      "body_in_front": false,
+      "clubs": {
+        "15": {
+          "layer": 1,
+          "metasprite": "$9AA2",
+          "canonical_pos": {
+            "x": 30,
+            "y": 58,
+            "linked_to": 0
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": null,
+          "nudge_class": null
+        }
+      }
+    },
+    {
+      "frame": 5,
+      "body_metasprite": "$8BA9",
+      "body_sprites": 22,
+      "body_linked_to": null,
+      "peak_sprites_per_scanline": 3,
+      "body_in_front": false,
+      "clubs": {
+        "15": {
+          "layer": 1,
+          "metasprite": "$9ABC",
+          "canonical_pos": {
+            "x": 34,
+            "y": 61
+          },
+          "nudge": {
+            "dx": 0,
+            "dy": 0
+          },
+          "nudge_slot": null,
+          "nudge_class": null
+        }
+      }
+    }
+  ]
+}
