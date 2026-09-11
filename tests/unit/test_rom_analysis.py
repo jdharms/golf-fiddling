@@ -68,6 +68,22 @@ class TestInlineArgSpec:
         spec = InlineArgSpec("X", FIXED, 2, "word")
         assert spec.render(bytes([0x45, 0x91])) == ".dw $9145"
 
+    def test_alternate_terminator_lets_a_table_hold_key_zero(self):
+        spec = InlineArgSpec("X", TRIPLES, terminator=0xFF)
+        table = bytes([0x00, 0xFE, 0xAF, 0x01, 0x20, 0xB0, 0xFF, 0xAD])
+        assert spec.measure(table) == 7
+
+    def test_alternate_terminator_renders_every_entry(self):
+        spec = InlineArgSpec("X", TRIPLES, style="key_addr", terminator=0xFF)
+        rendered = spec.render(bytes([0x00, 0xFE, 0xAF, 0x01, 0x20, 0xB0, 0xFF]))
+        assert "$00->$AFFE" in rendered
+        assert "$01->$B020" in rendered
+
+    def test_copy_block_rendering(self):
+        spec = InlineArgSpec("X", FIXED, 6, "copy_block")
+        args = bytes([0x59, 0xB4, 0x10, 0x04, 0x10, 0x00])
+        assert "$B459 -> $0410, $0010 bytes" in spec.render(args)
+
 
 class TestInlineSpecLookup:
     def test_fixed_bank_routine_resolves_from_any_bank(self):
@@ -83,6 +99,16 @@ class TestInlineSpecLookup:
 
     def test_dispatch_table_does_not_return(self):
         assert inline_spec_for(0xD227, None).returns is False
+
+    def test_ff_terminated_dispatcher_is_registered(self):
+        spec = inline_spec_for(0xD267, None)
+        assert spec.terminator == 0xFF
+        assert spec.returns is True
+
+    def test_read_inline_word_parameter_is_not_an_inline_routine(self):
+        # $D8A2 reads its *caller's* caller inline word, so a JSR to it
+        # consumes nothing; listing it here desyncs every call site by two.
+        assert inline_spec_for(0xD8A2, None) is None
 
 
 class TestDataRanges:

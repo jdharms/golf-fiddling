@@ -47,6 +47,7 @@ class InlineArgSpec:
     length: int = 0  # FIXED only
     style: str = "bytes"  # "bytes" | "word" | "bank_addr"
     returns: bool = True  # False = control never comes back to the call site
+    terminator: int = 0x00  # PAIRS/TRIPLES only: byte that ends the table
 
     def measure(self, data: bytes) -> int:
         """Byte count consumed, given the bytes starting just after the JSR."""
@@ -54,14 +55,20 @@ class InlineArgSpec:
             return self.length
         stride = 2 if self.kind == PAIRS else 3
         n = 0
-        while n < len(data) and data[n] != 0x00:
+        while n < len(data) and data[n] != self.terminator:
             n += stride
-        return min(n + 1, len(data))  # include the $00 terminator
+        return min(n + 1, len(data))  # include the terminator byte
 
     def render(self, args: bytes) -> str:
         if self.style == "bank_addr" and len(args) >= 3:
             addr = args[1] | (args[2] << 8)
             return f".db ${args[0]:02X}, ${args[1]:02X}, ${args[2]:02X}   ; -> bank ${args[0]:02X} ${addr:04X}"
+        if self.style == "copy_block" and len(args) >= 6:
+            src = args[0] | (args[1] << 8)
+            dst = args[2] | (args[3] << 8)
+            n = args[4] | (args[5] << 8)
+            body = ", ".join(f"${b:02X}" for b in args)
+            return f".db {body}   ; ${src:04X} -> ${dst:04X}, ${n:04X} bytes"
         if self.style == "word" and len(args) >= 2:
             addr = args[0] | (args[1] << 8)
             return f".dw ${addr:04X}"
@@ -71,7 +78,7 @@ class InlineArgSpec:
             entries = []
             for i in range(0, len(args) - 1, stride):
                 chunk = args[i : i + stride]
-                if len(chunk) < stride or chunk[0] == 0x00:
+                if len(chunk) < stride or chunk[0] == self.terminator:
                     break
                 if self.kind == TRIPLES and self.style == "key_addr":
                     entries.append(f"${chunk[0]:02X}->${chunk[2] << 8 | chunk[1]:04X}")
@@ -90,16 +97,27 @@ INLINE_ARG_ROUTINES: dict[tuple[int | None, int], InlineArgSpec] = {
     (None, 0xD45F): InlineArgSpec("LoadCompressedGraphics", FIXED, 3, "bank_addr"),
     (None, 0xCE84): InlineArgSpec("WriteNametableTiles", FIXED, 2, "word"),
     (None, 0xD80A): InlineArgSpec("Load32BytesToBuffer", FIXED, 2, "word"),
-    (None, 0xD8A2): InlineArgSpec("ReadInlineWordParameter", FIXED, 2, "word"),
+    (None, 0xCE7E): InlineArgSpec("WriteNametableTilesMode2", FIXED, 2, "word"),
+    (None, 0xD41A): InlineArgSpec("CopyInlineMemoryBlock", FIXED, 6, "copy_block"),
+    # NOT listed: $D8A2 ReadInlineWordParameter and $D436. Both TSX and read
+    # $0103,X - skipping their own return address - so the inline word belongs
+    # to whoever called *their* caller. A `JSR $D8A2` consumes nothing itself;
+    # it is the enclosing routine (e.g. $D80A below) that takes the 2 bytes.
     (None, 0xD227): InlineArgSpec(
         "DispatchInlineJumpTable", TRIPLES, style="key_addr", returns=False
+    ),
+    # Same dispatcher body as $D227 (they share the tail at $D24F) but the
+    # table ends on $FF, so key $00 is usable. Control does come back: the
+    # tail pushes the post-table address before JMP ($24).
+    (None, 0xD267): InlineArgSpec(
+        "DispatchInlineJumpTableFF", TRIPLES, style="key_addr", terminator=0xFF
     ),
     (12, 0x8A14): InlineArgSpec("LookupInlineByteTable", PAIRS),
     (12, 0x8A56): InlineArgSpec("LookupInlineRangeTable", TRIPLES),
 }
 
-# The dispatcher whose inline tables find_references can actually search.
-DISPATCH_INLINE_JUMP_TABLE = 0xD227
+# The dispatchers whose inline tables find_references can actually search.
+DISPATCH_INLINE_JUMP_TABLES = (0xD227, 0xD267)
 
 
 def inline_spec_for(target_cpu: int, bank: int | None) -> InlineArgSpec | None:
@@ -539,7 +557,9 @@ def find_code_references(reader, target_cpu: int, target_bank: int, labels=None)
     sites, dispatch_refs = _search_dispatch_tables(reader, target_cpu, target_bank, fixed_target, labels)
     report.dispatch_sites_checked = sites
     report.refs.extend(dispatch_refs)
-    report.searched.append(f"inline jump tables at all {sites} DispatchInlineJumpTable call sites")
+    report.searched.append(
+        f"inline jump tables at all {sites} DispatchInlineJumpTable ($D227/$D267) call sites"
+    )
     report.searched.append(
         "instruction-boundary check on each hit, anchored at the nearest code label"
     )
@@ -554,20 +574,26 @@ def find_code_references(reader, target_cpu: int, target_bank: int, labels=None)
 
 
 def _search_dispatch_tables(reader, target_cpu, target_bank, fixed_target, labels):
-    """Scan the inline tables of every JSR DispatchInlineJumpTable site."""
+    """Scan the inline tables of every JSR to either inline dispatcher."""
     lo, hi = target_cpu & 0xFF, target_cpu >> 8
-    dlo, dhi = DISPATCH_INLINE_JUMP_TABLE & 0xFF, DISPATCH_INLINE_JUMP_TABLE >> 8
+    dispatchers = {
+        (d & 0xFF, d >> 8): INLINE_ARG_ROUTINES[(None, d)].terminator
+        for d in DISPATCH_INLINE_JUMP_TABLES
+    }
     sites = 0
     refs: list[Reference] = []
     for bank, base, data in _iter_banks(reader):
         for i in range(len(data) - 2):
-            if data[i] != JSR or data[i + 1] != dlo or data[i + 2] != dhi:
+            if data[i] != JSR:
+                continue
+            end = dispatchers.get((data[i + 1], data[i + 2]))
+            if end is None:
                 continue
             sites += 1
             if not (fixed_target or bank == target_bank):
                 continue
             j = i + 3
-            while j + 2 < len(data) and data[j] != 0x00:
+            while j + 2 < len(data) and data[j] != end:
                 if data[j + 1] == lo and data[j + 2] == hi:
                     prg = base + j
                     _, cpu = prg_to_bank_and_cpu(prg)
