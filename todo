@@ -20,6 +20,7 @@ Randomizer:
 * Pre-chosen SRAM init edits
   * Club choices
   * Player name(s)
+* Investigate 36H stroke play
 
 Todos:
 * Invalid neighbor indicator should be a single border per pairing
