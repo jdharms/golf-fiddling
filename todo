@@ -21,6 +21,9 @@ Randomizer:
   * Club choices
   * Player name(s)
 * Investigate 36H stroke play
+* Wind "profiles".  It might be neat to have different "flavors" of wind
+  on courses.  Beyond the seeding, stuff like "wind is biased in one direction"
+  or "an especially windy day".
 
 Todos:
 * Invalid neighbor indicator should be a single border per pairing
