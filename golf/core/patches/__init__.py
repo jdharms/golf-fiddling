@@ -44,6 +44,11 @@ from .practice_swing import (
     practice_swing_patch,
     practice_swing_patches,
 )
+from .scorecard_qr import (
+    QrCredentials,
+    ScorecardQrPatch,
+    scorecard_qr_patch,
+)
 from .signpost_banner import remove_course_banner_patches
 from .seeded_wind import (
     HoleWindForecast,
@@ -83,6 +88,9 @@ AVAILABLE_PATCHES: dict[str, ROMPatch] = {
 
 __all__ = [
     "ROMPatch",
+    "QrCredentials",
+    "ScorecardQrPatch",
+    "scorecard_qr_patch",
     "BytePatch",
     "CompositePatch",
     "PatchError",

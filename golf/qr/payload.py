@@ -47,7 +47,8 @@ PUTT_BITS = 8 - STROKE_BITS
 MAX_STROKES = 1 << STROKE_BITS
 MAX_PUTTS = (1 << PUTT_BITS) - 1
 
-_B64_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+#: The base64url alphabet, in index order — a 64-byte ROM table for the port.
+B64_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
 
 
 def pack_hole(strokes: int, putts: int, stroke_bits: int = STROKE_BITS) -> int:
@@ -80,10 +81,10 @@ def base64url_encode(data: bytes) -> str:
     out = []
     for i in range(0, len(data), 3):
         group = (data[i] << 16) | (data[i + 1] << 8) | data[i + 2]
-        out.append(_B64_ALPHABET[(group >> 18) & 0x3F])
-        out.append(_B64_ALPHABET[(group >> 12) & 0x3F])
-        out.append(_B64_ALPHABET[(group >> 6) & 0x3F])
-        out.append(_B64_ALPHABET[group & 0x3F])
+        out.append(B64_ALPHABET[(group >> 18) & 0x3F])
+        out.append(B64_ALPHABET[(group >> 12) & 0x3F])
+        out.append(B64_ALPHABET[(group >> 6) & 0x3F])
+        out.append(B64_ALPHABET[group & 0x3F])
     return "".join(out)
 
 
@@ -92,7 +93,7 @@ def base64url_decode(text: str) -> bytes:
         raise ValueError(
             f"base64url text must be a multiple of 4 chars, got {len(text)}"
         )
-    lookup = {c: i for i, c in enumerate(_B64_ALPHABET)}
+    lookup = {c: i for i, c in enumerate(B64_ALPHABET)}
     out = bytearray()
     for i in range(0, len(text), 4):
         group = 0

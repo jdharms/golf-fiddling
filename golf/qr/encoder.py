@@ -306,7 +306,10 @@ def walk_order(static_matrix: bytes) -> tuple[int, ...]:
     return tuple(order)
 
 
-_MASK_PREDICATES = (
+#: The eight mask predicates, by mask number: True means the module is
+#: inverted. Public because the ROM table bakes the chosen one in (see
+#: `golf.qr.tables`).
+MASK_PREDICATES = (
     lambda row, col: (row + col) % 2 == 0,
     lambda row, col: row % 2 == 0,
     lambda row, col: col % 3 == 0,
@@ -328,7 +331,7 @@ def place(codewords: bytes, static_matrix: bytes, mask: int) -> QrMatrix:
         raise ValueError(f"expected {TOTAL_CODEWORDS} code words, got {len(codewords)}")
 
     modules = bytearray(1 if m == 1 else 0 for m in static_matrix)
-    predicate = _MASK_PREDICATES[mask]
+    predicate = MASK_PREDICATES[mask]
     total_bits = TOTAL_CODEWORDS * 8
 
     for bit_index, index in enumerate(walk_order(static_matrix)):

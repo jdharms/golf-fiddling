@@ -38,6 +38,9 @@ golf-labels = "tools.labels:main"
 golf-golfer-export = "tools.golfer_export:main"
 golf-qr-preview = "tools.qr_preview:main"
 golf-qr-validate = "tools.qr_validate:main"
+golf-qr-tables = "tools.qr_tables:main"
+golf-qr-port = "tools.qr_port:main"
+golf-patch-qr = "tools.patch_qr:main"
 
 [tool.uv]
 package = true
