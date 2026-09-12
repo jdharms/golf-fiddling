@@ -1,0 +1,181 @@
+"""
+HalfSipHash-2-4 against the reference implementation's official test vectors.
+
+Both vector sets come from `vectors.h` in veorq/SipHash. The test setup there
+is: an 8-byte key of 0x00..0x07, and for each length i in 0..63 a message of
+0x00..0x(i-1).
+"""
+
+import pytest
+
+from golf.qr.halfsiphash import halfsiphash
+
+# vectors_hsip32: halfsiphash(in[0..i], k, outlen=4) for i in 0..63
+VECTORS_HSIP32 = [
+    "a9359f5b",
+    "27475ab8",
+    "fa62a603",
+    "8afee704",
+    "2a6e4689",
+    "c5fab669",
+    "5863fc23",
+    "8bcf63c5",
+    "d0b8848f",
+    "f806e779",
+    "94b07934",
+    "08083050",
+    "57f0872f",
+    "77e663ff",
+    "d6fff87c",
+    "74fe2b97",
+    "d9b5ac84",
+    "c474645b",
+    "465b8d9b",
+    "7befe387",
+    "e34d1045",
+    "613f62b3",
+    "70f367fe",
+    "e6adb8bd",
+    "27400c63",
+    "26787875",
+    "4f567b5f",
+    "3ab0e669",
+    "b0644000",
+    "ff670fb4",
+    "509e338b",
+    "5d589f1a",
+    "fee72112",
+    "33753259",
+    "6a434f8c",
+    "fe28b729",
+    "e75cc6ec",
+    "697e8d54",
+    "63688b0f",
+    "650b62b4",
+    "b6bc1840",
+    "5d074505",
+    "2442fd2e",
+    "7bb7863a",
+    "7705d548",
+    "d75208b1",
+    "b6d499c8",
+    "0892202e",
+    "69e12ce3",
+    "8db580e5",
+    "369764c6",
+    "016e0204",
+    "3b85f3d4",
+    "fedb66be",
+    "1e692a3a",
+    "c68984c0",
+    "a5c5b940",
+    "9be9e88c",
+    "7dbc8140",
+    "7c078ec5",
+    "d4e76c73",
+    "428fcbb9",
+    "bd83997a",
+    "59ea4a74",
+]
+
+# vectors_hsip64: same, outlen=8
+VECTORS_HSIP64 = [
+    "218d1f59b9b83cc8",
+    "be552412f8387315",
+    "064f39ef7c50eb57",
+    "ce0f1a45f7060679",
+    "d5e78a175be52ea1",
+    "cb9d7c3f2f3db580",
+    "ce3e91358aa2bc25",
+    "ff202728b07bc684",
+    "edfee820bce4858c",
+    "5b51cccc13888307",
+    "95b0469f06a6f2ee",
+    "ae26333994ddcd48",
+    "7bc71f9faef5c799",
+    "5a2352d75a0c3744",
+    "3bb1a870eae8e658",
+    "217d0bcb4e81c902",
+    "7336aad25f7bf3b5",
+    "37adc0641c4c4f6a",
+    "c9b2db2b9a3e42f9",
+    "f910e48020ab363c",
+    "1bf52b0a6feea7db",
+    "00741dc269e8b3ef",
+    "e20103fa1ba776ef",
+    "4c2210e54b681d73",
+    "70741045ae3fa6f1",
+    "0c86403739714038",
+    "0d899ed8112923f0",
+    "226bf5fab81ee1b8",
+    "2d925ffb1e0016b5",
+    "361958d52cee10f1",
+    "291aaf864898179d",
+    "863c7f155c34117c",
+    "28709d46d811626c",
+    "248477681d28f89c",
+    "8324e4d7528f9830",
+    "f9efd4e13aea6bd8",
+    "86d67a40ec4276dc",
+    "3f6292eccca97e35",
+    "cbd92ee724d42109",
+    "368df6808d403d79",
+    "5b38c81c67c8ae4c",
+    "95ab7189d439acb3",
+    "a91a52c025327024",
+    "5b0087c69528acea",
+    "1e30f3ad27dcb15a",
+    "697f5c9a90324ed4",
+    "495c0f995557dc38",
+    "9427202a3c29f94d",
+    "a9eaa8c04ba93e3e",
+    "eea4c1737d011218",
+    "912d568fd8f65a49",
+    "56919596b0ff5c97",
+    "02445a7998f550e1",
+    "86ec466ce71d1fb2",
+    "359569e7d289e3bc",
+    "871b05ca62bb7c96",
+    "a1a492f942f15f1d",
+    "12ec267ff6095b6e",
+    "5d1b5ea1b231d89d",
+    "d8cfb4453f92ee54",
+    "d6762890bf26e460",
+    "313563a4b7ed5cf3",
+    "f90b3ab572d46693",
+    "2ea63c71bf326087",
+]
+
+KEY = bytes(range(8))
+
+
+@pytest.mark.parametrize("length", range(64))
+def test_hsip32_reference_vectors(length: int) -> None:
+    message = bytes(range(length))
+    assert halfsiphash(message, KEY, outlen=4).hex() == VECTORS_HSIP32[length]
+
+
+@pytest.mark.parametrize("length", range(64))
+def test_hsip64_reference_vectors(length: int) -> None:
+    message = bytes(range(length))
+    assert halfsiphash(message, KEY, outlen=8).hex() == VECTORS_HSIP64[length]
+
+
+def test_32_and_64_bit_outputs_differ() -> None:
+    """
+    The two output lengths are not prefixes of each other — they use different
+    finalization tweaks. Pinned down so a 6502 port that implements the wrong
+    variant fails loudly rather than producing plausible-looking MACs.
+    """
+    message = bytes(range(32))
+    assert halfsiphash(message, KEY, 4) != halfsiphash(message, KEY, 8)[:4]
+
+
+def test_key_length_is_validated() -> None:
+    with pytest.raises(ValueError, match="key must be 8 bytes"):
+        halfsiphash(b"abc", b"short")
+
+
+def test_outlen_is_validated() -> None:
+    with pytest.raises(ValueError, match="outlen must be 4 or 8"):
+        halfsiphash(b"abc", KEY, outlen=6)

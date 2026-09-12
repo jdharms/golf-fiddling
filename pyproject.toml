@@ -36,6 +36,8 @@ golf-patch-practice-swing = "tools.patch_practice_swing:main"
 golf-rom-peek = "tools.rom_peek:main"
 golf-labels = "tools.labels:main"
 golf-golfer-export = "tools.golfer_export:main"
+golf-qr-preview = "tools.qr_preview:main"
+golf-qr-validate = "tools.qr_validate:main"
 
 [tool.uv]
 package = true
@@ -65,6 +67,9 @@ dev = [
     "pyright>=1.1.407",
     "ruff>=0.14.10",
     "pyinstaller>=6.18.0",
+    "zxing-cpp>=3.1.1",
+    "opencv-python-headless>=5.0.0.93",
+    "qrcode>=8.2",
 ]
 
 [tool.hatch.build.targets.wheel]

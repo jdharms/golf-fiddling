@@ -86,6 +86,14 @@ golf-patch-seeded-wind <rom_file.nes> --seed <meta-seed> [-o out.nes] [--holes 1
 # Requires wram_expansion, so apply golf-patch-wram first.
 golf-patch-practice-swing <rom_file.nes> [-o out.nes] [--hold-frames N] [--validate-only]
 
+# End-of-round scorecard QR code (see docs/scorecard_qr.md). The `golf.qr` package is
+# the reference implementation the 6502 port gets differentially tested against.
+# Preview: build a payload, encode it as the ROM will, render the NES screen to PNG
+golf-qr-preview [-o out.png] [--mask 0-7] [--seed N] [--scores '4/2,3/1,...'] [--url URL] [--crop] [--ascii]
+# Validate: sweep masks x random rounds x simulated capture conditions x two decoders,
+# which is what justifies the ROM using a fixed mask instead of spec penalty scoring
+golf-qr-validate [-n ROUNDS] [--masks 0,3,5] [--degradations native,blur_soft] [--out report.md]
+
 # Launch the course editor (CHR files optional, defaults to data/ files)
 golf-editor [terrain_chr.bin] [greens_chr.bin] [hole.json]
 ```
@@ -179,6 +187,16 @@ data in that second format. See `docs/course_intro_scene.md`.
 
 **Golfer Sprites**: `golf/core/golfer_sprites.py` reads the six golfers' metasprite tables,
 per-golfer CHR, palettes and club positioning out of the ROM. See `docs/golfer_sprites.md`.
+
+**Scorecard QR** (`golf/qr/`): the end-of-round submission QR code — payload and MAC
+(`payload.py`, `halfsiphash.py`), a version 5-M QR encoder hard-wired to that one version
+(`encoder.py`, `galois.py`), the NES tile/nametable pipeline (`nes.py`), PNG rendering
+(`render.py`), simulated capture conditions and decoders (`capture.py`, `decode.py`). This
+is the **reference implementation for the 6502 port**, so every stage is exposed
+individually (`encoder.encode_stages`) and every constant the ROM will bake in is asserted
+in `tests/unit/test_qr_*.py`. Correctness is pinned two ways: module-for-module against the
+independent `qrcode` package, and by decoding real renders with zxing-cpp and OpenCV. See
+`docs/scorecard_qr.md`.
 
 **Decompression**: Course terrain and greens use a custom compression scheme with three stages:
 1. RLE + dictionary expansion (codes $E0+ expand to multiple bytes)
