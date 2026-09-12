@@ -1,10 +1,10 @@
 # NES Open Tournament Golf - Distance Measurement Tool
 
-A client-side web application for measuring distances on golf course images from NES Open Tournament Golf.
+A client-side web application for measuring distances on golf course images from NES Open Tournament Golf and its Japanese release, Mario Open Golf.
 
 ## Features
 
-- **All 54 Holes**: Browse all holes from Japan, US, and UK courses
+- **All 144 Holes**: Browse the three NES Open courses (Japan, US, UK) and the five Mario Open Golf courses (Japan, Australia, France, Hawaii, UK), grouped by game in the course selector
 - **Integer Zoom**: 1x-8x zoom with pixel-perfect scaling for crisp NES graphics
 - **Waypoint Measurement**: Click to add multiple waypoints and measure cumulative distances
 - **Accurate Calculations**: Uses the exact formula from the editor (`sqrt(dx² + dy²) × 2 = yards`)
@@ -18,7 +18,7 @@ A client-side web application for measuring distances on golf course images from
 
 1. **Generate Images** (first time only):
    ```bash
-   golf-render-web data/chr-ram.bin courses/ web/
+   golf-render-web data/chr-ram.bin data/green-ram.bin courses/ web/
    ```
 
 2. **Start Local Server**:
@@ -92,7 +92,7 @@ jobs:
 
       - name: Generate images
         run: |
-          python tools/render_web.py data/chr-ram.bin courses/ web/
+          python tools/render_web.py data/chr-ram.bin data/green-ram.bin courses/ web/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -115,13 +115,27 @@ web/
   ui.js            - UI component management
   metadata.json    - Course/hole metadata (generated)
   images/          - Pre-rendered hole images (generated)
-    japan/
-      hole_01.png ... hole_18.png
-    us/
-      hole_01.png ... hole_18.png
-    uk/
-      hole_01.png ... hole_18.png
+    japan/         - NES Open: Japan
+      hole_01.png ... hole_18.png              (terrain)
+      hole_01_green.png ... hole_18_green.png  (green detail)
+      hole_01_flag_0.png ... hole_18_flag_3.png (flag overlays)
+    us/            - NES Open: US
+    uk/            - NES Open: UK
+    jp_japan/      - Mario Open: Japan
+    jp_australia/  - Mario Open: Australia
+    jp_france/     - Mario Open: France
+    jp_hawaii/     - Mario Open: Hawaii
+    jp_uk/         - Mario Open: UK
 ```
+
+### Adding or Reordering Courses
+
+The course list lives in `tools/render_web.py` as `COURSES`: one
+`(course id, path under courses/, group label)` entry per course, in dropdown
+order. The group label becomes an `<optgroup>` in the course selector - which is
+what keeps the two games apart, since both have a course named "Japan". The
+Mario Open courses are rendered with the same CHR tilesets as the NES Open ones;
+the two releases share the tile graphics.
 
 ## Technical Details
 
@@ -190,7 +204,7 @@ python3 -m http.server 8000
 
 If course data changes, regenerate images:
 ```bash
-golf-render-web data/chr-ram.bin courses/ web/
+golf-render-web data/chr-ram.bin data/green-ram.bin courses/ web/
 ```
 
 ## License

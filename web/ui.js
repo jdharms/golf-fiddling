@@ -34,13 +34,27 @@ export class UIController {
    * Initialize UI components and event listeners
    */
   _initializeUI() {
-    // Populate course selector
+    // Populate course selector. Courses carrying a `group` are collected into
+    // <optgroup>s so the two games' courses are visually separated - both have a
+    // course called "Japan", so the group label is what tells them apart.
+    const groups = new Map();
     for (const courseId in this.metadata.courses) {
       const course = this.metadata.courses[courseId];
       const option = document.createElement('option');
       option.value = courseId;
       option.textContent = course.name;
-      this.courseSelect.appendChild(option);
+
+      let parent = this.courseSelect;
+      if (course.group) {
+        if (!groups.has(course.group)) {
+          const optgroup = document.createElement('optgroup');
+          optgroup.label = course.group;
+          this.courseSelect.appendChild(optgroup);
+          groups.set(course.group, optgroup);
+        }
+        parent = groups.get(course.group);
+      }
+      parent.appendChild(option);
     }
 
     // Course selection change handler
@@ -289,7 +303,8 @@ export class UIController {
    */
   nextHole() {
     const currentNumber = this.state.holeNumber;
-    if (currentNumber < 18) {
+    const course = this.metadata.courses[this.state.courseId];
+    if (course && currentNumber < course.holes.length) {
       this.selectHole(currentNumber + 1);
     }
   }
