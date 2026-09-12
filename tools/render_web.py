@@ -20,8 +20,22 @@ from golf.rendering.pil_renderer import (
 from golf.rendering.pil_sprite import PILSprite
 
 
-# Course directories to process
-COURSE_NAMES = ["japan", "us", "uk"]
+# Courses to process, in dropdown order: (course id, path under courses/, group label).
+# The group label becomes an <optgroup> in the web app's course selector, so the two
+# games' courses stay visually separated even though both have a course named "Japan".
+NES_OPEN_GROUP = "NES Open Tournament Golf"
+MARIO_OPEN_GROUP = "Mario Open Golf (JP)"
+
+COURSES = [
+    ("japan", "japan", NES_OPEN_GROUP),
+    ("us", "us", NES_OPEN_GROUP),
+    ("uk", "uk", NES_OPEN_GROUP),
+    ("jp_japan", "jp/jp_japan", MARIO_OPEN_GROUP),
+    ("jp_australia", "jp/jp_australia", MARIO_OPEN_GROUP),
+    ("jp_france", "jp/jp_france", MARIO_OPEN_GROUP),
+    ("jp_hawaii", "jp/jp_hawaii", MARIO_OPEN_GROUP),
+    ("jp_uk", "jp/jp_uk", MARIO_OPEN_GROUP),
+]
 
 
 def load_sprites() -> dict[str, PILSprite]:
@@ -74,8 +88,8 @@ def render_all_courses(
     # Metadata structure
     metadata = {"courses": {}}
 
-    for course_name in COURSE_NAMES:
-        course_dir = courses_path / course_name
+    for course_id, course_subpath, group in COURSES:
+        course_dir = courses_path / course_subpath
         if not course_dir.exists():
             print(f"Warning: Course directory not found: {course_dir}")
             continue
@@ -86,15 +100,16 @@ def render_all_courses(
             with open(course_json_path) as f:
                 course_data = json.load(f)
         else:
-            course_data = {"name": course_name.capitalize()}
+            course_data = {"name": course_id.capitalize()}
 
         # Create output directory for this course
-        course_output_dir = output_path / "images" / course_name
+        course_output_dir = output_path / "images" / course_id
         course_output_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize course metadata
-        metadata["courses"][course_name] = {
-            "name": course_data.get("name", course_name.capitalize()),
+        metadata["courses"][course_id] = {
+            "name": course_data.get("name", course_id.capitalize()),
+            "group": group,
             "holes": []
         }
 
@@ -105,7 +120,7 @@ def render_all_courses(
             print(f"Warning: No hole files found in {course_dir}")
             continue
 
-        print(f"\nRendering {course_name.upper()} course ({len(hole_files)} holes)...")
+        print(f"\nRendering {course_id.upper()} course ({len(hole_files)} holes)...")
 
         for hole_file in hole_files:
             hole_name = hole_file.stem  # e.g., "hole_01"
@@ -146,20 +161,20 @@ def render_all_courses(
                     flag_filename = f"{hole_name}_flag_{i}.png"
                     flag_path = course_output_dir / flag_filename
                     flag_img.save(flag_path)
-                    flag_images.append(f"images/{course_name}/{flag_filename}")
+                    flag_images.append(f"images/{course_id}/{flag_filename}")
 
             # Add to metadata
             hole_metadata = {
                 "number": hole_data.get("hole", 1),
                 "par": hole_data.get("par", 4),
                 "distance": hole_data.get("distance", 0),
-                "image": f"images/{course_name}/{image_filename}",
+                "image": f"images/{course_id}/{image_filename}",
                 "width": img.width,
                 "height": img.height,
-                "green_image": f"images/{course_name}/{green_filename}",
+                "green_image": f"images/{course_id}/{green_filename}",
                 "flag_images": flag_images,
             }
-            metadata["courses"][course_name]["holes"].append(hole_metadata)
+            metadata["courses"][course_id]["holes"].append(hole_metadata)
 
             print(f"  ✓ {hole_name}: {img.width}x{img.height}px + green + 4 flags")
 
@@ -188,7 +203,8 @@ This will create:
   web/images/japan/hole_01.png ... hole_18.png
   web/images/japan/hole_01_green.png ... hole_18_green.png
   web/images/japan/hole_01_flag_0.png ... hole_18_flag_3.png
-  (same for us/ and uk/)
+  (same for us/, uk/, and the five Mario Open Golf courses jp_japan/,
+   jp_australia/, jp_france/, jp_hawaii/, jp_uk/)
   web/metadata.json
         """,
     )
