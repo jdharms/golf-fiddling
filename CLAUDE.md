@@ -93,6 +93,18 @@ golf-qr-preview [-o out.png] [--mask 0-7] [--seed N] [--scores '4/2,3/1,...'] [-
 # Validate: sweep masks x random rounds x simulated capture conditions x two decoders,
 # which is what justifies the ROM using a fixed mask instead of spec penalty scoring
 golf-qr-validate [-n ROUNDS] [--masks 0,3,5] [--degradations native,blur_soft] [--out report.md]
+# Export the ROM tables (static matrix, GF tables, generator poly, CHR, base64url
+# alphabet, constant code word head) as a blob, an assembler include, per-table
+# binaries and a JSON manifest. Omit the directory to just print the layout.
+golf-qr-tables [out_dir] [--mask N] [--origin '$8400'] [--no-split] [--asm]
+# Assemble the 6502 port (golf/qr/port/) and report per-routine sizes against the
+# bank 2 budget; -o writes the tables-plus-code image, --asm prints the source.
+golf-qr-port [-o image.bin] [--origin '$8E00'] [--asm] [--symbols]
+# Install the QR screen into a ROM: image into bank 2, trampoline into bank 13
+# padding, two-byte splice at the post-round scorecard. --manifest writes the
+# per-build seed/player IDs and the secret MAC keys the server needs.
+golf-patch-qr <rom_file.nes> [-o out.nes] [--manifest keys.json] [--seed-id HEX]
+              [--player-id HEX] [--key HEX] [--rng-seed N] [--validate-only]
 
 # Launch the course editor (CHR files optional, defaults to data/ files)
 golf-editor [terrain_chr.bin] [greens_chr.bin] [hole.json]
@@ -191,10 +203,23 @@ per-golfer CHR, palettes and club positioning out of the ROM. See `docs/golfer_s
 **Scorecard QR** (`golf/qr/`): the end-of-round submission QR code — payload and MAC
 (`payload.py`, `halfsiphash.py`), a version 5-M QR encoder hard-wired to that one version
 (`encoder.py`, `galois.py`), the NES tile/nametable pipeline (`nes.py`), PNG rendering
-(`render.py`), simulated capture conditions and decoders (`capture.py`, `decode.py`). This
+(`render.py`), simulated capture conditions and decoders (`capture.py`, `decode.py`), and the ROM
+table export (`tables.py`, `golf-qr-tables`, checked-in output in `data/qr/`). This
 is the **reference implementation for the 6502 port**, so every stage is exposed
-individually (`encoder.encode_stages`) and every constant the ROM will bake in is asserted
-in `tests/unit/test_qr_*.py`. Correctness is pinned two ways: module-for-module against the
+individually (`encoder.encode_stages`), every ROM table is derived from those stages
+rather than transcribed beside them, and every constant the ROM will bake in is asserted
+in `tests/unit/test_qr_*.py`.
+
+**The 6502 port itself is `golf/qr/port/`**: assembly sources assembled by
+`golf/core/asm6502.py` against `port/layout.py`, run under py65 by `port/sim.py`, and
+differentially tested stage by stage against the oracle in `tests/unit/test_qr_port.py`.
+`port/sim.py` also models the slice of the PPU the display layer (`display.s`) uses and
+stubs the fixed-bank routines it calls, so `tests/unit/test_qr_display.py` can check the
+finished screen — and decode the QR — out of simulated video memory.
+
+**Writing new 6502 code**: use `golf/core/asm6502.py` (two-pass, labels, local labels,
+`.org/.byte/.word/.res/.align`, branch-range checks) rather than hand-assembling byte
+arrays. Existing small patches in `golf/core/patches/` predate it and stay as they are. Correctness is pinned two ways: module-for-module against the
 independent `qrcode` package, and by decoding real renders with zxing-cpp and OpenCV. See
 `docs/scorecard_qr.md`.
 
