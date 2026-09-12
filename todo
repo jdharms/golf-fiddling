@@ -9,19 +9,17 @@ Non-editor:
 * index for patch requirements/rom space usage
 
 Randomizer:
-* Add Mario Open holes to Rangefinder
 * Hole equivalence classes
 * Mirrored holes?
 * Randomize bunkers/water?
 * Music swap/shuffle
 * random green topography?
-* palette swaps
+* palette swaps (sprites, signs)
 * putting practice mode
   * Notes: Need to change/fake(?) par values and get rid of the hole in one cutscenes.  Also reconsider rng seeding.
 * Pre-chosen SRAM init edits
   * Club choices
   * Player name(s)
-* Investigate 36H stroke play
 * Wind "profiles".  It might be neat to have different "flavors" of wind
   on courses.  Beyond the seeding, stuff like "wind is biased in one direction"
   or "an especially windy day".
@@ -79,3 +77,4 @@ Done:
 * Create stamp library
 * G should cycle through grid sizes, alter palette tool?
 * Add greens to rangefinder?
+* Add Mario Open holes to Rangefinder
