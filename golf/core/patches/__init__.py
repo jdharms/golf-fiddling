@@ -44,6 +44,7 @@ from .practice_swing import (
     practice_swing_patch,
     practice_swing_patches,
 )
+from .signpost_banner import remove_course_banner_patches
 from .seeded_wind import (
     HoleWindForecast,
     derive_hole_seeds,
@@ -86,6 +87,7 @@ __all__ = [
     "CompositePatch",
     "PatchError",
     "mercy_tap_in_patches",
+    "remove_course_banner_patches",
     "practice_swing_patch",
     "practice_swing_patches",
     "PRACTICE_SWING_OFFSET",

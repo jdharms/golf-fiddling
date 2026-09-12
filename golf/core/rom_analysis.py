@@ -99,6 +99,14 @@ INLINE_ARG_ROUTINES: dict[tuple[int | None, int], InlineArgSpec] = {
     (None, 0xD80A): InlineArgSpec("Load32BytesToBuffer", FIXED, 2, "word"),
     (None, 0xCE7E): InlineArgSpec("WriteNametableTilesMode2", FIXED, 2, "word"),
     (None, 0xD41A): InlineArgSpec("CopyInlineMemoryBlock", FIXED, 6, "copy_block"),
+    # Consumes 2 inline bytes (a pointer to an object-record table) despite
+    # not touching them directly itself: it JSRs $D8A2 ReadInlineWordParameter,
+    # whose double-indirection skips both its own return address and $F7C0's,
+    # landing back on the word right after `JSR $F7C0`. Confirmed by decoding
+    # the AllocateObjectRecords call sites in bank 12 ($AC08/$AC12/$AC50) and
+    # cross-checking against the sidecar's pre-existing "3 x 9 bytes, allocated
+    # via LF7C0" note on CourseIntroObjectDefs.
+    (None, 0xF7C0): InlineArgSpec("AllocateObjectRecords", FIXED, 2, "word"),
     # NOT listed: $D8A2 ReadInlineWordParameter and $D436. Both TSX and read
     # $0103,X - skipping their own return address - so the inline word belongs
     # to whoever called *their* caller. A `JSR $D8A2` consumes nothing itself;
