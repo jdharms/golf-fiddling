@@ -11,7 +11,15 @@ from pathlib import Path
 
 import pytest
 
-from golf.core.patches import QrCredentials, ScorecardQrPatch
+from golf.core.patches import (
+    COURSE_MIRRORS_PATCH,
+    PatchError,
+    QrCredentials,
+    ScorecardQrPatch,
+    mercy_tap_in_patches,
+    practice_swing_patch,
+    seeded_wind_patch,
+)
 from golf.core.patches.scorecard_qr import TRAMPOLINE_CPU_ADDR
 from golf.core.rom_writer import RomWriter
 from golf.qr import encoder, nes, sample
@@ -30,9 +38,15 @@ pytestmark = pytest.mark.skipif(
 CREDENTIALS = QrCredentials.random(random.Random(0xC0FFEE))
 
 
+def mirrored_writer(out: Path) -> RomWriter:
+    writer = RomWriter(ROM_PATH, str(out))
+    COURSE_MIRRORS_PATCH.apply(writer)
+    return writer
+
+
 def apply_to_rom(tmp_path: Path, name: str = "qr.nes") -> Path:
     out = tmp_path / name
-    writer = RomWriter(ROM_PATH, str(out))
+    writer = mirrored_writer(out)
     ScorecardQrPatch(CREDENTIALS).apply(writer)
     writer.save()
     return out
@@ -41,6 +55,14 @@ def apply_to_rom(tmp_path: Path, name: str = "qr.nes") -> Path:
 def test_the_vanilla_rom_has_the_hook_site_this_patch_expects() -> None:
     writer = RomWriter(ROM_PATH, "/dev/null")
     assert ScorecardQrPatch(CREDENTIALS).can_apply(writer)
+
+
+def test_requires_course_mirrors(tmp_path) -> None:
+    writer = RomWriter(ROM_PATH, str(tmp_path / "vanilla.nes"))
+    patch = ScorecardQrPatch(CREDENTIALS)
+    with pytest.raises(PatchError, match="requires course_mirrors"):
+        patch.apply(writer)
+    assert not patch.is_applied(writer)
 
 
 def test_apply_and_reload(tmp_path) -> None:
@@ -60,9 +82,11 @@ def test_applying_twice_changes_nothing(tmp_path) -> None:
 
 
 def test_only_the_three_regions_change(tmp_path) -> None:
-    vanilla = Path(ROM_PATH).read_bytes()
+    mirrored = mirrored_writer(tmp_path / "mirrored.nes")
+    mirrored.save()
+    before = (tmp_path / "mirrored.nes").read_bytes()
     patched = apply_to_rom(tmp_path).read_bytes()
-    assert len(patched) == len(vanilla)
+    assert len(patched) == len(before)
 
     patch = ScorecardQrPatch(CREDENTIALS)
     header = 0x10
@@ -74,9 +98,7 @@ def test_only_the_three_regions_change(tmp_path) -> None:
     ):
         allowed.update(range(header + offset, header + offset + length))
 
-    changed = {
-        index for index in range(len(vanilla)) if vanilla[index] != patched[index]
-    }
+    changed = {index for index in range(len(before)) if before[index] != patched[index]}
     assert changed <= allowed
     # The splice and the trampoline must actually have changed; the image may
     # coincide with vanilla data in a byte here and there but not overall.
@@ -100,6 +122,27 @@ def test_the_patched_rom_carries_the_image_and_the_hook(tmp_path) -> None:
     assert trampoline[7] | (trampoline[8] << 8) == patch.entry
 
 
+def test_coexists_with_the_bank_13_tail_patches(tmp_path) -> None:
+    """Mercy tap-in, seeded wind and practice swing fill bank 13's tail; the
+    QR trampoline lives in the fixed bank instead."""
+    writer = mirrored_writer(tmp_path / "all.nes")
+    others = [
+        *mercy_tap_in_patches(mercy_point=10),
+        seeded_wind_patch("qr"),
+        practice_swing_patch(),
+    ]
+    for other in others:
+        other.apply(writer)
+
+    patch = ScorecardQrPatch(CREDENTIALS)
+    assert patch.can_apply(writer)
+    patch.apply(writer)
+
+    assert patch.is_applied(writer)
+    for other in others:
+        assert other.is_applied(writer), other.name
+
+
 def test_a_modified_hook_site_is_refused(tmp_path) -> None:
     out = tmp_path / "stomped.nes"
     writer = RomWriter(ROM_PATH, str(out))
@@ -107,6 +150,15 @@ def test_a_modified_hook_site_is_refused(tmp_path) -> None:
     writer.write_prg(patch.splice_offset, b"\x00\x00")
     assert not patch.can_apply(writer)
     assert not patch.is_applied(writer)
+
+
+def test_used_trampoline_slots_are_refused(tmp_path) -> None:
+    writer = mirrored_writer(tmp_path / "taken.nes")
+    patch = ScorecardQrPatch(CREDENTIALS)
+    writer.write_prg(patch.trampoline_offset, b"\xea")
+    assert not patch.can_apply(writer)
+    with pytest.raises(PatchError):
+        patch.apply(writer)
 
 
 def test_the_feature_in_the_patched_rom_draws_a_scannable_code(tmp_path) -> None:

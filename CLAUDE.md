@@ -31,7 +31,7 @@ A toolset for reverse engineering, editing and patching the NES Open Tournament 
 
 - `golf/` - shared library
   - `core/` - ROM reading/writing, both compression codecs, NES graphics, golfer sprites,
-    signpost, audio, `asm6502.py` assembler, `rom_analysis.py`
+    signpost, audio, `asm6502.py` assembler, `rom_analysis.py`, `ips.py` (IPS patch files)
   - `golf/core/patches/` - ROM patches (`ROMPatch`, `BytePatch`, `CompositePatch`)
   - `formats/` - hole data model and JSON serialization (see `docs/course_data.md`)
   - `rendering/` - PIL rendering for static images

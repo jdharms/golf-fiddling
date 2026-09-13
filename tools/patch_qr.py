@@ -4,17 +4,17 @@ NES Open Tournament Golf - Scorecard QR Patch Tool
 
 Installs the end-of-round QR submission screen (docs/scorecard_qr.md): the
 tables and routine go into bank 2's reclaimed region, and the wait that follows
-the post-round scorecard is repointed through a trampoline in bank 13 padding.
+the post-round scorecard is repointed through a trampoline in the fixed bank's
+dead greens pointer slots.
 
 Each build gets its own seed ID, one player ID per slot, and one MAC key per
 slot. The keys are secret — they are what stops a player submitting a scorecard
 as somebody else — so `--manifest` writes them out for the server and nothing
 else prints them in full.
 
-The region this writes into is the vacated UK course. Apply it to a randomizer
-ROM, where course mirroring and menu trimming have already made course 3
-unreachable; on a vanilla ROM the other two courses still play normally, but the
-UK course's terrain is gone.
+The patch requires course_mirrors (applied by every golf-write): the trampoline
+reuses greens pointer slots that only the mirrors make dead. The region it
+writes into is the vacated UK course, which course mirroring makes unreachable.
 """
 
 import argparse
@@ -24,6 +24,7 @@ import sys
 from pathlib import Path
 
 from golf.core.patches import PatchError, QrCredentials, ScorecardQrPatch
+from golf.core.patches.scorecard_qr import HOOK_BANK, SPLICE_CPU_ADDR, TRAMPOLINE_CPU_ADDR
 from golf.core.rom_writer import RomWriter
 from golf.qr import payload
 from golf.qr.port import layout
@@ -119,23 +120,33 @@ def main() -> int:
     )
     print(
         f"  entry       ${patch.entry:04X} QrShowCodes, far-called from the "
-        f"bank 13 trampoline at ${0xBF83:04X}"
+        f"fixed-bank trampoline at ${TRAMPOLINE_CPU_ADDR:04X}"
     )
-    print(f"  hook        bank 13 $852D, JSR operand -> ${0xBF83:04X}")
+    print(
+        f"  hook        bank {HOOK_BANK} ${SPLICE_CPU_ADDR:04X}, JSR operand -> "
+        f"${TRAMPOLINE_CPU_ADDR:04X}"
+    )
     print(f"  seed ID     {credentials.seed_id.hex()}")
     for slot, player_id in enumerate(credentials.player_ids):
         print(f"  player {slot + 1}    {player_id.hex()}  (key withheld)")
+
+    missing = patch.missing_requirements(writer)
+    for required in patch.requires:
+        applied = "missing" if required in missing else "applied"
+        print(f"  requires    {required.name} ({applied})")
 
     if patch.is_applied(writer):
         state = "already applied (will be rewritten with these credentials)"
     elif patch.can_apply(writer):
         state = "pending"
     else:
-        state = "CONFLICT: the hook site is not vanilla"
+        state = "CONFLICT: the hook site or trampoline slots are not vanilla"
+    if missing:
+        state = f"BLOCKED: requires {', '.join(p.name for p in missing)}"
     print(f"  status      {state}")
 
     if args.validate_only:
-        return 0 if "CONFLICT" not in state else 1
+        return 0 if state == "pending" or state.startswith("already") else 1
 
     try:
         patch.apply(writer)
