@@ -4,7 +4,7 @@ description: |
   NES Open Tournament Golf ROM layout reference. Use when working with ROM reading, writing,
   decompression, or course data extraction for the NES Open Tournament Golf game. Includes
   memory maps, pointer table addresses, bank layouts, data region boundaries, and metadata
-  table locations. Essential for: modifying course_writer.py, rom_reader.py, dump.py, or
+  table locations. Essential for: modifying golf/core/patches/courses.py, rom_reader.py, dump.py, or
   any code that reads/writes ROM data.
 ---
 

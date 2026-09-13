@@ -7,8 +7,8 @@ golf/core/patches/seeded_wind.py, and can print the expected pin index,
 wind anchors and per-swing wind for each hole so a Mesen session can be
 checked against the seed.
 
-The patch requires course3_mirror (applied by every golf-write); apply it
-to a ROM that has already been through golf-write, or apply course3_mirror
+The patch requires course_mirrors (applied by every golf-write); apply it
+to a ROM that has already been through golf-write, or apply course_mirrors
 first.
 """
 
@@ -17,7 +17,6 @@ import sys
 from pathlib import Path
 
 from golf.core.patches import (
-    COURSE3_MIRROR_PATCH,
     PatchError,
     derive_hole_seeds,
     predict_hole,
@@ -27,8 +26,13 @@ from golf.core.rom_writer import RomWriter
 
 
 def _report_status(patch, rom_writer: RomWriter) -> bool:
-    """Print per-sub-patch status. Returns True if the whole group can apply."""
+    """Print requirement and per-sub-patch status. Returns True if the whole group can apply."""
     all_ok = True
+    for required in patch.requires:
+        applied = required.is_applied(rom_writer)
+        state = "required, applied" if applied else "REQUIRED, NOT APPLIED"
+        all_ok = all_ok and applied
+        print(f"  [{state:24}] {required.name}: {required.description}")
     for sub in patch.patches:
         if sub.is_applied(rom_writer):
             state = "already applied"
@@ -55,9 +59,6 @@ def main():
     parser = argparse.ArgumentParser(description="Apply or validate the seeded wind patch")
     parser.add_argument("rom_file", help="Source ROM file")
     parser.add_argument("--seed", required=True, help="Meta-seed string; expands to one RNG seed per hole")
-    parser.add_argument(
-        "--holes", type=int, default=18, help="Number of holes to seed (18 for 1-course, 36 for 2-course)"
-    )
     parser.add_argument("-o", "--output", help="Output ROM file (default: <rom>.seeded.nes)")
     parser.add_argument(
         "--validate-only", action="store_true", help="Report sub-patch status without writing a ROM"
@@ -70,7 +71,7 @@ def main():
     )
     args = parser.parse_args()
 
-    seeds = derive_hole_seeds(args.seed, args.holes)
+    seeds = derive_hole_seeds(args.seed)
     if args.forecast:
         _print_forecast(seeds, args.forecast)
         print()
@@ -84,12 +85,6 @@ def main():
 
     print(f"{patch.name}: {patch.description}")
     can_apply = _report_status(patch, rom_writer)
-
-    if not COURSE3_MIRROR_PATCH.is_applied(rom_writer):
-        print(
-            "  WARNING: course3_mirror is not applied; the seed table overwrites the "
-            "UK flag X offsets, which are live without it"
-        )
 
     if args.validate_only:
         sys.exit(0 if can_apply else 1)

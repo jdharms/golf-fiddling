@@ -188,7 +188,7 @@ design alongside architectural decisions.
 
 ### Features, Requirements, Constraints, etc.
 
-The mission statement in a paragraph for the randomizer would be something like: 
+The mission statement in a paragraph for the randomizer would be something like:
 
 "Allow users to patch their NES Open Tournament Golf rom to get back a game
 that supports Stroke Play mode for One or Two Players on a single course
@@ -207,8 +207,8 @@ generating randomized roms, they can generate multiple randomized roms if someth
 like a "two course competition" is desired.  This allows us to essentially not
 worry about space when it comes to inserting course data into the rom. It does
 leave us with a possible question of how could you generate a two course
-competition where no holes are shared between the two courses.  That's something
-I'll figure out for version 2.0. (Also, see Appendix B)
+competition where no holes are shared between the two courses.  They'd still
+be two courses on two separate roms. (Also, see Appendix B)
 
 Constraints:
 
@@ -242,7 +242,7 @@ bucket I'd put the practice swing functionality and the mercy tap-in rule.
 
 ### Seed Generation
 
-The primary randomization that happens as part of generating a seeded rom is 
+The primary randomization that happens as part of generating a seeded rom is
 the creation of an 18 hole randomized course.  I've spent some time thinking of
 a mental model of this and landed on the following:
 
@@ -466,7 +466,7 @@ Either way, this work is specifically not in scope for v1.0.
 
 In order to ensure that old manifests remain downloadable, the catalog's
 contents should be considered immutable.  If a custom hole is in the
-catalog and a tweak is made to it by the author that we want to 
+catalog and a tweak is made to it by the author that we want to
 incorporate, we leave the old version in the catalog, mark it as
 "deprecated" so the generator never puts it in a new manifest, and
 add the new version of the hole with a new ID.
