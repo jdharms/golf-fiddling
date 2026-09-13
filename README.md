@@ -97,7 +97,7 @@ Build a standalone editor executable with `uv run pyinstaller run_editor.spec`.
 |---------|-------------|
 | `golf-patch-wram <rom>` | Expand the terrain buffer past 48 rows; see `docs/wram_expansion.md` |
 | `golf-patch-seeded-wind <rom> --seed <seed>` | Seed pins and wind per hole; see `docs/seeded_wind.md` |
-| `golf-patch-practice-swing <rom>` | Practice swings (apply `golf-patch-wram` first); see `docs/practice_swing.md` |
+| `golf-patch-practice-swing <rom>` | Practice swings that cost no stroke; see `docs/practice_swing.md` |
 | `golf-patch-music <rom> <music.json>` | Replace the course themes from a music dump; see `docs/music_format.md` |
 | `golf-patch-signpost <rom> <edited.aseprite>` | Install new signpost banner art; see `docs/prehole_signpost.md` |
 | `golf-patch-qr <rom>` | Install the end-of-round QR screen; see `docs/scorecard_qr.md` |

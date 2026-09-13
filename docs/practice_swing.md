@@ -152,9 +152,9 @@ the club together.
 `golf-patch-practice-swing <rom> [-o out.nes] [--hold-frames N]`. Ten `BytePatch`es, every
 one length-preserving, so nothing else in the ROM moves.
 
-**Depends on `wram_expansion`** - the toggle routine lives at fixed-bank `$CAE4`, the tail
-of the `$CA40`-`$CAFF` block that `wram_expansion` carves its relocated tables from. Apply
-it to a ROM that has already been through `golf-patch-wram`.
+The toggle routine lives at fixed-bank `$CAE4`, the tail of the `$CA40`-`$CAFF` block (all
+`$FF` in vanilla) that `wram_expansion` also carves its relocated tables from. The two share
+the block without overlapping, and practice swing applies with or without `wram_expansion`.
 
 ### Space
 

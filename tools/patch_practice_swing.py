@@ -6,9 +6,8 @@ Applies (or validates) the practice swing patch defined in
 golf/core/patches/practice_swing.py.
 
 The patch places its toggle routine in the fixed-bank free space at $CAE4,
-which is the tail of the $CA40-$CAFF block wram_expansion carves its
-relocated tables from, so apply it to a ROM that has already been through
-golf-patch-wram.
+the tail of the $CA40-$CAFF block that wram_expansion also uses. The two do
+not overlap, so it applies with or without golf-patch-wram.
 """
 
 import argparse
