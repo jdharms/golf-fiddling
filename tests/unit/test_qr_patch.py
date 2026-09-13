@@ -11,7 +11,8 @@ import random
 
 import pytest
 
-from golf.core.patches import PatchError, QrCredentials, ScorecardQrPatch
+from golf.core import rom_utils
+from golf.core.patches import COURSE_MIRRORS_PATCH, PatchError, QrCredentials, ScorecardQrPatch
 from golf.core.patches.scorecard_qr import (
     EXECUTE_FAR_CALL,
     QR_BANK,
@@ -156,9 +157,15 @@ def test_the_trampoline_carries_whatever_entry_point_it_is_given() -> None:
     assert len(trampoline) == 10
 
 
-def test_the_trampoline_fits_below_the_seeded_wind_one(patch) -> None:
+def test_the_trampoline_fits_the_dead_greens_pointer_slots(patch) -> None:
+    # slots 18-53 of the greens pointer table, up to the par table
+    assert TRAMPOLINE_CPU_ADDR == rom_utils.TABLE_GREENS_PTR + 36 == 0xDCBD
+    assert TRAMPOLINE_LIMIT == rom_utils.TABLE_PAR == 0xDD05
     assert TRAMPOLINE_CPU_ADDR + len(patch.trampoline) <= TRAMPOLINE_LIMIT
-    assert TRAMPOLINE_LIMIT == 0xBFAF  # seeded_wind's trampoline starts here
+
+
+def test_requires_course_mirrors(patch) -> None:
+    assert list(patch.requires) == [COURSE_MIRRORS_PATCH]
 
 
 def test_the_splice_repoints_the_wait_at_the_trampoline(patch) -> None:
@@ -172,7 +179,7 @@ def test_the_splice_repoints_the_wait_at_the_trampoline(patch) -> None:
 
 def test_the_offsets_are_where_those_banks_live(patch) -> None:
     assert patch.image_offset == 2 * 0x4000 + (layout.TABLE_ORIGIN - 0x8000)
-    assert patch.trampoline_offset == 13 * 0x4000 + (TRAMPOLINE_CPU_ADDR - 0x8000)
+    assert patch.trampoline_offset == 15 * 0x4000 + (TRAMPOLINE_CPU_ADDR - 0xC000)
     assert patch.splice_offset == 13 * 0x4000 + (0x852E - 0x8000)
 
 

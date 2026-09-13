@@ -338,7 +338,7 @@ For reference, the filler runs of 48 bytes or more, totalling about 1.6KB: bank 
 `$8DD0` x256 (which sits directly after a signed ramp table and may be in range of an
 indexed read - confirm before trusting it), bank 3 `$BF59` x154, bank 10 `$BF6B` x136
 (**taken** by `putting_practice`), bank 14 `$8E44` x91, bank 5 `$BF83` x112, bank 13
-`$BF83` x112 (**taken** by the QR trampoline and `mercy_tap_in`), bank 2 `$BF87` x108,
+`$BF83` x112 (**taken** by `mercy_tap_in`, `seeded_wind` and `practice_swing`), bank 2 `$BF87` x108,
 bank 6 `$BF8B` x104, bank 11 `$BF97` x92, bank 4 `$BFAD` x70, bank 0 `$BFB5` x62. Bank 12
 itself has one 28-byte run at `$BFD7`.
 

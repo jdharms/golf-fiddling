@@ -232,8 +232,13 @@ $8530  ...                                     ; mode dispatch; single-round mod
 ```
 
 The splice is **a two-byte edit of the `JSR` operand at `$852E`-`$852F`**, pointing it at
-a 10-byte trampoline in bank 13's tail padding (`$BF83`-`$BFAE`, 44 bytes free below the
-seeded-wind trampoline at `$BFAF`):
+a 10-byte trampoline in the fixed bank at `$DCBD`. Bank 13's tail padding is fully claimed
+by `mercy_tap_in`, `seeded_wind` and `practice_swing`, so the trampoline reuses slots 18-22
+of `GreenCompressedDataPtrTable` (`$DC99`). That table's only reader found by byte search is
+hole setup (`$DAF1`/`$DAF6`), indexed by the doubled hole index, and under
+`COURSE_MIRRORS_PATCH` every course slot plays holes 0-17, so slots 18-53 (`$DCBD`-`$DD04`)
+are never read. The patch requires the mirrors. The fixed bank is always mapped, so the bank
+13 `JSR` reaches it:
 
 ```
 QrAfterScorecard:
@@ -506,14 +511,15 @@ golf-patch-qr rom.nes --validate-only
 ```
 
 Three writes: the 4,420-byte image (tables, routine, credentials) into bank 2 from
-`$8400`; the ten-byte trampoline into bank 13's tail padding at `$BF83`; and the two-byte
+`$8400`; the ten-byte trampoline into the fixed bank's dead greens pointer slots at `$DCBD`; and the two-byte
 splice at `$852E` that repoints the post-round wait at it.
 
 **This patch does not verify the bytes it overwrites**, unlike `BytePatch`. The region
 write is four kilobytes of vanilla course data and carrying a copy to compare against
 would be absurd. What it verifies instead is the hook: the six-byte far call to
 `DrawScorecardScreen` at `$8523`, the vanilla `JSR $85BA` operand, and that the
-trampoline's ten bytes are still `$FF` padding. That is a precise enough anchor to
+trampoline's ten bytes still hold the vanilla greens pointers. It also requires
+`COURSE_MIRRORS_PATCH` to be applied first. That is a precise enough anchor to
 catch a wrong ROM or a rearranged routine. A future "reclaim" patch that fills the freed
 region with `$FF` would let this one assert on the region too.
 

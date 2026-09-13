@@ -9,23 +9,31 @@ Phase 6 of `docs/scorecard_qr.md`. Three writes:
    course mirroring and menu trimming there is no way to play a round on
    course 3, so nothing reads it.
 
-2. **A trampoline** in bank 13's tail padding (`$BF83`), ten bytes:
+2. **A trampoline** in the fixed bank at `$DCBD`, ten bytes:
 
        JSR $85BA              ; the scorecard's own wait-for-A/B
        JSR ExecuteFarCall     ; .db $02, <QrShowCodes, >QrShowCodes
        RTS
+
+   `$DCBD` is slot 18 of `GreenCompressedDataPtrTable` (`$DC99`). Its only
+   reader is hole setup (`$DAF1`/`$DAF6`, indexed by the doubled hole index),
+   and under `COURSE_MIRRORS_PATCH` every course slot plays holes 0-17, so
+   slots 18-53 (`$DCBD`-`$DD04`) are never read. The patch requires the
+   mirrors for that reason. The fixed bank is always mapped, so the bank 13
+   `JSR` reaches it.
 
 3. **A two-byte splice**: the `JSR $85BA` at bank 13 `$852D` — the wait that
    follows the post-round scorecard — is repointed at that trampoline. `$85BA`
    is also called from `$8599` on the tournament path; only this call site
    moves.
 
-Unlike `BytePatch`, this does not verify the bytes it overwrites. The region
-write is nearly four kilobytes of vanilla course data, and carrying a copy of
-that to compare against would be absurd. What it *does* verify is the splice
-site itself and the six-byte far call to `DrawScorecardScreen` just above it,
-which is a precise enough anchor to catch a wrong or already-modified ROM, plus
-that the trampoline's ten bytes are still padding.
+Unlike `BytePatch`, this does not verify the bytes it overwrites in bank 2. The
+region write is nearly four kilobytes of vanilla course data, and carrying a
+copy of that to compare against would be absurd. What it *does* verify is the
+splice site itself and the six-byte far call to `DrawScorecardScreen` just
+above it, which is a precise enough anchor to catch a wrong or already-modified
+ROM, plus that the trampoline's ten bytes still hold the vanilla greens
+pointers.
 
 (A future "reclaim" patch that fills the freed region with `$FF` would let this
 one assert on the region too. See the note in the doc.)
@@ -34,11 +42,13 @@ one assert on the region too. See the note in the doc.)
 import random
 from dataclasses import dataclass
 
+from golf.core import rom_utils
 from golf.core.asm6502 import assemble
 from golf.qr import payload, port
 from golf.qr.port import layout
 
 from .base import PatchError, ROMPatch
+from .multi_bank import COURSE_MIRRORS_PATCH
 
 # --- Splice site ------------------------------------------------------------
 
@@ -56,10 +66,13 @@ SCORECARD_WAIT = 0x85BA
 ANCHOR_CPU_ADDR = 0x8523
 ANCHOR_BYTES = bytes([0x20, 0x72, 0xD3, 0x02, 0x76, 0xAE])
 
-#: Bank 13 tail padding. `$BF83`-`$BFAE` is free; the seeded-wind patch's own
-#: trampoline starts at `$BFAF`.
-TRAMPOLINE_CPU_ADDR = 0xBF83
-TRAMPOLINE_LIMIT = 0xBFAF
+#: Greens pointer slots 18-53, dead under the course mirrors: from slot 18 up
+#: to the par table that follows.
+TRAMPOLINE_CPU_ADDR = rom_utils.TABLE_GREENS_PTR + 18 * 2
+TRAMPOLINE_LIMIT = rom_utils.TABLE_PAR
+
+#: The vanilla UK greens pointers (slots 18-22) the trampoline replaces.
+TRAMPOLINE_VANILLA = bytes([0x77, 0x8D, 0x11, 0x8E, 0x01, 0x8F, 0xDE, 0x8F, 0xBF, 0x90])
 
 EXECUTE_FAR_CALL = 0xD372
 
@@ -153,7 +166,7 @@ def build_image(credentials: QrCredentials) -> bytes:
 
 
 def build_trampoline(entry: int) -> bytes:
-    """The ten bytes in bank 13 that the spliced `JSR` now reaches."""
+    """The ten bytes in the fixed bank that the spliced `JSR` now reaches."""
     source = f"""
         jsr ${SCORECARD_WAIT:04X}
         jsr ${EXECUTE_FAR_CALL:04X}
@@ -171,6 +184,7 @@ class ScorecardQrPatch(ROMPatch):
 
     name = "scorecard_qr"
     description = "Draw a scorecard submission QR code after the post-round scorecard"
+    requires = (COURSE_MIRRORS_PATCH,)
 
     def __init__(self, credentials: QrCredentials):
         self.credentials = credentials
@@ -186,7 +200,12 @@ class ScorecardQrPatch(ROMPatch):
                 f"${layout.REGION_END:04X}"
             )
         if TRAMPOLINE_CPU_ADDR + len(self.trampoline) > TRAMPOLINE_LIMIT:
-            raise PatchError("the trampoline does not fit bank 13's tail padding")
+            raise PatchError("the trampoline does not fit the dead greens pointer slots")
+        if len(self.trampoline) != len(TRAMPOLINE_VANILLA):
+            raise PatchError(
+                f"the trampoline is {len(self.trampoline)} bytes; update "
+                "TRAMPOLINE_VANILLA to the vanilla bytes it now covers"
+            )
 
     # -- addresses --------------------------------------------------------
 
@@ -196,7 +215,7 @@ class ScorecardQrPatch(ROMPatch):
 
     @property
     def trampoline_offset(self) -> int:
-        return _prg_offset(TRAMPOLINE_CPU_ADDR, HOOK_BANK)
+        return rom_utils.cpu_to_prg_fixed(TRAMPOLINE_CPU_ADDR)
 
     @property
     def splice_offset(self) -> int:
@@ -214,9 +233,9 @@ class ScorecardQrPatch(ROMPatch):
 
     def can_apply(self, rom_writer) -> bool:
         """
-        The splice site must be vanilla and the trampoline space still padding.
-        The region the image goes into is deliberately not checked — see the
-        module docstring.
+        The splice site must be vanilla and the trampoline's slots must still
+        hold the vanilla greens pointers. The region the image goes into is
+        deliberately not checked — see the module docstring.
         """
         anchor = rom_writer.read_prg(
             _prg_offset(ANCHOR_CPU_ADDR, HOOK_BANK), len(ANCHOR_BYTES)
@@ -225,8 +244,10 @@ class ScorecardQrPatch(ROMPatch):
             return False
         if rom_writer.read_prg(self.splice_offset, 2) != self.vanilla_splice_bytes:
             return False
-        padding = rom_writer.read_prg(self.trampoline_offset, len(self.trampoline))
-        return padding == b"\xff" * len(self.trampoline)
+        return (
+            rom_writer.read_prg(self.trampoline_offset, len(self.trampoline))
+            == TRAMPOLINE_VANILLA
+        )
 
     def is_applied(self, rom_writer) -> bool:
         if rom_writer.read_prg(self.splice_offset, 2) != self.splice_bytes:
@@ -237,10 +258,11 @@ class ScorecardQrPatch(ROMPatch):
         )
 
     def apply(self, rom_writer) -> None:
+        self.check_requirements(rom_writer)
         if not self.is_applied(rom_writer) and not self.can_apply(rom_writer):
             raise PatchError(
                 "the post-round scorecard call site is not where this patch "
-                "expects it, or bank 13's tail padding is already in use"
+                "expects it, or the greens pointer slots it reuses are already in use"
             )
         rom_writer.write_prg(self.image_offset, self.image)
         rom_writer.write_prg(self.trampoline_offset, self.trampoline)
