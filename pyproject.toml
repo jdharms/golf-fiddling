@@ -34,12 +34,7 @@ golf-hex2bin = "tools.hex2bin:main"
 golf-expand-dict = "tools.expand_dict:main"
 
 # ROM patches
-golf-patch-wram = "tools.patch_wram:main"
-golf-patch-seeded-wind = "tools.patch_seeded_wind:main"
-golf-patch-music = "tools.patch_music:main"
-golf-patch-practice-swing = "tools.patch_practice_swing:main"
-golf-patch-signpost = "tools.patch_signpost:main"
-golf-patch-qr = "tools.patch_qr:main"
+golf-patch = "tools.patch:main"
 
 # Reverse-engineering research
 golf-rom-peek = "tools.research.rom_peek:main"
@@ -57,6 +52,7 @@ golf-qr-preview = "tools.qr.preview:main"
 golf-qr-validate = "tools.qr.validate:main"
 golf-qr-tables = "tools.qr.tables:main"
 golf-qr-port = "tools.qr.port:main"
+golf-qr-credentials = "tools.qr.credentials:main"
 
 [tool.uv]
 package = true

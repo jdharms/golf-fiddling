@@ -473,3 +473,27 @@ add the new version of the hole with a new ID.
 
 As mentioned in Appendix A, `transform`s need to be versioned as well,
 so really they can be considered part of the `catalog`, to some extent.
+
+## Appendix D: Patches
+
+Base:
+* attr streaming + WRAM Expansion (Contains several smaller patches)
+* Multi-Bank Courses (Allows a course to be split across banks. Includes course "mirroring".)
+
+Randomization & Course:
+* Course load
+* Seeded wind
+* Music import
+
+QOL:
+* Practice swing
+* Mercy rule tap-ins
+* Scorecard QR Submission
+
+Fit & Finish:
+* Signpost - Random banner
+* Scorecard - Yardage total, total par, course name
+* Menu trim
+
+Customization:
+* Default SRAM (Player name, Player clubs, BGM On/Off)

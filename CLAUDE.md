@@ -68,6 +68,12 @@ packing terrain across banks 0 and 1 with a per-hole bank table at $A700 in bank
 patch requires `multi_bank_lookup`, `course_mirrors` (every course slot plays course 1)
 and `attr_streaming`, which `golf-write` applies first. See `docs/multi_bank_terrain.md`.
 
+**Building ROMs**: `golf-patch` builds a ROM or IPS patch from a JSON recipe and/or inline
+`-p` steps through `PatchStack`, which checks the base ROM hash, each patch's `requires`,
+and that no two steps write the same byte. Patch types are registered in
+`golf/core/patches/registry.py`; a new patch needs an entry there to be reachable from
+recipes and the CLI. See `docs/patch_stack.md`.
+
 **Two compression schemes**, easily confused:
 - Course terrain/greens: RLE + dictionary, horizontal transitions, vertical fill
   (`golf/core/decompressor.py`, `compressor.py`; `golf/core/compression.md`). Terrain

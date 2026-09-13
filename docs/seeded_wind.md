@@ -2,7 +2,7 @@
 
 > **Note**: This document was written by Claude based on reverse-engineering requested by jdharms. Debugger values quoted below were captured by jdharms in Mesen on the vanilla US ROM.
 
-Makes every hole's pin position and wind sequence a pure function of a build-time seed, so all players of a given ROM face the same conditions on the same swing of the same hole. Implemented in `golf/core/patches/seeded_wind.py`; applied with `golf-patch-seeded-wind`.
+Makes every hole's pin position and wind sequence a pure function of a build-time seed, so all players of a given ROM face the same conditions on the same swing of the same hole. Implemented in `golf/core/patches/seeded_wind.py`; applied as the `seeded_wind` step of `golf-patch`.
 
 ## Vanilla RNG
 
@@ -102,10 +102,10 @@ Seeds come from `derive_hole_seeds(meta_seed)`: SHA-256 of a fixed prefix, the m
 
 ```bash
 # ROM produced by golf-write (course_mirrors already applied)
-golf-patch-seeded-wind modified.nes --seed "my seed" -o seeded.nes
+golf-patch modified.nes --any-base -p "seeded_wind:seed=my seed" -o seeded.nes
 
 # print the expected pin index, anchors and first 6 winds per hole
-golf-patch-seeded-wind modified.nes --seed "my seed" --forecast 6 --validate-only
+golf-patch modified.nes --any-base -p "seeded_wind:seed=my seed" --validate-only -v
 ```
 
 Forecast columns: `pin` is the 0-based flag index; `dir` is `WindDirectionAnchor` (`$012F`, bit 7 = reversed); `spd` is `WindSpeedAnchor` (`$0130`); each `dir/spd` pair is (`$96`, `$97`) for that swing.

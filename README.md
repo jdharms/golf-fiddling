@@ -95,12 +95,7 @@ Build a standalone editor executable with `uv run pyinstaller run_editor.spec`.
 
 | Command | Description |
 |---------|-------------|
-| `golf-patch-wram <rom>` | Expand the terrain buffer past 48 rows; see `docs/wram_expansion.md` |
-| `golf-patch-seeded-wind <rom> --seed <seed>` | Seed pins and wind per hole; see `docs/seeded_wind.md` |
-| `golf-patch-practice-swing <rom>` | Practice swings that cost no stroke; see `docs/practice_swing.md` |
-| `golf-patch-music <rom> <music.json>` | Replace the course themes from a music dump; see `docs/music_format.md` |
-| `golf-patch-signpost <rom> <edited.aseprite>` | Install new signpost banner art; see `docs/prehole_signpost.md` |
-| `golf-patch-qr <rom>` | Install the end-of-round QR screen; see `docs/scorecard_qr.md` |
+| `golf-patch <rom> [recipe.json] [-p ID[:key=value,...]]` | Build a ROM or IPS patch from a recipe and/or inline patch steps; `--list` shows every patch type; see `docs/patch_stack.md` |
 
 ### Reverse-engineering research
 
@@ -130,6 +125,7 @@ Build a standalone editor executable with `uv run pyinstaller run_editor.spec`.
 | `golf-qr-validate` | Sweep masks x rounds x capture conditions x decoders |
 | `golf-qr-tables [out_dir]` | Export the ROM tables |
 | `golf-qr-port` | Assemble the 6502 port and report sizes against the bank 2 budget |
+| `golf-qr-credentials -o <keys.json>` | Write the seed ID, player IDs and secret MAC keys the `scorecard_qr` patch reads |
 
 ## Example workflow
 
