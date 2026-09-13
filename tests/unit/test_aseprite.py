@@ -166,3 +166,102 @@ class TestCels:
     def test_mismatched_pixel_count_is_rejected(self):
         with pytest.raises(ValueError):
             Cel(0, 0, 0, 4, 4, bytes(3))
+
+
+class TestReader:
+    """The return leg: a file that has been through Aseprite and back.
+
+    Round-tripping the writer is the cheap half.  The half that matters is
+    tolerating what a real editor adds - chunks this module never writes, and
+    layers the artist created, hid or reordered.
+    """
+
+    def test_round_trip_preserves_canvas_palette_and_grid(self, sample):
+        back = AsepriteFile.from_bytes(sample.to_bytes())
+        assert (back.width, back.height) == (sample.width, sample.height)
+        assert back.transparent_index == sample.transparent_index
+        assert back.grid == sample.grid
+        assert len(back.palette) == len(sample.palette)
+        assert back.palette[1][:4] == sample.palette[1][:4]
+
+    def test_round_trip_preserves_layers_and_cels(self, sample):
+        back = AsepriteFile.from_bytes(sample.to_bytes())
+        assert [layer.name for layer in back.layers] == [
+            layer.name for layer in sample.layers
+        ]
+        cel = back.frames[0].cels[0]
+        assert (cel.layer, cel.x, cel.y, cel.width, cel.height) == (0, 1, 2, 2, 1)
+        assert cel.pixels == bytes([1, 2])
+
+    def test_palette_entry_names_survive(self):
+        ase = AsepriteFile(
+            width=1,
+            height=1,
+            palette=[(0, 0, 0, 0, "transparent"), (255, 0, 0, 255, "$16 - red")],
+            layers=[Layer("art")],
+            frames=[Frame(cels=[Cel(0, 0, 0, 1, 1, bytes([1]))])],
+        )
+        assert AsepriteFile.from_bytes(ase.to_bytes()).palette[1][4] == "$16 - red"
+
+    def test_unknown_chunks_are_skipped_not_parsed(self, sample):
+        """Aseprite writes a colour-profile chunk this module knows nothing of."""
+        data = bytearray(sample.to_bytes())
+        extra = struct.pack("<IH", 6 + 16, 0x2007) + bytes(16)
+        insert = 128 + 16
+        data[insert:insert] = extra
+        # Grow the frame's size and chunk counts to match the injected chunk.
+        frame_size = struct.unpack_from("<I", data, 128)[0] + len(extra)
+        struct.pack_into("<I", data, 128, frame_size)
+        struct.pack_into("<H", data, 128 + 6, struct.unpack_from("<H", data, 128 + 6)[0] + 1)
+        struct.pack_into("<I", data, 128 + 12, struct.unpack_from("<I", data, 128 + 12)[0] + 1)
+        struct.pack_into("<I", data, 0, len(data))
+
+        back = AsepriteFile.from_bytes(bytes(data))
+        assert [layer.name for layer in back.layers] == [
+            layer.name for layer in sample.layers
+        ]
+        assert back.frames[0].cels[0].pixels == bytes([1, 2])
+
+    def test_composite_paints_later_layers_over_earlier_ones(self):
+        ase = AsepriteFile(
+            width=2,
+            height=1,
+            palette=[(0, 0, 0, 0), (1, 1, 1, 255), (2, 2, 2, 255)],
+            layers=[Layer("under"), Layer("over")],
+            frames=[
+                Frame(
+                    cels=[
+                        Cel(0, 0, 0, 2, 1, bytes([1, 1])),
+                        Cel(1, 1, 0, 1, 1, bytes([2])),
+                    ]
+                )
+            ],
+        )
+        assert AsepriteFile.from_bytes(ase.to_bytes()).composite() == bytearray([1, 2])
+
+    def test_composite_skips_hidden_layers(self):
+        ase = AsepriteFile(
+            width=1,
+            height=1,
+            palette=[(0, 0, 0, 0), (1, 1, 1, 255), (2, 2, 2, 255)],
+            layers=[Layer("under"), Layer("hidden", flags=LAYER_EDITABLE)],
+            frames=[
+                Frame(
+                    cels=[
+                        Cel(0, 0, 0, 1, 1, bytes([1])),
+                        Cel(1, 0, 0, 1, 1, bytes([2])),
+                    ]
+                )
+            ],
+        )
+        assert AsepriteFile.from_bytes(ase.to_bytes()).composite() == bytearray([1])
+
+    def test_composite_resolves_a_linked_cel_to_its_source_image(self, sample):
+        back = AsepriteFile.from_bytes(sample.to_bytes())
+        assert back.composite(1) == back.composite(0)
+
+    def test_a_non_indexed_file_is_refused(self, sample):
+        data = bytearray(sample.to_bytes())
+        struct.pack_into("<H", data, 12, 32)      # RGBA
+        with pytest.raises(ValueError, match="indexed"):
+            AsepriteFile.from_bytes(bytes(data))

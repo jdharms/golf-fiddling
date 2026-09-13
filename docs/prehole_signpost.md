@@ -274,6 +274,117 @@ Following the scorecard's precedent (`docs/scorecard.md` "Modifying the card"):
   fourth call before `LC_AD31_FlushBigDigitBuffer` would draw a 4-digit number with no
   new code.
 
+## Importing new banner art
+
+`golf-signpost-import` (`tools/signpost_import.py`, logic in `golf/core/signpost.py`)
+is the return leg of the render: it reads an edited picture of the whole screen out of
+an `.aseprite` file and resolves the banner rectangle back into the two things the ROM
+needs - the raw nametable bytes of the `$AD86` descriptor's body, and any CHR patterns
+that do not exist yet.
+
+```bash
+golf-signpost-import after.aseprite --banner us \
+    --preview card.png --grid off_grid.png --json banner.json
+```
+
+The export convention is the NES screen at an integer zoom, indexed, using the same
+palette the golfer exporter offers (index 0 transparent, 1-55 every NES colour once;
+`golf/core/palettes.py` `distinct_nes_entries`). Three properties of that convention
+decide whether a file can be read back at all:
+
+- **One NES pixel is one aligned `zoom x zoom` block.** A stroke drawn thinner than
+  that, or starting half a block over, has no hardware pixel to live in. Those are
+  collected and reported rather than averaged away; `--grid` renders them for the artist
+  with the real pixel boundaries drawn on. Where a block genuinely holds two colours the
+  importer takes the lower palette index, which on the signpost's palette biases toward
+  the letters' black outline rather than the magenta brick behind it.
+- **`$20` and `$30` are the same white.** The colour lookup is keyed by RGB, not by NES
+  palette value, so an artist reaching for either swatch means the same pixel.
+- **Three colours per cell, chosen by the attribute table, not by the artist.** The
+  banner's rows sit under attribute `$55` (subpalette 1: `$30`/`$21`/`$15` on `$0F`)
+  except its last row, which falls in the `$05` block's lower half and uses subpalette 0.
+  A pixel outside its cell's three colours is an error naming the cell and the pixel.
+
+A cell whose art is unchanged keeps the byte the ROM already had, rather than being
+re-resolved through the pattern table - two slots can hold identical art, and an
+untouched region must round-trip exactly. `tests/integration/test_signpost_import_rom.py`
+pins that end to end by importing `renders/prehole_signpost/signpost_us_hole01_course_only.aseprite`,
+which was rendered *from* the ROM and therefore must come back with zero new patterns.
+
+### What new art costs
+
+Two separate budgets:
+
+- **Pattern-table slots.** 104 of the 256 slots in `$1000` are free once the other four
+  banners stop being drawn - the `JAPAN`/`UK` wordmarks and both contest banners are
+  nothing but unique letter art. Free slots are plentiful; *contiguous* ones are not.
+  The longest run is 10 tiles, so a 22-tile import needs three descriptors, not one.
+- **PRG bytes to hold the pixels.** The pattern table is filled at runtime from ROM, so
+  every new tile costs 16 bytes somewhere.
+
+The pixels are **not confined to bank 12**. `LoadCompressedGraphics` (`$D45F`) takes the
+bank as its first inline argument, saves the caller's bank, switches, decompresses and
+restores - which is how the signpost's own CHR comes out of bank 5 while the code runs in
+bank 12. Only the banner *body* - the 96 tile indices - has to be in bank 12, because
+`WriteNametableTiles` resolves its pointer against whatever bank is switched in, and it
+is already there.
+
+Compression buys nothing on letter art: a greedy encoder over the codec's own modes,
+checked by decoding the result back through `decompress_stream`, turns the 352 bytes of
+a 22-tile import into 351. Compression is worth using for the *bank freedom* it brings,
+not for the size.
+
+For reference, the filler runs of 48 bytes or more, totalling about 1.6KB: bank 9
+`$8DD0` x256 (which sits directly after a signed ramp table and may be in range of an
+indexed read - confirm before trusting it), bank 3 `$BF59` x154, bank 10 `$BF6B` x136
+(**taken** by `putting_practice`), bank 14 `$8E44` x91, bank 5 `$BF83` x112, bank 13
+`$BF83` x112 (**taken** by the QR trampoline and `mercy_tap_in`), bank 2 `$BF87` x108,
+bank 6 `$BF8B` x104, bank 11 `$BF97` x92, bank 4 `$BFAD` x70, bank 0 `$BFB5` x62. Bank 12
+itself has one 28-byte run at `$BFD7`.
+
+### Getting pixels into the pattern table without a compressor
+
+`WriteNametableTiles` (`$CE84`) takes an arbitrary PPU destination and copies literal
+bytes to `$2007`, advancing the destination by `$20` per row. Nothing restricts that
+destination to a nametable: pointing it at `$1000 + tile * 16` with a width of 32 writes
+two tiles per row, contiguously, straight into the pattern table. **New CHR therefore
+needs no `$D4C3` encoder at all** - it is raw bytes, exactly like the banner bodies.
+
+Two constraints come out of the disassembly. `$CEE8` does `LDA width / CMP rows / BCC`
+and **abandons the transfer when width < rows**, so a 32-wide write is capped at 32 rows
+(64 tiles); and because a row is two tiles, each run of slots must start on an even tile
+index and cover an even count.
+
+The call sites are free: the banner-removal patch's `JMP` leaves 39 unused bytes at
+`$AC5D`-`$AC83`, and four `JSR WriteNametableTiles` calls plus their inline pointers and
+a closing `JMP $AC84` come to 23.
+
+### The shipped patch
+
+`random_banner_patches()` in `golf/core/patches/signpost_random_banner.py`, driven by
+`golf-patch-signpost`:
+
+```bash
+golf-patch-signpost nes_open_us.nes after.aseprite -o random.nes
+```
+
+It writes six things into bank 12: the new tile pixels, the descriptors that load them
+into the pattern table, the banner's new nametable bytes over its existing body, and 23
+bytes of code at `$AC5D` replacing the course/contest selection with a fixed sequence -
+one `JSR WriteNametableTiles` per pattern chunk, one for the banner (reusing the `$AD86`
+entry rather than writing a sixth descriptor), then `JMP $AC84`.
+
+The other four banners are not repointed anywhere; they stop being reachable because the
+code that chose between them is gone, which is what frees their bodies to hold pixels.
+**The placement is provisional** - the pixels sit in the reclaimed bodies purely because
+that space is already understood, and `data_region` is the only thing that decides it.
+
+`renders/prehole_signpost/random_banner/from_patched_rom.png` is rendered by walking the
+patched ROM's own `JSR`/inline-pointer pairs and following each descriptor, so it is a
+picture of what the bytes do rather than of what they were meant to do;
+`tests/integration/test_signpost_random_banner_rom.py` asserts the same path
+pattern-for-pattern.
+
 ## Removing the banner
 
 Shipped as `remove_course_banner_patches()` in `golf/core/patches/signpost_banner.py`

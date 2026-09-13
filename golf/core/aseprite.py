@@ -1,10 +1,16 @@
 """
-A minimal writer for Aseprite's `.aseprite` / `.ase` format.
+A minimal reader and writer for Aseprite's `.aseprite` / `.ase` format.
 
 Only what a layered reference export needs: indexed colour, one palette, named
 layers with flags, and one compressed cel per layer per frame.  Cel position is
 part of the format, which is what lets a layer be *moved* by an artist and read
 back as an offset.
+
+`read` is the return leg: a file that has been through Aseprite carries chunks
+this module never writes (colour profile, tags, user data, the deprecated
+palette chunks), and the artist may have added, hidden or reordered layers.
+Unknown chunks are skipped by their length rather than parsed, so the reader
+only has to understand the four chunk types that carry pixels.
 
 Format reference: https://github.com/aseprite/aseprite/blob/main/docs/ase-file-specs.md
 """
@@ -25,12 +31,25 @@ LAYER_VISIBLE = 1
 LAYER_EDITABLE = 2
 LAYER_LOCK_MOVEMENT = 4
 
+# Layer types.  A group holds no pixels of its own; its children are listed
+# separately at a deeper child level, so compositing just skips it.
+LAYER_TYPE_GROUP = 1
+
+CEL_RAW = 0
+CEL_LINKED = 1
+CEL_COMPRESSED = 2
+
 
 @dataclass
 class Layer:
     name: str
     flags: int = LAYER_VISIBLE | LAYER_EDITABLE
     opacity: int = 255
+    layer_type: int = 0
+
+    @property
+    def visible(self) -> bool:
+        return bool(self.flags & LAYER_VISIBLE)
 
 
 @dataclass
@@ -113,7 +132,7 @@ class AsepriteFile:
 
     def _layer_chunk(self, layer: Layer) -> bytes:
         body = struct.pack(
-            "<HHHHHHB", layer.flags, 0, 0, 0, 0, 0, layer.opacity
+            "<HHHHHHB", layer.flags, layer.layer_type, 0, 0, 0, 0, layer.opacity
         )
         body += b"\x00" * 3
         body += self._string(layer.name)
@@ -181,3 +200,128 @@ class AsepriteFile:
     def write(self, path) -> None:
         with open(path, "wb") as handle:
             handle.write(self.to_bytes())
+
+    # ---- reading ----------------------------------------------------------
+
+    @classmethod
+    def from_bytes(cls, raw: bytes) -> "AsepriteFile":
+        magic = struct.unpack_from("<H", raw, 4)[0]
+        if magic != ASE_MAGIC:
+            raise ValueError(f"not an Aseprite file (magic {magic:#06x})")
+        frame_count, width, height, depth = struct.unpack_from("<HHHH", raw, 6)
+        if depth != 8:
+            raise ValueError(f"only indexed (8bpp) files are supported, got {depth}bpp")
+        transparent = raw[28]
+        grid = struct.unpack_from("<hhHH", raw, 36)
+
+        ase = cls(
+            width=width,
+            height=height,
+            palette=[],
+            transparent_index=transparent,
+            grid=grid,
+        )
+
+        offset = 128
+        for _ in range(frame_count):
+            frame_size, frame_magic = struct.unpack_from("<IH", raw, offset)
+            if frame_magic != FRAME_MAGIC:
+                raise ValueError(f"bad frame magic {frame_magic:#06x} at {offset}")
+            old_count, duration = struct.unpack_from("<HH", raw, offset + 6)
+            new_count = struct.unpack_from("<I", raw, offset + 12)[0]
+            frame = Frame(duration_ms=duration)
+
+            pos = offset + 16
+            for _ in range(new_count or old_count):
+                chunk_size, chunk_type = struct.unpack_from("<IH", raw, pos)
+                body = raw[pos + 6: pos + chunk_size]
+                if chunk_type == CHUNK_PALETTE:
+                    ase.palette = _parse_palette(body, ase.palette)
+                elif chunk_type == CHUNK_LAYER:
+                    ase.layers.append(_parse_layer(body))
+                elif chunk_type == CHUNK_CEL:
+                    frame.cels.append(_parse_cel(body))
+                pos += chunk_size
+
+            ase.frames.append(frame)
+            offset += frame_size
+        return ase
+
+    @classmethod
+    def read(cls, path) -> "AsepriteFile":
+        with open(path, "rb") as handle:
+            return cls.from_bytes(handle.read())
+
+    def composite(self, frame: int = 0) -> bytearray:
+        """Flatten one frame to `width*height` palette indices.
+
+        Visible layers are drawn in file order (bottom to top); the transparent
+        index does not paint.  Blend modes and per-layer opacity are ignored -
+        an indexed reference export has no meaningful notion of either, and a
+        file that uses them is not one this pipeline can read back anyway.
+        """
+        canvas = bytearray([self.transparent_index]) * (self.width * self.height)
+        for cel in self.frames[frame].cels:
+            layer = self.layers[cel.layer] if cel.layer < len(self.layers) else None
+            if layer is not None and not layer.visible:
+                continue
+            source = cel
+            if isinstance(cel, LinkedCel):
+                source = self._linked_source(cel)
+            for row in range(source.height):
+                y = source.y + row
+                if not 0 <= y < self.height:
+                    continue
+                line = source.pixels[row * source.width: (row + 1) * source.width]
+                for column, value in enumerate(line):
+                    x = source.x + column
+                    if value != self.transparent_index and 0 <= x < self.width:
+                        canvas[y * self.width + x] = value
+        return canvas
+
+    def _linked_source(self, cel: LinkedCel) -> Cel:
+        for candidate in self.frames[cel.frame_link].cels:
+            if isinstance(candidate, Cel) and candidate.layer == cel.layer:
+                return candidate
+        raise ValueError(
+            f"cel links to frame {cel.frame_link} layer {cel.layer}, which has no image"
+        )
+
+
+def _parse_palette(body: bytes, existing: list) -> list:
+    size, first, last = struct.unpack_from("<III", body, 0)
+    palette = list(existing) + [(0, 0, 0, 0)] * max(0, size - len(existing))
+    pos = 20
+    for index in range(first, last + 1):
+        flags, r, g, b, a = struct.unpack_from("<HBBBB", body, pos)
+        pos += 6
+        name = None
+        if flags & 1:
+            length = struct.unpack_from("<H", body, pos)[0]
+            name = body[pos + 2: pos + 2 + length].decode("utf-8")
+            pos += 2 + length
+        palette[index] = (r, g, b, a, name) if name else (r, g, b, a)
+    return palette
+
+
+def _parse_layer(body: bytes) -> Layer:
+    flags, layer_type = struct.unpack_from("<HH", body, 0)
+    opacity = body[12]
+    length = struct.unpack_from("<H", body, 16)[0]
+    name = body[18: 18 + length].decode("utf-8")
+    return Layer(name=name, flags=flags, opacity=opacity, layer_type=layer_type)
+
+
+def _parse_cel(body: bytes):
+    layer, x, y, _opacity, cel_type = struct.unpack_from("<HhhBH", body, 0)
+    if cel_type == CEL_LINKED:
+        return LinkedCel(
+            layer=layer, frame_link=struct.unpack_from("<H", body, 16)[0], x=x, y=y
+        )
+    if cel_type not in (CEL_RAW, CEL_COMPRESSED):
+        raise ValueError(f"unsupported cel type {cel_type} on layer {layer}")
+    width, height = struct.unpack_from("<HH", body, 16)
+    pixels = body[20:]
+    if cel_type == CEL_COMPRESSED:
+        pixels = zlib.decompress(pixels)
+    return Cel(layer=layer, x=x, y=y, width=width, height=height, pixels=pixels)

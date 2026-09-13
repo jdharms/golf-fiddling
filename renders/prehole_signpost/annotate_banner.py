@@ -16,10 +16,17 @@ from PIL import Image, ImageDraw
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from render_signpost import BANK, CHR_BANK, CHR_TABLES, PALETTE, banner_index, write_banner
-from golf.core.graphics_codec import VideoMemory, load_graphics_table
 from golf.core.palettes import NES_SYSTEM_PALETTE
 from golf.core.rom_reader import RomReader
+from golf.core.signpost import (
+    BANK,
+    PALETTE_ADDR,
+    banner_index,
+    load_scene_chr,
+    read_banner_body,
+    read_banner_descriptor,
+    write_rect,
+)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
@@ -35,11 +42,10 @@ WIDTH, ROWS = 16, 6
 
 def main():
     rom = RomReader(os.path.join(ROOT, "nes_open_us.nes"))
-    vram = VideoMemory()
-    for addr in CHR_TABLES:
-        load_graphics_table(rom, CHR_BANK, addr, vram)
-    write_banner(rom, vram, banner_index(0, 0))  # Japan, for the widest label set
-    pal = rom.read_switched(PALETTE, BANK, 32)
+    vram = load_scene_chr(rom)
+    japan = read_banner_descriptor(rom, banner_index(0, 0))  # widest label set
+    write_rect(vram, japan.dest, japan.width, japan.rows, read_banner_body(rom, japan))
+    pal = rom.read_switched(PALETTE_ADDR, BANK, 32)
 
     img = Image.new("RGB", (WIDTH * ZOOM, ROWS * ZOOM))
     draw = ImageDraw.Draw(img)
