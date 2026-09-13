@@ -191,13 +191,12 @@ The tool uses the exact same formula as the editor's MeasureTool:
 
 ## Development
 
-### Testing
+### Running Locally
 
-Run the included test suite:
 ```bash
 cd web
 python3 -m http.server 8000
-# Open http://localhost:8000/test.html
+# Open http://localhost:8000/
 ```
 
 ### Regenerating Images

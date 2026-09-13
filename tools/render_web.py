@@ -17,7 +17,7 @@ from golf.rendering.pil_renderer import (
     render_greens_to_image,
     render_all_flags_to_images,
 )
-from golf.rendering.pil_sprite import PILSprite
+from golf.rendering.pil_sprite import load_sprites
 
 
 # Courses to process, in dropdown order: (course id, path under courses/, group label).
@@ -36,34 +36,6 @@ COURSES = [
     ("jp_hawaii", "jp/jp_hawaii", MARIO_OPEN_GROUP),
     ("jp_uk", "jp/jp_uk", MARIO_OPEN_GROUP),
 ]
-
-
-def load_sprites() -> dict[str, PILSprite]:
-    """Load all sprites from data/sprites/."""
-    sprite_dir = Path(__file__).parent.parent / "data" / "sprites"
-    sprites = {}
-
-    sprite_files = {
-        # Terrain sprites
-        "tee": "tee-block.json",
-        "ball": "ball.json",
-        "flag": "flag.json",
-        # Green view sprites
-        "green-flag": "green-flag.json",
-        "green-cup": "green-cup.json",
-    }
-
-    for name, filename in sprite_files.items():
-        sprite_path = sprite_dir / filename
-        if sprite_path.exists():
-            try:
-                sprites[name] = PILSprite(str(sprite_path))
-            except Exception as e:
-                print(f"Warning: Failed to load sprite {name}: {e}")
-        else:
-            print(f"Warning: Sprite file not found: {sprite_path}")
-
-    return sprites
 
 
 def render_all_courses(

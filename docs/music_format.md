@@ -309,7 +309,7 @@ The seven instrument presets in that guide are the envelope rows of `MusicVolume
 
 ## Playback
 
-`golf-export-music` (`tools/export_music.py`, logic in `golf/core/audio.py`) turns the ROM
+`golf-export-music` (`tools/music/export.py`, logic in `golf/core/audio.py`) turns the ROM
 into something you can actually listen to, two ways.
 
 **NSF** — the faithful one. Bank 14 plus the DPCM page are packaged as a bankswitched NSF

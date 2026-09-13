@@ -21,37 +21,17 @@ import sys
 from golf.core.palettes import NES_SYSTEM_PALETTE
 from golf.core.rom_reader import RomReader
 from golf.core.signpost import (
-    NAMETABLE,
     SCREEN_COLS,
     SCREEN_ROWS,
-    BannerDescriptor,
     build_screen,
     changed_tiles,
+    chr_rows,
     convert_banner,
-    pattern_tiles,
-    read_banner_body,
+    freeable_patterns,
+    parse_banner,
     read_banner_descriptor,
     screen_from_aseprite,
 )
-
-BANNERS = {
-    "japan": 0,
-    "us": 1,
-    "uk": 2,
-    "long-drive": 3,
-    "nearest-pin": 4,
-}
-
-
-def chr_rows(pattern: bytes):
-    """A 16-byte pattern -> 8 rows of 8 two-bit values."""
-    return [
-        [
-            ((pattern[y] >> (7 - x)) & 1) | (((pattern[y + 8] >> (7 - x)) & 1) << 1)
-            for x in range(8)
-        ]
-        for y in range(8)
-    ]
 
 
 def grid_report(ase, ragged, path, margin=1, zoom=12):
@@ -130,45 +110,6 @@ def preview(result, reference, palette, path, scale=2):
 
     image.resize((image.width * scale, image.height * scale), Image.NEAREST).save(path)
     print(f"\nwrote {path}")
-
-
-def freeable_patterns(rom, reference, target: BannerDescriptor):
-    """Pattern slots this screen does not need, and what makes them spare.
-
-    Three tiers, loosest first: patterns that are blank, patterns the drawn
-    screen never references, and patterns referenced only by the *other* four
-    banner blobs - reclaimable as soon as those banners stop being drawn, which
-    is the whole premise of a single "RANDOM COURSE" sign.
-    """
-    patterns = pattern_tiles(reference)
-    blank = {index for index, pattern in enumerate(patterns) if not any(pattern)}
-
-    target_cells = {
-        (target.col + col, target.row + row)
-        for row in range(target.rows)
-        for col in range(target.width)
-    }
-    rest_of_screen = {
-        reference.data[NAMETABLE + row * SCREEN_COLS + col]
-        for row in range(SCREEN_ROWS)
-        for col in range(SCREEN_COLS)
-        if (col, row) not in target_cells
-    }
-    on_screen = rest_of_screen | {
-        reference.data[NAMETABLE + row * SCREEN_COLS + col]
-        for col, row in target_cells
-    }
-
-    other_banners = set()
-    for index in range(5):
-        if index != target.index:
-            other_banners.update(read_banner_body(rom, read_banner_descriptor(rom, index)))
-
-    return {
-        "blank": sorted(blank),
-        "unreferenced_by_screen": sorted(set(range(256)) - on_screen - blank),
-        "only_other_banners": sorted(other_banners - rest_of_screen - blank),
-    }
 
 
 def describe(result, reference, scale, ragged, free, args):
@@ -253,10 +194,7 @@ def main():
     )
     args = parser.parse_args()
 
-    if args.banner in BANNERS:
-        index = BANNERS[args.banner]
-    else:
-        index = int(args.banner, 0)
+    index = parse_banner(args.banner)
     course = args.course if args.course is not None else min(index, 2)
 
     rom = RomReader(args.rom)

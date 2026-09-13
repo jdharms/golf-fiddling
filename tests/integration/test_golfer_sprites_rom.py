@@ -201,7 +201,7 @@ def _linked_and_source_positions(data, layer):
 
 class TestExporter:
     def test_export_produces_a_readable_file_and_sidecar(self, rom, sprites, tmp_path):
-        from tools.golfer_export import canvas_bounds, export_golfer
+        from golf.core.golfer_export import canvas_bounds, export_golfer
 
         bounds = canvas_bounds(sprites)
         path, meta = export_golfer(rom, sprites, 0, False, bounds, str(tmp_path))
@@ -220,7 +220,7 @@ class TestExporter:
         assert sidecar["canvas"]["origin_x"] > 0
 
     def test_every_swing_club_group_gets_its_own_layer(self, rom, sprites, tmp_path):
-        from tools.golfer_export import canvas_bounds, export_golfer
+        from golf.core.golfer_export import canvas_bounds, export_golfer
 
         _, meta = export_golfer(
             rom, sprites, 0, False, canvas_bounds(sprites), str(tmp_path)
@@ -238,7 +238,7 @@ class TestExporter:
             NES_CANONICAL_BLACK,
             NES_SYSTEM_PALETTE,
         )
-        from tools.golfer_export import PALETTE_SIZE, build_palette, nes_index
+        from golf.core.golfer_export import PALETTE_SIZE, build_palette, nes_index
 
         palette = build_palette([0x25, 0x0F, 0x36], [0x17, 0x0F, 0x30])
         assert len(palette) == PALETTE_SIZE
@@ -254,7 +254,7 @@ class TestExporter:
 
     def test_the_spare_blacks_collapse_onto_one_entry(self):
         from golf.core.palettes import NES_BLACK_ENTRIES, NES_CANONICAL_BLACK
-        from tools.golfer_export import NES_ENTRIES, nes_index
+        from golf.core.golfer_export import NES_ENTRIES, nes_index
 
         black = nes_index(NES_CANONICAL_BLACK)
         for value in NES_BLACK_ENTRIES:
@@ -265,7 +265,7 @@ class TestExporter:
     def test_no_two_palette_entries_share_a_colour_except_white(self):
         # $20 and $30 are both white in this palette rendering; every other
         # duplicate has been folded away.
-        from tools.golfer_export import NES_ENTRIES
+        from golf.core.golfer_export import NES_ENTRIES
         from golf.core.palettes import NES_SYSTEM_PALETTE
 
         seen = {}
@@ -278,7 +278,7 @@ class TestExporter:
         assert duplicates == [(0x20, 0x30)]
 
     def test_nes_by_index_round_trips(self):
-        from tools.golfer_export import NES_ENTRIES, nes_by_index, nes_index
+        from golf.core.golfer_export import NES_ENTRIES, nes_by_index, nes_index
 
         table = nes_by_index()
         assert table[0] is None, "transparent"
@@ -286,7 +286,7 @@ class TestExporter:
             assert table[nes_index(value)] == value
 
     def test_body_pixels_use_the_golfer_s_own_nes_indices(self, rom, sprites, tmp_path):
-        from tools.golfer_export import canvas_bounds, export_golfer, nes_index
+        from golf.core.golfer_export import canvas_bounds, export_golfer, nes_index
 
         _, meta = export_golfer(
             rom, sprites, 0, False, canvas_bounds(sprites), str(tmp_path)
@@ -298,7 +298,7 @@ class TestExporter:
             assert table[index] == nes
 
     def test_linked_body_cels_repeat_the_source_position(self, rom, sprites, tmp_path):
-        from tools.golfer_export import canvas_bounds, export_golfer
+        from golf.core.golfer_export import canvas_bounds, export_golfer
 
         path, _ = export_golfer(
             rom, sprites, 0, False, canvas_bounds(sprites), str(tmp_path)
@@ -310,7 +310,7 @@ class TestExporter:
             assert linked_xy == source_xy
 
     def test_putt_export_uses_the_putter(self, rom, sprites, tmp_path):
-        from tools.golfer_export import canvas_bounds, export_golfer
+        from golf.core.golfer_export import canvas_bounds, export_golfer
 
         bounds = canvas_bounds(sprites)
         _, meta = export_golfer(rom, sprites, 5, True, bounds, str(tmp_path))
@@ -318,7 +318,7 @@ class TestExporter:
         assert len(meta["frames"]) == 6
 
     def test_canvas_fits_every_golfer_and_both_animations(self, sprites):
-        from tools.golfer_export import canvas_bounds
+        from golf.core.golfer_export import canvas_bounds
 
         x0, y0, x1, y1 = canvas_bounds(sprites)
         for golfer in range(6):

@@ -35,6 +35,21 @@ DISTANCE = (0xDD3B, 0xDD71, 0xDDA7)      # hundreds, tens, ones
 
 BANNER_JAPAN, BANNER_US, BANNER_UK, BANNER_LONG_DRIVE, BANNER_NEAREST_PIN = range(5)
 
+BANNER_NAMES = {
+    "japan": BANNER_JAPAN,
+    "us": BANNER_US,
+    "uk": BANNER_UK,
+    "long-drive": BANNER_LONG_DRIVE,
+    "nearest-pin": BANNER_NEAREST_PIN,
+}
+
+
+def parse_banner(text: str) -> int:
+    """A banner name from `BANNER_NAMES`, or its index as a number."""
+    if text in BANNER_NAMES:
+        return BANNER_NAMES[text]
+    return int(text, 0)
+
 NAMETABLE = 0x2000
 ATTRIBUTES = 0x23C0
 SCREEN_COLS = 32
@@ -66,6 +81,56 @@ class BannerDescriptor:
     @property
     def length(self) -> int:
         return self.width * self.rows
+
+
+def chr_rows(pattern: bytes):
+    """A 16-byte pattern -> 8 rows of 8 two-bit values."""
+    return [
+        [
+            ((pattern[y] >> (7 - x)) & 1) | (((pattern[y + 8] >> (7 - x)) & 1) << 1)
+            for x in range(8)
+        ]
+        for y in range(8)
+    ]
+
+
+def freeable_patterns(rom, reference: VideoMemory, target: BannerDescriptor) -> dict:
+    """Pattern slots this screen does not need, and what makes them spare.
+
+    Three tiers, loosest first: patterns that are blank, patterns the drawn
+    screen never references, and patterns referenced only by the *other* four
+    banner blobs - reclaimable as soon as those banners stop being drawn, which
+    is the whole premise of a single "RANDOM COURSE" sign.
+    """
+    patterns = pattern_tiles(reference)
+    blank = {index for index, pattern in enumerate(patterns) if not any(pattern)}
+
+    target_cells = {
+        (target.col + col, target.row + row)
+        for row in range(target.rows)
+        for col in range(target.width)
+    }
+    rest_of_screen = {
+        reference.data[NAMETABLE + row * SCREEN_COLS + col]
+        for row in range(SCREEN_ROWS)
+        for col in range(SCREEN_COLS)
+        if (col, row) not in target_cells
+    }
+    on_screen = rest_of_screen | {
+        reference.data[NAMETABLE + row * SCREEN_COLS + col]
+        for col, row in target_cells
+    }
+
+    other_banners = set()
+    for index in range(len(BANNER_NAMES)):
+        if index != target.index:
+            other_banners.update(read_banner_body(rom, read_banner_descriptor(rom, index)))
+
+    return {
+        "blank": sorted(blank),
+        "unreferenced_by_screen": sorted(set(range(256)) - on_screen - blank),
+        "only_other_banners": sorted(other_banners - rest_of_screen - blank),
+    }
 
 
 def read_banner_descriptor(rom, index: int) -> BannerDescriptor:

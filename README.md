@@ -1,6 +1,8 @@
 # NES Open Tournament Golf Tools
 
-Tools for reverse engineering and editing NES Open Tournament Golf ROM data.
+Reverse engineering, editing and patching tools for NES Open Tournament Golf: course
+extraction and a course editor, ROM research tools, gameplay patches, and the groundwork
+for a randomizer.
 
 ## Requirements
 
@@ -37,27 +39,99 @@ cd golf-fiddling
 uv sync
 ```
 
-## Project Overview
+Run any command below with `uv run <command>`. Every command takes `--help`, which is the
+full reference for its options.
 
-The codebase is organized into three main packages:
+## Layout
 
-- **golf/** - Shared library for ROM reading, decompression, NES graphics, and data formats
-- **editor/** - Interactive Pygame-based course editor for modifying hole layouts
-- **tools/** - Command-line utilities for extraction, analysis, and visualization
+- **golf/** - shared library: ROM reading/writing, compression, graphics, patches
+  (`golf/core/patches/`), data formats, rendering, and the scorecard QR code (`golf/qr/`)
+- **editor/** - the Pygame course editor
+- **tools/** - command-line entry points, grouped into `data/` (regenerates `data/`
+  files), `research/`, `art/`, `music/` and `qr/`; course and patch tools sit at the top
+  level; `archive/` holds retired one-off scripts
+- **docs/** - design and reverse-engineering notes; start at `docs/README.md`
+- **data/** - checked-in tables, tilesets, sprites and exports the tools and editor load
+- **courses/** - extracted course JSON
+- **web/** - the course measurement web app
 
-## Available Commands
+## Commands
+
+### Course editor
 
 | Command | Description |
 |---------|-------------|
-| `golf-editor` | Launch the interactive course editor |
-| `golf-dump <rom> <output_dir>` | Extract course data from ROM to JSON files |
-| `golf-write <rom> <course_dir>` | Write course data from JSON back to ROM |
-| `golf-analyze <course_dir>` | Analyze hole data patterns and statistics |
-| `golf-visualize <tileset> <hole.json>` | Render a hole as a PNG image |
-| `golf-expand-dict <meta.json>` | Expand dictionary codes into transition sequences |
-| `golf-hex2bin` | Convert hex string to binary file |
+| `golf-editor [terrain_chr] [greens_chr] [hole.json]` | Launch the course editor; see `editor/CLAUDE.md` |
 
-### Example Workflow
+Build a standalone editor executable with `uv run pyinstaller run_editor.spec`.
+
+### Course data
+
+| Command | Description |
+|---------|-------------|
+| `golf-dump <rom> <out_dir>` | Extract all courses from the US ROM to JSON, with compression statistics |
+| `golf-dump-jp <jp_rom> [out_dir]` | Extract the Mario Open Golf (JP) courses; see `docs/jp_extraction.md` |
+| `golf-write <rom> <course_dir> [course_dir2]` | Write 1-2 courses back into a ROM across three banks; see `docs/multi_bank_terrain.md` |
+| `golf-visualize <tileset> <hole.json or course_dir> [out]` | Render holes to PNG |
+| `golf-render-web <tileset> <greens_tileset> <courses> <web_dir>` | Render every hole for the web app |
+
+### Regenerating data/ files
+
+| Command | Description |
+|---------|-------------|
+| `golf-extract-tables <rom> [out.json]` | Decompression tables -> `data/tables/compression_tables.json` |
+| `golf-analyze-neighbors` | Terrain tile neighbor data -> `data/tables/terrain_neighbors.json` (editor validation) |
+| `golf-analyze-greens-neighbors` | Greens tile neighbor data -> `data/tables/greens_neighbors.json` (fringe generation) |
+| `golf-analyze-putting` | Putting surface sizes -> `data/statistics/putting_surface_sizes.json` |
+
+### Utilities
+
+| Command | Description |
+|---------|-------------|
+| `golf-hex2bin <input.txt> <output.bin>` | Convert a hex string file to binary |
+| `golf-expand-dict <meta.json> [terrain or greens]` | Expand dictionary codes into their horizontal transition sequences |
+
+### ROM patches
+
+| Command | Description |
+|---------|-------------|
+| `golf-patch-wram <rom>` | Expand the terrain buffer past 48 rows; see `docs/wram_expansion.md` |
+| `golf-patch-seeded-wind <rom> --seed <seed>` | Seed pins and wind per hole; see `docs/seeded_wind.md` |
+| `golf-patch-practice-swing <rom>` | Practice swings (apply `golf-patch-wram` first); see `docs/practice_swing.md` |
+| `golf-patch-music <rom> <music.json>` | Replace the course themes from a music dump; see `docs/music_format.md` |
+| `golf-patch-signpost <rom> <edited.aseprite>` | Install new signpost banner art; see `docs/prehole_signpost.md` |
+| `golf-patch-qr <rom>` | Install the end-of-round QR screen; see `docs/scorecard_qr.md` |
+
+### Reverse-engineering research
+
+| Command | Description |
+|---------|-------------|
+| `golf-rom-peek <rom> <subcommand>` | Targeted reads, searches, disassembly and reference finding; see the `nes-open-golf-rom-peek` skill |
+| `golf-labels <file.mlb> list/add/edit/remove` | Edit the Mesen `.mlb` label file; see the `nes-open-golf-label-conventions` skill |
+
+### Art
+
+| Command | Description |
+|---------|-------------|
+| `golf-golfer-export <rom> <out_dir>` | Export golfer animations as layered Aseprite files; see `docs/golfer_sprites.md` |
+| `golf-signpost-import <edited.aseprite>` | Read edited signpost banner art back out of a screen export; see `docs/prehole_signpost.md` |
+
+### Music
+
+| Command | Description |
+|---------|-------------|
+| `golf-export-music <rom>` | Export music as NSF, the DPCM drum kit, or a relocatable JSON dump; works on the US and JP ROMs |
+
+### Scorecard QR
+
+| Command | Description |
+|---------|-------------|
+| `golf-qr-preview` | Build a payload, encode it as the ROM will, render the NES screen |
+| `golf-qr-validate` | Sweep masks x rounds x capture conditions x decoders |
+| `golf-qr-tables [out_dir]` | Export the ROM tables |
+| `golf-qr-port` | Assemble the 6502 port and report sizes against the bank 2 budget |
+
+## Example workflow
 
 ```bash
 # Extract all courses from ROM
@@ -66,12 +140,18 @@ golf-dump nes_open_us.nes courses/
 # Edit a hole using the course editor
 golf-editor courses/japan/hole_01.json
 
-# Write edited course back to ROM
+# Write 1 course (all 3 course slots show the same course)
 golf-write nes_open_us.nes courses/japan/ -o modified.nes
+
+# Write 2 courses (Japan slot shows course 1, US slot shows course 2, UK mirrors Japan)
+golf-write nes_open_us.nes courses/japan/ courses/us/ -o modified.nes
+
+# Check courses will fit without writing
+golf-write nes_open_us.nes courses/japan/ courses/us/ --validate-only --verbose
 ```
 
-## Running Tests
+## Running tests
 
 ```bash
-pytest
+uv run pytest
 ```
