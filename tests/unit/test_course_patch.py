@@ -9,6 +9,7 @@ from golf.core.patches import (
     CoursePatch,
     PatchError,
 )
+from golf.core import rom_utils
 from golf.core.patches.course import (
     BANK_TABLE_CPU_ADDR,
     BANK_TABLE_SIZE,
@@ -19,6 +20,7 @@ from golf.core.patches.course import (
     allocate_terrain,
     bank_table_bytes,
     compress_holes,
+    scorecard_total_writes,
 )
 from golf.core.rom_writer import BankOverflowError
 from golf.formats.hole_data import HoleData
@@ -169,6 +171,58 @@ class TestCompressHoles:
             # Attributes are packed at their real size, not padded to 72 bytes
             assert len(comp.attributes) == ((len(hole.attributes) + 1) // 2) * 6
             assert len(comp.greens) > 0
+
+
+class TestScorecardTotals:
+    @staticmethod
+    def by_name(writes) -> dict[str, tuple[int, bytes]]:
+        return {write.name: (write.prg_offset, write.data) for write in writes}
+
+    def test_japan(self, japan):
+        """Japan's totals are the values vanilla hardcodes for course 0."""
+        writes = self.by_name(scorecard_total_writes(japan))
+        bank2 = lambda addr: rom_utils.cpu_to_prg_switched(addr, 2)  # noqa: E731
+        assert writes == {
+            "scorecard total yardage 7037 (thousands tile)": (bank2(0xAF33), bytes([0x47])),
+            "scorecard total yardage 7037 (hundreds)": (bank2(0xAF71), bytes([0, 0, 0])),
+            "scorecard total yardage 7037 (tens)": (bank2(0xAF74), bytes([3, 3, 3])),
+            "scorecard total yardage 7037 (ones)": (bank2(0xAF77), bytes([7, 7, 7])),
+            "scorecard total par 72 (main card)": (bank2(0xB9BF), bytes([0x47, 0x42])),
+            "scorecard total par 72 (36-hole match play card)": (bank2(0xBAD5), bytes([0x47, 0x42])),
+        }
+
+    def test_follows_edited_holes(self):
+        holes = [MockHoleData() for _ in range(18)]
+        holes[0].metadata = {"par": 5, "distance": 568}
+        # 17 x par 4 + 5 = 73; 17 x 400 + 568 = 7,368
+        writes = [write.data for write in scorecard_total_writes(holes)]
+        assert writes == [
+            bytes([0x47]),
+            bytes([3, 3, 3]),
+            bytes([6, 6, 6]),
+            bytes([8, 8, 8]),
+            bytes([0x47, 0x43]),
+            bytes([0x47, 0x43]),
+        ]
+
+    @pytest.mark.parametrize(
+        ("metadata", "message"),
+        [
+            ({"par": 4, "distance": 55}, "Total yardage 990"),
+            ({"par": 4, "distance": 556}, "Total yardage 10,008"),
+            ({"par": 6, "distance": 400}, "Total par 108"),
+        ],
+    )
+    def test_rejects_totals_that_do_not_fit(self, metadata, message):
+        holes = [MockHoleData() for _ in range(18)]
+        for hole in holes:
+            hole.metadata = metadata
+        with pytest.raises(ValueError, match=message):
+            scorecard_total_writes(holes)
+
+    def test_course_patch_writes_them(self, course, japan):
+        assert course.writes[-6:] == scorecard_total_writes(japan)
+        assert (course.stats.total_yards, course.stats.total_par) == (7037, 72)
 
 
 class TestCoursePatch:

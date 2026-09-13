@@ -361,11 +361,12 @@ a closing `JMP $AC84` come to 23.
 
 ### The shipped patch
 
-`random_banner_patches()` in `golf/core/patches/signpost_random_banner.py`, driven by
-`golf-patch-signpost`:
+`random_banner_patches()` in `golf/core/patches/signpost_random_banner.py`, built from an
+edited screen export by `signpost_banner_patch()` and applied as the
+`signpost_random_banner` step of `golf-patch`:
 
 ```bash
-golf-patch-signpost nes_open_us.nes after.aseprite -o random.nes
+golf-patch nes_open_us.nes -p signpost_random_banner:art=after.aseprite -o random.nes
 ```
 
 It writes six things into bank 12: the new tile pixels, the descriptors that load them

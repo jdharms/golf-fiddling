@@ -26,8 +26,8 @@ build = stack.build(vanilla)                 # StackBuild: .rom and .regions
 patch = stack.ips(vanilla)                   # the same build, as an IPS patch
 ```
 
-Steps are built `ROMPatch` objects, so a stack is assembled in Python. Step names must be
-unique.
+Steps are built `ROMPatch` objects, and step names must be unique. A stack is assembled in
+Python, or from a [recipe](#recipes) with [`golf-patch`](#golf-patch).
 
 ## What a build checks
 
@@ -48,7 +48,7 @@ unique.
   name.
 
 Overlap tracking matters most for the writes that do not check what they replace: course
-data in `CoursePatch`, and the scorecard QR image in bank 2.
+data and scorecard totals in `CoursePatch`, and the scorecard QR image in bank 2.
 
 `StackBuild.regions` maps each step name to the `[start, end)` PRG offset ranges it wrote.
 
@@ -57,13 +57,8 @@ data in `CoursePatch`, and the scorecard QR image in bank 2.
 `ROMPatch.requires` lists patches a patch depends on but does not write. It is separate from
 `can_apply`, which checks only the bytes a patch replaces. `apply` on `CompositePatch`,
 `CoursePatch` and `ScorecardQrPatch` refuses to run while a requirement is missing, so the
-rule holds outside a stack too.
-
-| Patch | Requires |
-|---|---|
-| `CoursePatch` | `multi_bank_lookup`, `course_mirrors`, `attr_streaming` |
-| `seeded_wind` | `course_mirrors` |
-| `scorecard_qr` | `course_mirrors` |
+rule holds outside a stack too. The [patch types](#patch-types) table lists each patch's
+requirements.
 
 ## Writes and IPS output
 
@@ -77,11 +72,98 @@ identical bytes as RLE records, splits records at 65,535 bytes, and never starts
 offset `0x454F46` (which reads as the `EOF` marker). The same inputs always produce the same
 patch. `ips.apply` reads RLE records and the truncation extension.
 
+## Recipes
+
+A recipe is a stack written as JSON (`golf/core/patches/recipe.py`):
+
+```json
+{
+  "steps": [
+    {"patch": "wram_expansion"},
+    {"patch": "multi_bank_lookup"},
+    {"patch": "course_mirrors"},
+    {"patch": "attr_streaming"},
+    {"patch": "course", "course": "courses/jp/jp_uk"},
+    {"patch": "menu_trim", "title": "RANDOMIZER0001"},
+    {"patch": "mercy_tap_in", "mercy_point": 9},
+    {"patch": "seeded_wind", "seed": "abc123"},
+    {"patch": "practice_swing"},
+    {"patch": "scorecard_qr", "credentials": "keys.json"}
+  ]
+}
+```
+
+- `patch` names a patch type in the registry (`golf/core/patches/registry.py`). The other
+  keys are its parameters, checked against the type's parameter dataclass: unknown or
+  missing parameters and values of the wrong type are errors, and integers may also be
+  written as strings in any base Python reads (`"0x78"`).
+- Paths are relative to the recipe file.
+- `base_sha1` is optional. Omitted means the vanilla US ROM; `null` means any base.
+- Patch types take concrete values and draw nothing at random, so a recipe and a base ROM
+  always build the same ROM.
+- `scorecard_qr` reads its credentials from a separate file written by
+  `golf-qr-credentials`, because the MAC keys are secret; a recipe only names the file.
+
+In Python: `Recipe.load(path)`, `Recipe.from_dict(data, base_dir)`, `recipe.stack(base)`,
+`recipe.build_steps(base)` (each patch with its parameters and report),
+`recipe.to_dict(base_dir)` and `recipe.save(path)`.
+
+## golf-patch
+
+```bash
+golf-patch nes_open_us.nes recipe.json -o out.nes
+golf-patch nes_open_us.nes recipe.json --ips out.ips
+golf-patch nes_open_us.nes -p multi_bank_lookup -p course_mirrors -p attr_streaming \
+    -p course:course=courses/japan -p seeded_wind:seed=abc -o out.nes
+golf-patch --list
+```
+
+- `-p ID[:key=value,...]` adds a step after the recipe's steps, parsed like a recipe step
+  with paths relative to the current directory. A value containing a comma needs a recipe.
+- `-o` writes the ROM (default `<rom>.patched.nes` unless `--ips` is given); `--ips` writes
+  an IPS patch from the base to the build; `--validate-only` builds in memory and writes
+  nothing.
+- `--save-recipe PATH` writes the combined steps as a recipe.
+- `--any-base` builds on a base other than the vanilla US ROM, such as the output of
+  `golf-write`.
+- `-v` adds each patch type's report: bank usage and scorecard totals for `course`, the per-hole pin and wind
+  forecast for `seeded_wind`, track and space usage for `music_import`, new tiles and
+  import notes for `signpost_random_banner`, and the image location, seed ID and player IDs
+  for `scorecard_qr` (never the keys).
+- `--list` prints every patch type and its parameters.
+
+`golf-write` remains the tool for writing a course from the editor: it applies the course's
+three requirements and the `course` step.
+
+## Patch types
+
+| Patch | Parameters | Requires |
+|---|---|---|
+| `wram_expansion` | | |
+| `multi_bank_lookup` | | |
+| `course_mirrors` | | |
+| `attr_streaming` | | |
+| `course` | `course` (a directory) or `holes` (18 files); also writes the scorecard totals | `multi_bank_lookup`, `course_mirrors`, `attr_streaming` |
+| `menu_trim` | `title` (14 renderable characters) | |
+| `scorecard_course_name` | `name` (default `RANDOM`; A-Z, 0-9 and space, at most 9), `title` (optional, replaces `18H STROKE PLAY`; at most 16) | `course_mirrors` |
+| `remove_course_banner` | | |
+| `signpost_random_banner` | `art`, `banner` (default `us`), `hole` (default 1) | |
+| `mercy_tap_in` | `mercy_point`, `mercy_result` (default `mercy_point` + 1) | |
+| `seeded_wind` | `seed` | `course_mirrors` |
+| `practice_swing` | `hold_frames` (default `0x78`) | |
+| `scorecard_qr` | `credentials` (a `golf-qr-credentials` file) | `course_mirrors` |
+| `music_import` | `dump`, `transpose_adjust` (default from the dump) | |
+| `putting_practice` | (experimental) | |
+
+`remove_course_banner` and `signpost_random_banner` both rewrite the banner selection at
+bank 12 `$AC5D`, so a stack with both fails: whichever comes second finds the other's bytes
+where it expects vanilla ones.
+
 ## Testing
 
 ```bash
-uv run pytest tests/unit/test_patch_stack.py tests/unit/test_ips.py tests/unit/test_rom_writer.py
-uv run pytest tests/integration/test_patch_stack_rom.py
+uv run pytest tests/unit/test_patch_stack.py tests/unit/test_patch_recipe.py tests/unit/test_ips.py tests/unit/test_rom_writer.py
+uv run pytest tests/integration/test_patch_stack_rom.py tests/integration/test_patch_recipe_rom.py
 ```
 
 `tests/integration/test_patch_stack_rom.py` builds a stack of every patch that has no art or

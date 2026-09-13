@@ -24,6 +24,7 @@ from golf.core.patches import (
     music_import_patch,
     practice_swing_patch,
     remove_course_banner_patches,
+    scorecard_course_name_patch,
     seeded_wind_patch,
 )
 from golf.formats.hole_data import HoleData
@@ -61,6 +62,7 @@ def full_steps(course) -> list[ROMPatch]:
         ATTR_STREAMING_PATCH,
         course,
         menu_trim_patch("RANDOMIZER0001"),
+        scorecard_course_name_patch(title="RANDOMIZER 0001"),
         remove_course_banner_patches(),
         CompositePatch("mercy_tap_in", "mercy tap-in at 10", mercy_tap_in_patches(10)),
         seeded_wind_patch("stack"),
@@ -95,7 +97,7 @@ def test_every_patch_builds_together(vanilla, full_steps):
         assert regions, f"{name} wrote nothing"
 
     bank2_terrain = range(2 * 0x4000 + 0x037F, 2 * 0x4000 + 0x2554)
-    assert not any(start in bank2_terrain for start, _ in result.regions["courses"])
+    assert not any(start in bank2_terrain for start, _ in result.regions["course"])
     assert any(start in bank2_terrain for start, _ in result.regions["scorecard_qr"])
 
 
@@ -107,13 +109,13 @@ def test_the_build_is_deterministic_and_its_ips_reproduces_it(vanilla, full_step
 
 
 def test_a_missing_requirement_is_reported(vanilla, course):
-    with pytest.raises(StackError, match=r"'courses' requires course_mirrors \(not in the stack\)"):
+    with pytest.raises(StackError, match=r"'course' requires course_mirrors \(not in the stack\)"):
         PatchStack([MULTI_BANK_CODE_PATCH, ATTR_STREAMING_PATCH, course]).build(vanilla)
 
 
 def test_a_requirement_listed_too_late_is_reported(vanilla, course):
     steps = [MULTI_BANK_CODE_PATCH, ATTR_STREAMING_PATCH, course, COURSE_MIRRORS_PATCH]
-    with pytest.raises(StackError, match=r"'courses' requires course_mirrors \(listed after it\)"):
+    with pytest.raises(StackError, match=r"'course' requires course_mirrors \(listed after it\)"):
         PatchStack(steps).build(vanilla)
 
 
@@ -126,7 +128,7 @@ def test_an_unchecked_write_over_course_data_is_refused(vanilla, course):
         course,
         RawWrite("stomp", first_write.prg_offset, b"\xff"),
     ]
-    with pytest.raises(StackError, match="step 'stomp' writes bank 0 \\$8000 .* step 'courses' already wrote"):
+    with pytest.raises(StackError, match="step 'stomp' writes bank 0 \\$8000 .* step 'course' already wrote"):
         PatchStack(steps).build(vanilla)
 
 
@@ -140,4 +142,4 @@ def test_a_modified_base_is_refused(vanilla):
 def test_a_prepatched_base_satisfies_requirements(vanilla, course):
     base = PatchStack([MULTI_BANK_CODE_PATCH, COURSE_MIRRORS_PATCH, ATTR_STREAMING_PATCH]).build(vanilla).rom
     result = PatchStack([course], base_sha1=None).build(base)
-    assert result.regions["courses"]
+    assert result.regions["course"]

@@ -122,6 +122,27 @@ def test_metadata_roundtrip(japan_holes, tmp_path):
         assert rom.read_fixed_word(rom_utils.TABLE_TEE_Y + hole_idx * 2) == tee["y"]
 
 
+def test_scorecard_totals_follow_the_course(tmp_path):
+    """A course that is not par 72 or 7,037 yards gets its own totals on both cards."""
+    holes = load_course_holes("courses/japan")
+    holes[0].metadata["par"] = holes[0].metadata["par"] + 1
+    holes[0].metadata["distance"] = holes[0].metadata["distance"] + 111
+    yards = sum(hole.metadata.get("distance", 400) for hole in holes)
+    par = sum(hole.metadata.get("par", 4) for hole in holes)
+    assert (yards, par) == (7148, 73)
+    _, rom = write_rom(holes, tmp_path / "totals.nes")
+
+    thousands = rom.read_switched(0xAF33, 2, 1)[0]
+    course_digits = [rom.read_switched(table, 2, 3) for table in (0xAF71, 0xAF74, 0xAF77)]
+    for course in range(3):
+        digits = [thousands - 0x40] + [table[course] for table in course_digits]
+        assert int("".join(map(str, digits))) == yards
+
+    for cell in (0xB9BF, 0xBAD5):
+        tens, ones = rom.read_switched(cell, 2, 2)
+        assert (tens - 0x40) * 10 + (ones - 0x40) == par
+
+
 def test_greens_sequential_in_bank3(japan_holes, tmp_path):
     _, rom = write_rom(japan_holes, tmp_path / "greens.nes")
 

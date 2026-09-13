@@ -10,12 +10,15 @@ is laid out in `writes`. A course that does not fit raises `BankOverflowError`
 from the constructor, so building the patch is also how a course is checked
 for fit.
 
-The patch writes course data only: terrain and attributes in banks 0 and 1,
-the per-hole bank table and greens in bank 3, and the pointer and metadata
-tables for holes 0-17 in the fixed bank. Like `ScorecardQrPatch`'s image, these
+The patch writes course data: terrain and attributes in banks 0 and 1, the
+per-hole bank table and greens in bank 3, and the pointer and metadata tables
+for holes 0-17 in the fixed bank. It also writes the course's totals onto the
+scorecard in bank 2, where vanilla stores them as constants rather than adding
+up the metadata tables (docs/scorecard.md): the total yardage digits, and the
+`TOTAL 72` par cell in both blank cards. Like `ScorecardQrPatch`'s image, these
 writes do not check what they overwrite - the regions hold vanilla course data,
-and carrying a copy to compare against would be absurd - so `can_apply` is
-always true.
+or another course's, and carrying a copy to compare against would be absurd -
+so `can_apply` is always true.
 
 The data is only playable on a ROM carrying three other patches, listed in
 `requires` and checked by `apply`:
@@ -61,6 +64,22 @@ GREENS_BANK = 3
 GREENS_DATA_START = 0x81C0  # First byte after the decompression tables
 GREENS_DATA_END = BANK_TABLE_CPU_ADDR  # Stop before bank table
 
+# Scorecard totals in bank 2 (docs/scorecard.md). The yardage code at $AF2F
+# loads the thousands tile as an immediate (`LDA #$47` at $AF32), then ORs $40
+# into one raw digit from each of three tables indexed by CurrCourse. Every
+# course slot plays this course, so each table gets its digit three times.
+SCORECARD_BANK = 2
+YARDAGE_THOUSANDS_OPERAND = 0xAF33
+YARDAGE_DIGIT_TABLES = (0xAF71, 0xAF74, 0xAF77)  # hundreds, tens, ones
+COURSE_SLOTS = 3
+# The two par digits of `TOTAL 72`, literals in each blank card's compressed
+# nametable stream: the main card, and the 36-hole match play tournament card.
+PAR_TOTAL_CELLS = (0xB9BF, 0xBAD5)
+DIGIT_TILES = 0x40  # the small table font's `0`
+
+TOTAL_YARDS_RANGE = range(1000, 10000)
+TOTAL_PAR_RANGE = range(10, 100)
+
 
 @dataclass
 class HoleCompressedData:
@@ -94,6 +113,8 @@ class CourseWriteStats:
     greens_bytes_per_hole: list = field(default_factory=list)
     total_terrain_bytes: int = 0
     total_greens_bytes: int = 0
+    total_yards: int = 0
+    total_par: int = 0
 
 
 @dataclass(frozen=True)
@@ -103,6 +124,14 @@ class DataWrite:
     name: str
     prg_offset: int
     data: bytes
+
+
+def hole_par(hole: HoleData) -> int:
+    return hole.metadata.get("par", 4)
+
+
+def hole_distance(hole: HoleData) -> int:
+    return hole.metadata.get("distance", 400)
 
 
 def compress_holes(holes: Sequence[HoleData]) -> list[HoleCompressedData]:
@@ -175,6 +204,48 @@ def bank_table_bytes(allocations: Sequence[BankAllocation]) -> bytes:
     return bytes(table)
 
 
+def scorecard_total_writes(holes: Sequence[HoleData]) -> list[DataWrite]:
+    """
+    The scorecard's total yardage and total par for these holes.
+
+    Raises ValueError when a total does not fit its cell: four digits of
+    yardage, two of par.
+    """
+    yards = sum(hole_distance(hole) for hole in holes)
+    par = sum(hole_par(hole) for hole in holes)
+    if yards not in TOTAL_YARDS_RANGE:
+        raise ValueError(
+            f"Total yardage {yards:,} does not fit the scorecard's four digits "
+            f"({TOTAL_YARDS_RANGE.start}-{TOTAL_YARDS_RANGE.stop - 1})"
+        )
+    if par not in TOTAL_PAR_RANGE:
+        raise ValueError(
+            f"Total par {par} does not fit the scorecard's two digits "
+            f"({TOTAL_PAR_RANGE.start}-{TOTAL_PAR_RANGE.stop - 1})"
+        )
+
+    def write(what: str, cpu_addr: int, data: bytes) -> DataWrite:
+        return DataWrite(
+            f"scorecard {what}", rom_utils.cpu_to_prg_switched(cpu_addr, SCORECARD_BANK), data
+        )
+
+    thousands, *digits = (int(digit) for digit in f"{yards:04d}")
+    writes = [
+        write(
+            f"total yardage {yards} (thousands tile)",
+            YARDAGE_THOUSANDS_OPERAND,
+            bytes([DIGIT_TILES + thousands]),
+        )
+    ]
+    for place, table, digit in zip(("hundreds", "tens", "ones"), YARDAGE_DIGIT_TABLES, digits, strict=True):
+        writes.append(write(f"total yardage {yards} ({place})", table, bytes([digit] * COURSE_SLOTS)))
+    for card, cell in zip(("main card", "36-hole match play card"), PAR_TOTAL_CELLS, strict=True):
+        writes.append(
+            write(f"total par {par} ({card})", cell, bytes([DIGIT_TILES + par // 10, DIGIT_TILES + par % 10]))
+        )
+    return writes
+
+
 def _fixed(cpu_addr: int) -> int:
     return rom_utils.cpu_to_prg_fixed(cpu_addr)
 
@@ -189,13 +260,13 @@ def _metadata_writes(hole_idx: int, hole: HoleData) -> list[DataWrite]:
     flags = metadata.get("flag_positions", [])
     flag_y = bytes(flags[i].get("y_offset", 0) if i < len(flags) else 0 for i in range(4))
     flag_x = bytes(flags[i].get("x_offset", 0) if i < len(flags) else 0 for i in range(4))
-    dist_100, dist_10, dist_1 = int_to_bcd(metadata.get("distance", 400))
+    dist_100, dist_10, dist_1 = int_to_bcd(hole_distance(hole))
 
     def write(what: str, cpu_addr: int, data: bytes) -> DataWrite:
         return DataWrite(f"hole {hole_idx} {what}", _fixed(cpu_addr), data)
 
     return [
-        write("par", rom_utils.TABLE_PAR + hole_idx, bytes([metadata.get("par", 4)])),
+        write("par", rom_utils.TABLE_PAR + hole_idx, bytes([hole_par(hole)])),
         write(
             "handicap",
             rom_utils.TABLE_HANDICAP + hole_idx,
@@ -221,7 +292,7 @@ def _metadata_writes(hole_idx: int, hole: HoleData) -> list[DataWrite]:
 class CoursePatch(ROMPatch):
     """Write one 18-hole course. Requires the code patches that can play it."""
 
-    name = "courses"
+    name = "course"
     description = "Write one 18-hole course, packed across terrain banks 0 and 1"
     requires = (MULTI_BANK_CODE_PATCH, COURSE_MIRRORS_PATCH, ATTR_STREAMING_PATCH)
 
@@ -231,6 +302,7 @@ class CoursePatch(ROMPatch):
                 f"Expected {rom_utils.HOLES_PER_COURSE} holes, got {len(holes)}"
             )
         self.holes = list(holes)
+        self.scorecard_writes = scorecard_total_writes(self.holes)
         self.compressed = compress_holes(self.holes)
         self.allocations = allocate_terrain(self.compressed)
         self.writes: list[DataWrite] = []
@@ -283,6 +355,8 @@ class CoursePatch(ROMPatch):
         for index, hole in enumerate(self.holes):
             self.writes += _metadata_writes(index, hole)
 
+        self.writes += self.scorecard_writes
+
     def _layout_greens(self) -> None:
         """Lay greens out sequentially after bank 3's decompression tables."""
         total_size = sum(len(hole.greens) for hole in self.compressed)
@@ -327,6 +401,8 @@ class CoursePatch(ROMPatch):
 
         stats.total_terrain_bytes = sum(stats.bank_usage.values())
         stats.total_greens_bytes = sum(stats.greens_bytes_per_hole)
+        stats.total_yards = sum(hole_distance(hole) for hole in self.holes)
+        stats.total_par = sum(hole_par(hole) for hole in self.holes)
         return stats
 
     # -- ROMPatch -------------------------------------------------------

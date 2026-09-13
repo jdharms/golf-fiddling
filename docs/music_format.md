@@ -417,7 +417,7 @@ the noise drum table — and that is what the engine reads, so it is what a dump
 
 ## Inserting a track
 
-`golf-patch-music` (`tools/patch_music.py`, `golf/core/patches/music_import.py`) puts a
+The `music_import` step of `golf-patch` (`golf/core/patches/music_import.py`) puts a
 dump back into a ROM. It is a **proof of concept**: it replaces music `$02`, `$03` and
 `$04` in the vanilla US ROM — exactly the three `CourseBgmTable` entries, so no code
 outside the music data changes — and it fits them into the space those three tracks
@@ -426,7 +426,7 @@ already occupy.
 ```bash
 golf-export-music mario_open_jp.nes --dump --reference nes_open_us.nes \
     -o data/music/music_jp_courses.json
-golf-patch-music nes_open_us.nes data/music/music_jp_courses.json -o jp_music.nes
+golf-patch nes_open_us.nes -p music_import:dump=data/music/music_jp_courses.json -o jp_music.nes
 ```
 
 Removing the three US course themes frees four regions, and nothing else in the ROM

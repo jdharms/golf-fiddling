@@ -503,11 +503,12 @@ the palette, sets `PpuCtrl_Cache` `$10` to `$90` (NMI on, background patterns at
 
 ### Installing it: the patch
 
-`golf/core/patches/scorecard_qr.py`, driven by `golf-patch-qr`:
+`golf/core/patches/scorecard_qr.py`, applied as the `scorecard_qr` step of `golf-patch` with
+credentials written by `golf-qr-credentials`:
 
 ```bash
-golf-patch-qr rom.nes -o out.nes --manifest keys.json
-golf-patch-qr rom.nes --validate-only
+golf-qr-credentials -o keys.json
+golf-patch modified.nes --any-base -p scorecard_qr:credentials=keys.json -o out.nes
 ```
 
 Three writes: the 4,420-byte image (tables, routine, credentials) into bank 2 from
@@ -526,13 +527,14 @@ region with `$FF` would let this one assert on the region too.
 Each build gets a fresh seed ID, one player ID per slot and one MAC key per slot, written
 into placeholders the assembler reserved (`QrSeedId`, `QrPlayerId`, `QrMacKey`). They
 default to zero, so **a ROM that was never patched produces an all-zero seed and player
-ID** — something the server rejects rather than silently accepting. `--manifest` writes
-the credentials out as JSON; the keys are secret and nothing else prints them.
+ID** — something the server rejects rather than silently accepting. `golf-qr-credentials` writes
+the credentials as JSON and the patch reads them from that file; the keys are secret and
+nothing else prints them.
 
 `tests/integration/test_qr_patch_rom.py` applies the patch to the real ROM, checks that
 exactly those three regions change, then reads bank 2 back out of the patched file, runs
 it in the simulator, and decodes the screen it draws — the whole chain from
-`golf-patch-qr` to a scannable, MAC-verifying code.
+the `scorecard_qr` patch to a scannable, MAC-verifying code.
 
 ### Dismissal
 
@@ -682,7 +684,7 @@ goes up.
    differentially tested against the oracle. See The 6502 port above.
 5. **Display layer** — *done*, `golf/qr/port/display.s`; 446 bytes, tested through
    simulated video memory. See The display layer above.
-6. **Patch integration** — *done*, `golf-patch-qr`; three writes, credentials inserted
+6. **Patch integration** — *done*, the `scorecard_qr` patch; three writes, credentials inserted
    at patch time. See Installing it above.
 7. **Server endpoint.**
 

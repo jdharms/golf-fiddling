@@ -39,4 +39,5 @@ the finished screen, and decode the QR, out of simulated video memory.
   justifies a fixed mask instead of spec penalty scoring
 - `golf-qr-tables` - export the ROM tables
 - `golf-qr-port` - assemble the port and report per-routine sizes against the bank 2 budget
-- `golf-patch-qr` - install the QR screen into a ROM; `--manifest` writes the secret MAC keys
+- `golf-qr-credentials` - write a build's seed ID, player IDs and secret MAC keys; the
+  `scorecard_qr` step of `golf-patch` installs the QR screen with them

@@ -190,7 +190,7 @@ the two bytes.
 
 ## Modifying the card
 
-Everything below assumes free space is available somewhere in bank 2.
+Where an edit needs more room than it replaces, it assumes free space somewhere in bank 2.
 
 ### Title and course-name strings
 
@@ -228,18 +228,56 @@ punctuation.
 To widen the red band, patch the four attribute bytes - they are a plain literal in the
 compressed nametable stream at bank 2 **`$B9F2`** (`C0 F0 F0 30`, covering columns 8-23).
 Bits 4-7 of each byte are the lower half of the attribute row, i.e. tile row 3. The
-mode-6 card at `$BA0B` stores the same region as a `$20` run of six `$F0` bytes seeded at
-**`$BB04`**, so there columns 8-31 are already all palette 3.
+36-hole match play tournament card at `$BA0B` stores the same region as a `$20` run of
+six `$F0` bytes seeded at **`$BB04`**, so there columns 8-31 are already all palette 3.
 
 Changing the scorecard name does not touch the course intro scene, which has its own
 copy - see `course_intro_scene.md`.
 
-### Un-hardcoding the total-yardage thousands digit
+The `scorecard_course_name` patch (`golf/core/patches/scorecard_course_name.py`) does all
+of this for `<NAME> COURSE`, with no free space:
 
-`$AF2F`-`$AF4E` is 32 bytes that load four digits one at a time, with the first one
-hardcoded (`LDA #$47`). A four-entry loop over a `4 x course` table of *tile* values
-(no `ORA #$40` needed) fits in 20 bytes, leaving the remaining 12 for the table itself -
-so a three-course version needs no free space at all:
+- it repoints the US and UK entries of the course table (`$AEAE`, `$AEB1`) at the Japan
+  handler `$AFC2`, so every slot draws the same name
+- it rewrites the descriptor at `$AFC8` in place, centred at column `(32 - width) // 2`
+  as vanilla centres its own names; past 16 bytes it runs into the now-unreachable US
+  handler at `$AFD8`
+- it rebuilds the four attribute bytes at `$B9F2` so palette 3 covers the name's columns
+
+The attribute literal spans only columns 8-23, which caps the name at 16 tiles (9
+characters before ` COURSE`).
+
+Its optional `title` replaces `18H STROKE PLAY` (mode `$00`), up to 16 characters. The
+vanilla descriptor at `$B00D` is 15 tiles with the mode `$01` handler right behind it at
+`$B020`, so the new descriptor goes in the unreachable US and UK handler bytes instead, at
+`$AFDC` (just past the longest name descriptor), and the `.dw` at `$B00A` is repointed.
+It is centred at column `(33 - width) // 2`, which is where vanilla puts
+`18H STROKE PLAY` and `18H MATCH PLAY`. Other game modes keep their titles.
+
+### Total yardage
+
+`$AF2F`-`$AF4E` loads the four digits one at a time:
+
+```
+$AF2F  AE 02 01     LDX CurrCourse
+$AF32  A9 47        LDA #$47               ; thousands tile, an immediate
+$AF34  8D 14 04     STA $0414
+$AF37  BD 71 AF     LDA $AF71,X : ORA #$40 ; hundreds
+$AF3F  BD 74 AF     LDA $AF74,X : ORA #$40 ; tens
+$AF47  BD 77 AF     LDA $AF77,X : ORA #$40 ; ones
+```
+
+The thousands digit is the operand byte at **`$AF33`**, and is a tile value (`$40` +
+digit). The three tables hold *raw* digits, one per course: `$AF71` = `00 01 00`,
+`$AF74` = `03 00 04`, `$AF77` = `07 02 09`.
+
+`CoursePatch` writes all four for its course: the thousands tile at `$AF33`, and each
+table's digit three times, since every course slot plays the one course. It raises
+`ValueError` for a total outside 1000-9999.
+
+With more than one course per ROM the thousands digit would need to follow `CurrCourse`
+too. A four-entry loop over a `4 x course` table of *tile* values fits in the same 32
+bytes, table included:
 
 ```
 $AF2F  AD 02 01     LDA CurrCourse
@@ -256,13 +294,9 @@ $AF43  .db $47,$40,$43,$47   ; 7037  Japan
        .db $47,$40,$44,$49   ; 7049  UK
 ```
 
-`$AF4F` onward (the `JSR WriteNametableTiles` / `.dw $AF6B`) is untouched, and the old
-`CourseTotalYardageDigitTables` at `$AF71`-`$AF79` become reclaimable. Move the table
-out to free space if you need more than three courses.
-
-Doing it *properly* - summing the three BCD distance tables for the course instead of
-tabling the answer - keeps the total honest when holes are edited, but needs a 16-bit
-accumulator and a four-digit version of `WordToThreeDigitTiles`.
+Summing the three BCD distance tables at run time instead would keep the total honest
+if something edited the tables after the build, but needs a 16-bit accumulator and a
+four-digit version of `WordToThreeDigitTiles`.
 
 ### `TOTAL 72`
 
@@ -272,9 +306,12 @@ same-length byte edit with no re-encoding:
 | Card | ROM (bank 2) | Bytes |
 |---|---|---|
 | `$B90B` main | `$B9BF` | `47 42` |
-| `$BA0B` mode 6 | `$BAD5` | `47 42` |
+| `$BA0B` 36-hole match play tournament | `$BAD5` | `47 42` |
 
-For a value that follows the course, write the cell from code instead: two tiles at PPU
+`CoursePatch` writes both with its course's total par, and raises `ValueError` for a
+total outside 10-99.
+
+For a value that follows `CurrCourse` at run time, write the cell from code instead: two tiles at PPU
 `$230D`, summing `ParTable[$DD05]` over the course's 18 holes and running the result
 through `ByteToTwoDigitTiles`. The natural splice is `$AF64 JSR $CDBE` - replace it with
 a `JSR` to the new routine, which draws the cell, calls `$CDBE` itself, and returns.

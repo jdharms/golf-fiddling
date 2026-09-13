@@ -30,13 +30,22 @@ The code goes in the 39 bytes the banner-selection logic occupies at `$AC5D`
 fixed banner has nothing to select.
 """
 
+from pathlib import Path
+
 from golf.core.asm6502 import assemble
 from golf.core.signpost import (
     BANNER_TABLE,
     BANK,
+    allocate_patterns,
+    build_screen,
+    convert_banner,
+    free_pattern_slots,
+    parse_banner,
     read_banner_descriptor,
+    screen_from_aseprite,
 )
 
+from .base import PatchError
 from .byte_patch import BytePatch
 from .composite import CompositePatch
 
@@ -230,3 +239,61 @@ def random_banner_patches(rom, patterns, chunks, banner_index: int, banner_body:
         description="draw one fixed signpost banner, with new tile art",
         patches=patches,
     )
+
+
+class SignpostBannerPatch(CompositePatch):
+    """`random_banner_patches` built from an edited screen export, plus what
+    the conversion found along the way."""
+
+    def __init__(self, patch: CompositePatch, new_tiles: int, chunks, notes):
+        super().__init__(patch.name, patch.description, patch.patches)
+        self.new_tiles = new_tiles
+        self.chunks = list(chunks)
+        self.notes = list(notes)
+
+
+def signpost_banner_patch(rom, art, banner: str = "us", hole: int = 1) -> SignpostBannerPatch:
+    """The banner patch for an edited signpost screen export.
+
+    `rom` is a `RomReader` on the base ROM. Reads the banner back off the
+    edited screen (`golf-signpost-import` prints the same analysis), finds
+    pattern-table slots for whatever art the ROM does not already have, and
+    builds the patch. Raises PatchError when the art cannot be imported.
+    """
+    index = parse_banner(banner)
+    reference, palette = build_screen(rom, course=min(index, 2), hole_1based=hole)
+    descriptor = read_banner_descriptor(rom, index)
+
+    try:
+        edited = screen_from_aseprite(art)
+    except ValueError as problem:
+        raise PatchError(f"{Path(art).name}: {problem}") from problem
+    result = convert_banner(edited.pixels, reference, palette, descriptor)
+    if result.errors:
+        raise PatchError(
+            "the art uses colours the attribute table does not allow: "
+            + "; ".join(str(error) for error in result.errors)
+        )
+
+    notes = []
+    if edited.ragged:
+        notes.append(
+            f"{len(edited.ragged)} NES pixel(s) were drawn finer than the {edited.scale}x "
+            "grid; each resolved to its lower palette index (run golf-signpost-import "
+            "--grid to see them)"
+        )
+
+    patterns = list(result.new_patterns)
+    kept = [tile.tile for tile in result.tiles]
+    chunks = allocate_patterns(free_pattern_slots(rom, reference, kept), len(patterns))
+
+    placement = {}
+    supply = list(patterns)
+    for first_tile, count in chunks:
+        for offset in range(min(count, len(supply))):
+            placement[supply[offset]] = first_tile + offset
+        supply = supply[count:]
+
+    body = result.nametable(placement)
+    patch = random_banner_patches(rom, patterns, chunks, index, body)
+    return SignpostBannerPatch(patch, len(patterns), chunks, notes)

@@ -106,7 +106,7 @@ golf-write rom.nes courses/japan/ --validate-only --verbose
 
 ### Required Patches
 
-`CoursePatch` writes course data only. It lists the code patches the data needs in
+`CoursePatch` writes course data, plus the course's totals on the scorecard. It lists the code patches the data needs in
 `requires`, and `apply` raises `PatchError` if any is not applied. `golf-write` applies
 them first:
 
@@ -126,9 +126,11 @@ Building the patch does all the work, without a ROM:
 4. **Lay out every write**: Terrain to assigned banks, greens to bank 3, pointers and
    metadata (par, distance, positions) for holes 0-17 to the fixed bank, collected in
    `CoursePatch.writes`
+5. **Write the scorecard totals**: total yardage and total par into bank 2, where vanilla
+   keeps them as constants (see `docs/scorecard.md`)
 
-`CoursePatch.stats` reports bank usage. The data writes do not check the bytes they
-overwrite.
+`CoursePatch.stats` reports bank usage and the two totals. The writes do not check the
+bytes they overwrite.
 
 ### Validation
 

@@ -4,17 +4,15 @@ ROM Patching System.
 This package provides a declarative system for applying patches to NES ROMs.
 Patches can modify game behavior by replacing specific byte sequences.
 
-Usage:
-    from golf.core.patches import BytePatch, PatchError, AVAILABLE_PATCHES
+Patch types are registered in `registry.PATCH_SPECS`; a `PatchStack` builds an
+ordered list of patches onto a base ROM, and a `Recipe` is a stack written as
+JSON. See docs/patch_stack.md.
 
-    # Apply specific patches
-    for patch in patches_to_apply:
-        if patch.can_apply(rom_writer):
-            patch.apply(rom_writer)
-        elif patch.is_applied(rom_writer):
-            print(f"Already applied: {patch.name}")
-        else:
-            raise PatchError(f"Cannot apply: {patch.name}")
+Usage:
+    from golf.core.patches import Recipe
+
+    recipe = Recipe.load("recipe.json")
+    rom = recipe.stack(base).build(base).rom
 """
 
 from .attr_streaming import (
@@ -46,9 +44,14 @@ from .practice_swing import (
     practice_swing_patch,
     practice_swing_patches,
 )
+from .scorecard_course_name import (
+    scorecard_course_name_patch,
+    scorecard_course_name_patches,
+)
 from .scorecard_qr import (
     QrCredentials,
     ScorecardQrPatch,
+    load_credentials,
     scorecard_qr_patch,
 )
 from .signpost_banner import remove_course_banner_patches
@@ -81,26 +84,34 @@ from .multi_bank import (
 )
 from .stack import PatchStack, StackBuild, StackError
 from .wram_expansion import WRAM_EXPANSION_PATCH
+from .registry import PATCH_SPECS, BuildContext, PatchSpec
+from .recipe import (
+    BuiltStep,
+    Recipe,
+    RecipeError,
+    RecipeStep,
+    describe_params,
+    parse_step_arg,
+)
 
-# Registry of all available patches by name
-AVAILABLE_PATCHES: dict[str, ROMPatch] = {
-    MULTI_BANK_CODE_PATCH.name: MULTI_BANK_CODE_PATCH,
-    COURSE2_MIRROR_PATCH.name: COURSE2_MIRROR_PATCH,
-    COURSE3_MIRROR_PATCH.name: COURSE3_MIRROR_PATCH,
-    COURSE2_MIRROR_PATCH_SCORECARD.name: COURSE2_MIRROR_PATCH_SCORECARD,
-    COURSE3_MIRROR_PATCH_SCORECARD.name: COURSE3_MIRROR_PATCH_SCORECARD,
-    COURSE_MIRRORS_PATCH.name: COURSE_MIRRORS_PATCH,
-    ATTR_STREAMING_PATCH.name: ATTR_STREAMING_PATCH,
-    ATTR_STREAMING_BANK_SWITCH_PATCH.name: ATTR_STREAMING_BANK_SWITCH_PATCH,
-    **{p.name: p for p in ATTR_STREAMING_PATCHES},
-    WRAM_EXPANSION_PATCH.name: WRAM_EXPANSION_PATCH,
-}
 
 __all__ = [
     "ROMPatch",
     "QrCredentials",
+    "load_credentials",
+    "PATCH_SPECS",
+    "BuildContext",
+    "PatchSpec",
+    "BuiltStep",
+    "Recipe",
+    "RecipeError",
+    "RecipeStep",
+    "describe_params",
+    "parse_step_arg",
     "ScorecardQrPatch",
     "scorecard_qr_patch",
+    "scorecard_course_name_patch",
+    "scorecard_course_name_patches",
     "BytePatch",
     "CompositePatch",
     "PatchStack",
@@ -145,5 +156,4 @@ __all__ = [
     "MusicImportPatch",
     "music_import_patch",
     "COURSE_TRACKS",
-    "AVAILABLE_PATCHES",
 ]

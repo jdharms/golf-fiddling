@@ -85,8 +85,9 @@ def build(rom, course, mode, holes_played):
         ppu -= 0x20
         hole -= 1
 
-    # $AF2F: total yardage, first digit hardcoded to $47.  $AF54: holes played.
-    total = [0x47] + [
+    # $AF2F: total yardage, the thousands tile an immediate operand at $AF33.
+    # $AF54: holes played.
+    total = [rom.read_switched(0xAF33, BANK, 1)[0]] + [
         rom.read_switched(table + course, BANK, 1)[0] | 0x40
         for table in (0xAF71, 0xAF74, 0xAF77)
     ]

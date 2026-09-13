@@ -3,7 +3,7 @@ Integration: the scorecard QR patch against the real vanilla ROM.
 
 The last test is the one that matters — it reads the feature back out of the
 *patched ROM file*, runs it in the simulator, and decodes the resulting screen
-with zxing. That closes the loop from `golf-patch-qr` to a scannable code.
+with zxing. That closes the loop from the patch to a scannable code.
 """
 
 import random

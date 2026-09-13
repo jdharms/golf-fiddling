@@ -39,8 +39,10 @@ pointers.
 one assert on the region too. See the note in the doc.)
 """
 
+import json
 import random
 from dataclasses import dataclass
+from pathlib import Path
 
 from golf.core import rom_utils
 from golf.core.asm6502 import assemble
@@ -139,6 +141,29 @@ class QrCredentials:
             "url_prefix": payload.URL_PREFIX,
             "protocol_version": payload.PROTOCOL_VERSION,
         }
+
+    @classmethod
+    def from_manifest(cls, data) -> "QrCredentials":
+        """Read credentials back from what `manifest()` wrote."""
+        try:
+            players = sorted(data["players"], key=lambda player: player["slot"])
+            if [player["slot"] for player in players] != [0, 1]:
+                raise ValueError("credentials need player slots 0 and 1")
+            return cls(
+                seed_id=bytes.fromhex(data["seed_id"]),
+                player_ids=(
+                    bytes.fromhex(players[0]["player_id"]),
+                    bytes.fromhex(players[1]["player_id"]),
+                ),
+                keys=(bytes.fromhex(players[0]["key"]), bytes.fromhex(players[1]["key"])),
+            )
+        except (KeyError, TypeError) as error:
+            raise ValueError(f"not a credentials file: missing or malformed {error}") from error
+
+
+def load_credentials(path) -> QrCredentials:
+    """Credentials from a JSON file written by `golf-qr-credentials`."""
+    return QrCredentials.from_manifest(json.loads(Path(path).read_text()))
 
 
 def build_image(credentials: QrCredentials) -> bytes:

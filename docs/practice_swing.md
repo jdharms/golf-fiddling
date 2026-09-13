@@ -8,8 +8,8 @@ back ~8 pixels into practice mode, where a full three-press swing can be taken w
 hitting the ball or counting a stroke. The power and accuracy markers hold on screen for a
 moment afterward, then the player can swing again or toggle back out.
 
-Implemented as `golf/core/patches/practice_swing.py`, applied by
-`golf-patch-practice-swing`. The rest of this document is the analysis of the vanilla
+Implemented as `golf/core/patches/practice_swing.py`, applied as the
+`practice_swing` step of `golf-patch`. The rest of this document is the analysis of the vanilla
 swing code it is built on; the implementation itself is at the end.
 
 ## The swing state machine
@@ -149,7 +149,7 @@ the club together.
 
 ## Implementation
 
-`golf-patch-practice-swing <rom> [-o out.nes] [--hold-frames N]`. Ten `BytePatch`es, every
+The `practice_swing` step of `golf-patch`, with an optional `hold_frames` parameter. Ten `BytePatch`es, every
 one length-preserving, so nothing else in the ROM moves.
 
 The toggle routine lives at fixed-bank `$CAE4`, the tail of the `$CA40`-`$CAFF` block (all

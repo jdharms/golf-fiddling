@@ -8,7 +8,6 @@ import pytest
 from golf.core.patches import (
     ATTR_STREAMING_BANK_SWITCH_PATCH,
     ATTR_STREAMING_PATCHES,
-    AVAILABLE_PATCHES,
     COURSE2_MIRROR_PATCH,
     COURSE3_MIRROR_PATCH,
     MULTI_BANK_CODE_PATCH,
@@ -209,27 +208,6 @@ class TestMultiBankPatchApplication:
         rom_writer2 = RomWriter(str(output_path), str(tmp_path / "patched2.nes"))
         assert MULTI_BANK_CODE_PATCH.is_applied(rom_writer2)
         assert COURSE3_MIRROR_PATCH.is_applied(rom_writer2)
-
-
-class TestAvailablePatchesRegistry:
-    """Tests for the AVAILABLE_PATCHES registry."""
-
-    def test_all_patches_registered(self):
-        """All defined patches are in the registry."""
-        assert "multi_bank_lookup" in AVAILABLE_PATCHES
-        assert "course2_mirror" in AVAILABLE_PATCHES
-        assert "course3_mirror" in AVAILABLE_PATCHES
-
-    def test_registry_contains_correct_patches(self):
-        """Registry maps to correct patch instances."""
-        assert AVAILABLE_PATCHES["multi_bank_lookup"] is MULTI_BANK_CODE_PATCH
-        assert AVAILABLE_PATCHES["course2_mirror"] is COURSE2_MIRROR_PATCH
-        assert AVAILABLE_PATCHES["course3_mirror"] is COURSE3_MIRROR_PATCH
-
-    def test_patch_names_match_registry_keys(self):
-        """Patch.name matches the registry key."""
-        for name, patch in AVAILABLE_PATCHES.items():
-            assert patch.name == name
 
 
 class TestPatchOnUnexpectedRom:
