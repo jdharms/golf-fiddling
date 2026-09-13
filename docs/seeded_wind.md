@@ -94,21 +94,18 @@ The slot now advances exactly one LFSR step per swing. In-shot draws still use t
 
 ### 3. Seed table
 
-Two bytes per hole (`$42` then `$43`) at `$DFE7` (PRG `0x3DFE7`), the course-3 block of `GreenFlagXTable` (72 bytes, 36 holes). Under `COURSE3_MIRROR_PATCH` the course-3 offset is 0, so indexes 36-53 are never read. `PackedCourseWriter` only writes metadata for the holes it is given (0-17 or 0-35), so the seed table survives `golf-write` in either order.
+Two bytes per hole (`$42` then `$43`) for the course's 18 holes at `$DFE7` (PRG `0x3DFE7`), the start of the course-3 block of `GreenFlagXTable`. Under `COURSE_MIRRORS_PATCH` every course slot plays holes 0-17, so the course-3 block is never read; the patch declares `COURSE_MIRRORS_PATCH` as a requirement and refuses to apply without it. `CoursePatch` only writes metadata for holes 0-17, so the seed table survives `golf-write` in either order.
 
-Seeds come from `derive_hole_seeds(meta_seed, hole_count)`: SHA-256 of a fixed prefix, the meta-seed string and the hole index, first two bytes little-endian. The same string always rebuilds the same ROM. The seed string itself is not yet recorded in the ROM.
+Seeds come from `derive_hole_seeds(meta_seed)`: SHA-256 of a fixed prefix, the meta-seed string and the hole index, first two bytes little-endian. The same string always rebuilds the same ROM. The seed string itself is not yet recorded in the ROM.
 
 ## Usage
 
 ```bash
-# 1-course ROM produced by golf-write (course3_mirror already applied)
+# ROM produced by golf-write (course_mirrors already applied)
 golf-patch-seeded-wind modified.nes --seed "my seed" -o seeded.nes
 
 # print the expected pin index, anchors and first 6 winds per hole
 golf-patch-seeded-wind modified.nes --seed "my seed" --forecast 6 --validate-only
-
-# 2-course ROM
-golf-patch-seeded-wind modified.nes --seed "my seed" --holes 36 -o seeded.nes
 ```
 
 Forecast columns: `pin` is the 0-based flag index; `dir` is `WindDirectionAnchor` (`$012F`, bit 7 = reversed); `spd` is `WindSpeedAnchor` (`$0130`); each `dir/spd` pair is (`$96`, `$97`) for that swing.
@@ -121,6 +118,6 @@ Forecast columns: `pin` is the 0-based flag index; `dir` is `WindDirectionAnchor
 
 ## Constraints
 
-- Requires `COURSE3_MIRROR_PATCH`. Without it the UK flag X offsets are live and get clobbered; the CLI warns.
+- Requires `COURSE_MIRRORS_PATCH`. Without it the UK flag X offsets are live and would get clobbered, so the patch refuses to apply.
 - Fixed bank: net zero bytes. Bank 13: 16 bytes at `$BFAF-$BFBE` plus 10 NOPs at `$82C0`. Free bank 13 padding after this patch: `$BFBF-$BFF2` (52 bytes).
 - Practice mode manual wind and replay playback are untouched. The hole-in-one auto replay should still reproduce, since playback restores the slots and re-runs `InitHole`, but this has not been exercised.

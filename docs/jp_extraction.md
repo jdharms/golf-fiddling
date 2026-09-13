@@ -389,9 +389,8 @@ golf/
 │   ├── packing.py             # pack_attributes returns the real byte count for the
 │   │                          # given attribute row count, no fixed-size padding
 │   └── patches/
-│       ├── multi_bank.py      # MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING: use this
-│       │                      # instead of MULTI_BANK_CODE_PATCH when attr_streaming
-│       │                      # is also applied - both touch $DB68-$DB70
+│       ├── multi_bank.py      # Per-hole terrain bank lookup; its splice ends just
+│       │                      # before the $DB6E JSR that attr_streaming redirects
 │       └── attr_streaming.py  # Streams attributes from ROM instead of a fixed
 │                               # 72-byte RAM buffer copy
 tools/
@@ -407,14 +406,13 @@ tools/
    permutation. Added to `jp_rom_utils.py`.
 
 2. **Attrs streaming patch**: Done, and no longer blocked on missing plumbing.
-   Converted to the declarative patch framework as `golf/core/patches/attr_streaming.py`,
-   plus `MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING` in `multi_bank.py` (both patches
-   touch the same bytes at `$DB68`-`$DB70`, so a merged variant replaces using both
-   independently). Verified byte-identical to the hand-tested `attrs_patch.nes` when
+   Converted to the declarative patch framework as `golf/core/patches/attr_streaming.py`.
+   It applies with or without `MULTI_BANK_CODE_PATCH`, whose splice at `$DB68`-`$DB6D`
+   ends just before the `JSR` at `$DB6E` that attr streaming redirects. Verified byte-identical to the hand-tested `attrs_patch.nes` when
    applied without multi-bank. `pack_attributes` no longer pads/truncates to 72 bytes -
    it returns the real byte count for the hole's actual attribute row count.
-   `PackedCourseWriter` auto-detects when any hole needs more than 72 bytes and applies
-   the streaming patch set instead of the plain multi-bank patch.
+   `CoursePatch` (`golf/core/patches/courses.py`) requires the streaming patch set for every
+   course.
 
    A **new** blocker turned up while testing an actual 60-row JP hole end-to-end: the
    vanilla terrain decompression buffer in WRAM is only sized for 48 rows (1,056 bytes

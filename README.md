@@ -71,7 +71,7 @@ Build a standalone editor executable with `uv run pyinstaller run_editor.spec`.
 |---------|-------------|
 | `golf-dump <rom> <out_dir>` | Extract all courses from the US ROM to JSON, with compression statistics |
 | `golf-dump-jp <jp_rom> [out_dir]` | Extract the Mario Open Golf (JP) courses; see `docs/jp_extraction.md` |
-| `golf-write <rom> <course_dir> [course_dir2]` | Write 1-2 courses back into a ROM across three banks; see `docs/multi_bank_terrain.md` |
+| `golf-write <rom> <course_dir>` | Write one course back into a ROM, packed across terrain banks 0 and 1; see `docs/multi_bank_terrain.md` |
 | `golf-visualize <tileset> <hole.json or course_dir> [out]` | Render holes to PNG |
 | `golf-render-web <tileset> <greens_tileset> <courses> <web_dir>` | Render every hole for the web app |
 
@@ -140,14 +140,11 @@ golf-dump nes_open_us.nes courses/
 # Edit a hole using the course editor
 golf-editor courses/japan/hole_01.json
 
-# Write 1 course (all 3 course slots show the same course)
+# Write a course (all 3 course slots play it)
 golf-write nes_open_us.nes courses/japan/ -o modified.nes
 
-# Write 2 courses (Japan slot shows course 1, US slot shows course 2, UK mirrors Japan)
-golf-write nes_open_us.nes courses/japan/ courses/us/ -o modified.nes
-
-# Check courses will fit without writing
-golf-write nes_open_us.nes courses/japan/ courses/us/ --validate-only --verbose
+# Check a course will fit without writing
+golf-write nes_open_us.nes courses/japan/ --validate-only --verbose
 ```
 
 ## Running tests

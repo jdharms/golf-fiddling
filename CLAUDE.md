@@ -59,12 +59,13 @@ course data. `RomReader` translates CPU addresses to PRG ROM offsets.
 | 3 | All greens + code | $81C0-$A773 | 9,652 bytes |
 
 Bank 2 has tables *before* terrain at $8000-$837E. Bank 3 has decompression tables at
-$8000-$81BF and executable code at $A774-$BFFF. `PackedCourseWriter` enforces these
-boundaries. Full details: the `nes-open-golf-rom-layout` skill.
+$8000-$81BF and executable code at $A774-$BFFF. `CoursePatch` (`golf/core/patches/course.py`) enforces these
+boundaries, and uses only banks 0 and 1 for terrain. Full details: the `nes-open-golf-rom-layout` skill.
 
-**Multi-bank mode**: `golf-write` packs 1-2 courses across all three terrain banks with a
-per-hole bank table at $A700 in bank 3, patching the bank lookup and mirroring course 3
-onto course 1. See `docs/multi_bank_terrain.md`.
+**One course per ROM**: `golf-write` writes a single 18-hole course with `CoursePatch`,
+packing terrain across banks 0 and 1 with a per-hole bank table at $A700 in bank 3. The
+patch requires `multi_bank_lookup`, `course_mirrors` (every course slot plays course 1)
+and `attr_streaming`, which `golf-write` applies first. See `docs/multi_bank_terrain.md`.
 
 **Two compression schemes**, easily confused:
 - Course terrain/greens: RLE + dictionary, horizontal transitions, vertical fill

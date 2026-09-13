@@ -29,7 +29,7 @@ One line per document. Command-line tools are indexed in the top-level `README.m
 
 | Doc | About |
 |-----|-------|
-| [multi_bank_terrain.md](multi_bank_terrain.md) | Packing courses across all three terrain banks (`golf-write`) |
+| [multi_bank_terrain.md](multi_bank_terrain.md) | Writing a course across terrain banks 0 and 1 (`golf-write`) |
 | [wram_expansion.md](wram_expansion.md) | Growing the terrain buffer past 48 rows |
 | [seeded_wind.md](seeded_wind.md) | Pin positions and wind as a function of a build-time seed |
 | [practice_swing.md](practice_swing.md) | Practice swings that cost no stroke |

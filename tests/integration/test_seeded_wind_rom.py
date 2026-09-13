@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from golf.core.patches import (
-    COURSE3_MIRROR_PATCH,
+    COURSE_MIRRORS_PATCH,
     PatchError,
     mercy_tap_in_patches,
     seeded_wind_patch,
@@ -19,6 +19,12 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+def mirrored_writer(path: Path) -> RomWriter:
+    writer = RomWriter(ROM_PATH, str(path))
+    COURSE_MIRRORS_PATCH.apply(writer)
+    return writer
+
+
 def test_vanilla_rom_has_expected_bytes_at_every_site(tmp_path):
     writer = RomWriter(ROM_PATH, str(tmp_path / "out.nes"))
     patch = seeded_wind_patch("integration")
@@ -28,20 +34,25 @@ def test_vanilla_rom_has_expected_bytes_at_every_site(tmp_path):
 
 def test_apply_and_reload(tmp_path):
     out = tmp_path / "seeded.nes"
-    writer = RomWriter(ROM_PATH, str(out))
-    COURSE3_MIRROR_PATCH.apply(writer)
+    writer = mirrored_writer(out)
     patch = seeded_wind_patch("integration")
     patch.apply(writer)
     writer.save()
 
     reloaded = RomWriter(str(out), str(tmp_path / "unused.nes"))
     assert patch.is_applied(reloaded)
-    assert COURSE3_MIRROR_PATCH.is_applied(reloaded)
+    assert COURSE_MIRRORS_PATCH.is_applied(reloaded)
+
+
+def test_refuses_vanilla_rom_without_mirrors(tmp_path):
+    writer = RomWriter(ROM_PATH, str(tmp_path / "vanilla.nes"))
+    with pytest.raises(PatchError, match="requires course_mirrors"):
+        seeded_wind_patch("integration").apply(writer)
 
 
 def test_coexists_with_mercy_tap_in(tmp_path):
     """Both patches use bank 13 tail padding; they must not overlap."""
-    writer = RomWriter(ROM_PATH, str(tmp_path / "both.nes"))
+    writer = mirrored_writer(tmp_path / "both.nes")
     for p in mercy_tap_in_patches(mercy_point=10):
         p.apply(writer)
     patch = seeded_wind_patch("integration")
@@ -53,7 +64,7 @@ def test_coexists_with_mercy_tap_in(tmp_path):
 
 
 def test_reset_stub_untouched(tmp_path):
-    writer = RomWriter(ROM_PATH, str(tmp_path / "stub.nes"))
+    writer = mirrored_writer(tmp_path / "stub.nes")
     stub_before = writer.read_prg(0x37FF3, 13)
     seeded_wind_patch("integration").apply(writer)
     assert writer.read_prg(0x37FF3, 13) == stub_before
@@ -61,7 +72,7 @@ def test_reset_stub_untouched(tmp_path):
 
 
 def test_conflict_when_trampoline_space_is_taken(tmp_path):
-    writer = RomWriter(ROM_PATH, str(tmp_path / "conflict.nes"))
+    writer = mirrored_writer(tmp_path / "conflict.nes")
     writer.write_prg(0x37FAF, bytes([0x00]))
-    with pytest.raises(PatchError):
+    with pytest.raises(PatchError, match="unexpected state"):
         seeded_wind_patch("integration").apply(writer)

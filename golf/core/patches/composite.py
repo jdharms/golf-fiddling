@@ -2,6 +2,7 @@
 CompositePatch implementation for grouping multiple patches into one unit.
 """
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from .base import PatchError, ROMPatch
@@ -20,12 +21,22 @@ class CompositePatch(ROMPatch):
     sub-patch is applied. This lets a partially-applied group be completed
     by a later `apply()` call, while still rejecting the group outright if
     any sub-patch's ROM region is in an unexpected state.
+
+    `requires` lists patches the group depends on but does not apply;
+    `apply()` refuses to run until they are applied.
     """
 
-    def __init__(self, name: str, description: str, patches: list[ROMPatch]):
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        patches: list[ROMPatch],
+        requires: Sequence[ROMPatch] = (),
+    ):
         self.name = name
         self.description = description
         self.patches = patches
+        self.requires = list(requires)
 
     def can_apply(self, rom_writer: "RomWriter") -> bool:
         return all(
@@ -37,6 +48,7 @@ class CompositePatch(ROMPatch):
         return all(p.is_applied(rom_writer) for p in self.patches)
 
     def apply(self, rom_writer: "RomWriter") -> None:
+        self.check_requirements(rom_writer)
         if not self.can_apply(rom_writer):
             blocked = [
                 p.name

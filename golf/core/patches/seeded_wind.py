@@ -50,13 +50,13 @@ Patch
    from the shot-start snapshot and never touches the slots, so it stays
    correct.
 
-3. Seed table: 2 bytes per hole ([$42, $43] order) in the course-3 block
-   of `GreenFlagXTable` ($DFE7-$E02E, 72 bytes = 36 holes). That block is
-   dead once `COURSE3_MIRROR_PATCH` is applied, which `PackedCourseWriter`
-   always does. The writer never touches metadata slots 36-53, so the seed
-   table survives a `golf-write` in either order.
+3. Seed table: 2 bytes per hole ([$42, $43] order) for the course's 18
+   holes, at the start of the course-3 block of `GreenFlagXTable`
+   ($DFE7-$E00A). That block is dead once `COURSE_MIRRORS_PATCH` is applied,
+   and `CoursePatch` only writes metadata for holes 0-17, so the seed table
+   survives a `golf-write` in either order.
 
-Requires COURSE3_MIRROR_PATCH (otherwise the UK flag X offsets get
+Requires COURSE_MIRRORS_PATCH (otherwise the UK flag X offsets get
 clobbered). Practice-mode manual wind ($04F6 bit 7) and replay playback are
 untouched.
 
@@ -70,23 +70,21 @@ from typing import Sequence
 
 from .byte_patch import BytePatch
 from .composite import CompositePatch
+from .multi_bank import COURSE_MIRRORS_PATCH
 
 # --- Seed table -------------------------------------------------------------
 
 SEED_TABLE_CPU_ADDR = 0xDFE7  # GreenFlagXTable ($DF57) + 36 holes * 4 bytes
 SEED_TABLE_PRG_OFFSET = 0x3DFE7
-SEED_TABLE_MAX_HOLES = 36  # 72 bytes: the whole course-3 flag X block
+SEED_TABLE_HOLES = 18  # one course: 36 bytes at the start of the course-3 flag X block
 
-# Vanilla UK flag X offsets that the seed table overwrites (holes 36-53).
+# Vanilla UK flag X offsets that the seed table overwrites (holes 36-44).
 _SEED_TABLE_VANILLA = bytes([
     0x4C, 0x7F, 0x35, 0x6F, 0x4D, 0x30, 0x48, 0x70, 0x3B, 0x90, 0x58, 0x62,
     0x3E, 0x76, 0x83, 0x46, 0x36, 0x31, 0x84, 0x7D, 0x90, 0x3C, 0x48, 0x71,
     0x44, 0x88, 0x40, 0x73, 0x4E, 0x34, 0x5E, 0x89, 0x36, 0x5D, 0x8C, 0x3D,
-    0x57, 0x54, 0x2D, 0x7E, 0x68, 0x38, 0x7C, 0x68, 0x5F, 0x27, 0x87, 0x38,
-    0x68, 0x68, 0x40, 0x48, 0x68, 0x37, 0x5F, 0x77, 0x50, 0x30, 0x88, 0x68,
-    0x30, 0x5F, 0x6E, 0x38, 0x62, 0x38, 0x5E, 0x36, 0x58, 0x80, 0x40, 0x80,
 ])
-assert len(_SEED_TABLE_VANILLA) == SEED_TABLE_MAX_HOLES * 2
+assert len(_SEED_TABLE_VANILLA) == SEED_TABLE_HOLES * 2
 
 # --- 1. InitHole seeding (fixed bank $DB0B) ---------------------------------
 
@@ -142,17 +140,15 @@ _WIND_CALL_PATCHED = bytes([0x20, TRAMPOLINE_CPU_ADDR & 0xFF, TRAMPOLINE_CPU_ADD
 # --- Public builders --------------------------------------------------------
 
 
-def derive_hole_seeds(meta_seed: str, hole_count: int = 18) -> list[int]:
+def derive_hole_seeds(meta_seed: str) -> list[int]:
     """
     Expand a meta-seed string into one 16-bit LFSR seed per hole.
 
     Deterministic: the same meta_seed always yields the same table, so a
     ROM can be rebuilt from the seed string alone.
     """
-    if not (1 <= hole_count <= SEED_TABLE_MAX_HOLES):
-        raise ValueError(f"hole_count must be 1-{SEED_TABLE_MAX_HOLES}, got {hole_count}")
     seeds = []
-    for hole in range(hole_count):
+    for hole in range(SEED_TABLE_HOLES):
         digest = hashlib.sha256(f"nes-open-seeded-wind\0{meta_seed}\0{hole}".encode()).digest()
         seeds.append(digest[0] | (digest[1] << 8))
     return seeds
@@ -160,8 +156,8 @@ def derive_hole_seeds(meta_seed: str, hole_count: int = 18) -> list[int]:
 
 def seed_table_bytes(seeds: list[int]) -> bytes:
     """Lay out 16-bit seeds as the ROM table: [$42 (low), $43 (high)] per hole."""
-    if not (1 <= len(seeds) <= SEED_TABLE_MAX_HOLES):
-        raise ValueError(f"need 1-{SEED_TABLE_MAX_HOLES} seeds, got {len(seeds)}")
+    if len(seeds) != SEED_TABLE_HOLES:
+        raise ValueError(f"need {SEED_TABLE_HOLES} seeds, got {len(seeds)}")
     out = bytearray()
     for s in seeds:
         if not (0 <= s <= 0xFFFF):
@@ -172,7 +168,6 @@ def seed_table_bytes(seeds: list[int]) -> bytes:
 
 def seeded_wind_patches(
     meta_seed: str | None = None,
-    hole_count: int = 18,
     *,
     seeds: list[int] | None = None,
 ) -> list[BytePatch]:
@@ -186,7 +181,7 @@ def seeded_wind_patches(
     if seeds is None:
         if meta_seed is None:
             raise ValueError("need meta_seed or seeds")
-        seeds = derive_hole_seeds(meta_seed, hole_count)
+        seeds = derive_hole_seeds(meta_seed)
     elif meta_seed is not None:
         raise ValueError("pass meta_seed or seeds, not both")
 
@@ -199,7 +194,7 @@ def seeded_wind_patches(
             f"of GreenFlagXTable at ${SEED_TABLE_CPU_ADDR:04X}"
         ),
         prg_offset=SEED_TABLE_PRG_OFFSET,
-        original=_SEED_TABLE_VANILLA[: len(table)],
+        original=_SEED_TABLE_VANILLA,
         patched=table,
     )
     init_hole_patch = BytePatch(
@@ -235,15 +230,20 @@ def seeded_wind_patches(
 
 def seeded_wind_patch(
     meta_seed: str | None = None,
-    hole_count: int = 18,
     *,
     seeds: list[int] | None = None,
 ) -> CompositePatch:
-    """The seeded wind patch set as one CompositePatch."""
+    """
+    The seeded wind patch set as one CompositePatch.
+
+    Requires COURSE_MIRRORS_PATCH: the seed table overwrites the UK course's
+    flag X offsets, which are live without it.
+    """
     return CompositePatch(
         name="seeded_wind",
         description="Seed pin position and wind per hole; advance wind once per swing, per player",
-        patches=seeded_wind_patches(meta_seed, hole_count, seeds=seeds),
+        patches=seeded_wind_patches(meta_seed, seeds=seeds),
+        requires=[COURSE_MIRRORS_PATCH],
     )
 
 

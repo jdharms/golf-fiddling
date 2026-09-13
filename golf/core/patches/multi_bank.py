@@ -8,50 +8,30 @@ See docs/multi_bank_terrain.md for full details.
 """
 
 from .byte_patch import BytePatch
+from .composite import CompositePatch
 
-# Original code at $DB68 looks up bank by course number (3 entries):
-#   LDX CourseNumber; LDA BankNumTerrainDataTable,X; JSR BankSwitchRoutine
-_MULTI_BANK_ORIGINAL = bytes([0xAE, 0x02, 0x01, 0xBD, 0xBE, 0xDB, 0x20, 0x52, 0xD3])
-
-# Code patch to change terrain bank lookup from course-based to hole-based
+# Code patch to change terrain bank lookup from course-based to hole-based.
 #
-# Patched code uses doubled hole index ($31) to look up per-hole table at $A700:
-#   LDX $31; LDA $A700,X; JSR BankSwitchRoutine; NOP
+# LoadTerrainAndAttrs ($DB5D) looks up the terrain bank by course number:
+#   $DB68  LDX CurrCourse
+#   $DB6B  LDA BankNumTerrainDataTable,X   ; 3 entries
+#   $DB6E  JSR BankSwitchRoutine
 #
-# This enables 54 per-hole bank entries instead of 3 per-course entries.
+# The first two instructions become a lookup by doubled hole index ($31) into
+# the per-hole table at $A700 in bank 3, which is still switched in from
+# DecompressGreen:
+#   $DB68  LDX $31
+#   $DB6A  LDA $A700,X
+#   $DB6D  NOP
+#
+# The JSR at $DB6E is left in place, so ATTR_STREAMING_BANK_SWITCH_PATCH
+# (attr_streaming.py) can redirect it independently of this patch.
 MULTI_BANK_CODE_PATCH = BytePatch(
     name="multi_bank_lookup",
     description="Change terrain bank lookup from course-based to hole-based",
     prg_offset=0x3DB68,  # CPU $DB68 in fixed bank (bank 15)
-    original=_MULTI_BANK_ORIGINAL,
-    patched=bytes([0xA6, 0x31, 0xBD, 0x00, 0xA7, 0x20, 0x52, 0xD3, 0xEA]),
-)
-
-# Same hole-based bank lookup as MULTI_BANK_CODE_PATCH, but for use together
-# with the attr_streaming patch set (see patches/attr_streaming.py).
-#
-# MULTI_BANK_CODE_PATCH's replacement shrinks the LDX+LDA sequence from 6
-# bytes to 5, which shifts the JSR BankSwitchRoutine call one byte earlier
-# (from $DB6E to $DB6D) - right through the middle of the JSR that
-# attr_streaming's LoadTerrainAndAttrs patch expects to find, byte-for-byte,
-# at $DB6E. Applying both patches to the same ROM is a genuine conflict:
-# whichever applies second won't find its expected original bytes.
-#
-# Since a JSR is 3 bytes regardless of target, the fix is to redirect that
-# already-shifted JSR to attr_streaming's SaveBankAndSwitch trampoline
-# ($E1BE) instead of BankSwitchRoutine ($D352) directly - same bank-switch
-# behavior, plus the AttrDataBank bookkeeping attr_streaming needs. This
-# patch IS that redirect; use it in place of MULTI_BANK_CODE_PATCH whenever
-# attr_streaming is also applied, never both at once.
-MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING = BytePatch(
-    name="multi_bank_lookup_attr_streaming",
-    description=(
-        "Change terrain bank lookup from course-based to hole-based, "
-        "redirected through SaveBankAndSwitch for attr streaming"
-    ),
-    prg_offset=0x3DB68,  # CPU $DB68 in fixed bank (bank 15)
-    original=_MULTI_BANK_ORIGINAL,
-    patched=bytes([0xA6, 0x31, 0xBD, 0x00, 0xA7, 0x20, 0xBE, 0xE1, 0xEA]),
+    original=bytes([0xAE, 0x02, 0x01, 0xBD, 0xBE, 0xDB]),
+    patched=bytes([0xA6, 0x31, 0xBD, 0x00, 0xA7, 0xEA]),
 )
 
 # Course 2 mirror patch - makes US (course 2) mirror Japan (course 1)
@@ -108,9 +88,22 @@ COURSE3_MIRROR_PATCH_SCORECARD = BytePatch(
     patched=bytes([0x00]),
 )
 
+# A ROM carries one course: every course slot plays holes 0-17, in both the
+# fixed-bank offset table and the scorecard's bank 2 copy. Hole slots 18-53
+# are never read.
+COURSE_MIRRORS_PATCH = CompositePatch(
+    name="course_mirrors",
+    description="Make courses 2 (US) and 3 (UK) mirror course 1 (Japan)",
+    patches=[
+        COURSE2_MIRROR_PATCH,
+        COURSE3_MIRROR_PATCH,
+        COURSE2_MIRROR_PATCH_SCORECARD,
+        COURSE3_MIRROR_PATCH_SCORECARD,
+    ],
+)
+
 # All multi-bank patches in recommended application order
 MULTI_BANK_PATCHES = [
     MULTI_BANK_CODE_PATCH,
-    COURSE3_MIRROR_PATCH,
-    COURSE3_MIRROR_PATCH_SCORECARD,
+    COURSE_MIRRORS_PATCH,
 ]

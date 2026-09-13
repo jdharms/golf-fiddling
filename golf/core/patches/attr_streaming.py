@@ -12,16 +12,13 @@ RAM introduced:
 
 New code occupies free space at $E1AD-$E1D0 (36 bytes) in the fixed bank.
 
-The terrain bank-switch call this patch set hooks into (at $DB6E, to record
-AttrDataBank - see ATTR_STREAMING_BANK_SWITCH_PATCH) sits inside the 9-byte
-region MULTI_BANK_CODE_PATCH replaces in multi_bank.py, and multi_bank's
-replacement shifts that call by one byte. When multi-bank terrain is also in
-use, apply MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING (in multi_bank.py)
-INSTEAD of both MULTI_BANK_CODE_PATCH and ATTR_STREAMING_BANK_SWITCH_PATCH -
-see that module's docstring for the full explanation.
+The patch set applies the same way with or without MULTI_BANK_CODE_PATCH
+(multi_bank.py): that patch rewrites the six bytes before the terrain
+bank-switch call at $DB6E, and this one redirects the call itself.
 """
 
 from .byte_patch import BytePatch
+from .composite import CompositePatch
 
 # New routines written into fixed-bank free space at $E1AD (36 bytes, all
 # zero in a vanilla ROM).
@@ -154,13 +151,7 @@ ATTR_STREAMING_LOADTERRAIN_PTR_HIGH_PATCH = BytePatch(
 )
 
 # LoadTerrainAndAttrs: redirect its terrain bank-switch call through
-# SaveBankAndSwitch so AttrDataBank gets recorded. This is the STANDALONE
-# form - it targets the exact same 3 bytes ($DB6E-$DB70) that sit inside
-# the 9-byte region MULTI_BANK_CODE_PATCH replaces in multi_bank.py, so it
-# only applies cleanly on top of a vanilla (non-multi-bank) ROM. When
-# multi-bank terrain is also in use, apply
-# MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING (multi_bank.py) INSTEAD of both
-# MULTI_BANK_CODE_PATCH and this patch - never combine this with either.
+# SaveBankAndSwitch so AttrDataBank gets recorded.
 ATTR_STREAMING_BANK_SWITCH_PATCH = BytePatch(
     name="attr_streaming_bank_switch",
     description="LoadTerrainAndAttrs: JSR BankSwitchRoutine -> JSR SaveBankAndSwitch",
@@ -179,14 +170,8 @@ ATTR_STREAMING_LOADTERRAIN_COPY_LOOP_NOP_PATCH = BytePatch(
     patched=bytes([0xEA] * 10),
 )
 
-# All attr-streaming patches EXCEPT the bank-switch redirect, which has two
-# mutually-exclusive forms depending on whether multi-bank terrain is also
-# in use - see ATTR_STREAMING_BANK_SWITCH_PATCH above and
-# MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING in multi_bank.py. Callers must
-# add exactly one of those two to this list, never both:
-#   - No multi-bank: ATTR_STREAMING_PATCHES + [ATTR_STREAMING_BANK_SWITCH_PATCH]
-#   - With multi-bank: ATTR_STREAMING_PATCHES + [MULTI_BANK_CODE_PATCH_WITH_ATTR_STREAMING]
-#     (PackedCourseWriter always uses this form)
+# The whole attr-streaming patch set, in application order: the new routines
+# first, so no redirect ever points at code that isn't there yet.
 ATTR_STREAMING_PATCHES = [
     ATTR_STREAMING_FREE_SPACE_PATCH,
     ATTR_STREAMING_LE451_ENTRY_PATCH,
@@ -194,5 +179,12 @@ ATTR_STREAMING_PATCHES = [
     ATTR_STREAMING_LEED5_PATCH,
     ATTR_STREAMING_LOADTERRAIN_PTR_LOW_PATCH,
     ATTR_STREAMING_LOADTERRAIN_PTR_HIGH_PATCH,
+    ATTR_STREAMING_BANK_SWITCH_PATCH,
     ATTR_STREAMING_LOADTERRAIN_COPY_LOOP_NOP_PATCH,
 ]
+
+ATTR_STREAMING_PATCH = CompositePatch(
+    name="attr_streaming",
+    description="Stream terrain attributes from ROM instead of copying them into the 72-byte RAM buffer",
+    patches=ATTR_STREAMING_PATCHES,
+)

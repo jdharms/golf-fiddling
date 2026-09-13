@@ -9,7 +9,7 @@ from golf.core.patches import (
     mercy_tap_in_patches,
     practice_swing_patch,
     seeded_wind_patch,
-    COURSE3_MIRROR_PATCH,
+    COURSE_MIRRORS_PATCH,
 )
 from golf.core.rom_writer import RomWriter
 
@@ -51,7 +51,7 @@ def test_applies_on_top_of_wram_expansion(tmp_path):
 def test_coexists_with_mercy_tap_in_and_seeded_wind(tmp_path):
     """All three share bank 13 tail padding; they must not overlap."""
     writer = RomWriter(ROM_PATH, str(tmp_path / "all.nes"))
-    COURSE3_MIRROR_PATCH.apply(writer)
+    COURSE_MIRRORS_PATCH.apply(writer)
     for p in mercy_tap_in_patches(mercy_point=10):
         p.apply(writer)
     seeded = seeded_wind_patch("integration")

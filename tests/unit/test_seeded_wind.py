@@ -2,9 +2,9 @@
 
 import pytest
 
-from golf.core.patches import PatchError
+from golf.core.patches import COURSE_MIRRORS_PATCH, PatchError
 from golf.core.patches.seeded_wind import (
-    SEED_TABLE_MAX_HOLES,
+    SEED_TABLE_HOLES,
     SEED_TABLE_PRG_OFFSET,
     TRAMPOLINE_CPU_ADDR,
     derive_hole_seeds,
@@ -29,11 +29,14 @@ class MockRomWriter:
         self.data[prg_offset : prg_offset + len(data)] = data
 
 
-def make_vanilla_like_rom() -> MockRomWriter:
-    """A 256KB PRG image with the vanilla bytes at every seeded-wind site."""
+def make_vanilla_like_rom(mirrored: bool = True) -> MockRomWriter:
+    """A 256KB PRG image with the vanilla bytes at every seeded-wind site,
+    and (by default) the course mirrors already applied."""
     rom = MockRomWriter(bytes(16 * 0x4000))
     for p in seeded_wind_patches("x"):
         rom.write_prg(p.prg_offset, p.original)
+    for mirror in COURSE_MIRRORS_PATCH.patches:
+        rom.write_prg(mirror.prg_offset, mirror.patched if mirrored else mirror.original)
     return rom
 
 
@@ -128,23 +131,21 @@ class TestSeedDerivation:
     def test_differs_by_meta_seed(self):
         assert derive_hole_seeds("abc") != derive_hole_seeds("abd")
 
-    def test_hole_count(self):
-        assert len(derive_hole_seeds("abc", 18)) == 18
-        assert len(derive_hole_seeds("abc", 36)) == 36
-        assert derive_hole_seeds("abc", 36)[:18] == derive_hole_seeds("abc", 18)
-
-    def test_hole_count_bounds(self):
-        with pytest.raises(ValueError):
-            derive_hole_seeds("abc", 0)
-        with pytest.raises(ValueError):
-            derive_hole_seeds("abc", SEED_TABLE_MAX_HOLES + 1)
+    def test_one_seed_per_hole_of_the_course(self):
+        assert SEED_TABLE_HOLES == 18
+        assert len(derive_hole_seeds("abc")) == 18
 
     def test_table_layout_is_low_then_high(self):
-        assert seed_table_bytes([0x1234, 0xABCD]) == bytes([0x34, 0x12, 0xCD, 0xAB])
+        table = seed_table_bytes([0x1234, 0xABCD] + [0] * 16)
+        assert table[:4] == bytes([0x34, 0x12, 0xCD, 0xAB])
+
+    def test_table_rejects_wrong_seed_count(self):
+        with pytest.raises(ValueError):
+            seed_table_bytes([0x1234])
 
     def test_table_rejects_bad_seed(self):
         with pytest.raises(ValueError):
-            seed_table_bytes([0x10000])
+            seed_table_bytes([0x10000] + [0] * 17)
 
 
 # --- Patch layout -----------------------------------------------------------
@@ -185,28 +186,29 @@ class TestPatchLayout:
     def test_call_redirect_is_last(self):
         assert seeded_wind_patches("x")[-1].name == "seeded_wind_call_redirect"
 
-    def test_seed_table_length_follows_hole_count(self):
-        t18 = next(p for p in seeded_wind_patches("x", 18) if p.name == "seeded_wind_seed_table")
-        t36 = next(p for p in seeded_wind_patches("x", 36) if p.name == "seeded_wind_seed_table")
-        assert t18.prg_offset == SEED_TABLE_PRG_OFFSET
-        assert len(t18.patched) == 36
-        assert len(t36.patched) == 72
-        assert t36.original[:36] == t18.original
+    def test_seed_table_is_18_holes(self):
+        t = next(p for p in seeded_wind_patches("x") if p.name == "seeded_wind_seed_table")
+        assert t.prg_offset == SEED_TABLE_PRG_OFFSET
+        assert len(t.original) == len(t.patched) == 36
 
     def test_seed_table_matches_derivation(self):
-        seeds = derive_hole_seeds("abc", 18)
+        seeds = derive_hole_seeds("abc")
         t = next(p for p in seeded_wind_patches("abc") if p.name == "seeded_wind_seed_table")
         assert t.patched == seed_table_bytes(seeds)
 
     def test_explicit_seeds(self):
-        t = next(p for p in seeded_wind_patches(seeds=[0x0102]) if p.name == "seeded_wind_seed_table")
-        assert t.patched == bytes([0x02, 0x01])
+        seeds = [0x0102] + [0] * 17
+        t = next(p for p in seeded_wind_patches(seeds=seeds) if p.name == "seeded_wind_seed_table")
+        assert t.patched[:2] == bytes([0x02, 0x01])
 
     def test_rejects_both_and_neither(self):
         with pytest.raises(ValueError):
-            seeded_wind_patches("abc", seeds=[1])
+            seeded_wind_patches("abc", seeds=[1] * 18)
         with pytest.raises(ValueError):
             seeded_wind_patches()
+
+    def test_requires_course_mirrors(self):
+        assert seeded_wind_patch("abc").requires == [COURSE_MIRRORS_PATCH]
 
 
 # --- Application ------------------------------------------------------------
@@ -222,6 +224,14 @@ class TestApplication:
         assert patch.is_applied(rom)
         for p in patch.patches:
             assert rom.read_prg(p.prg_offset, len(p.patched)) == p.patched
+
+    def test_refuses_rom_without_course_mirrors(self):
+        rom = make_vanilla_like_rom(mirrored=False)
+        patch = seeded_wind_patch("abc")
+        assert patch.can_apply(rom)  # the bytes it replaces are fine
+        with pytest.raises(PatchError, match="requires course_mirrors"):
+            patch.apply(rom)
+        assert not any(p.is_applied(rom) for p in patch.patches)
 
     def test_apply_is_idempotent(self):
         rom = make_vanilla_like_rom()

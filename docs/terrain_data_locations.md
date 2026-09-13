@@ -14,7 +14,7 @@ File offsets assume the standard 16-byte iNES header (no trainer) present in `ne
 | US | 1 | $8000–$A19E | 0x04000–0x0619E | 0x004010–0x0061AE | 8,607 B | 8,678 B (to $A1E5) |
 | UK | 2 | $837F–$A50C | 0x0837F–0x0A50C | 0x00838F–0x00A51C | 8,590 B | 8,661 B (to $A553) |
 
-The "max available" end address is the boundary before the fixed lookup tables that must be preserved in each bank (see `PackedCourseWriter` constraints in `CLAUDE.md`). If a course is stripped entirely, the reclaimable region is the **max available** span, not just the currently-used bytes — e.g. dropping UK frees `$837F`–`$A553` in bank 2, file offset `0x00838F`–`0x00A563` (8,661 bytes), regardless of how much the vanilla UK data actually used.
+The "max available" end address is the boundary before the fixed lookup tables that must be preserved in each bank (see `TERRAIN_BOUNDS` in `golf/core/patches/courses.py`). If a course is stripped entirely, the reclaimable region is the **max available** span, not just the currently-used bytes — e.g. dropping UK frees `$837F`–`$A553` in bank 2, file offset `0x00838F`–`0x00A563` (8,661 bytes), regardless of how much the vanilla UK data actually used.
 
 Each hole's terrain is immediately followed by that hole's attribute data before the next hole starts, so the per-hole end pointer below is not a hard free/used boundary — treat the whole-bank span above as the safe reclaimable block once a course is removed.
 
