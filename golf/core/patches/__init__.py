@@ -79,6 +79,7 @@ from .multi_bank import (
     MULTI_BANK_CODE_PATCH,
     MULTI_BANK_PATCHES,
 )
+from .stack import PatchStack, StackBuild, StackError
 from .wram_expansion import WRAM_EXPANSION_PATCH
 
 # Registry of all available patches by name
@@ -102,6 +103,9 @@ __all__ = [
     "scorecard_qr_patch",
     "BytePatch",
     "CompositePatch",
+    "PatchStack",
+    "StackBuild",
+    "StackError",
     "CoursePatch",
     "CourseWriteStats",
     "PatchError",

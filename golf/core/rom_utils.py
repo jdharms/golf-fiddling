@@ -16,6 +16,9 @@ INES_HEADER_SIZE = 0x10
 PRG_BANK_SIZE = 0x4000  # 16KB banks
 FIXED_BANK_PRG_START = 0x3C000  # Bank 15, maps to $C000-$FFFF
 
+# SHA-1 of the whole vanilla US ROM file (iNES header included)
+US_ROM_SHA1 = "53b47f2b68c353afbc822baee0a9172eb16e38af"
+
 # ============================================================================
 # Course Structure Constants
 # ============================================================================

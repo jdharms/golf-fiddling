@@ -12,9 +12,10 @@ practice swing can be taken. Select toggles back out.
 See docs/practice_swing.md for the analysis this is built on, and
 docs/golfer_sprites.md for the renderer tables.
 
-Depends on wram_expansion: the toggle routine lives in the fixed-bank free
-space at $CAE4, which is the tail of the $CA40-$CAFF block that
-wram_expansion carves its relocated tables out of.
+The toggle routine lives in fixed-bank free space at $CAE4, the tail of the
+$CA40-$CAFF block (all $FF in vanilla) that wram_expansion also carves its
+relocated tables out of. The two share the block without overlapping, and
+practice swing applies with or without wram_expansion.
 
 Layout
 ------

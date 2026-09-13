@@ -29,6 +29,7 @@ One line per document. Command-line tools are indexed in the top-level `README.m
 
 | Doc | About |
 |-----|-------|
+| [patch_stack.md](patch_stack.md) | Building a ROM from an ordered stack of patches, and IPS output |
 | [multi_bank_terrain.md](multi_bank_terrain.md) | Writing a course across terrain banks 0 and 1 (`golf-write`) |
 | [wram_expansion.md](wram_expansion.md) | Growing the terrain buffer past 48 rows |
 | [seeded_wind.md](seeded_wind.md) | Pin positions and wind as a function of a build-time seed |
