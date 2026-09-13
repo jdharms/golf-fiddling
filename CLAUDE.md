@@ -77,6 +77,18 @@ golf-rom-peek <rom_file.nes> --labels <file.mlb> find-refs '$AA09' --bank 13
 # club nudge slot, and which layers share a nudge class.
 golf-golfer-export <rom_file.nes> <out_dir> [-g mario|0|all] [-c VISIBLE_CLUB] [-a swing|putt|both]
 
+# Read edited pre-hole signpost banner art back out of an .aseprite export of the
+# screen, and put it in a ROM (see docs/prehole_signpost.md). The export is the
+# 256x240 screen at an integer zoom, indexed, using the same palette convention as
+# golf-golfer-export. --grid renders the pixels drawn finer than the zoom grid, which
+# is what goes back to the artist.
+golf-signpost-import <edited.aseprite> [--banner japan|us|uk|long-drive|nearest-pin]
+    [--rom rom.nes] [--preview card.png] [--grid off_grid.png] [--json banner.json]
+# Install the imported banner: tile pixels, the descriptors that load them into the
+# pattern table, the new banner body, and the code at $AC5D that draws it.
+golf-patch-signpost <rom_file.nes> <edited.aseprite> [-o out.nes] [--banner us]
+    [--validate-only]
+
 # Seed pin positions and wind per hole so every player sees the same conditions
 # (see docs/seeded_wind.md; requires course3_mirror, which golf-write applies)
 golf-patch-seeded-wind <rom_file.nes> --seed <meta-seed> [-o out.nes] [--holes 18|36] [--forecast N] [--validate-only]

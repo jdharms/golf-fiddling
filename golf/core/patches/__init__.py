@@ -50,6 +50,12 @@ from .scorecard_qr import (
     scorecard_qr_patch,
 )
 from .signpost_banner import remove_course_banner_patches
+from .signpost_random_banner import (
+    build_code,
+    build_layout,
+    data_region,
+    random_banner_patches,
+)
 from .seeded_wind import (
     HoleWindForecast,
     derive_hole_seeds,
