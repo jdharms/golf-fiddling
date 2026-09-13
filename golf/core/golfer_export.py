@@ -19,9 +19,10 @@ game behaves.
 
 A JSON sidecar beside each file records the canvas origin, the canonical club
 position per frame, and which nudge slot each frame writes to.
+
+The CLI is `golf-golfer-export` (tools/art/golfer_export.py).
 """
 
-import argparse
 import json
 import os
 
@@ -48,7 +49,6 @@ from golf.core.palettes import (
     canonical_nes,
     distinct_nes_entries,
 )
-from golf.core.rom_reader import RomReader
 
 # Palette layout.  Index 0 is transparent, then every NES colour worth offering -
 # all 64 less the nine redundant blacks, which fold onto $0F - then the guide
@@ -374,68 +374,3 @@ def export_golfer(rom, sprites, golfer, putt, bounds, out_dir, visible_club=0):
     with open(os.path.join(out_dir, f"{stem}.json"), "w") as handle:
         json.dump(meta, handle, indent=2)
     return ase_path, meta
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description="Export golfer animations as layered Aseprite files"
-    )
-    parser.add_argument("rom")
-    parser.add_argument("out_dir")
-    parser.add_argument(
-        "-g", "--golfer", default="all",
-        help="name or index (default: all six)",
-    )
-    parser.add_argument(
-        "-c", "--club", type=int, default=0,
-        help="which club layer starts visible in the swing file (default: 0); "
-             "every club group gets a layer regardless",
-    )
-    parser.add_argument(
-        "-a", "--animation", choices=["swing", "putt", "both"], default="both"
-    )
-    args = parser.parse_args()
-
-    if not 0 <= args.club < PUTTER_CLUB:
-        parser.error(
-            f"--club must be 0-{PUTTER_CLUB - 1}; putting always uses club {PUTTER_CLUB}"
-        )
-
-    rom = RomReader(args.rom)
-    sprites = GolferSprites(rom)
-
-    if args.golfer == "all":
-        golfers = list(range(len(GOLFER_NAMES)))
-    elif args.golfer.isdigit():
-        golfers = [int(args.golfer)]
-    else:
-        lowered = [n.lower() for n in GOLFER_NAMES]
-        if args.golfer.lower() not in lowered:
-            parser.error(f"unknown golfer {args.golfer!r}; expected one of {GOLFER_NAMES}")
-        golfers = [lowered.index(args.golfer.lower())]
-
-    os.makedirs(args.out_dir, exist_ok=True)
-    bounds = canvas_bounds(sprites)
-    x0, y0, x1, y1 = bounds
-    groups = ", ".join(f"{lo}-{hi}" for lo, hi in SWING_CLUB_GROUPS)
-    print(f"canvas {x1 - x0}x{y1 - y0}, origin at ({-x0}, {-y0})")
-    print(f"swing club layers: {groups}   putt: club {PUTTER_CLUB}")
-
-    animations = (
-        [False, True] if args.animation == "both" else [args.animation == "putt"]
-    )
-    for golfer in golfers:
-        for putt in animations:
-            path, meta = export_golfer(
-                rom, sprites, golfer, putt, bounds, args.out_dir, args.club
-            )
-            linked = sum(1 for f in meta["frames"] if f["body_linked_to"] is not None)
-            print(
-                f"  {os.path.basename(path):22} {len(meta['frames'])} frames"
-                f" ({linked} linked), {len(meta['clubs'])} club layer(s),"
-                f" build {sprites.body_type(golfer)}"
-            )
-
-
-if __name__ == "__main__":
-    main()

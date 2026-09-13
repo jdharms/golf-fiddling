@@ -25,11 +25,10 @@ from golf.core.signpost import (
     build_screen,
     convert_banner,
     free_pattern_slots,
+    parse_banner,
     read_banner_descriptor,
     screen_from_aseprite,
 )
-
-BANNERS = {"japan": 0, "us": 1, "uk": 2, "long-drive": 3, "nearest-pin": 4}
 
 
 def main():
@@ -44,9 +43,7 @@ def main():
     parser.add_argument("--validate-only", action="store_true")
     args = parser.parse_args()
 
-    index = BANNERS.get(args.banner, None)
-    if index is None:
-        index = int(args.banner, 0)
+    index = parse_banner(args.banner)
 
     rom = RomReader(args.rom)
     reference, palette = build_screen(rom, course=min(index, 2), hole_1based=args.hole)

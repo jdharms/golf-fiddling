@@ -13,36 +13,50 @@ dependencies = [
 ]
 
 [project.scripts]
+# Course editor
 golf-editor = "editor.main:main"
+
+# Course data: dump, write, render
 golf-dump = "tools.dump:main"
 golf-dump-jp = "tools.dump_jp_courses:main"
 golf-write = "tools.write:main"
-golf-analyze = "tools.analyze:main"
 golf-visualize = "tools.visualize:main"
+golf-render-web = "tools.render_web:main"
+
+# Regenerate checked-in data/ files
+golf-extract-tables = "tools.data.extract_tables:main"
+golf-analyze-neighbors = "tools.data.analyze_neighbors:main"
+golf-analyze-greens-neighbors = "tools.data.analyze_greens_neighbors:main"
+golf-analyze-putting = "tools.data.analyze_putting_surface:main"
+
+# Utilities
 golf-hex2bin = "tools.hex2bin:main"
 golf-expand-dict = "tools.expand_dict:main"
-golf-export-music = "tools.export_music:main"
-golf-extract-tables = "tools.extract_tables:main"
-golf-analyze-transform = "tools.analyze_transform:main"
-golf-analyze-neighbors = "tools.analyze_neighbors:main"
-golf-analyze-greens-neighbors = "tools.analyze_greens_neighbors:main"
-golf-render-web = "tools.render_web:main"
-golf-analyze-putting = "tools.analyze_putting_surface:main"
-golf-compare-traces = "tools.compare_traces:main"
+
+# ROM patches
 golf-patch-wram = "tools.patch_wram:main"
 golf-patch-seeded-wind = "tools.patch_seeded_wind:main"
 golf-patch-music = "tools.patch_music:main"
 golf-patch-practice-swing = "tools.patch_practice_swing:main"
-golf-rom-peek = "tools.rom_peek:main"
-golf-labels = "tools.labels:main"
-golf-golfer-export = "tools.golfer_export:main"
-golf-signpost-import = "tools.signpost_import:main"
 golf-patch-signpost = "tools.patch_signpost:main"
-golf-qr-preview = "tools.qr_preview:main"
-golf-qr-validate = "tools.qr_validate:main"
-golf-qr-tables = "tools.qr_tables:main"
-golf-qr-port = "tools.qr_port:main"
 golf-patch-qr = "tools.patch_qr:main"
+
+# Reverse-engineering research
+golf-rom-peek = "tools.research.rom_peek:main"
+golf-labels = "tools.research.labels:main"
+
+# Art round-trips
+golf-golfer-export = "tools.art.golfer_export:main"
+golf-signpost-import = "tools.art.signpost_import:main"
+
+# Music
+golf-export-music = "tools.music.export:main"
+
+# Scorecard QR
+golf-qr-preview = "tools.qr.preview:main"
+golf-qr-validate = "tools.qr.validate:main"
+golf-qr-tables = "tools.qr.tables:main"
+golf-qr-port = "tools.qr.port:main"
 
 [tool.uv]
 package = true

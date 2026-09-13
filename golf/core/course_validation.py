@@ -5,10 +5,15 @@ Validates course data before writing to ROM or saving.
 Catches issues like placeholder tiles that would cause compression failures.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from . import rom_utils
-from ..formats.hole_data import HoleData
+
+if TYPE_CHECKING:
+    from ..formats.hole_data import HoleData
 
 
 @dataclass

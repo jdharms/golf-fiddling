@@ -74,7 +74,7 @@ def find_neighbor_matches(terrain, tile1, direction, tile2):
 
 def search_all_holes(tile1, direction, tile2):
     """Search all course holes for the neighbor relationship."""
-    courses_dir = Path(__file__).parent.parent / "courses"
+    courses_dir = Path(__file__).parents[2] / "courses"
 
     if not courses_dir.exists():
         print(f"Error: courses directory not found at {courses_dir}")

@@ -276,7 +276,7 @@ Following the scorecard's precedent (`docs/scorecard.md` "Modifying the card"):
 
 ## Importing new banner art
 
-`golf-signpost-import` (`tools/signpost_import.py`, logic in `golf/core/signpost.py`)
+`golf-signpost-import` (`tools/art/signpost_import.py`, logic in `golf/core/signpost.py`)
 is the return leg of the render: it reads an edited picture of the whole screen out of
 an `.aseprite` file and resolves the banner rectangle back into the two things the ROM
 needs - the raw nametable bytes of the `$AD86` descriptor's body, and any CHR patterns

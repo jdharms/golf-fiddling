@@ -141,7 +141,7 @@ def analyze_greens_neighbors() -> dict:
         lambda: {"up": {}, "down": {}, "left": {}, "right": {}}
     )
 
-    courses_dir = Path(__file__).parent.parent / "courses"
+    courses_dir = Path(__file__).parents[2] / "courses"
     total_holes = 0
 
     for course_name in ["japan", "us", "uk"]:
@@ -369,7 +369,7 @@ def main():
     result = analyze_greens_neighbors()
 
     # Create output directory
-    output_dir = Path(__file__).parent.parent / "data" / "tables"
+    output_dir = Path(__file__).parents[2] / "data" / "tables"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Write to JSON file

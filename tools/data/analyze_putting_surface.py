@@ -77,7 +77,7 @@ def analyze_courses(courses_dir: Path) -> dict:
 def main():
     """Main entry point."""
     # Determine paths
-    script_dir = Path(__file__).parent.parent
+    script_dir = Path(__file__).parents[2]
     courses_dir = script_dir / "courses"
     output_dir = script_dir / "data" / "statistics"
 
