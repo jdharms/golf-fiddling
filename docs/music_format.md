@@ -418,15 +418,18 @@ the noise drum table — and that is what the engine reads, so it is what a dump
 ## Inserting a track
 
 The `music_import` step of `golf-patch` (`golf/core/patches/music_import.py`) puts a
-dump back into a ROM. It is a **proof of concept**: it replaces music `$02`, `$03` and
-`$04` in the vanilla US ROM — exactly the three `CourseBgmTable` entries, so no code
-outside the music data changes — and it fits them into the space those three tracks
-already occupy.
+dump back into a ROM. It is a **proof of concept**: it writes over music `$02`, `$03` and
+`$04` in the vanilla US ROM — exactly the three `CourseBgmTable` entries — and fits
+what it imports into the space those three tracks already occupy. By default it imports
+the dump's own `$02`, `$03` and `$04`, and no code outside the music data changes; with
+`track` it imports one track as the only course theme (see
+[One course theme](#one-course-theme)).
 
 ```bash
 golf-export-music mario_open_jp.nes --dump --reference nes_open_us.nes \
     -o data/music/music_jp_courses.json
 golf-patch nes_open_us.nes -p music_import:dump=data/music/music_jp_courses.json -o jp_music.nes
+golf-patch nes_open_us.nes -p music_import:dump=data/music/music_jp_courses.json,track=0x0C -o one.nes
 ```
 
 Removing the three US course themes frees four regions, and nothing else in the ROM
@@ -454,6 +457,26 @@ Verified by running the game's own engine over both ROMs under py65: for all thr
 imported tracks the patched US ROM emits a byte-identical APU write log to the JP ROM
 across 30 seconds of playback, and every other track's log is unchanged from vanilla
 (`tests/integration/test_music_import_rom.py`).
+
+### One course theme
+
+With `menu_trim` ([menu_system.md](menu_system.md)) a round always runs with `CurrCourse`
+0, so it only plays `CourseBgmTable`'s first entry, `$03`. `track` imports one dump track,
+of any ID, as music `$03` into all of the freed space above, and makes two edits so that
+nothing requests `$02` or `$04` whatever `CurrCourse` holds:
+
+| Edit | Where | Vanilla | Patched |
+|---|---|---|---|
+| `CourseBgmTable` | fixed bank `$DA14` | `03 02 04` | `03 03 03` |
+| The other request for `$04` | bank 12 `$A373`, the operand of `LDA #$04` | `04` | `03` |
+
+`$A372` is the only request for `$04` outside the table in the [Tracks](#tracks) table, and
+`$02` has none. Both come from a static search, not a breakpoint sweep. The scene at
+`$A35F` is entered from bank 9 `$B1A6` and `$B2C8`, near `CurrentWager`.
+
+Header slots stay within reach: base `$8F2A` reaches 16 of the 22 slots, and the largest
+JP course theme, `$02`, has 7 patterns. The same APU write-log comparison checks the one
+track against its own ID in the JP ROM.
 
 A production version would discover the layout instead of hardcoding US addresses, and
 would need somewhere to put a track that does not fit in what it displaces — see "Space"

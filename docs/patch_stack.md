@@ -3,8 +3,9 @@
 > **Note**: This document was written by Claude based on design and ideas by jdharms.
 
 A finished ROM is a vanilla ROM plus an ordered list of patches: the code a course needs,
-the course itself, and the gameplay patches on top. `PatchStack`
-(`golf/core/patches/stack.py`) is that list, and builds it in memory.
+the course itself, and the gameplay, quality of life, and "fit and finish"
+patches on top. `PatchStack` (`golf/core/patches/stack.py`) is that list,
+and builds it in memory.
 
 ```python
 from golf.core.patches import (
@@ -154,7 +155,7 @@ three requirements and the `course` step.
 | `seeded_wind` | `seed` | `course_mirrors` |
 | `practice_swing` | `hold_frames` (default `0x78`) | |
 | `scorecard_qr` | `credentials` (a `golf-qr-credentials` file) | `course_mirrors` |
-| `music_import` | `dump`, `transpose_adjust` (default from the dump) | |
+| `music_import` | `dump`, `track` (optional; one dump music ID, imported as `$03` and made every course's theme), `transpose_adjust` (default from the dump) | |
 | `sram_defaults` | `player_name` (A-Z, `.` and space, at most 10), `clubs` (up to 14 of `1W`-`4W`, `1I`-`9I`, `PW`, `SW`, `PT`; the putter is added), `bgm` (default true), `sram_magic` (default `0x3553`, "5S"; neither byte `$00` or `$FF`). Only a save being initialised gets them | |
 | `putting_practice` | (experimental) | |
 

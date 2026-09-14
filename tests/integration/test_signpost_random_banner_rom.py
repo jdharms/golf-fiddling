@@ -29,10 +29,12 @@ from golf.core.rom_writer import RomWriter
 from golf.core.signpost import (
     BANK,
     BANNER_US,
+    DIGIT_COUNT,
     allocate_patterns,
     apply_descriptor,
     build_screen,
     convert_banner,
+    digit_tiles,
     free_pattern_slots,
     load_scene_chr,
     read_banner_descriptor,
@@ -102,6 +104,19 @@ def test_allocation_never_reuses_a_tile_the_screen_still_needs(prepared):
     free = set(free_pattern_slots(rom, reference, kept))
     for first_tile, count in chunks:
         assert set(range(first_tile, first_tile + count)) <= free
+
+
+def test_allocation_never_takes_a_digit_tile(prepared):
+    """The reference card draws only some digits; the other holes draw the rest.
+
+    Read straight from the `$B01C` records rather than through
+    `free_pattern_slots`, so it cannot share that function's view of the screen.
+    """
+    rom, *_, chunks, _ = prepared
+    digits = {tile for digit in range(DIGIT_COUNT) for tile in digit_tiles(rom, digit)}
+    for first_tile, count in chunks:
+        taken = digits & set(range(first_tile, first_tile + count))
+        assert not taken, f"chunk ${first_tile:02X} overwrites digit tiles {sorted(taken)}"
 
 
 def test_layout_stays_inside_the_reclaimed_banner_bodies(prepared):

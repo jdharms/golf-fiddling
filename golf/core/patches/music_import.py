@@ -1,4 +1,4 @@
-"""Replace the three US course themes with tracks from a music dump.
+"""Replace the US course themes with tracks from a music dump.
 
 **Proof of concept.** This exists to prove out the whole path -
 ``golf-export-music --dump`` on one ROM, the relocatable JSON it writes, and this
@@ -12,6 +12,19 @@ properly.
 Replacing exactly the course themes is what makes the PoC small: ``CourseBgmTable``
 at ``$DA14`` maps Japan/US/UK to ``$03``/``$02``/``$04``, so keeping the same IDs
 means nothing outside the music data has to change.
+
+One track
+---------
+
+``track=`` imports a single dump track, of any ID, as music ``$03`` and gives it
+all of the space below. ``menu_trim`` pins ``CurrCourse`` to 0, whose
+``CourseBgmTable`` entry is ``$03``. Two edits outside bank 14 leave nothing
+requesting ``$02`` or ``$04``, whose data it overwrites, whatever ``CurrCourse``
+holds:
+
+  CourseBgmTable   fixed $DA14   03 02 04 -> 03 03 03
+  scene request    bank 12 $A373       04 -> 03   operand of `LDA #$04`, the only
+                                                  other request for $04 found
 
 What gets rewritten
 -------------------
@@ -88,6 +101,17 @@ COURSE_TRACKS = (0x02, 0x03, 0x04)
 
 #: Header base per music ID, the `< $04` / `< $10` split the engine does at $8AF6.
 _HEADER_BASES = {0x02: 0x8F2A, 0x03: 0x8F2A, 0x04: 0x900A}
+
+# --- One-track mode ----------------------------------------------------------
+
+#: The ID a single imported track is written as: CourseBgmTable's course 0 entry.
+SINGLE_TRACK_ID = 0x03
+#: CourseBgmTable, fixed bank $DA14 (PRG offset)
+COURSE_BGM_TABLE_PRG = 0x3C000 + (0xDA14 - 0xC000)
+_VANILLA_COURSE_BGM = bytes([0x03, 0x02, 0x04])
+#: The operand of bank 12 `$A372 LDA #$04` (PRG offset), in the scene entered
+#: from bank 9 $B1A6/$B2C8
+SCENE_MUSIC_OPERAND_PRG = 0x30000 + (0xA373 - 0x8000)
 
 # --- Space the three course themes free up (CPU addresses, end exclusive) ---
 
@@ -209,32 +233,59 @@ def _build_envelope_table(tracks: list[dict]) -> tuple[bytes, dict[int, dict[int
 
 
 class MusicImportPatch(ROMPatch):
-    """Insert three dumped tracks over the US ROM's course themes."""
+    """Insert dumped tracks over the US ROM's course themes: three, or one for all."""
 
-    def __init__(self, dump: dict, *, transpose_adjust: int | None = None):
+    def __init__(
+        self,
+        dump: dict,
+        *,
+        track: int | None = None,
+        transpose_adjust: int | None = None,
+    ):
         by_id = {t["music_id"]: t for t in dump.get("tracks", [])}
-        missing = [m for m in COURSE_TRACKS if m not in by_id]
-        if missing:
-            raise PatchError(
-                "dump is missing music "
-                + ", ".join(f"${m:02X}" for m in missing)
-                + f" (has {', '.join(f'${m:02X}' for m in sorted(by_id))})"
-            )
-        tracks = [by_id[m] for m in COURSE_TRACKS]
+        have = ", ".join(f"${m:02X}" for m in sorted(by_id))
+        if track is None:
+            missing = [m for m in COURSE_TRACKS if m not in by_id]
+            if missing:
+                raise PatchError(
+                    "dump is missing music "
+                    + ", ".join(f"${m:02X}" for m in missing)
+                    + f" (has {have})"
+                )
+            tracks = [by_id[m] for m in COURSE_TRACKS]
+        else:
+            if track not in by_id:
+                raise PatchError(f"dump has no music ${track:02X} (has {have})")
+            tracks = [dict(by_id[track], music_id=SINGLE_TRACK_ID)]
 
         if transpose_adjust is None:
             transpose_adjust = dump.get("engine", {}).get(
                 "semitones_sharper_than_reference", 0
             )
 
+        source = dump.get("source") or "a dump"
         self.name = "music_import"
-        self.description = (
-            f"replace course themes ${COURSE_TRACKS[0]:02X}/${COURSE_TRACKS[1]:02X}/"
-            f"${COURSE_TRACKS[2]:02X} with tracks from {dump.get('source') or 'a dump'}"
-        )
+        if track is None:
+            self.description = (
+                f"replace course themes ${COURSE_TRACKS[0]:02X}/${COURSE_TRACKS[1]:02X}/"
+                f"${COURSE_TRACKS[2]:02X} with tracks from {source}"
+            )
+        else:
+            self.description = f"make music ${track:02X} from {source} the only course theme"
         self.source = dump.get("source", "")
+        self.track = track
         self.transpose_adjust = transpose_adjust
         self.tracks = tracks
+
+        # (name, PRG offset, vanilla bytes, new bytes) outside bank 14
+        self.redirects: list[tuple[str, int, bytes, bytes]] = []
+        if track is not None:
+            self.redirects = [
+                ("CourseBgmTable", COURSE_BGM_TABLE_PRG, _VANILLA_COURSE_BGM,
+                 bytes([SINGLE_TRACK_ID] * 3)),
+                ("scene music request", SCENE_MUSIC_OPERAND_PRG, bytes([0x04]),
+                 bytes([SINGLE_TRACK_ID])),
+            ]
 
         self.envelope_table, remap = _build_envelope_table(tracks)
         self.header_addr = _place_headers(tracks)
@@ -350,13 +401,14 @@ class MusicImportPatch(ROMPatch):
             and all(read(_prg(a), 2) == _ENVELOPE_OPERAND for a in ENVELOPE_OPERANDS)
             and read(_prg(ORDER_TABLE + COURSE_TRACKS[0]), 3) == _VANILLA_ORDER_BASES
             and read(_prg(TRANSPOSE_TABLE + COURSE_TRACKS[0]), 3) == _VANILLA_TRANSPOSE
+            and all(read(prg, len(old)) == old for _, prg, old, _ in self.redirects)
         )
 
     def is_applied(self, rom_writer: RomWriter) -> bool:
+        read = rom_writer.read_prg
         return all(
-            rom_writer.read_prg(_prg(addr), len(data)) == data
-            for _, addr, data in self.writes
-        )
+            read(_prg(addr), len(data)) == data for _, addr, data in self.writes
+        ) and all(read(prg, len(new)) == new for _, prg, _, new in self.redirects)
 
     def apply(self, rom_writer: RomWriter) -> None:
         if self.is_applied(rom_writer):
@@ -368,6 +420,8 @@ class MusicImportPatch(ROMPatch):
             )
         for _, addr, data in self.writes:
             rom_writer.write_prg(_prg(addr), data)
+        for _, prg, _, new in self.redirects:
+            rom_writer.write_prg(prg, new)
 
     # -- reporting ------------------------------------------------------
 
@@ -389,13 +443,21 @@ class MusicImportPatch(ROMPatch):
         return [(k, used[k], sizes[k]) for k in sizes]
 
     def __repr__(self) -> str:
-        ids = " ".join(f"${t['music_id']:02X}" for t in self.tracks)
+        if self.track is None:
+            ids = " ".join(f"${t['music_id']:02X}" for t in self.tracks)
+        else:
+            ids = f"${self.track:02X} as ${SINGLE_TRACK_ID:02X}"
         return (
             f"MusicImportPatch(source={self.source!r}, tracks=[{ids}], "
             f"transpose_adjust={self.transpose_adjust:+d})"
         )
 
 
-def music_import_patch(dump: dict, *, transpose_adjust: int | None = None) -> MusicImportPatch:
-    """Build the patch from a ``golf-export-music --dump`` JSON document."""
-    return MusicImportPatch(dump, transpose_adjust=transpose_adjust)
+def music_import_patch(
+    dump: dict, *, track: int | None = None, transpose_adjust: int | None = None
+) -> MusicImportPatch:
+    """Build the patch from a ``golf-export-music --dump`` JSON document.
+
+    With ``track``, only that dump music ID is imported, as the one course theme.
+    """
+    return MusicImportPatch(dump, track=track, transpose_adjust=transpose_adjust)

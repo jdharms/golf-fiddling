@@ -15,8 +15,11 @@ from golf.core import music_data as md
 from golf.core.audio import discover_layout, run_engine
 from golf.core.patches import PatchError, music_import_patch
 from golf.core.patches.music_import import (
+    COURSE_BGM_TABLE_PRG,
     COURSE_TRACKS,
     FREE_HEADERS,
+    SCENE_MUSIC_OPERAND_PRG,
+    SINGLE_TRACK_ID,
     US_ENVELOPE_ROWS,
     _build_envelope_table,
     _place_headers,
@@ -33,6 +36,10 @@ pytestmark = pytest.mark.skipif(
 )
 
 UNTOUCHED_TRACKS = [0x01, *range(0x05, 0x18)]
+JP_COURSE_THEMES = [0x02, 0x03, 0x04, 0x0B, 0x0C]
+
+#: The one-track import under test: a JP theme with no US counterpart ID
+SINGLE = 0x0C
 
 
 @pytest.fixture(scope="module")
@@ -48,6 +55,21 @@ def patched(tmp_path_factory, dump):
     music_import_patch(dump).apply(writer)
     writer.save()
     return out.read_bytes()
+
+
+@pytest.fixture(scope="module")
+def single_path(tmp_path_factory, dump):
+    """The vanilla US ROM with JP music $0C as its only course theme."""
+    out = tmp_path_factory.mktemp("music") / "single.nes"
+    writer = RomWriter(US_ROM, str(out))
+    music_import_patch(dump, track=SINGLE).apply(writer)
+    writer.save()
+    return out
+
+
+@pytest.fixture(scope="module")
+def single(single_path):
+    return single_path.read_bytes()
 
 
 @pytest.fixture(scope="module")
@@ -150,3 +172,60 @@ def test_the_relocated_envelope_table_is_still_discoverable(patched):
     layout = discover_layout(patched)
     assert layout.envelope_table != 0x81A4
     assert 0x8000 <= layout.envelope_table < 0xC000
+
+
+# ------------------------------------------------------------------ one track
+
+@pytest.mark.parametrize("music_id", JP_COURSE_THEMES)
+def test_every_jp_course_theme_fits_as_the_one_track(dump, music_id):
+    patch = music_import_patch(dump, track=music_id)
+    assert [t["music_id"] for t in patch.tracks] == [SINGLE_TRACK_ID]
+    assert sorted(t["music_id"] for t in dump["tracks"]) == JP_COURSE_THEMES
+
+
+def test_a_track_the_dump_lacks_is_rejected(dump):
+    with pytest.raises(PatchError, match=r"no music \$17"):
+        music_import_patch(dump, track=0x17)
+
+
+def test_one_track_is_applicable_and_idempotent(tmp_path, dump, single_path):
+    patch = music_import_patch(dump, track=SINGLE)
+    fresh = RomWriter(US_ROM, str(tmp_path / "fresh.nes"))
+    assert patch.can_apply(fresh)
+    assert not patch.is_applied(fresh)
+
+    again = RomWriter(str(single_path), str(tmp_path / "twice.nes"))
+    assert patch.is_applied(again)
+    patch.apply(again)
+    again.save()
+    assert (tmp_path / "twice.nes").read_bytes() == single_path.read_bytes()
+
+
+def test_one_track_touches_bank_14_and_the_two_redirects(single, vanilla):
+    changed = [i - 16 for i in range(len(vanilla)) if vanilla[i] != single[i]]
+    outside = {i for i in changed if not 0x38000 <= i < 0x3C000}
+    # CourseBgmTable's first entry is already $03
+    assert outside == {COURSE_BGM_TABLE_PRG + 1, COURSE_BGM_TABLE_PRG + 2, SCENE_MUSIC_OPERAND_PRG}
+
+
+def test_every_course_and_the_scene_request_play_the_one_track(single):
+    assert single[16 + COURSE_BGM_TABLE_PRG:16 + COURSE_BGM_TABLE_PRG + 3] == b"\x03\x03\x03"
+    assert single[16 + SCENE_MUSIC_OPERAND_PRG - 1:16 + SCENE_MUSIC_OPERAND_PRG + 1] == b"\xa9\x03"
+
+
+def test_the_one_track_round_trips_out_of_the_patched_rom(single, jp):
+    got = md.extract_track(single, SINGLE_TRACK_ID)
+    want = md.extract_track(jp, SINGLE)
+    assert [p["stream"] for p in got["patterns"]] == [p["stream"] for p in want["patterns"]]
+    assert got["order"] == want["order"]
+    assert got["loop_position"] == want["loop_position"]
+    assert got["transpose"] == want["transpose"] + 2
+
+
+def test_the_one_track_sounds_exactly_like_the_source(single, jp):
+    assert run_engine(single, SINGLE_TRACK_ID, 1800) == run_engine(jp, SINGLE, 1800)
+
+
+@pytest.mark.parametrize("music_id", UNTOUCHED_TRACKS)
+def test_one_track_leaves_every_other_track_unchanged(single, vanilla, music_id):
+    assert run_engine(single, music_id, 600) == run_engine(vanilla, music_id, 600)
