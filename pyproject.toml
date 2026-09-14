@@ -35,6 +35,7 @@ golf-expand-dict = "tools.expand_dict:main"
 
 # ROM patches
 golf-patch = "tools.patch:main"
+golf-randomize = "tools.randomize:main"
 
 # Reverse-engineering research
 golf-rom-peek = "tools.research.rom_peek:main"

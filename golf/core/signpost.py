@@ -22,6 +22,7 @@ BANK = 12
 BANNER_TABLE = 0xAD86        # 5 x 6-byte WriteNametableTiles descriptors
 PALETTE_ADDR = 0xADC4        # JapanSignpostData - shared by all 5 banners
 DIGIT_PTR_TABLE = 0xB01C     # 11 entries (digits 0-9, then the narrow "1" prefix)
+DIGIT_COUNT = 11
 
 CHR_BANK = 5
 CHR_TABLES = (0xA69F, 0xA6DD, 0xB3B3)   # -> $0000, $1000 (font/texture), $2000 (blank card+attrs)
@@ -441,6 +442,10 @@ def free_pattern_slots(rom, reference: VideoMemory, kept_tiles) -> list:
     Everything the screen draws outside the banner has to keep its tiles, and so
     do the banner cells whose art is unchanged.  What is left over is the other
     banners' wordmarks - unique letter art that nothing else references.
+
+    `reference` is one hole's card, but the hole number, par and yardage change
+    from hole to hole, so every big-digit record is kept whether or not this
+    card happens to draw it.
     """
     descriptor = read_banner_descriptor(rom, BANNER_JAPAN)
     banner_cells = {
@@ -454,6 +459,7 @@ def free_pattern_slots(rom, reference: VideoMemory, kept_tiles) -> list:
         for col in range(SCREEN_COLS)
         if (col, row) not in banner_cells
     }
+    needed.update(tile for digit in range(DIGIT_COUNT) for tile in digit_tiles(rom, digit))
     needed.update(tile for tile in kept_tiles if tile is not None)
     return sorted(set(range(256)) - needed)
 

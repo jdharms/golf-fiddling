@@ -144,6 +144,8 @@ class ScorecardQrParams:
 class MusicImportParams:
     #: a golf-export-music --dump document
     dump: Path
+    #: import only this dump music ID, as the one course theme; default all three
+    track: int | None = None
     #: defaults to the dump's recorded tuning difference
     transpose_adjust: int | None = None
 
@@ -233,11 +235,14 @@ def _report_qr(params: ScorecardQrParams, patch: ScorecardQrPatch) -> list[str]:
 
 def _build_music(ctx: BuildContext, params: MusicImportParams) -> ROMPatch:
     dump = json.loads(Path(params.dump).read_text())
-    return music_import_patch(dump, transpose_adjust=params.transpose_adjust)
+    return music_import_patch(dump, track=params.track, transpose_adjust=params.transpose_adjust)
 
 
 def _report_music(params: MusicImportParams, patch) -> list[str]:
-    lines = [
+    lines = []
+    if patch.track is not None:
+        lines.append(f"dump music ${patch.track:02X} is the only course theme (CourseBgmTable 03 03 03)")
+    lines += [
         f"music ${track['music_id']:02X}: {len(track['patterns'])} patterns, transpose "
         f"{track['transpose']:+d} -> {track['transpose'] + patch.transpose_adjust:+d}"
         for track in patch.tracks
@@ -352,7 +357,7 @@ PATCH_SPECS: dict[str, PatchSpec] = {
         ),
         PatchSpec(
             "music_import",
-            "Replace the three course themes from a music dump (docs/music_format.md)",
+            "Replace the course themes from a music dump, or make one track the only theme (docs/music_format.md)",
             MusicImportParams,
             _build_music,
             _report_music,

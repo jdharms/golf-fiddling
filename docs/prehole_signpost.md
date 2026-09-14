@@ -315,10 +315,18 @@ which was rendered *from* the ROM and therefore must come back with zero new pat
 
 Two separate budgets:
 
-- **Pattern-table slots.** 104 of the 256 slots in `$1000` are free once the other four
-  banners stop being drawn - the `JAPAN`/`UK` wordmarks and both contest banners are
-  nothing but unique letter art. Free slots are plentiful; *contiguous* ones are not.
-  The longest run is 10 tiles, so a 22-tile import needs three descriptors, not one.
+- **Pattern-table slots.** Once the other four banners stop being drawn, their tiles are
+  free - the `JAPAN`/`UK` wordmarks and both contest banners are nothing but unique
+  letter art. On US hole 1 that is 106 of the 256 slots in `$1000` if the whole US banner
+  is redrawn, 84 if all of its art is kept. Free slots are plentiful; *contiguous* ones
+  are not. The longest run is 8 tiles, so a 22-tile import needs three descriptors
+  (`$04`x8, `$14`x8, `$F2`x6), not one.
+- **Every digit's tiles stay reserved.** `free_pattern_slots` works from a single hole's
+  card, but the hole number, par and yardage are redrawn per hole, so a digit that card
+  never shows is still in use. All 11 `$B01C` records (0-9 and the narrow "1") are
+  counted as needed. Without that, the longest free run started at digit 9's `$02`/`$03`
+  and `$12`/`$13`, and new art overwrote the "9" (and, from 22 tiles, the "0") on
+  every other hole.
 - **PRG bytes to hold the pixels.** The pattern table is filled at runtime from ROM, so
   every new tile costs 16 bytes somewhere.
 

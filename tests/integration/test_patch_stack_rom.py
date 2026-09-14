@@ -70,7 +70,7 @@ def full_steps(course) -> list[ROMPatch]:
         practice_swing_patch(),
         ScorecardQrPatch(QrCredentials.random(random.Random(1))),
         sram_defaults_patch("RANDO", ["1W", "3W", "5I", "PW", "SW"], bgm=False, sram_magic=0x5244),
-        music_import_patch(json.loads(Path("data/music/music_jp_courses.json").read_text())),
+        music_import_patch(json.loads(Path("data/music/music_jp_courses.json").read_text()), track=0x0C),
     ]
 
 

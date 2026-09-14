@@ -96,6 +96,7 @@ Build a standalone editor executable with `uv run pyinstaller run_editor.spec`.
 | Command | Description |
 |---------|-------------|
 | `golf-patch <rom> [recipe.json] [-p ID[:key=value,...]]` | Build a ROM or IPS patch from a recipe and/or inline patch steps; `--list` shows every patch type; see `docs/patch_stack.md` |
+| `golf-randomize <rom> [-o out.nes] [--seed S]` | Spike: build a randomized ROM from a fixed par layout and a Python patch stack |
 
 ### Reverse-engineering research
 
