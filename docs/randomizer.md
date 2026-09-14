@@ -369,8 +369,9 @@ processor should be able to do that, but also should be able to apply patches
 in memory, keeping track of the changes requested, and then outputting a combined
 .IPS or json document that consolidates all the byte changes from applying
 all the patches.  Then this .IPS or json document gets sent down to the client,
-and a small bit of WASM code does the mechanical patching of the user's rom file,
-and triggers a download dialog to place the patched rom on the user's computer.
+and a small bit of vanilla JavaScript code does the mechanical
+patching of the user's rom file, and triggers a download dialog to
+place the patched rom on the user's computer.
 
 There is prior art here--this is how ALTTPR enables the player to "download" a rom.
 
@@ -486,7 +487,6 @@ Randomization & Course:
 * Music import
 
 QOL:
-* Practice swing
 * Mercy rule tap-ins
 * Scorecard QR Submission
 
