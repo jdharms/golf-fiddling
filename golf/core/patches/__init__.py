@@ -32,10 +32,10 @@ from .byte_patch import BytePatch
 from .composite import CompositePatch
 from .course import CoursePatch, CourseWriteStats
 from .menu_trim import (
+    DEFAULT_WORDS,
     RENDERABLE_CHARS,
     menu_trim_patch,
     menu_trim_patches,
-    random_title,
 )
 from .mercy_tap_in import mercy_tap_in_patches
 from .practice_swing import (
@@ -54,6 +54,7 @@ from .scorecard_qr import (
     load_credentials,
     scorecard_qr_patch,
 )
+from .sram_defaults import Club, sram_defaults_patch, sram_defaults_patches
 from .signpost_banner import remove_course_banner_patches
 from .signpost_random_banner import (
     build_code,
@@ -128,7 +129,7 @@ __all__ = [
     "DEFAULT_HOLD_FRAMES",
     "menu_trim_patch",
     "menu_trim_patches",
-    "random_title",
+    "DEFAULT_WORDS",
     "RENDERABLE_CHARS",
     "seeded_wind_patch",
     "seeded_wind_patches",
@@ -156,4 +157,7 @@ __all__ = [
     "MusicImportPatch",
     "music_import_patch",
     "COURSE_TRACKS",
+    "Club",
+    "sram_defaults_patch",
+    "sram_defaults_patches",
 ]

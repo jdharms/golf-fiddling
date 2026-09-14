@@ -253,17 +253,18 @@ of a list leaves a visual gap unless the entries below it are moved up.
 
 ### Worked example
 
-`golf/core/patches/menu_trim.py` implements all of the above as a proof of
-concept: it retitles menu `$00`, cuts the main menu to STROKE PLAY + CLUB HOUSE,
-and cuts the club house to five entries. Ten `BytePatch`es, 33 bytes changed,
-every one of them length-preserving and inside bank 12.
+`golf/core/patches/menu_trim.py` implements all of the above: it gives menus
+`$00`-`$02` a shared three-word header, cuts the main menu to STROKE PLAY + CLUB
+HOUSE, cuts course select to a single RANDOM COURSE option that picks course 0,
+and cuts the club house to five entries. Every `BytePatch` is length-preserving
+and inside bank 12, and no instruction changes except one compare operand.
 
 ```python
 from golf.core.patches import menu_trim_patch
 from golf.core.rom_writer import RomWriter
 
 writer = RomWriter("nes_open_us.nes", "out.nes")
-menu_trim_patch(seed=1234).apply(writer)   # or title_text="MY OWN TITLE.."
+menu_trim_patch("OPEN GOLF RANDO").apply(writer)   # or ["OPEN", "GOLF", "RANDO"]
 writer.save()
 ```
 
@@ -277,11 +278,28 @@ to any removal:
   TOURNAMENT slides CLUB HOUSE from index 3 to index 1, where it would start
   silently setting match play. The patch tightens the guard to `CMP #$01`.
 
-A longer replacement title also needs somewhere to live: 14 characters need 17
-bytes plus a 3-byte list header, and the shared `$8B90` "PLEASE SELECT" entry has
-room for 16 and is used by eleven menus. The patch builds a private list for menu
-`$00` in the 26 bytes freed by the two removed entries and repoints
-`MenuTextListPtrTable[$00]+0` at it, so every other menu is untouched.
+The header is a two-entry list, built with its 13-character first line in the
+26 bytes freed by the removed MATCH,PLAY and TOURNAMENT entries (`$8BB7`). Its
+second line reuses the "COURSE" entry at `$8C5C`, whose only other readers are
+the unreachable course-select menus. `MenuTextListPtrTable` `+0` for menus
+`$00`, `$01` and `$02` points at it; every other menu keeps the shared "PLEASE
+SELECT" list at `$8B8D`.
+
+Course select's single option overwrites the US COURSE entry in the options
+list shared with the unreachable menus `$06`/`$0B`/`$0F`/`$12`, and the value for
+key 1 in `ApplyCourseSelection`'s inline table (`$89EB`) is 0 so that selection
+0 picks JAPAN (course 0) rather than US.
+
+### Text position and attribute cells
+
+`SetMenuEntryPalette` colours every 2x2 attribute cell an entry touches, on the
+entry's row, and the cursor highlight also colours the row above. An entry
+whose span shares a cell with background art recolours that art. The menu box
+border sits in column 2 on rows `$08`-`$0F`, so an entry starting at column 3
+turns the border's colour-1 pixels in that cell from `$31` to `$30`. Every
+vanilla entry starts at column 4 or later. The menu trim header keeps vanilla's
+exact span for this reason: 13 characters at column 4, row `$0A`, and 6 at
+column 4, row `$0C`.
 
 ### Space budget
 

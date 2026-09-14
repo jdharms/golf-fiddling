@@ -19,6 +19,9 @@ from golf.core.patches.scorecard_course_name import (
     title_text,
 )
 
+LONGEST_NAME = "ABCDEFGHIJKLM"
+LONGEST_TITLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
 
 class MockRomWriter:
     """A bare PRG image with every sub-patch's and requirement's original bytes."""
@@ -56,17 +59,19 @@ class TestEncoding:
         text = course_name_text("RANDOM")
         assert first_column(text) == 9
         assert descriptor_bytes(text)[:4] == bytes([0x69, 0x20, 0x0D, 0x01])
-        # Column 9 falls in the first byte's lower-left quadrant, 21 in the last's
-        assert attribute_bytes(text) == bytes([0xF0, 0xF0, 0xF0, 0x30])
+        # Column 9 falls in the lower-left quadrant of the columns 8-11 byte, 21 in the columns 20-23 one's
+        assert attribute_bytes(text) == bytes([0x00, 0x00, 0xF0, 0xF0, 0xF0, 0x30, 0x00, 0x00])
 
-    def test_the_longest_name_fills_columns_8_to_23(self):
-        text = course_name_text("ABCDEFGHI")
-        assert first_column(text) == 8
-        assert attribute_bytes(text) == bytes([0xF0] * 4)
+    @pytest.mark.parametrize("name", ["ABCDEFGHIJKL", "ABCDEFGHIJKLM"])
+    def test_names_past_the_vanilla_band_fill_columns_6_to_25(self, name):
+        # 19 tiles start at column 6 and end at 24, which shares a quadrant with 25
+        text = course_name_text(name)
+        assert first_column(text) == 6
+        assert attribute_bytes(text) == bytes([0x00, 0xC0, 0xF0, 0xF0, 0xF0, 0xF0, 0x30, 0x00])
 
-    def test_rejects_a_name_too_long_for_the_red_band(self):
-        with pytest.raises(ValueError, match="at most 9 characters"):
-            course_name_text("ABCDEFGHIJ")
+    def test_rejects_a_name_too_long_for_its_descriptor(self):
+        with pytest.raises(ValueError, match="at most 13 characters"):
+            course_name_text("ABCDEFGHIJKLMN")
 
     @pytest.mark.parametrize("name", ["RANDOM!", "CAFÉ", "A-B"])
     def test_rejects_characters_the_font_lacks(self, name):
@@ -87,12 +92,14 @@ class TestTitleEncoding:
         # $B085: PPU $2089, width 14
         assert title_descriptor_bytes("18H MATCH PLAY")[:3] == bytes([0x89, 0x20, 0x0E])
 
-    def test_the_longest_title_starts_at_column_8(self):
-        assert title_descriptor_bytes(title_text("abcdefghijklmnop"))[:3] == bytes([0x88, 0x20, 0x10])
+    def test_the_longest_title_starts_at_column_3(self):
+        # Where vanilla puts 18H STROKE PLAY TOURNAMENT ($B02C: PPU $2083, width 26)
+        title = title_text("abcdefghijklmnopqrstuvwxyz")
+        assert title_descriptor_bytes(title)[:3] == bytes([0x83, 0x20, 0x1A])
 
     @pytest.mark.parametrize(("title", "message"), [
-        ("ABCDEFGHIJKLMNOPQ", "1-16 characters"),
-        ("", "1-16 characters"),
+        ("ABCDEFGHIJKLMNOPQRSTUVWXYZ0", "1-26 characters"),
+        ("", "1-26 characters"),
         ("SEED #1", "title font cannot render"),
     ])
     def test_rejects_titles_that_cannot_be_drawn(self, title, message):
@@ -112,7 +119,7 @@ class TestPatch:
         assert offsets == {
             "scorecard_course_name_dispatch": rom_utils.cpu_to_prg_switched(0xAEAE, 2),
             "scorecard_course_name_descriptor": rom_utils.cpu_to_prg_switched(0xAFC8, 2),
-            "scorecard_course_name_attributes": rom_utils.cpu_to_prg_switched(0xB9F2, 2),
+            "scorecard_course_name_attributes": rom_utils.cpu_to_prg_switched(0xB9F0, 2),
         }
 
     def test_every_slot_uses_the_japan_handler(self):
@@ -123,14 +130,14 @@ class TestPatch:
         leaves = {leaf.name: leaf for leaf in scorecard_course_name_patch(title="SEED 1234").patches}
         descriptor = leaves["scorecard_course_name_title_descriptor"]
         pointer = leaves["scorecard_course_name_title_pointer"]
-        assert descriptor.prg_offset == rom_utils.cpu_to_prg_switched(0xAFDC, 2)
+        assert descriptor.prg_offset == rom_utils.cpu_to_prg_switched(0xAFE0, 2)
         assert descriptor.patched == title_descriptor_bytes("SEED 1234")
         assert pointer.prg_offset == rom_utils.cpu_to_prg_switched(0xB00A, 2)
-        assert (pointer.original, pointer.patched) == (bytes([0x0D, 0xB0]), bytes([0xDC, 0xAF]))
+        assert (pointer.original, pointer.patched) == (bytes([0x0D, 0xB0]), bytes([0xE0, 0xAF]))
 
     @pytest.mark.parametrize(
         ("name", "title"),
-        [("RANDOM", None), ("X", "A"), ("ABCDEFGHI", "ABCDEFGHIJKLMNOP")],
+        [("RANDOM", None), ("X", "A"), (LONGEST_NAME, LONGEST_TITLE)],
     )
     def test_apply_then_is_applied(self, name, title):
         patch = scorecard_course_name_patch(name, title)
@@ -143,9 +150,14 @@ class TestPatch:
         assert patch.is_applied(rom)
 
     def test_the_longest_name_and_title_do_not_overlap(self):
-        leaves = scorecard_course_name_patch("ABCDEFGHI", "ABCDEFGHIJKLMNOP").patches
+        leaves = scorecard_course_name_patch(LONGEST_NAME, LONGEST_TITLE).patches
         spans = sorted((leaf.prg_offset, leaf.prg_offset + len(leaf.patched)) for leaf in leaves)
         assert all(end <= start for (_, end), (start, _) in zip(spans, spans[1:]))
+
+    def test_the_longest_title_ends_before_the_mode_0_handler(self):
+        leaves = {leaf.name: leaf for leaf in scorecard_course_name_patch(LONGEST_NAME, LONGEST_TITLE).patches}
+        descriptor = leaves["scorecard_course_name_title_descriptor"]
+        assert descriptor.prg_offset + len(descriptor.patched) == rom_utils.cpu_to_prg_switched(0xAFFE, 2)
 
     def test_refuses_rom_without_course_mirrors(self):
         patch = scorecard_course_name_patch()

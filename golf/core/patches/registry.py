@@ -36,6 +36,15 @@ from .scorecard_qr import QR_BANK, TRAMPOLINE_CPU_ADDR, ScorecardQrPatch, load_c
 from .seeded_wind import derive_hole_seeds, predict_hole, seeded_wind_patch
 from .signpost_banner import remove_course_banner_patches
 from .signpost_random_banner import signpost_banner_patch
+from .sram_defaults import (
+    VANILLA_CLUBS,
+    VANILLA_MAGIC,
+    VANILLA_NAME,
+    club_bag_bytes,
+    club_labels,
+    magic_bytes,
+    sram_defaults_patch,
+)
 from .wram_expansion import WRAM_EXPANSION_PATCH
 
 
@@ -86,8 +95,8 @@ class CourseParams:
 
 @dataclass(frozen=True)
 class MenuTrimParams:
-    #: the 14 characters shown in place of "PLEASE SELECT"
-    title: str
+    #: three 4-6 character header words for menus $00-$02; default OPEN GOLF RANDO
+    words: list[str] | None = None
 
 
 @dataclass(frozen=True)
@@ -119,9 +128,9 @@ class PracticeSwingParams:
 
 @dataclass(frozen=True)
 class ScorecardCourseNameParams:
-    #: the word before "COURSE": A-Z, 0-9 and space, at most 9 characters
+    #: the word before "COURSE": A-Z, 0-9 and space, at most 13 characters
     name: str = DEFAULT_COURSE_NAME
-    #: replaces "18H STROKE PLAY": A-Z, 0-9 and space, at most 16 characters
+    #: replaces "18H STROKE PLAY": A-Z, 0-9 and space, at most 26 characters
     title: str | None = None
 
 
@@ -137,6 +146,18 @@ class MusicImportParams:
     dump: Path
     #: defaults to the dump's recorded tuning difference
     transpose_adjust: int | None = None
+
+
+@dataclass(frozen=True)
+class SramDefaultsParams:
+    #: 1-10 characters: A-Z, '.' and space
+    player_name: str | None = None
+    #: up to 14 of 1W-4W, 1I-9I, PW, SW and PT; the putter is added if missing
+    clubs: list[str] | None = None
+    #: false starts a new save with music off
+    bgm: bool = True
+    #: the high byte is stored at $6001; neither byte may be $00 or $FF
+    sram_magic: int = VANILLA_MAGIC
 
 
 # --- Factories and reports ------------------------------------------------------
@@ -228,6 +249,18 @@ def _report_music(params: MusicImportParams, patch) -> list[str]:
     return lines
 
 
+def _report_sram_defaults(params: SramDefaultsParams, patch) -> list[str]:
+    name = VANILLA_NAME if params.player_name is None else params.player_name.upper()
+    clubs = VANILLA_CLUBS if params.clubs is None else params.clubs
+    magic = magic_bytes(params.sram_magic)
+    return [
+        f"player name: {name}",
+        f"clubs: {' '.join(club_labels(club_bag_bytes(clubs)))}",
+        f"bgm: {'on' if params.bgm else 'off'}",
+        f"sram magic: ${magic[0]:02X} ${magic[1]:02X}",
+    ]
+
+
 def _fixed(patch: ROMPatch) -> Callable[[BuildContext, object], ROMPatch]:
     return lambda ctx, params: patch
 
@@ -268,9 +301,9 @@ PATCH_SPECS: dict[str, PatchSpec] = {
         ),
         PatchSpec(
             "menu_trim",
-            "Trim the title and club house menus, with a 14-character title (docs/menu_system.md)",
+            "Trim the title, course select and club house menus, under a three-word header (docs/menu_system.md)",
             MenuTrimParams,
-            lambda ctx, params: menu_trim_patch(title_text=params.title),
+            lambda ctx, params: menu_trim_patch(params.words),
         ),
         PatchSpec(
             "remove_course_banner",
@@ -323,6 +356,15 @@ PATCH_SPECS: dict[str, PatchSpec] = {
             MusicImportParams,
             _build_music,
             _report_music,
+        ),
+        PatchSpec(
+            "sram_defaults",
+            "Change a new save's player name, club bags, BGM option and SRAM magic",
+            SramDefaultsParams,
+            lambda ctx, params: sram_defaults_patch(
+                params.player_name, params.clubs, params.bgm, params.sram_magic
+            ),
+            _report_sram_defaults,
         ),
         PatchSpec(
             "putting_practice",

@@ -13,13 +13,13 @@ each handler draws one `WriteNametableTiles` descriptor. Three writes:
 2. The Japan descriptor at $AFC8 is rewritten in place, centred on the row the
    way vanilla centres its own names. With the US and UK handlers unreachable,
    it may run past its vanilla 16 bytes into theirs ($AFD8-$AFFD).
-3. The course-name row is red only where the attribute table says so. Four
-   attribute bytes at $B9F2, a literal in the blank card's compressed nametable
-   stream, cover columns 8-23; they are rebuilt so palette 3 covers every
-   column the name uses. The bytes either side of that literal are not
-   literals, which is what limits the whole name to 16 tiles. The 36-hole match
-   play tournament card has its own attributes, which already cover columns
-   8-31.
+3. The course-name row is red only where the attribute table says so. The
+   whole top attribute row, $B9F0-$B9F7, sits inside one literal in the blank
+   card's compressed nametable stream, so all eight bytes are rebuilt in place
+   with palette 3 under every column the name uses. The frame tiles the wider
+   band also covers use only colours 0 and 3, which are the same in every
+   palette. The 36-hole match play tournament card has its own attributes,
+   which already cover columns 2-29.
 
 The optional title replaces what GolfGameMode $00's handler ($AFFE) draws. Its
 vanilla descriptor at $B00D is 15 tiles, followed directly by the mode $01
@@ -27,6 +27,9 @@ handler, so the new one goes in the rest of the unreachable US and UK handler
 bytes, after the longest possible name descriptor, and the handler's inline
 `.dw` at $B00A is repointed at it. The title row is palette 2 across the whole
 card, so no attributes change. Other game modes keep their own titles.
+
+The unreachable bytes, $AFC8-$AFFD, hold a 20-tile name and a 26-tile title,
+the width of the card's interior.
 
 Both strings must be in the title font: A-Z, 0-9 and space. The course intro
 scene has its own copy of the course name and is not changed.
@@ -54,17 +57,16 @@ DESCRIPTOR_ADDR = 0xAFC8
 NAME_ROW_PPU = 0x2060  # row 3, column 0
 ROW_TILES = 32
 
-ATTRIBUTES_ADDR = 0xB9F2
-ATTRIBUTES_FIRST_COLUMN = 8
+ATTRIBUTES_ADDR = 0xB9F0  # attribute row 0, PPU $23C0-$23C7
 NAME_PALETTE = 3
-MAX_TILES = 16  # columns 8-23, the span of the four attribute bytes
+MAX_TILES = 20
 
 # The stroke play title: the inline `.dw` after the mode $00 handler's
 # `JSR WriteNametableTiles`, and where the new descriptor goes.
 TITLE_POINTER_ADDR = 0xB00A
-TITLE_DESCRIPTOR_ADDR = DESCRIPTOR_ADDR + 4 + MAX_TILES  # $AFDC
+TITLE_DESCRIPTOR_ADDR = DESCRIPTOR_ADDR + 4 + MAX_TILES  # $AFE0
 TITLE_ROW_PPU = 0x2080  # row 4, column 0
-MAX_TITLE_TILES = 16
+MAX_TITLE_TILES = 26  # columns 3-28, the card's interior
 UNREACHABLE_END = 0xAFFE  # the mode $00 handler
 assert TITLE_DESCRIPTOR_ADDR + 4 + MAX_TITLE_TILES <= UNREACHABLE_END
 
@@ -72,31 +74,29 @@ TITLE_FONT_CHARS = string.ascii_uppercase + string.digits + " "
 
 _VANILLA_DISPATCH_POINTERS = bytes([0xD8, 0xAF, 0x02, 0xEB, 0xAF])
 
-# From $AFC8: the Japan descriptor, then the first bytes of the US handler.
-_VANILLA_DESCRIPTOR_REGION = bytes(
+# $AFC8-$AFFD: the Japan descriptor, then the US and UK handlers and descriptors.
+_VANILLA_UNREACHABLE_REGION = bytes(
     [
         0x6A, 0x20, 0x0C, 0x01,  # PPU $206A, width 12, 1 row
         0x13, 0x0A, 0x19, 0x0A, 0x17, 0x24,  # JAPAN_
         0x0C, 0x18, 0x1E, 0x1B, 0x1C, 0x0E,  # COURSE
-        0x20, 0x84, 0xCE, 0xDE,  # $AFD8: JSR $CE84 / .dw $AFDE
-    ]
-)
-assert len(_VANILLA_DESCRIPTOR_REGION) == 4 + MAX_TILES
-
-_VANILLA_ATTRIBUTES = bytes([0xC0, 0xF0, 0xF0, 0x30])
-
-_VANILLA_TITLE_POINTER = bytes([0x0D, 0xB0])
-
-# From $AFDC: the rest of the US handler and descriptor, then the UK handler.
-_VANILLA_TITLE_REGION = bytes(
-    [
-        0xAF, 0x60,  # .dw $AFDE (high byte) / RTS
+        0x20, 0x84, 0xCE, 0xDE, 0xAF, 0x60,  # $AFD8: JSR $CE84 / .dw $AFDE / RTS
         0x6B, 0x20, 0x09, 0x01,  # PPU $206B, width 9, 1 row
         0x1E, 0x1C, 0x24, 0x0C, 0x18, 0x1E, 0x1B, 0x1C, 0x0E,  # US COURSE
-        0x20, 0x84, 0xCE, 0xF1, 0xAF,  # $AFEB: JSR $CE84 / .dw $AFF1
+        0x20, 0x84, 0xCE, 0xF1, 0xAF, 0x60,  # $AFEB: JSR $CE84 / .dw $AFF1 / RTS
+        0x6B, 0x20, 0x09, 0x01,  # PPU $206B, width 9, 1 row
+        0x1E, 0x14, 0x24, 0x0C, 0x18, 0x1E, 0x1B, 0x1C, 0x0E,  # UK COURSE
     ]
 )
-assert len(_VANILLA_TITLE_REGION) == 4 + MAX_TITLE_TILES
+assert DESCRIPTOR_ADDR + len(_VANILLA_UNREACHABLE_REGION) == UNREACHABLE_END
+
+_VANILLA_DESCRIPTOR_REGION = _VANILLA_UNREACHABLE_REGION[: 4 + MAX_TILES]
+_VANILLA_TITLE_REGION = _VANILLA_UNREACHABLE_REGION[4 + MAX_TILES :]
+
+# Columns 10-21 of row 3 are palette 3, sized for JAPAN COURSE.
+_VANILLA_ATTRIBUTES = bytes([0x00, 0x00, 0xC0, 0xF0, 0xF0, 0x30, 0x00, 0x00])
+
+_VANILLA_TITLE_POINTER = bytes([0x0D, 0xB0])
 
 
 def _prg(cpu_addr: int) -> int:
@@ -116,7 +116,7 @@ def course_name_text(name: str) -> str:
     """The full name as drawn: upper-cased, with " COURSE" appended.
 
     Raises ValueError for characters the title font lacks, or a name too long
-    for the red band.
+    for its descriptor's space.
     """
     text = name.upper() + SUFFIX
     _check_title_font(text, "name")
@@ -179,7 +179,7 @@ def title_descriptor_bytes(text: str) -> bytes:
 
 def attribute_bytes(text: str) -> bytes:
     """
-    The four attribute bytes for columns 8-23, with palette 3 under the text.
+    Attribute row 0, one byte per four columns, with palette 3 under the text.
 
     Bits 4-5 of each byte colour its lower-left 2x2 tiles, bits 6-7 its
     lower-right; the lower half is tile row 3. The upper half belongs to the
@@ -191,7 +191,7 @@ def attribute_bytes(text: str) -> bytes:
     for index, vanilla in enumerate(_VANILLA_ATTRIBUTES):
         value = vanilla & 0x0F
         for offset, shift in ((0, 4), (2, 6)):
-            column = ATTRIBUTES_FIRST_COLUMN + 4 * index + offset
+            column = 4 * index + offset
             if column in used or column + 1 in used:
                 value |= NAME_PALETTE << shift
         attributes.append(value)

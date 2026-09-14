@@ -28,7 +28,7 @@ def test_patched_rom_roundtrips_through_ips(tmp_path):
 
     course = CoursePatch(load_holes("courses/jp/jp_uk"))
     writer = RomWriter(ROM_PATH, str(tmp_path / "unused.nes"))
-    for patch in [*course.requires, course, seeded_wind_patch("ips"), menu_trim_patch("IPSROUNDTRIP00")]:
+    for patch in [*course.requires, course, seeded_wind_patch("ips"), menu_trim_patch("ROUND TRIP TEST")]:
         patch.apply(writer)
     patched = bytes(writer.rom_data)
 

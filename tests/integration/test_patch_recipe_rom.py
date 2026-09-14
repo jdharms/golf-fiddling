@@ -50,7 +50,7 @@ def full_recipe(credentials: Path) -> dict:
             {"patch": "course_mirrors"},
             {"patch": "attr_streaming"},
             {"patch": "course", "course": "courses/jp/jp_uk"},
-            {"patch": "menu_trim", "title": "RANDOMIZER0001"},
+            {"patch": "menu_trim", "words": ["RANDO", "GOLF", "0001"]},
             {"patch": "signpost_random_banner", "art": str(ART.relative_to(ROOT))},
             {"patch": "mercy_tap_in", "mercy_point": 9},
             {"patch": "seeded_wind", "seed": "recipe"},
