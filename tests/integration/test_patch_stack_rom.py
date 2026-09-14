@@ -26,6 +26,7 @@ from golf.core.patches import (
     remove_course_banner_patches,
     scorecard_course_name_patch,
     seeded_wind_patch,
+    sram_defaults_patch,
 )
 from golf.formats.hole_data import HoleData
 
@@ -61,13 +62,14 @@ def full_steps(course) -> list[ROMPatch]:
         COURSE_MIRRORS_PATCH,
         ATTR_STREAMING_PATCH,
         course,
-        menu_trim_patch("RANDOMIZER0001"),
+        menu_trim_patch("RANDO GOLF 0001"),
         scorecard_course_name_patch(title="RANDOMIZER 0001"),
         remove_course_banner_patches(),
         CompositePatch("mercy_tap_in", "mercy tap-in at 10", mercy_tap_in_patches(10)),
         seeded_wind_patch("stack"),
         practice_swing_patch(),
         ScorecardQrPatch(QrCredentials.random(random.Random(1))),
+        sram_defaults_patch("RANDO", ["1W", "3W", "5I", "PW", "SW"], bgm=False, sram_magic=0x5244),
         music_import_patch(json.loads(Path("data/music/music_jp_courses.json").read_text())),
     ]
 

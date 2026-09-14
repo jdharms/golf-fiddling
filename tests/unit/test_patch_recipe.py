@@ -36,7 +36,7 @@ class TestRegistry:
     def test_every_patch_type_builds_a_patch_of_its_own_name(self, credentials_file):
         params = {
             "course": {"course": "courses/japan"},
-            "menu_trim": {"title": "ABCDEFGHIJKLMN"},
+            "menu_trim": {"words": "ABCD EFGH IJKL"},
             "mercy_tap_in": {"mercy_point": 9},
             "seeded_wind": {"seed": "x"},
             "scorecard_qr": {"credentials": str(credentials_file)},
@@ -56,6 +56,7 @@ class TestRegistry:
         assert "mercy_result (integer or null)" in describe_params(PATCH_SPECS["mercy_tap_in"])
         assert "name (string, default 'RANDOM')" in describe_params(PATCH_SPECS["scorecard_course_name"])
         assert "title (string or null)" in describe_params(PATCH_SPECS["scorecard_course_name"])
+        assert "clubs (list of string or null)" in describe_params(PATCH_SPECS["sram_defaults"])
 
 
 class TestParams:
@@ -84,13 +85,22 @@ class TestParams:
         params = step({"patch": "course", "holes": ["a.json", "b.json"]}, tmp_path).params
         assert params.holes == [tmp_path / "a.json", tmp_path / "b.json"]
 
+    def test_string_lists_also_take_a_whitespace_separated_string(self):
+        assert step({"patch": "sram_defaults", "clubs": " 1W 3W  PW"}).params.clubs == ["1W", "3W", "PW"]
+        params = parse_step_arg("sram_defaults:clubs=1W 3W PW,bgm=false", ROOT).params
+        assert (params.clubs, params.bgm) == (["1W", "3W", "PW"], False)
+
+    def test_path_lists_do_not_take_a_string(self, tmp_path):
+        with pytest.raises(RecipeError, match="holes: expected list of path,"):
+            step({"patch": "course", "holes": "a.json b.json"}, tmp_path)
+
     def test_unknown_parameters_are_named(self):
         with pytest.raises(RecipeError, match=r"unknown parameter\(s\) sed; seeded_wind takes seed"):
             step({"patch": "seeded_wind", "sed": "x"})
 
     def test_missing_required_parameters(self):
-        with pytest.raises(RecipeError, match="missing required parameter 'title'"):
-            step({"patch": "menu_trim"})
+        with pytest.raises(RecipeError, match="missing required parameter 'seed'"):
+            step({"patch": "seeded_wind"})
 
     def test_unknown_patch_types_list_the_known_ones(self):
         with pytest.raises(RecipeError, match="unknown patch type 'wind'; known types: wram_expansion"):
@@ -147,8 +157,8 @@ class TestRecipe:
             recipe.build_steps(b"")
 
     def test_build_errors_name_the_step(self):
-        recipe = Recipe([step({"patch": "practice_swing"}), step({"patch": "menu_trim", "title": "SHORT"})])
-        with pytest.raises(RecipeError, match=r"steps\[1\] \(menu_trim\): title_text must be exactly 14"):
+        recipe = Recipe([step({"patch": "practice_swing"}), step({"patch": "menu_trim", "words": "TWO WORDS"})])
+        with pytest.raises(RecipeError, match=r"steps\[1\] \(menu_trim\): words must be exactly 3 words"):
             recipe.build_steps(b"")
 
     def test_malformed_json(self, tmp_path):

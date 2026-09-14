@@ -13,7 +13,8 @@ pytestmark = pytest.mark.skipif(
     not Path(ROM_PATH).exists(), reason=f"{ROM_PATH} not present"
 )
 
-TITLE = "ABCDEFGHIJKLMN"
+WORDS = ["ALPHA", "BETA", "GAMMA"]
+HEADER = [(0x04, 0x0A, "ALPHA  BETA  "), (0x04, 0x0C, "GAMMA ")]
 
 _BANK12 = 12 * 0x4000
 
@@ -55,26 +56,40 @@ class MenuTables:
         base = self.word(0x8AA2 + menu_id * 2)
         return [self.byte(base + i) for i in range(len(self.options(menu_id)))]
 
+    def course_select_table(self) -> dict[int, int]:
+        """ApplyCourseSelection's inline (selection + 1 -> CurrCourse) table."""
+        table = {}
+        cpu = 0x89EA
+        while self.byte(cpu):
+            table[self.byte(cpu)] = self.byte(cpu + 1)
+            cpu += 2
+        return table
+
+
+@pytest.fixture
+def vanilla() -> MenuTables:
+    return MenuTables(Path(ROM_PATH).read_bytes())
+
 
 @pytest.fixture
 def patched(tmp_path) -> MenuTables:
     out = tmp_path / "menu_trim.nes"
     writer = RomWriter(ROM_PATH, str(out))
-    menu_trim_patch(title_text=TITLE).apply(writer)
+    menu_trim_patch(WORDS).apply(writer)
     writer.save()
     return MenuTables(out.read_bytes())
 
 
 def test_vanilla_rom_has_expected_bytes_at_every_site(tmp_path):
     writer = RomWriter(ROM_PATH, str(tmp_path / "out.nes"))
-    for sub in menu_trim_patches(title_text=TITLE):
+    for sub in menu_trim_patches(WORDS):
         assert sub.can_apply(writer), sub.name
 
 
 def test_apply_and_reload(tmp_path):
     out = tmp_path / "menu_trim.nes"
     writer = RomWriter(ROM_PATH, str(out))
-    patch = menu_trim_patch(title_text=TITLE)
+    patch = menu_trim_patch(WORDS)
     patch.apply(writer)
     writer.save()
 
@@ -84,7 +99,7 @@ def test_apply_and_reload(tmp_path):
 
 def test_apply_is_idempotent(tmp_path):
     writer = RomWriter(ROM_PATH, str(tmp_path / "out.nes"))
-    patch = menu_trim_patch(title_text=TITLE)
+    patch = menu_trim_patch(WORDS)
     patch.apply(writer)
     before = bytes(writer.rom_data)
     patch.apply(writer)
@@ -92,15 +107,15 @@ def test_apply_is_idempotent(tmp_path):
 
 
 def test_rejects_an_already_trimmed_rom(tmp_path):
-    """A second, differently-titled build must refuse rather than corrupt."""
+    """A second build with different words must refuse rather than corrupt."""
     out = tmp_path / "menu_trim.nes"
     writer = RomWriter(ROM_PATH, str(out))
-    menu_trim_patch(title_text=TITLE).apply(writer)
+    menu_trim_patch(WORDS).apply(writer)
     writer.save()
 
     reloaded = RomWriter(str(out), str(tmp_path / "unused.nes"))
     with pytest.raises(PatchError):
-        menu_trim_patch(title_text="NOPQRSTUVWXYZ0").apply(reloaded)
+        menu_trim_patch().apply(reloaded)
 
 
 def test_main_menu_keeps_only_stroke_play_and_club_house(patched):
@@ -115,13 +130,39 @@ def test_main_menu_rows_have_no_gap(patched):
     assert [y for _, y, _ in patched.options(0x00)] == [0x0E, 0x10]
 
 
-def test_main_menu_static_text_is_the_requested_title(patched):
-    assert patched.static_text(0x00) == [(0x04, 0x0A, TITLE)]
+def test_main_player_and_course_menus_share_the_header(patched):
+    for menu_id in (0x00, 0x01, 0x02):
+        assert patched.static_text(menu_id) == HEADER, f"menu ${menu_id:02X}"
+
+
+def test_header_occupies_exactly_vanilla_course_select_span(patched, vanilla):
+    """Same positions and widths, so the same attribute cells are coloured."""
+    def span(entries):
+        return [(x, y, len(text)) for x, y, text in entries]
+
+    assert vanilla.static_text(0x02) == [(0x04, 0x0A, "PLEASE SELECT"), (0x04, 0x0C, "COURSE")]
+    assert span(patched.static_text(0x02)) == span(vanilla.static_text(0x02))
 
 
 def test_other_menus_keep_the_shared_please_select_text(patched):
-    for menu_id in (0x01, 0x03, 0x09, 0x10):
+    for menu_id in (0x03, 0x07, 0x09, 0x10):
         assert patched.static_text(menu_id) == [(0x04, 0x0A, "PLEASE SELECT")]
+
+
+def test_course_select_offers_only_random_course(patched):
+    assert patched.options(0x02) == [(0x0C, 0x0E, "RANDOM COURSE")]
+    assert patched.destinations(0x02) == [0x03]
+
+
+def test_course_select_picks_course_zero(patched, vanilla):
+    # selection 0 looks up key 1
+    assert vanilla.course_select_table() == {1: 1, 2: 0, 3: 2}
+    assert patched.course_select_table() == {1: 0, 2: 0, 3: 2}
+
+
+def test_player_count_menu_still_leads_to_course_select(patched):
+    assert [text for _, _, text in patched.options(0x01)] == ["1 PLAYER", "2 PLAYER"]
+    assert patched.destinations(0x01) == [0x02, 0x02]
 
 
 def test_club_house_keeps_only_the_five_retained_entries(patched):
@@ -149,7 +190,7 @@ def test_play_mode_guard_only_fires_for_selection_zero(patched):
 def test_only_bank_12_data_changes(tmp_path):
     out = tmp_path / "menu_trim.nes"
     writer = RomWriter(ROM_PATH, str(out))
-    menu_trim_patch(title_text=TITLE).apply(writer)
+    menu_trim_patch(WORDS).apply(writer)
     writer.save()
 
     vanilla = Path(ROM_PATH).read_bytes()

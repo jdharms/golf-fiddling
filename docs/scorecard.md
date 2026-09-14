@@ -225,11 +225,17 @@ punctuation.
   over **columns 10-21 only**, sized to fit `JAPAN COURSE` exactly. Outside that band
   the text comes out in palette 0, whose colour 2 is `$25` (pink).
 
-To widen the red band, patch the four attribute bytes - they are a plain literal in the
-compressed nametable stream at bank 2 **`$B9F2`** (`C0 F0 F0 30`, covering columns 8-23).
-Bits 4-7 of each byte are the lower half of the attribute row, i.e. tile row 3. The
-36-hole match play tournament card at `$BA0B` stores the same region as a `$20` run of
-six `$F0` bytes seeded at **`$BB04`**, so there columns 8-31 are already all palette 3.
+To widen the red band, patch the attribute bytes in place. The whole of attribute row 0
+(PPU `$23C0`-`$23C7`, one byte per four columns) sits inside one 9-byte literal in the
+compressed nametable stream: opcode `$08` at bank 2 `$B9EF`, then **`$B9F0`**-`$B9F7` =
+`00 00 C0 F0 F0 30 00 00`, and `$B9F8`, the first byte of attribute row 1. Bits 4-7 of
+each byte are the lower half of the attribute row, tile rows 2 and 3. Row 2 is the card's
+top frame, and the frame tiles use only colours 0 and 3, which are `$30` and `$0F` in all
+four palettes, so the band can cover any columns without changing the frame. The 36-hole
+match play tournament card at `$BA0B` stores the row as `C0`, a `$20` run of six `$F0`
+bytes seeded at **`$BB04`**, then `30`, so there columns 2-29 are already all palette 3.
+
+Both rows have 26 blank tiles between the frame, columns 3-28.
 
 Changing the scorecard name does not touch the course intro scene, which has its own
 copy - see `course_intro_scene.md`.
@@ -242,17 +248,19 @@ of this for `<NAME> COURSE`, with no free space:
 - it rewrites the descriptor at `$AFC8` in place, centred at column `(32 - width) // 2`
   as vanilla centres its own names; past 16 bytes it runs into the now-unreachable US
   handler at `$AFD8`
-- it rebuilds the four attribute bytes at `$B9F2` so palette 3 covers the name's columns
+- it rebuilds attribute row 0 at `$B9F0`-`$B9F7` so palette 3 covers the name's columns
 
-The attribute literal spans only columns 8-23, which caps the name at 16 tiles (9
-characters before ` COURSE`).
+Its optional `title` replaces `18H STROKE PLAY` (mode `$00`). The vanilla descriptor at
+`$B00D` is 15 tiles with the mode `$01` handler right behind it at `$B020`, so the new
+descriptor goes in the unreachable US and UK handler bytes instead, at `$AFE0` (just past
+the longest name descriptor), and the `.dw` at `$B00A` is repointed. It is centred at
+column `(33 - width) // 2`, which is where vanilla puts `18H STROKE PLAY`,
+`18H MATCH PLAY` and the 26-tile tournament titles. Other game modes keep their titles.
 
-Its optional `title` replaces `18H STROKE PLAY` (mode `$00`), up to 16 characters. The
-vanilla descriptor at `$B00D` is 15 tiles with the mode `$01` handler right behind it at
-`$B020`, so the new descriptor goes in the unreachable US and UK handler bytes instead, at
-`$AFDC` (just past the longest name descriptor), and the `.dw` at `$B00A` is repointed.
-It is centred at column `(33 - width) // 2`, which is where vanilla puts
-`18H STROKE PLAY` and `18H MATCH PLAY`. Other game modes keep their titles.
+The two descriptors share the unreachable bytes `$AFC8`-`$AFFD`, 54 bytes, 4 of header
+each. The patch splits them as a 20-tile name (13 characters before ` COURSE`) and a
+26-tile title, the full width of the card. A longer name would need the title packed
+right after the actual name, or moved to free space.
 
 ### Total yardage
 

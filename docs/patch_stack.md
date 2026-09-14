@@ -84,7 +84,7 @@ A recipe is a stack written as JSON (`golf/core/patches/recipe.py`):
     {"patch": "course_mirrors"},
     {"patch": "attr_streaming"},
     {"patch": "course", "course": "courses/jp/jp_uk"},
-    {"patch": "menu_trim", "title": "RANDOMIZER0001"},
+    {"patch": "menu_trim", "words": "RANDO GOLF 0001"},
     {"patch": "mercy_tap_in", "mercy_point": 9},
     {"patch": "seeded_wind", "seed": "abc123"},
     {"patch": "practice_swing"},
@@ -96,7 +96,9 @@ A recipe is a stack written as JSON (`golf/core/patches/recipe.py`):
 - `patch` names a patch type in the registry (`golf/core/patches/registry.py`). The other
   keys are its parameters, checked against the type's parameter dataclass: unknown or
   missing parameters and values of the wrong type are errors, and integers may also be
-  written as strings in any base Python reads (`"0x78"`).
+  written as strings in any base Python reads (`"0x78"`). A list of strings may also be
+  written as one whitespace-separated string (`"clubs": "1W 3W PW"`), which is how `-p`
+  passes one.
 - Paths are relative to the recipe file.
 - `base_sha1` is optional. Omitted means the vanilla US ROM; `null` means any base.
 - Patch types take concrete values and draw nothing at random, so a recipe and a base ROM
@@ -128,8 +130,8 @@ golf-patch --list
   `golf-write`.
 - `-v` adds each patch type's report: bank usage and scorecard totals for `course`, the per-hole pin and wind
   forecast for `seeded_wind`, track and space usage for `music_import`, new tiles and
-  import notes for `signpost_random_banner`, and the image location, seed ID and player IDs
-  for `scorecard_qr` (never the keys).
+  import notes for `signpost_random_banner`, the image location, seed ID and player IDs
+  for `scorecard_qr` (never the keys), and the new-save defaults for `sram_defaults`.
 - `--list` prints every patch type and its parameters.
 
 `golf-write` remains the tool for writing a course from the editor: it applies the course's
@@ -144,8 +146,8 @@ three requirements and the `course` step.
 | `course_mirrors` | | |
 | `attr_streaming` | | |
 | `course` | `course` (a directory) or `holes` (18 files); also writes the scorecard totals | `multi_bank_lookup`, `course_mirrors`, `attr_streaming` |
-| `menu_trim` | `title` (14 renderable characters) | |
-| `scorecard_course_name` | `name` (default `RANDOM`; A-Z, 0-9 and space, at most 9), `title` (optional, replaces `18H STROKE PLAY`; at most 16) | `course_mirrors` |
+| `menu_trim` | `words` (default `OPEN GOLF RANDO`; three words of 4-6 renderable characters for the header of the main, player count and course select menus) | |
+| `scorecard_course_name` | `name` (default `RANDOM`; A-Z, 0-9 and space, at most 13), `title` (optional, replaces `18H STROKE PLAY`; at most 26) | `course_mirrors` |
 | `remove_course_banner` | | |
 | `signpost_random_banner` | `art`, `banner` (default `us`), `hole` (default 1) | |
 | `mercy_tap_in` | `mercy_point`, `mercy_result` (default `mercy_point` + 1) | |
@@ -153,6 +155,7 @@ three requirements and the `course` step.
 | `practice_swing` | `hold_frames` (default `0x78`) | |
 | `scorecard_qr` | `credentials` (a `golf-qr-credentials` file) | `course_mirrors` |
 | `music_import` | `dump`, `transpose_adjust` (default from the dump) | |
+| `sram_defaults` | `player_name` (A-Z, `.` and space, at most 10), `clubs` (up to 14 of `1W`-`4W`, `1I`-`9I`, `PW`, `SW`, `PT`; the putter is added), `bgm` (default true), `sram_magic` (default `0x3553`, "5S"; neither byte `$00` or `$FF`). Only a save being initialised gets them | |
 | `putting_practice` | (experimental) | |
 
 `remove_course_banner` and `signpost_random_banner` both rewrite the banner selection at
@@ -168,5 +171,5 @@ uv run pytest tests/integration/test_patch_stack_rom.py tests/integration/test_p
 
 `tests/integration/test_patch_stack_rom.py` builds a stack of every patch that has no art or
 file inputs beyond a music dump - WRAM expansion, the course code and a Mario Open course,
-menu trim, banner removal, mercy tap-in, seeded wind, practice swing, the scorecard QR and
-music import - on the vanilla ROM.
+menu trim, banner removal, mercy tap-in, seeded wind, practice swing, the scorecard QR,
+SRAM defaults and music import - on the vanilla ROM.
