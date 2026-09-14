@@ -7,6 +7,7 @@ One line per document. Command-line tools are indexed in the top-level `README.m
 | Doc | About |
 |-----|-------|
 | [randomizer.md](randomizer.md) | Randomizer design: goals, logic, what gets randomized |
+| [randomizer_devplan.md](randomizer_devplan.md) | Randomizer site architecture, data model, routes and the ordered development plan |
 | [jp_extraction.md](jp_extraction.md) | Extracting Mario Open Golf (JP) courses for import into the US ROM |
 
 ## How the vanilla ROM works
