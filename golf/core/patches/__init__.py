@@ -49,10 +49,14 @@ from .scorecard_course_name import (
     scorecard_course_name_patches,
 )
 from .scorecard_qr import (
-    QrCredentials,
+    QR_DISABLE_PATCH,
+    SCORECARD_QR_PATCH,
     ScorecardQrPatch,
+)
+from .qr_credentials import (
+    QrCredentials,
     load_credentials,
-    scorecard_qr_patch,
+    qr_credentials_patch,
 )
 from .sram_defaults import Club, sram_defaults_patch, sram_defaults_patches
 from .signpost_banner import remove_course_banner_patches
@@ -100,6 +104,7 @@ __all__ = [
     "ROMPatch",
     "QrCredentials",
     "load_credentials",
+    "qr_credentials_patch",
     "PATCH_SPECS",
     "BuildContext",
     "PatchSpec",
@@ -110,7 +115,8 @@ __all__ = [
     "describe_params",
     "parse_step_arg",
     "ScorecardQrPatch",
-    "scorecard_qr_patch",
+    "SCORECARD_QR_PATCH",
+    "QR_DISABLE_PATCH",
     "scorecard_course_name_patch",
     "scorecard_course_name_patches",
     "BytePatch",

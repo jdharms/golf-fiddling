@@ -24,8 +24,8 @@ that region is permanently available.
 | 14-31 | 18 | Hole records, holes 1-18 |
 | 32-35 | 4 | HalfSipHash-2-4-32 over bytes 0-31 |
 
-Seed ID, player ID and the MAC key are written at patch time by the randomizer. The
-hole records are read out of RAM at round end.
+Seed ID, player ID and the MAC key are written per download by the `qr_credentials`
+patch. The hole records are read out of RAM at round end.
 
 ### Hole record
 
@@ -501,19 +501,31 @@ table, writes the 19x19 block one row per PPU address, draws the three captions,
 the palette, sets `PpuCtrl_Cache` `$10` to `$90` (NMI on, background patterns at
 `$1000`), `$11` to `$1E`, zeroes the scroll, and turns rendering back on (`$CDBE`).
 
-### Installing it: the patch
+### Installing it: the patches
 
-`golf/core/patches/scorecard_qr.py`, applied as the `scorecard_qr` step of `golf-patch` with
-credentials written by `golf-qr-credentials`:
+A randomized ROM is built in two stages (`randomizer_devplan.md`): an unfinished ROM once
+per seed, and a finished ROM per download. The QR screen is split the same way, into three
+patches:
+
+| Patch | Stage | Writes |
+|---|---|---|
+| `scorecard_qr` (`golf/core/patches/scorecard_qr.py`) | unfinished | the image, the trampoline and the splice |
+| `qr_credentials` (`golf/core/patches/qr_credentials.py`) | finishing, signed in | the seed ID, player IDs and MAC keys |
+| `qr_disable` (`golf/core/patches/scorecard_qr.py`) | finishing, guest | the splice, back to the vanilla wait |
 
 ```bash
 golf-qr-credentials -o keys.json
-golf-patch modified.nes --any-base -p scorecard_qr:credentials=keys.json -o out.nes
+golf-patch modified.nes --any-base -p scorecard_qr -o unfinished.nes
+golf-patch unfinished.nes --any-base -p qr_credentials:credentials=keys.json -o finished.nes
+golf-patch unfinished.nes --any-base -p qr_disable -o guest.nes
 ```
 
-Three writes: the 4,420-byte image (tables, routine, credentials) into bank 2 from
-`$8400`; the ten-byte trampoline into the fixed bank's dead greens pointer slots at `$DCBD`; and the two-byte
-splice at `$852E` that repoints the post-round wait at it.
+`scorecard_qr` makes three writes: the 4,420-byte image (tables and routine) into bank 2
+from `$8400`; the ten-byte trampoline into the fixed bank's dead greens pointer slots at
+`$DCBD`; and the two-byte splice at `$852E` that repoints the post-round wait at it.
+
+Both finishing patches rewrite bytes `scorecard_qr` wrote, so neither shares a
+`PatchStack` with it; they run in a second stack on the unfinished ROM.
 
 **This patch does not verify the bytes it overwrites**, unlike `BytePatch`. The region
 write is four kilobytes of vanilla course data and carrying a copy to compare against
@@ -524,17 +536,28 @@ trampoline's ten bytes still hold the vanilla greens pointers. It also requires
 catch a wrong ROM or a rearranged routine. A future "reclaim" patch that fills the freed
 region with `$FF` would let this one assert on the region too.
 
-Each build gets a fresh seed ID, one player ID per slot and one MAC key per slot, written
-into placeholders the assembler reserved (`QrSeedId`, `QrPlayerId`, `QrMacKey`). They
-default to zero, so **a ROM that was never patched produces an all-zero seed and player
-ID** — something the server rejects rather than silently accepting. `golf-qr-credentials` writes
-the credentials as JSON and the patch reads them from that file; the keys are secret and
-nothing else prints them.
+The seed ID, one player ID per slot and one MAC key per slot go into placeholders the
+assembler reserved (`QrSeedId`, `QrPlayerId`, `QrMacKey`). `scorecard_qr` leaves them at the
+fill, zero, so **an unfinished ROM produces an all-zero seed and player ID**, which the
+server rejects rather than silently accepting. `qr_credentials` is three byte patches, one
+per placeholder, each expecting the fill as its original bytes: it only lands on an
+unfinished image, it refuses a ROM already finished with other credentials, and finishing
+twice with the same credentials writes nothing. `golf-qr-credentials` writes the credentials
+as JSON and the patch reads them from that file; the keys are secret and nothing else
+prints them.
 
-`tests/integration/test_qr_patch_rom.py` applies the patch to the real ROM, checks that
-exactly those three regions change, then reads bank 2 back out of the patched file, runs
-it in the simulator, and decodes the screen it draws — the whole chain from
-the `scorecard_qr` patch to a scannable, MAC-verifying code.
+`qr_disable` is one byte patch that expects the splice `scorecard_qr` wrote and restores
+`JSR $85BA`, so a guest ROM ends the round on the scorecard. The image and trampoline stay,
+unreachable. Afterwards `scorecard_qr` is neither applied nor applicable, so the screen
+cannot be put back on a guest ROM.
+
+`tests/integration/test_qr_patch_rom.py` applies `scorecard_qr` to the real ROM and checks
+that exactly those three regions change and the placeholders hold the fill; that
+`qr_credentials` changes only the placeholders and refuses a ROM without `scorecard_qr` or
+one already finished with other credentials; and that `qr_disable` changes only the splice.
+It then finishes a ROM, reads bank 2 back out of the file, runs it in the simulator, and
+decodes the screen it draws — the whole chain from the patches to a scannable,
+MAC-verifying code.
 
 ### Dismissal
 
@@ -588,6 +611,8 @@ arrays at `$0158` (strokes) and `$018E` (putts), with `PlayerCount` `$9A` = 1.
 
 - `GET /s/<48 chars>` decodes the payload, recomputes the MAC with the key stored for
   that (seed, player), and records the round.
+- A seed ID or player ID of all zeros is the placeholder fill of an unfinished ROM and is
+  rejected.
 - **First submission per (seed, player) is authoritative.** Anything after it is
   rejected.
 - Two players on one cart are treated as teammates. Player slot 1 submissions are
@@ -684,8 +709,8 @@ goes up.
    differentially tested against the oracle. See The 6502 port above.
 5. **Display layer** — *done*, `golf/qr/port/display.s`; 446 bytes, tested through
    simulated video memory. See The display layer above.
-6. **Patch integration** — *done*, the `scorecard_qr` patch; three writes, credentials inserted
-   at patch time. See Installing it above.
+6. **Patch integration** — *done*, the `scorecard_qr` patch and its finishing patches
+   `qr_credentials` and `qr_disable`. See Installing it above.
 7. **Server endpoint.**
 
 Phases 1-5 touch no ROM: the port is assembled and tested entirely in the repo, and

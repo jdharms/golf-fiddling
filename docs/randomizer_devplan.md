@@ -50,8 +50,9 @@ needed:
 Finishing applies the stored IPS to the vanilla bytes in memory, runs the finishing
 `PatchStack` on that unfinished ROM with the stack's vanilla hash check disabled
 (`base_sha1=None`), and diffs the result against vanilla to produce the finished IPS. Overlap tracking is per stack,
-so a finishing patch rewriting bytes the unfinished stage wrote is allowed; one unit test
-builds both stages as a single stack to prove the two never collide by accident.
+so a finishing patch rewriting bytes the unfinished stage wrote is allowed. `qr_credentials`
+and `qr_disable` rewrite bytes `scorecard_qr` wrote by design; one unit test builds both
+stages as a single stack and asserts those are the only overlaps.
 
 Generation runs in a threadpool behind a semaphore so a burst of requests serializes
 instead of piling up. One uvicorn worker is enough to start.
@@ -203,12 +204,12 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
    `generate(catalog, curation, settings) -> Manifest`, which draws a family per slot into
    a layout, chooses the music, derives the wind seeds and draws the magic words, each from
    its own stream of the PRNG seed. See `docs/manifest.md`.
-4. **QR patch split.** `scorecard_qr` writes the image with its placeholders unfilled;
-   a new `qr_credentials` patch of three byte patches fills them, with the fill as its
-   expected originals; a new `qr_disable` patch reverts the splice for guest ROMs. Both
-   registered in `registry.py`. Update the patch table in `patch_stack.md` and the
-   Installing it and Server contract passages in `scorecard_qr.md`. Integration test on
-   the real ROM.
+4. **QR patch split.** Done: `scorecard_qr` (`golf/core/patches/scorecard_qr.py`) writes
+   the image with its placeholders at the fill; `qr_credentials`
+   (`golf/core/patches/qr_credentials.py`) is three byte patches that fill them, expecting
+   the fill; `qr_disable` reverts the splice for guest ROMs. All three are registered, and
+   `tests/integration/test_qr_patch_rom.py` covers them on the real ROM. See
+   `docs/scorecard_qr.md`.
 5. **Build stages.** The unfinished stack from a manifest and the finishing stack from
    player options in both flavours, in `golf/randomizer/`. The unit test that builds
    both stages as a single stack to prove no overlap, and an integration test that

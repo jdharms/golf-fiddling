@@ -89,7 +89,7 @@ A recipe is a stack written as JSON (`golf/core/patches/recipe.py`):
     {"patch": "mercy_tap_in", "mercy_point": 9},
     {"patch": "seeded_wind", "seed": "abc123"},
     {"patch": "practice_swing"},
-    {"patch": "scorecard_qr", "credentials": "keys.json"}
+    {"patch": "scorecard_qr"}
   ]
 }
 ```
@@ -104,7 +104,7 @@ A recipe is a stack written as JSON (`golf/core/patches/recipe.py`):
 - `base_sha1` is optional. Omitted means the vanilla US ROM; `null` means any base.
 - Patch types take concrete values and draw nothing at random, so a recipe and a base ROM
   always build the same ROM.
-- `scorecard_qr` reads its credentials from a separate file written by
+- `qr_credentials` reads its credentials from a separate file written by
   `golf-qr-credentials`, because the MAC keys are secret; a recipe only names the file.
 
 In Python: `Recipe.load(path)`, `Recipe.from_dict(data, base_dir)`, `recipe.stack(base)`,
@@ -131,8 +131,9 @@ golf-patch --list
   `golf-write`.
 - `-v` adds each patch type's report: bank usage and scorecard totals for `course`, the per-hole pin and wind
   forecast for `seeded_wind`, track and space usage for `music_import`, new tiles and
-  import notes for `signpost_random_banner`, the image location, seed ID and player IDs
-  for `scorecard_qr` (never the keys), and the new-save defaults for `sram_defaults`.
+  import notes for `signpost_random_banner`, the image location for `scorecard_qr`, the
+  seed ID and player IDs for `qr_credentials` (never the keys), and the new-save defaults
+  for `sram_defaults`.
 - `--list` prints every patch type and its parameters.
 
 `golf-write` remains the tool for writing a course from the editor: it applies the course's
@@ -154,7 +155,9 @@ three requirements and the `course` step.
 | `mercy_tap_in` | `mercy_point`, `mercy_result` (default `mercy_point` + 1) | |
 | `seeded_wind` | `seed` | `course_mirrors` |
 | `practice_swing` | `hold_frames` (default `0x78`) | |
-| `scorecard_qr` | `credentials` (a `golf-qr-credentials` file) | `course_mirrors` |
+| `scorecard_qr` | none; the seed ID, player ID and MAC key placeholders are left at the fill | `course_mirrors` |
+| `qr_credentials` | `credentials` (a `golf-qr-credentials` file); fills the placeholders, expecting the fill | `scorecard_qr` |
+| `qr_disable` | none; reverts the round-end splice for a guest ROM, expecting the splice `scorecard_qr` wrote | |
 | `music_import` | `dump`, `track` (optional; one dump music ID, imported as `$03` and made every course's theme), `transpose_adjust` (default from the dump) | |
 | `sram_defaults` | `player_name` (A-Z, `.` and space, at most 10), `clubs` (up to 14 of `1W`-`4W`, `1I`-`9I`, `PW`, `SW`, `PT`; the putter is added), `bgm` (default true), `sram_magic` (default `0x3553`, "5S"; neither byte `$00` or `$FF`). Only a save being initialised gets them | |
 | `putting_practice` | (experimental) | |
@@ -162,6 +165,17 @@ three requirements and the `course` step.
 `remove_course_banner` and `signpost_random_banner` both rewrite the banner selection at
 bank 12 `$AC5D`, so a stack with both fails: whichever comes second finds the other's bytes
 where it expects vanilla ones.
+
+`qr_credentials` and `qr_disable` rewrite bytes `scorecard_qr` wrote, so neither can share a
+stack with it. They are finishing patches: build the unfinished ROM with `scorecard_qr`,
+then run a second stack with `base_sha1=None` (`--any-base`) on that ROM. See the two-stage
+build in `randomizer_devplan.md`.
+
+```bash
+golf-patch nes_open_us.nes recipe.json -o unfinished.nes
+golf-patch unfinished.nes --any-base -p qr_credentials:credentials=keys.json -o finished.nes
+golf-patch unfinished.nes --any-base -p qr_disable -o guest.nes
+```
 
 ## Testing
 
@@ -173,4 +187,5 @@ uv run pytest tests/integration/test_patch_stack_rom.py tests/integration/test_p
 `tests/integration/test_patch_stack_rom.py` builds a stack of every patch that has no art or
 file inputs beyond a music dump - WRAM expansion, the course code and a Mario Open course,
 menu trim, banner removal, mercy tap-in, seeded wind, practice swing, the scorecard QR,
-SRAM defaults and music import - on the vanilla ROM.
+SRAM defaults and music import - on the vanilla ROM, then finishes that ROM with
+`qr_credentials` and, separately, with `qr_disable`.

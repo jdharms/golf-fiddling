@@ -2,11 +2,11 @@
 """
 NES Open Tournament Golf - Scorecard QR Credentials
 
-Writes the credentials the scorecard_qr patch needs - a seed ID, and one player
+Writes the credentials the qr_credentials patch needs - a seed ID, and one player
 ID and MAC key per player slot - to a JSON file that a recipe names:
 
     golf-qr-credentials -o keys.json
-    golf-patch rom.nes -p scorecard_qr:credentials=keys.json ...
+    golf-patch rom.nes -p scorecard_qr -p qr_credentials:credentials=keys.json ...
 
 The keys are secret: they are what stops a player submitting a scorecard as
 somebody else, and the server needs them to verify submissions. Keep the file

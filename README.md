@@ -127,7 +127,7 @@ Build a standalone editor executable with `uv run pyinstaller run_editor.spec`.
 | `golf-qr-validate` | Sweep masks x rounds x capture conditions x decoders |
 | `golf-qr-tables [out_dir]` | Export the ROM tables |
 | `golf-qr-port` | Assemble the 6502 port and report sizes against the bank 2 budget |
-| `golf-qr-credentials -o <keys.json>` | Write the seed ID, player IDs and secret MAC keys the `scorecard_qr` patch reads |
+| `golf-qr-credentials -o <keys.json>` | Write the seed ID, player IDs and secret MAC keys the `qr_credentials` patch reads |
 
 ## Example workflow
 

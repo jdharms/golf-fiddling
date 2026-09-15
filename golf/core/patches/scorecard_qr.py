@@ -7,7 +7,9 @@ Phase 6 of `docs/scorecard_qr.md`. Three writes:
    `golf.qr.port` — into bank 2's reclaimed region, from `$8400`. That region
    is the vacated UK course: a randomized ROM carries one course, and with
    course mirroring and menu trimming there is no way to play a round on
-   course 3, so nothing reads it.
+   course 3, so nothing reads it. The seed ID, player ID and MAC key
+   placeholders (`QrSeedId`, `QrPlayerId`, `QrMacKey`) are left holding
+   `port.PATCH_FILL`.
 
 2. **A trampoline** in the fixed bank at `$DCBD`, ten bytes:
 
@@ -27,6 +29,21 @@ Phase 6 of `docs/scorecard_qr.md`. Three writes:
    is also called from `$8599` on the tournament path; only this call site
    moves.
 
+The image carries no credentials because a randomized ROM is built in two
+stages (`docs/randomizer_devplan.md`): this patch belongs to the unfinished
+ROM built once per seed, and one of two companions finishes it per download.
+
+- `qr_credentials` (`golf/core/patches/qr_credentials.py`) writes a player's
+  seed ID, player IDs and MAC keys over the fill.
+- `QR_DISABLE_PATCH` (`qr_disable`) puts the splice back to `JSR $85BA` for a
+  guest ROM, so the QR screen never appears. Its expected original is the
+  splice this patch wrote, so it can only follow it. Afterwards this patch
+  reports neither applied (the splice is vanilla) nor applicable (the
+  trampoline is not), so it cannot be re-applied to a guest ROM.
+
+Both rewrite bytes this patch wrote, so neither can share a `PatchStack` with
+it; they run in the finishing stack on top of the unfinished ROM.
+
 Unlike `BytePatch`, this does not verify the bytes it overwrites in bank 2. The
 region write is nearly four kilobytes of vanilla course data, and carrying a
 copy of that to compare against would be absurd. What it *does* verify is the
@@ -39,17 +56,13 @@ pointers.
 one assert on the region too. See the note in the doc.)
 """
 
-import json
-import random
-from dataclasses import dataclass
-from pathlib import Path
-
 from golf.core import rom_utils
 from golf.core.asm6502 import assemble
-from golf.qr import payload, port
+from golf.qr import port
 from golf.qr.port import layout
 
 from .base import PatchError, ROMPatch
+from .byte_patch import BytePatch
 from .multi_bank import COURSE_MIRRORS_PATCH
 
 # --- Splice site ------------------------------------------------------------
@@ -87,109 +100,6 @@ def _prg_offset(cpu_addr: int, bank: int) -> int:
     return bank * PRG_BANK_SIZE + (cpu_addr - 0x8000)
 
 
-# --- Per-build credentials --------------------------------------------------
-
-
-@dataclass(frozen=True)
-class QrCredentials:
-    """
-    What the randomizer writes into each ROM: the seed this cartridge plays,
-    and one player ID and MAC key per player slot.
-
-    The IDs are public; **the keys are not** — they are what stops a player
-    submitting a scorecard as somebody else, and they live server-side keyed to
-    (seed, player).
-    """
-
-    seed_id: bytes
-    player_ids: tuple[bytes, bytes]
-    keys: tuple[bytes, bytes]
-
-    def __post_init__(self) -> None:
-        if len(self.seed_id) != payload.SEED_ID_LEN:
-            raise ValueError(f"seed_id must be {payload.SEED_ID_LEN} bytes")
-        for player_id in self.player_ids:
-            if len(player_id) != payload.PLAYER_ID_LEN:
-                raise ValueError(f"player_id must be {payload.PLAYER_ID_LEN} bytes")
-        for key in self.keys:
-            if len(key) != payload.KEY_LEN:
-                raise ValueError(f"key must be {payload.KEY_LEN} bytes")
-
-    @classmethod
-    def random(cls, rng: random.Random | None = None) -> "QrCredentials":
-        source = rng or random.SystemRandom()
-
-        def draw(count: int) -> bytes:
-            return bytes(source.randrange(256) for _ in range(count))
-
-        return cls(
-            seed_id=draw(payload.SEED_ID_LEN),
-            player_ids=(draw(payload.PLAYER_ID_LEN), draw(payload.PLAYER_ID_LEN)),
-            keys=(draw(payload.KEY_LEN), draw(payload.KEY_LEN)),
-        )
-
-    def manifest(self) -> dict[str, object]:
-        """Everything the server needs to verify this cartridge's submissions."""
-        return {
-            "seed_id": self.seed_id.hex(),
-            "players": [
-                {"slot": slot, "player_id": pid.hex(), "key": key.hex()}
-                for slot, (pid, key) in enumerate(
-                    zip(self.player_ids, self.keys, strict=True)
-                )
-            ],
-            "url_prefix": payload.URL_PREFIX,
-            "protocol_version": payload.PROTOCOL_VERSION,
-        }
-
-    @classmethod
-    def from_manifest(cls, data) -> "QrCredentials":
-        """Read credentials back from what `manifest()` wrote."""
-        try:
-            players = sorted(data["players"], key=lambda player: player["slot"])
-            if [player["slot"] for player in players] != [0, 1]:
-                raise ValueError("credentials need player slots 0 and 1")
-            return cls(
-                seed_id=bytes.fromhex(data["seed_id"]),
-                player_ids=(
-                    bytes.fromhex(players[0]["player_id"]),
-                    bytes.fromhex(players[1]["player_id"]),
-                ),
-                keys=(bytes.fromhex(players[0]["key"]), bytes.fromhex(players[1]["key"])),
-            )
-        except (KeyError, TypeError) as error:
-            raise ValueError(f"not a credentials file: missing or malformed {error}") from error
-
-
-def load_credentials(path) -> QrCredentials:
-    """Credentials from a JSON file written by `golf-qr-credentials`."""
-    return QrCredentials.from_manifest(json.loads(Path(path).read_text()))
-
-
-def build_image(credentials: QrCredentials) -> bytes:
-    """
-    The bytes that go into bank 2 from `layout.TABLE_ORIGIN`: tables, then the
-    routine, with this build's seed, player IDs and keys written into the
-    placeholders the assembler reserved.
-    """
-    program = port.build()
-    try:
-        image = bytearray(port.rom_bytes())
-    except ValueError as error:  # an origin that cannot hold the tables
-        raise PatchError(str(error)) from error
-
-    def put(symbol: str, data: bytes) -> None:
-        offset = program.symbol(symbol) - layout.TABLE_ORIGIN
-        if not 0 <= offset <= len(image) - len(data):
-            raise PatchError(f"{symbol} is outside the image")
-        image[offset : offset + len(data)] = data
-
-    put("QrSeedId", credentials.seed_id)
-    put("QrPlayerId", b"".join(credentials.player_ids))
-    put("QrMacKey", b"".join(credentials.keys))
-    return bytes(image)
-
-
 def build_trampoline(entry: int) -> bytes:
     """The ten bytes in the fixed bank that the spliced `JSR` now reaches."""
     source = f"""
@@ -211,9 +121,11 @@ class ScorecardQrPatch(ROMPatch):
     description = "Draw a scorecard submission QR code after the post-round scorecard"
     requires = (COURSE_MIRRORS_PATCH,)
 
-    def __init__(self, credentials: QrCredentials):
-        self.credentials = credentials
-        self.image = build_image(credentials)
+    def __init__(self) -> None:
+        try:
+            self.image = port.rom_bytes()
+        except ValueError as error:  # an origin that cannot hold the tables
+            raise PatchError(str(error)) from error
         self.entry = port.build().symbol("QrShowCodes")
         self.trampoline = build_trampoline(self.entry)
 
@@ -299,6 +211,15 @@ class ScorecardQrPatch(ROMPatch):
         )
 
 
-def scorecard_qr_patch(credentials: QrCredentials | None = None) -> ScorecardQrPatch:
-    """The patch, with fresh random credentials unless some are supplied."""
-    return ScorecardQrPatch(credentials or QrCredentials.random())
+SCORECARD_QR_PATCH = ScorecardQrPatch()
+
+#: For a guest ROM: the splice back to the vanilla scorecard wait, so the round
+#: ends on the scorecard and the QR screen is never reached. The image and the
+#: trampoline stay, unreachable.
+QR_DISABLE_PATCH = BytePatch(
+    name="qr_disable",
+    description="Revert the round-end splice so the QR screen never appears (guest ROMs)",
+    prg_offset=SCORECARD_QR_PATCH.splice_offset,
+    original=SCORECARD_QR_PATCH.splice_bytes,
+    patched=SCORECARD_QR_PATCH.vanilla_splice_bytes,
+)

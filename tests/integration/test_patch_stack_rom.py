@@ -12,17 +12,19 @@ from golf.core.patches import (
     COURSE_MIRRORS_PATCH,
     MULTI_BANK_CODE_PATCH,
     WRAM_EXPANSION_PATCH,
+    QR_DISABLE_PATCH,
+    SCORECARD_QR_PATCH,
     CompositePatch,
     CoursePatch,
     PatchStack,
     QrCredentials,
     ROMPatch,
-    ScorecardQrPatch,
     StackError,
     menu_trim_patch,
     mercy_tap_in_patches,
     music_import_patch,
     practice_swing_patch,
+    qr_credentials_patch,
     remove_course_banner_patches,
     scorecard_course_name_patch,
     seeded_wind_patch,
@@ -68,7 +70,7 @@ def full_steps(course) -> list[ROMPatch]:
         CompositePatch("mercy_tap_in", "mercy tap-in at 10", mercy_tap_in_patches(10)),
         seeded_wind_patch("stack"),
         practice_swing_patch(),
-        ScorecardQrPatch(QrCredentials.random(random.Random(1))),
+        SCORECARD_QR_PATCH,
         sram_defaults_patch("RANDO", ["1W", "3W", "5I", "PW", "SW"], bgm=False, sram_magic=0x5244),
         music_import_patch(json.loads(Path("data/music/music_jp_courses.json").read_text()), track=0x0C),
     ]
@@ -101,6 +103,43 @@ def test_every_patch_builds_together(vanilla, full_steps):
     bank2_terrain = range(2 * 0x4000 + 0x037F, 2 * 0x4000 + 0x2554)
     assert not any(start in bank2_terrain for start, _ in result.regions["course"])
     assert any(start in bank2_terrain for start, _ in result.regions["scorecard_qr"])
+
+
+@pytest.fixture(scope="module")
+def unfinished(vanilla, full_steps) -> bytes:
+    return PatchStack(full_steps).build(vanilla).rom
+
+
+def test_finishing_with_credentials_builds_on_the_unfinished_rom(vanilla, unfinished):
+    credentials = QrCredentials.random(random.Random(1))
+    finished = PatchStack([qr_credentials_patch(credentials)], base_sha1=None).build(unfinished)
+    written = {
+        0x10 + i for start, end in finished.regions["qr_credentials"] for i in range(start, end)
+    }
+    changed = {i for i in range(len(unfinished)) if unfinished[i] != finished.rom[i]}
+    assert changed and changed <= written
+    assert len(written) == 32
+
+
+def test_finishing_as_a_guest_restores_the_vanilla_wait(vanilla, unfinished):
+    guest = PatchStack([QR_DISABLE_PATCH], base_sha1=None).build(unfinished).rom
+    offset = 0x10 + SCORECARD_QR_PATCH.splice_offset
+    assert guest[offset : offset + 2] == vanilla[offset : offset + 2]
+    changed = [i for i in range(len(guest)) if guest[i] != unfinished[i]]
+    assert changed and all(offset <= i < offset + 2 for i in changed)
+
+
+@pytest.mark.parametrize("finishing", ["qr_credentials", "qr_disable"])
+def test_finishing_patches_overlap_scorecard_qr_in_one_stack(vanilla, full_steps, finishing):
+    """By design: both rewrite bytes scorecard_qr wrote, so they belong in the
+    finishing stack on top of the unfinished ROM."""
+    patch = (
+        qr_credentials_patch(QrCredentials.random(random.Random(1)))
+        if finishing == "qr_credentials"
+        else QR_DISABLE_PATCH
+    )
+    with pytest.raises(StackError, match=f"step '{finishing}' writes .* step 'scorecard_qr' already wrote"):
+        PatchStack([*full_steps, patch]).build(vanilla)
 
 
 def test_the_build_is_deterministic_and_its_ips_reproduces_it(vanilla, full_steps):
