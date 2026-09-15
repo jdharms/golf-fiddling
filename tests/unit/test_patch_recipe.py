@@ -39,7 +39,7 @@ class TestRegistry:
             "menu_trim": {"words": "ABCD EFGH IJKL"},
             "mercy_tap_in": {"mercy_point": 9},
             "seeded_wind": {"seed": "x"},
-            "scorecard_qr": {"credentials": str(credentials_file)},
+            "qr_credentials": {"credentials": str(credentials_file)},
             "music_import": {"dump": "data/music/music_jp_courses.json"},
         }
         for spec_id in PATCH_SPECS:

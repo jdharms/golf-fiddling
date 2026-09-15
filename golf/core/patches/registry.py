@@ -32,7 +32,8 @@ from .practice_swing import DEFAULT_HOLD_FRAMES, practice_swing_patch
 from .putting_practice import putting_practice_patches
 from .scorecard_course_name import DEFAULT_NAME as DEFAULT_COURSE_NAME
 from .scorecard_course_name import scorecard_course_name_patch
-from .scorecard_qr import QR_BANK, TRAMPOLINE_CPU_ADDR, ScorecardQrPatch, load_credentials
+from .qr_credentials import load_credentials, qr_credentials_patch
+from .scorecard_qr import QR_BANK, QR_DISABLE_PATCH, SCORECARD_QR_PATCH, TRAMPOLINE_CPU_ADDR, ScorecardQrPatch
 from .seeded_wind import derive_hole_seeds, predict_hole, seeded_wind_patch
 from .signpost_banner import remove_course_banner_patches
 from .signpost_random_banner import signpost_banner_patch
@@ -135,7 +136,7 @@ class ScorecardCourseNameParams:
 
 
 @dataclass(frozen=True)
-class ScorecardQrParams:
+class QrCredentialsParams:
     #: a file written by golf-qr-credentials
     credentials: Path
 
@@ -220,11 +221,20 @@ def _report_seeded_wind(params: SeededWindParams, patch) -> list[str]:
     return lines
 
 
-def _report_qr(params: ScorecardQrParams, patch: ScorecardQrPatch) -> list[str]:
-    credentials = patch.credentials
+def _report_qr(params: NoParams, patch: ScorecardQrPatch) -> list[str]:
     return [
         f"image {len(patch.image):,} bytes at bank {QR_BANK} ${qr_layout.TABLE_ORIGIN:04X}",
         f"entry ${patch.entry:04X} QrShowCodes, via the trampoline at ${TRAMPOLINE_CPU_ADDR:04X}",
+    ]
+
+
+def _build_qr_credentials(ctx: BuildContext, params: QrCredentialsParams) -> ROMPatch:
+    return qr_credentials_patch(load_credentials(params.credentials))
+
+
+def _report_qr_credentials(params: QrCredentialsParams, patch) -> list[str]:
+    credentials = load_credentials(params.credentials)
+    return [
         f"seed ID {credentials.seed_id.hex()}",
         *[
             f"player {slot + 1} {player_id.hex()} (key withheld)"
@@ -350,10 +360,23 @@ PATCH_SPECS: dict[str, PatchSpec] = {
         ),
         PatchSpec(
             "scorecard_qr",
-            "Show a submission QR code after the round (docs/scorecard_qr.md)",
-            ScorecardQrParams,
-            lambda ctx, params: ScorecardQrPatch(load_credentials(params.credentials)),
+            "Show a submission QR code after the round, its credentials unfilled (docs/scorecard_qr.md)",
+            NoParams,
+            _fixed(SCORECARD_QR_PATCH),
             _report_qr,
+        ),
+        PatchSpec(
+            "qr_credentials",
+            "Write a seed ID, player IDs and MAC keys into the QR placeholders (docs/scorecard_qr.md)",
+            QrCredentialsParams,
+            _build_qr_credentials,
+            _report_qr_credentials,
+        ),
+        PatchSpec(
+            "qr_disable",
+            "Revert the round-end splice so a guest ROM never shows the QR screen",
+            NoParams,
+            _fixed(QR_DISABLE_PATCH),
         ),
         PatchSpec(
             "music_import",

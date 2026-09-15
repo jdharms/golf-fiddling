@@ -42,7 +42,7 @@ def credentials(tmp_path) -> Path:
     return path
 
 
-def full_recipe(credentials: Path) -> dict:
+def full_recipe() -> dict:
     return {
         "steps": [
             {"patch": "wram_expansion"},
@@ -55,7 +55,7 @@ def full_recipe(credentials: Path) -> dict:
             {"patch": "mercy_tap_in", "mercy_point": 9},
             {"patch": "seeded_wind", "seed": "recipe"},
             {"patch": "practice_swing"},
-            {"patch": "scorecard_qr", "credentials": str(credentials)},
+            {"patch": "scorecard_qr"},
             {"patch": "music_import", "dump": "data/music/music_jp_courses.json"},
         ]
     }
@@ -68,8 +68,8 @@ def run(*args: str | Path) -> subprocess.CompletedProcess:
 
 
 @pytest.mark.skipif(not ART.exists(), reason=f"{ART.name} not present")
-def test_a_recipe_of_every_compatible_patch_builds(vanilla, credentials):
-    recipe = Recipe.from_dict(full_recipe(credentials), ROOT)
+def test_a_recipe_of_every_compatible_patch_builds(vanilla):
+    recipe = Recipe.from_dict(full_recipe(), ROOT)
     result = recipe.stack(vanilla).build(vanilla)
     assert [name for name, regions in result.regions.items() if regions] == [
         step.patch for step in recipe.steps
@@ -112,8 +112,8 @@ def test_banner_removal_and_new_banner_art_do_not_stack(vanilla):
         recipe.stack(vanilla).build(vanilla)
 
 
-def test_cli_builds_a_rom_and_its_ips_from_a_recipe(vanilla, tmp_path, credentials):
-    recipe = full_recipe(credentials)
+def test_cli_builds_a_rom_and_its_ips_from_a_recipe(vanilla, tmp_path):
+    recipe = full_recipe()
     recipe["steps"] = [s for s in recipe["steps"] if s["patch"] != "signpost_random_banner"]
     recipe_path = tmp_path / "recipe.json"
     Recipe.from_dict(recipe, ROOT).save(recipe_path)
@@ -124,8 +124,25 @@ def test_cli_builds_a_rom_and_its_ips_from_a_recipe(vanilla, tmp_path, credentia
     assert completed.returncode == 0, completed.stderr
     assert ips.apply(vanilla, patch.read_bytes()) == out.read_bytes()
     assert "bank 0:" in completed.stdout  # the course report
+
+
+def test_cli_finishes_an_unfinished_rom_with_credentials(tmp_path, credentials):
+    unfinished, finished = tmp_path / "unfinished.nes", tmp_path / "finished.nes"
+    built = run(
+        "tools.patch", ROM_PATH,
+        "-p", "multi_bank_lookup", "-p", "course_mirrors", "-p", "attr_streaming",
+        "-p", "course:course=courses/japan", "-p", "scorecard_qr", "-o", unfinished,
+    )
+    assert built.returncode == 0, built.stderr
+
+    completed = run(
+        "tools.patch", unfinished, "--any-base",
+        "-p", f"qr_credentials:credentials={credentials}", "-o", finished, "-v",
+    )
+    assert completed.returncode == 0, completed.stderr
     assert "(key withheld)" in completed.stdout
     assert load_credentials(credentials).keys[0].hex() not in completed.stdout
+    assert finished.read_bytes() != unfinished.read_bytes()
 
 
 def test_cli_inline_steps_match_their_saved_recipe(tmp_path):
@@ -151,7 +168,7 @@ def test_cli_reports_a_missing_requirement(tmp_path):
 def test_cli_lists_every_patch_type():
     completed = run("tools.patch", "--list")
     assert completed.returncode == 0
-    for spec_id in ("course", "seeded_wind", "scorecard_qr", "signpost_random_banner"):
+    for spec_id in ("course", "seeded_wind", "scorecard_qr", "qr_credentials", "qr_disable", "signpost_random_banner"):
         assert f"\n{spec_id}\n" in f"\n{completed.stdout}"
 
 

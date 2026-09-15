@@ -40,4 +40,5 @@ the finished screen, and decode the QR, out of simulated video memory.
 - `golf-qr-tables` - export the ROM tables
 - `golf-qr-port` - assemble the port and report per-routine sizes against the bank 2 budget
 - `golf-qr-credentials` - write a build's seed ID, player IDs and secret MAC keys; the
-  `scorecard_qr` step of `golf-patch` installs the QR screen with them
+  `scorecard_qr` step of `golf-patch` installs the QR screen with them unfilled, and the
+  `qr_credentials` step writes them in
