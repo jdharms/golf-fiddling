@@ -38,11 +38,54 @@ in this package.
   from Pico's variables (`--pico-ins-color`, `--pico-del-color` and the like) so dark mode
   follows. Components that change look with script state carry a `data-state` attribute
   the stylesheet selects on, rather than the script toggling styles or `hidden`.
+- No English in templates or scripts: see "Player-facing text" below.
 - JavaScript only where the browser must act: hashing and storing ROMs
   (`server/static/rom.js`) and, later, applying an IPS. Plain scripts, no build step, no
   frameworks. Everything else is a form or a link.
 - The ROM store is IndexedDB database `golf-randomizer`, object store `roms`, records
   `{id, sha1, bytes}` keyed by catalog ROM id. It holds only files whose SHA-1 matched.
+
+## Player-facing text
+
+A trial begun 2026-09-15. jdharms composes every English word a player sees, and Claude
+writes none of it, not even as a draft to be rewritten.
+
+- Every visible string, including tab titles, nav labels, button labels, accessible names
+  and script status messages, comes from `server/strings.toml` by key. No English goes in
+  a template or script. Proper nouns and data are not strings: ROM titles, hole ids, magic
+  words.
+- An entry is a `note` and a `text`. Claude adds keys and notes and never writes or edits
+  `text`. A note is terse fragments of what the string has to get across and the values it
+  receives, never wording that could be kept. Notes starting `plain:` mark strings that
+  take no HTML.
+- Templates call `t("key", name=value)`, whose text may hold inline HTML with values
+  escaped, or `t_plain(...)` for tab titles, attributes and anything else HTML would break.
+  Empty text renders as a marked placeholder showing the key, with the note on hover.
+- A script gets its entries as JSON: the route passes `strings.for_script(prefix)` and the
+  template embeds it in a `<script type="application/json">` element. The script's own
+  `t()` reads it, and calls it with literal keys so the tests can find them. Script
+  strings may hold inline HTML like any other: `t()` escapes the values it inserts and
+  returns HTML, which the script sets with `innerHTML`.
+- `tests/unit/test_server_strings.py` checks that every key a template or script uses is
+  in the catalog, and that every entry is used.
+- `golf-site --reload` restarts on changes to the catalog, since the app loads it once.
+
+## Seeing pages
+
+After changing a template, `site.css` or a page script, render the pages and look at the
+PNGs before reporting the change done:
+
+```bash
+uv run golf-site-screenshot / /rom -o <scratchpad>/shots \
+  --rom nes_open_us=nes_open_us.nes --rom mario_open_jp=mario_open_jp.nes
+```
+
+It serves the app on an in-memory database, captures each page at desktop and phone
+widths in light and dark, and exits 1 on a browser console error or a failed request. With
+`--rom`, the ROM setup page is captured again after loading those files, and the final card
+states are printed. Pass a patched ROM to capture the mismatch state. The tool is
+`tools/site_screenshot.py`; `tests/integration/test_site_screenshot.py` skips without a
+Playwright browser.
 
 ## Tests
 

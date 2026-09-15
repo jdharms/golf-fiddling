@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}NES Open Randomizer{% endblock %}</title>
+  <title>{% block title %}{{ t_plain("site.title") }}{% endblock %}</title>
   <link rel="stylesheet" href="/static/pico.green.min.css">
   <link rel="stylesheet" href="/static/site.css">
 </head>
@@ -13,12 +13,12 @@
   <header class="container">
     <nav>
       <ul>
-        <li><strong>NES Open Randomizer</strong></li>
+        <li><strong>{{ t("nav.brand") }}</strong></li>
       </ul>
       <ul>
-        <li><a href="/" {% if page=="home" %} aria-current="page" {% endif %}>Home</a></li>
-        <li><a href="/rom" {% if page=="rom" %} aria-current="page" {% endif %}>ROM setup</a></li>
-        <li><a href="/generate" {% if page=="generate" %} aria-current="page" {% endif %}>Generate</a></li>
+        <li><a href="/" {% if page=="home" %} aria-current="page" {% endif %}>{{ t("nav.home") }}</a></li>
+        <li><a href="/rom" {% if page=="rom" %} aria-current="page" {% endif %}>{{ t("nav.rom") }}</a></li>
+        <li><a href="/generate" {% if page=="generate" %} aria-current="page" {% endif %}>{{ t("nav.generate") }}</a></li>
       </ul>
     </nav>
   </header>

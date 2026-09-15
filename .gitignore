@@ -19,6 +19,7 @@ wheels/
 /golf_site.db
 /golf_site.db-wal
 /golf_site.db-shm
+/site-screenshots/
 
 # AI stuff lmao
 *.skill
