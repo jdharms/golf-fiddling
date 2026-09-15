@@ -138,7 +138,7 @@ def cmd_build(args: argparse.Namespace) -> int:
             credentials = load_credentials(args.credentials)
 
     unfinished = build_unfinished(manifest, catalog, store, vanilla)
-    if args.unfinished and options is not None:
+    if args.unfinished:
         stage, rom, patch = "unfinished", unfinished.rom, unfinished.ips
     else:
         finished = finish(manifest, vanilla, unfinished.ips, options, credentials)

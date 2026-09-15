@@ -47,6 +47,7 @@ full reference for its options.
 - **golf/** - shared library: ROM reading/writing, compression, graphics, patches
   (`golf/core/patches/`), data formats, rendering, and the scorecard QR code (`golf/qr/`)
 - **editor/** - the Pygame course editor
+- **server/** - the randomizer website; see `server/CLAUDE.md`
 - **tools/** - command-line entry points, grouped into `data/` (regenerates `data/`
   files), `research/`, `art/`, `music/` and `qr/`; course and patch tools sit at the top
   level; `archive/` holds retired one-off scripts
@@ -101,6 +102,12 @@ Build a standalone editor executable with `uv run pyinstaller run_editor.spec`.
 | `golf-randomize build <rom> <manifest.json> [-o out.nes] [--ips out.ips]` | Build a seed's ROM or IPS: a finished guest ROM by default, `--unfinished` or `--credentials keys.json` for the other stages |
 | `golf-randomize show <manifest.json>` | Print a manifest's course, totals, music and required ROMs |
 
+### Randomizer site
+
+| Command | Description |
+|---------|-------------|
+| `golf-site [--host H] [--port P] [--reload]` | Run the randomizer website under uvicorn; see "Running the site" below |
+
 ### Reverse-engineering research
 
 | Command | Description |
@@ -146,6 +153,27 @@ golf-write nes_open_us.nes courses/japan/ -o modified.nes
 # Check a course will fit without writing
 golf-write nes_open_us.nes courses/japan/ --validate-only --verbose
 ```
+
+## Running the site
+
+```bash
+uv run golf-site --reload
+# then open http://127.0.0.1:8000/
+```
+
+The ROM setup page hashes ROMs in the browser, which needs HTTPS or localhost. The site
+reads its configuration from environment variables:
+
+| Variable | Default | Meaning |
+|----------|---------|---------|
+| `GOLF_DATABASE` | `golf_site.db` | SQLite database path, created and migrated at startup |
+| `GOLF_ROM_DIR` | the repository root | Directory holding the server's vanilla ROMs |
+| `GOLF_HOLES_DIR` | `courses/` | Hole store root |
+| `GOLF_BASE_URL` | `http://127.0.0.1:8000` | Public base URL, also the OAuth redirect base |
+| `GOLF_DISCORD_CLIENT_ID`, `GOLF_DISCORD_CLIENT_SECRET` | unset | Discord sign-in |
+| `GOLF_SESSION_SECRET` | unset | Signs the session cookie |
+| `GOLF_ADMIN_TOKEN` | unset | Gates the admin pages |
+| `GOLF_DEV_LOGIN` | off | Development-only sign-in bypass (`1`, `true`, `yes` or `on`) |
 
 ## Running tests
 

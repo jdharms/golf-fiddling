@@ -1,0 +1,35 @@
+"""The database schema as ordered SQL scripts. Script N takes `PRAGMA user_version` from N-1 to N.
+
+A committed script is never edited: a change to the schema is a new script appended to
+the list. Tables arrive with the development plan item that first writes them.
+"""
+
+MIGRATIONS: list[str] = [
+    # 1: seeds and their denormalized holes (docs/randomizer_devplan.md, "Data model")
+    """
+    CREATE TABLE seeds (
+        id TEXT PRIMARY KEY CHECK (length(id) = 10),
+        qr_seed_id INTEGER NOT NULL UNIQUE CHECK (qr_seed_id BETWEEN 1 AND 839299365868340223),
+        manifest TEXT NOT NULL,
+        generator_version INTEGER NOT NULL,
+        catalog_version INTEGER NOT NULL,
+        curation_stamp TEXT NOT NULL,
+        unfinished_ips BLOB NOT NULL,
+        creator_id INTEGER,
+        created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE seed_holes (
+        seed_id TEXT NOT NULL REFERENCES seeds (id),
+        position INTEGER NOT NULL CHECK (position BETWEEN 1 AND 18),
+        hole_id TEXT NOT NULL,
+        transforms TEXT NOT NULL,
+        par INTEGER NOT NULL,
+        wind_seed INTEGER NOT NULL,
+        pin_index INTEGER NOT NULL,
+        wind_direction INTEGER NOT NULL,
+        wind_speed INTEGER NOT NULL,
+        PRIMARY KEY (seed_id, position)
+    );
+    """,
+]

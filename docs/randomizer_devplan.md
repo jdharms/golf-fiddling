@@ -13,8 +13,9 @@ mode, with a small migrations file and no ORM. Litestream replicates the databas
 object storage and sits outside the app.
 
 **Code layout.** Generation logic lives in a new `golf/randomizer/` package with no web
-dependencies. The FastAPI app lives in a new top-level `site/` package (`web/` is the
-rangefinder) and imports from `golf/` only. A `golf-randomize` CLI drives the same code
+dependencies. The FastAPI app lives in the top-level `server/` package (`web/` is the
+rangefinder; `site` would shadow the standard library module) and imports from `golf/`
+only. `golf-site` (`tools/site.py`) runs it under uvicorn. A `golf-randomize` CLI drives the same code
 so ROMs can be built and playtested from a manifest file offline; it lives at
 `tools/randomize.py`.
 
@@ -180,11 +181,13 @@ qr_seed_id INTEGER NOT NULL UNIQUE CHECK (qr_seed_id BETWEEN 1 AND 8392993658683
 
 Everything is a form or a link. The only fetch from JavaScript is the IPS.
 
-**Configuration** from the environment: database path, the server's vanilla ROM
-directory, the rehydrated holes directory, the public base URL (also the OAuth redirect
+**Configuration** from the environment (`server/config.py`): the database path
+`GOLF_DATABASE`, the server's vanilla ROM directory `GOLF_ROM_DIR`, the rehydrated holes
+directory `GOLF_HOLES_DIR`, the public base URL `GOLF_BASE_URL` (also the OAuth redirect
 base; the QR URL prefix is assembled into the port and fixed before the first public seed
-ships), Discord client id and secret, session secret, admin token, and the development
-login bypass.
+ships), the Discord client id and secret `GOLF_DISCORD_CLIENT_ID` and
+`GOLF_DISCORD_CLIENT_SECRET`, the session secret `GOLF_SESSION_SECRET`, the admin token
+`GOLF_ADMIN_TOKEN`, and the development login bypass `GOLF_DEV_LOGIN`.
 
 ## Development plan
 
@@ -226,10 +229,15 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
    `golf-qr-credentials` file, and `show` prints a manifest's course. See
    `docs/manifest.md`; `tests/unit/test_randomize_cli.py` and
    `tests/integration/test_randomize_cli_rom.py` check it against the library.
-7. **Site skeleton.** `site/`: FastAPI app, Jinja2, vendored Pico, sqlite3 with
-   migrations, configuration from the environment, health check, home page, and the
-   ROM setup page with its hashing and IndexedDB script. Tests against the app with
-   an in-memory database.
+7. **Site skeleton.** Done: `server/`. `create_app` in `server/app.py` with the home page,
+   the ROM setup page and `/healthz`; Jinja2 templates on vendored Pico CSS; `Config`
+   from `GOLF_` environment variables; `Database` in `server/db.py`, one locked sqlite3
+   connection in WAL mode, migrated by `PRAGMA user_version` from the ordered scripts in
+   `server/migrations.py`, the first creating `seeds` and `seed_holes`. The vanilla ROMs
+   and their SHA-1s are `golf/randomizer/roms.py`; `server/static/rom.js` hashes a chosen
+   file with SubtleCrypto and stores verified bytes in IndexedDB. `golf-site` launches
+   it. `tests/unit/test_server_app.py`, `test_server_db.py` and `test_server_config.py`
+   run against an in-memory database. See `server/CLAUDE.md`.
 8. **Generate and seed page.** The settings form, the seed and seed_holes rows, the
    unfinished IPS built in the threadpool and stored, the rate limiter, the seed page
    and manifest JSON rendered from the manifest and catalog.

@@ -18,8 +18,8 @@ A toolset for reverse engineering, editing and patching the NES Open Tournament 
   full reference. Run them with `uv run <command>`.
 - **Docs**: `docs/README.md` indexes the design and reverse-engineering notes.
 - **Area-specific guidance** loads from nested files when you work there:
-  `editor/CLAUDE.md` (editor architecture, adding editor tools) and `golf/qr/CLAUDE.md`
-  (the QR oracle and its 6502 port).
+  `editor/CLAUDE.md` (editor architecture, adding editor tools), `golf/qr/CLAUDE.md`
+  (the QR oracle and its 6502 port) and `server/CLAUDE.md` (the randomizer website).
 - **Skills** in `.claude/skills/`:
   - `nes-open-golf-rom-layout` - memory map, pointer tables, bank layouts, data region
     boundaries. Use for ROM reading/writing and course data work.
@@ -38,6 +38,8 @@ A toolset for reverse engineering, editing and patching the NES Open Tournament 
   - `rendering/` - PIL rendering for static images
   - `qr/` - scorecard QR reference implementation and 6502 port
 - `editor/` - the course editor
+- `server/` - the randomizer website (FastAPI); conventions in `server/CLAUDE.md`, design in
+  `docs/randomizer_devplan.md`
 - `tools/` - CLI entry points: `data/` (regenerates checked-in `data/` files), `research/`,
   `art/`, `music/`, `qr/`; course and patch tools at the top level; `archive/` for retired
   one-off scripts (no entry points)

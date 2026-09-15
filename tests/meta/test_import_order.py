@@ -1,4 +1,4 @@
-"""Every golf module imports cleanly as the first thing a fresh interpreter loads.
+"""Every golf and server module imports cleanly as the first thing a fresh interpreter loads.
 
 Within one pytest process, modules are already imported by the time most tests
 run, so a circular import that only bites when one particular module is imported
@@ -17,7 +17,8 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def _golf_modules() -> list[str]:
     modules = []
-    for path in sorted((ROOT / "golf").rglob("*.py")):
+    paths = sorted((ROOT / "golf").rglob("*.py")) + sorted((ROOT / "server").rglob("*.py"))
+    for path in paths:
         parts = path.relative_to(ROOT).with_suffix("").parts
         if parts[-1] == "__init__":
             parts = parts[:-1]
@@ -39,7 +40,7 @@ def _import_alone(module: str) -> tuple[str, str | None]:
 
 def test_every_golf_module_imports_first():
     modules = _golf_modules()
-    assert modules, "found no modules under golf/"
+    assert modules, "found no modules under golf/ or server/"
     with ThreadPoolExecutor(max_workers=8) as pool:
         failures = [(m, err) for m, err in pool.map(_import_alone, modules) if err]
     assert not failures, "\n".join(f"{m}: {err}" for m, err in failures)

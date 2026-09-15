@@ -1,0 +1,63 @@
+/* Rules Pico has no class for. Colors come from Pico's variables, so dark mode follows. */
+
+/* ROM setup cards. rom.js sets data-state: checking, empty, error, stored or unavailable. */
+
+article.rom > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pico-spacing);
+}
+
+article.rom input[type="file"] {
+  width: auto;
+}
+
+.rom-status {
+  margin-bottom: calc(var(--pico-spacing) * 0.5);
+}
+
+.rom-check {
+  display: none;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background-color: var(--pico-ins-color);
+  color: var(--pico-primary-inverse);
+  font-weight: bold;
+  line-height: 1;
+}
+
+article.rom[data-state="stored"] {
+  background-color: color-mix(in srgb, var(--pico-ins-color) 10%, var(--pico-card-background-color));
+  box-shadow: var(--pico-card-box-shadow), 0 0 0 2px var(--pico-ins-color);
+}
+
+article.rom[data-state="stored"] > header,
+article.rom[data-state="stored"] > footer {
+  background-color: color-mix(in srgb, var(--pico-ins-color) 20%, var(--pico-card-sectioning-background-color));
+}
+
+article.rom[data-state="stored"] .rom-check {
+  display: inline-flex;
+}
+
+article.rom[data-state="stored"] .rom-status {
+  color: var(--pico-ins-color);
+  font-weight: 600;
+}
+
+article.rom[data-state="error"] .rom-status {
+  color: var(--pico-del-color);
+}
+
+/* A stored ROM offers only Forget; anything else offers only the file input. */
+article.rom[data-state="stored"] input[type="file"],
+article.rom[data-state="stored"] .rom-expected,
+article.rom[data-state="unavailable"] input[type="file"],
+article.rom:not([data-state="stored"]) > footer {
+  display: none;
+}

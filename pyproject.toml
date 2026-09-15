@@ -10,6 +10,9 @@ dependencies = [
     "pillow>=12.0.0",
     "plyer>=2.1.0",
     "pygame>=2.6.1",
+    "fastapi>=0.141.1",
+    "uvicorn[standard]>=0.53.0",
+    "jinja2>=3.1.6",
 ]
 
 [project.scripts]
@@ -37,6 +40,9 @@ golf-expand-dict = "tools.expand_dict:main"
 # ROM patches
 golf-patch = "tools.patch:main"
 golf-randomize = "tools.randomize:main"
+
+# Randomizer site
+golf-site = "tools.site:main"
 
 # Reverse-engineering research
 golf-rom-peek = "tools.research.rom_peek:main"
@@ -70,6 +76,7 @@ addopts = [
     "--tb=short",
     "--cov=golf",
     "--cov=editor",
+    "--cov=server",
     "--cov-report=term-missing",
 ]
 
@@ -87,10 +94,11 @@ dev = [
     "zxing-cpp>=3.1.1",
     "opencv-python-headless>=5.0.0.93",
     "qrcode>=8.2",
+    "httpx2>=2.13.0",
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["golf", "editor", "tools"]
+packages = ["golf", "editor", "server", "tools"]
 
 [tool.ruff]
 line-length = 88
