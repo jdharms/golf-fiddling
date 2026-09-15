@@ -1,4 +1,4 @@
-"""The randomizer: the hole catalog, curation, layouts, and (later) manifests and builds.
+"""The randomizer: the hole catalog, curation, layouts, manifests and their generation.
 
-See docs/catalog.md and docs/randomizer_devplan.md.
+See docs/catalog.md, docs/manifest.md and docs/randomizer_devplan.md.
 """

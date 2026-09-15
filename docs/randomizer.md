@@ -353,8 +353,8 @@ Either way, there should be code to take a `manifest` and generate a `patch`.
 Worth noting, the `manifest` *alone* is **not** enough to generate a `patch`,
 at least typically.  There will also be settings at "download" time for
 players to specify their Player Name, to select what golf clubs they want
-in their bag, to enable the practice swing patch, select their golfer sprite,
-etc.  All of these decisions need to make their way into the `patch`.
+in their bag, select their golfer sprite, etc.
+All of these decisions need to make their way into the `patch`.
 
 The final step is to send this `patch` to the user, and the user's client,
 which is likely a browser window, can apply the `patch` to a rom file.
@@ -476,6 +476,9 @@ As mentioned in Appendix A, `transform`s need to be versioned as well,
 so really they can be considered part of the `catalog`, to some extent.
 
 ## Appendix D: Patches
+
+**Important Note** -- For now, I've decided to exclude the practice swing patch
+from the randomizer *entirely*, due to non-technical reasons.
 
 Base:
 * attr streaming + WRAM Expansion (Contains several smaller patches)
