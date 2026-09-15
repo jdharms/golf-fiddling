@@ -1,5 +1,29 @@
 /* Rules Pico has no class for. Colors come from Pico's variables, so dark mode follows. */
 
+/* Titles of games, written as <cite> in server/strings.toml: italic by convention, with
+   weight and the strongest text color so they stand out in running text without looking
+   like links. */
+cite {
+  font-style: italic;
+  font-weight: 600;
+  color: var(--pico-contrast);
+}
+
+/* Site nav: on narrow screens the links wrap below the site name instead of squeezing
+   each label onto several lines. The second list gets the first's edge alignment. */
+header nav {
+  flex-wrap: wrap;
+  column-gap: var(--pico-spacing);
+}
+
+header nav a {
+  white-space: nowrap;
+}
+
+header nav ul:last-of-type {
+  margin-left: calc(var(--pico-nav-element-spacing-horizontal) * -1);
+}
+
 /* ROM setup cards. rom.js sets data-state: checking, empty, error, stored or unavailable. */
 
 article.rom > header {
@@ -17,28 +41,42 @@ article.rom input[type="file"] {
   margin-bottom: calc(var(--pico-spacing) * 0.5);
 }
 
-.rom-check {
-  display: none;
+/* Hashes in a card wrap evenly on narrow screens instead of leaving a stray character. */
+article.rom code {
+  word-break: break-all;
+}
+
+article.rom > footer button {
+  margin-bottom: 0;
+}
+
+.rom-check,
+.step-number {
+  display: inline-flex;
   flex: none;
   align-items: center;
   justify-content: center;
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 50%;
-  background-color: var(--pico-ins-color);
+  background-color: var(--pico-primary-background);
   color: var(--pico-primary-inverse);
   font-weight: bold;
   line-height: 1;
 }
 
+.rom-check {
+  display: none;
+}
+
 article.rom[data-state="stored"] {
-  background-color: color-mix(in srgb, var(--pico-ins-color) 10%, var(--pico-card-background-color));
-  box-shadow: var(--pico-card-box-shadow), 0 0 0 2px var(--pico-ins-color);
+  background-color: color-mix(in srgb, var(--pico-primary-background) 10%, var(--pico-card-background-color));
+  box-shadow: var(--pico-card-box-shadow), 0 0 0 2px var(--pico-primary-background);
 }
 
 article.rom[data-state="stored"] > header,
 article.rom[data-state="stored"] > footer {
-  background-color: color-mix(in srgb, var(--pico-ins-color) 20%, var(--pico-card-sectioning-background-color));
+  background-color: color-mix(in srgb, var(--pico-primary-background) 20%, var(--pico-card-sectioning-background-color));
 }
 
 article.rom[data-state="stored"] .rom-check {
@@ -46,7 +84,7 @@ article.rom[data-state="stored"] .rom-check {
 }
 
 article.rom[data-state="stored"] .rom-status {
-  color: var(--pico-ins-color);
+  color: var(--pico-primary);
   font-weight: 600;
 }
 
@@ -60,4 +98,38 @@ article.rom[data-state="stored"] .rom-expected,
 article.rom[data-state="unavailable"] input[type="file"],
 article.rom:not([data-state="stored"]) > footer {
   display: none;
+}
+
+/* Home page steps: numbered cards in Pico's grid, inside an ordered list. */
+
+.steps {
+  padding: 0;
+}
+
+/* Each card spans two grid rows, header and body, shared with the cards beside it
+   through subgrid, so a header that wraps keeps every card's header the same height. */
+.steps > li,
+.steps > li > article {
+  display: grid;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  row-gap: 0;
+  margin: 0;
+}
+
+.steps > li {
+  list-style: none;
+}
+
+.steps article > header {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--pico-spacing) * 0.75);
+}
+
+/* An unwritten string from server/strings.toml: its key, marked, with the note on hover. */
+.unwritten {
+  outline: 1px dashed var(--pico-del-color);
+  color: var(--pico-del-color);
+  cursor: help;
 }

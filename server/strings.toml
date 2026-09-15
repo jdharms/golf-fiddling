@@ -1,0 +1,160 @@
+# Every English string a player can see on the site, keyed. See server/CLAUDE.md,
+# "Player-facing text".
+#
+# note  what the string has to get across, and the values it receives. Claude writes these.
+# text  the string. A human writes these. Empty renders as a marked placeholder.
+#
+# {name} inserts a value the note lists; {{ and }} are literal braces.
+# Notes starting "plain:" land in a tab title or an attribute: no HTML.
+# Other entries may use inline HTML such as <a>, <code>, <strong>, <em> and <mark>.
+
+# -- Every page -----------------------------------------------------------------------
+
+[site.title]
+note = "plain: browser tab title; default for pages without their own"
+text = "NES Open Randomizer"
+
+[nav.brand]
+note = "site name; left end of the nav bar, every page"
+text = "NES Open Tournament Golf Randomizer"
+
+[nav.home]
+note = "nav link to the home page"
+text = "Home"
+
+[nav.rom]
+note = "nav link to ROM setup"
+text = "ROM Setup"
+
+[nav.generate]
+note = "nav link to the seed settings form (page not built yet)"
+text = "Generate Game"
+
+# -- Home ----------------------------------------------------------------------------
+
+[home.heading]
+note = "home page h1"
+text = "NES Open Tournament Golf Randomizer"
+
+[home.tagline]
+note = "line under the h1; what the site is"
+text = """Play a new 18 holes every time you step onto the course."""
+
+[home.about]
+note = "what a seed is (18 holes, par layout, course music, wind); same holes and wind for everyone on a seed"
+text = "Inspired by other randomizer projects like The ALTTP Randomizer, Super Mario World Randomizer, and The Legend of Zelda Randomizer, this site allows you to patch your copy of NES Open Tournament Golf with a course made up of a random selection of 18 holes from both the U.S. and Japanese (Mario Open Golf) releases of the game."
+
+[home.step_rom.header]
+note = "card 1 of 3, header; set up ROMs"
+text = "Get the ROM."
+
+[home.step_rom.body]
+note = "card 1 of 3, body; set up ROMs, link /rom; files stay in the browser, only checked for being unmodified"
+text = """You'll need a copy of the NES Open Tournament Golf (US)
+ROM, and preferably a copy of the Mario Open Golf (Japan) ROM.  Currently only
+version 1.0 of Mario Open Golf is supported."""
+
+[home.step_generate.header]
+note = "card 2 of 3, header; generate a seed"
+text = "Generate a randomized game."
+
+[home.step_generate.body]
+note = "card 2 of 3, body; generate a seed, link /generate; share the seed page"
+text = """Head on over to
+<a href="/generate">Generate Game</a>.  This screen shows a variety of options.  When you're
+satisfied, hit the Randomize! button and it'll take you to the "seed page"."""
+
+[home.step_play.header]
+note = "card 3 of 3, header; play"
+text = "Get playing!"
+
+[home.step_play.body]
+note = "card 3 of 3, body; download from the seed page; play Stroke Play"
+text = """From the seed page, you can download the patched ROM file.
+Sending the link to a friend will let them download the same course.  You'll need
+something to run your game on.  An emulator (like <a href="https://www.mesen.ca/">Mesen</a>) is
+a good choice.  You can also play on original hardware using flash carts."""
+
+# -- ROM setup -----------------------------------------------------------------------
+
+[rom.page_title]
+note = "plain: browser tab title, ROM setup page"
+text = "NES Open Randomizer -- ROM Management"
+
+[rom.heading]
+note = "ROM setup page h1"
+text = "ROM Setup"
+
+[rom.tagline]
+note = "line under the h1; choose files once; checked and kept in this browser; never uploaded"
+text = "Choose your ROM files once.  Your browser will check them and keep them--they won't be uploaded."
+
+[rom.requirements]
+note = "which ROMs: NES Open (USA) for every seed; Mario Open Golf (Japan) too when a seed has its holes or music; unmodified dumps, iNES header included"
+text = """
+You'll always need the <cite>NES Open Tournament Golf (USA)</cite> ROM.
+It's the randomizer's base ROM.
+If you provide a <cite>Mario Open Golf (Japan)</cite> ROM, you'll get access
+to more courses and music."""
+
+[rom.noscript]
+note = "shown only with JavaScript off; this page needs it"
+text = """
+Unfortunately this site (really!) requires JavaScript to function. Allow it in your
+browser for this site or come back in another browser that supports it."""
+
+[rom.unsupported]
+note = "shown when the browser can't hash or store files; needs HTTPS or localhost, and IndexedDB"
+text = """
+Looks like you can't upload ROM files on this device.  You need to be accessing this site
+over HTTPS and your browser needs to support IndexedDB."""
+
+[rom.file_input_label]
+note = "plain: screen-reader name for a card's file input; {title} is the ROM's title"
+text = "{title} ROM file"
+
+[rom.expected_hash]
+note = "small line on a card with no stored ROM; {sha1} is the hash an unmodified dump has"
+text = "Expected file hash (sha1): <code>{sha1}</code>"
+
+[rom.forget]
+note = "button on a stored card; removes that ROM from this browser"
+text = "Forget ROM"
+
+# Card statuses. rom.js sets these; inline HTML works, and values are escaped.
+
+[rom.status.checking]
+note = "card status while looking up the stored ROM or hashing a chosen file"
+text = "Checking..."
+
+[rom.status.empty]
+note = "card status, no ROM stored"
+text = "No ROM uploaded"
+
+[rom.status.stored]
+note = "card status, ROM verified and stored; card is green"
+text = "ROM Verified"
+
+[rom.status.mismatch]
+note = "card status, chosen file isn't an unmodified dump, nothing stored; {file} file name, {sha1} its hash"
+text = "File \"{file}\" didn't match what we expected. It's not stored, you can try again. It hashed to: <code>{sha1}</code>"
+
+[rom.status.check_failed]
+note = "card status, file couldn't be read or hashed; {error} the browser's error"
+text = "Encountered an error reading or verifying the file: \"{error}\""
+
+[rom.status.forgetting]
+note = "card status while removing the stored ROM"
+text = "Removing..."
+
+[rom.status.forget_failed]
+note = "card status, removing failed; {error} the browser's error"
+text = "Received an error removing the file from the browser's storage: {error}"
+
+[rom.status.storage_failed]
+note = "card status, browser storage wouldn't open on page load; {error} the browser's error"
+text = "Error accessing browser storage: {error}"
+
+[rom.status.unavailable]
+note = "card status while the rom.unsupported notice shows"
+text = ""

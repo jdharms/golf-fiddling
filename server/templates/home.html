@@ -1,19 +1,30 @@
 {% extends "base.html" %}
 {% block content %}
 <hgroup>
-  <h1>NES Open Tournament Golf Randomizer</h1>
-  <p>Eighteen holes drawn from NES Open and Mario Open Golf, on one ROM everyone plays.</p>
+  <h1>{{ t("home.heading") }}</h1>
+  <p>{{ t("home.tagline") }}</p>
 </hgroup>
 
-<p>
-  A seed is a randomized course: its holes, par layout, course music and wind. Everyone who
-  downloads a seed plays the same holes with the same wind, so rounds can be compared
-  shot for shot.
-</p>
+<p>{{ t("home.about") }}</p>
 
-<ol>
-  <li><a href="/rom">Set up your ROMs.</a> Your ROM files stay in your browser. The site only checks that they are unmodified.</li>
-  <li><a href="/generate">Generate a seed</a> and share its page with the other players.</li>
-  <li>Download the seed from its page and play it in Stroke Play.</li>
+<ol class="grid steps" role="list">
+  <li>
+    <article>
+      <header><span class="step-number" aria-hidden="true">1</span><strong>{{ t("home.step_rom.header") }}</strong></header>
+      <div>{{ t("home.step_rom.body") }}</div>
+    </article>
+  </li>
+  <li>
+    <article>
+      <header><span class="step-number" aria-hidden="true">2</span><strong>{{ t("home.step_generate.header") }}</strong></header>
+      <div>{{ t("home.step_generate.body") }}</div>
+    </article>
+  </li>
+  <li>
+    <article>
+      <header><span class="step-number" aria-hidden="true">3</span><strong>{{ t("home.step_play.header") }}</strong></header>
+      <div>{{ t("home.step_play.body") }}</div>
+    </article>
+  </li>
 </ol>
 {% endblock %}

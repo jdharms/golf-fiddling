@@ -43,6 +43,7 @@ golf-randomize = "tools.randomize:main"
 
 # Randomizer site
 golf-site = "tools.site:main"
+golf-site-screenshot = "tools.site_screenshot:main"
 
 # Reverse-engineering research
 golf-rom-peek = "tools.research.rom_peek:main"
@@ -95,6 +96,7 @@ dev = [
     "opencv-python-headless>=5.0.0.93",
     "qrcode>=8.2",
     "httpx2>=2.13.0",
+    "playwright>=1.63.0",
 ]
 
 [tool.hatch.build.targets.wheel]

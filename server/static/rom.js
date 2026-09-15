@@ -10,6 +10,12 @@
 //   error        the chosen file did not match; the file input is offered again
 //   stored       a verified ROM is stored; only Forget is offered
 //   unavailable  this browser cannot hash or store files
+//
+// Player-visible text comes from server/strings.toml, which the page embeds as JSON in
+// #rom-strings: key to text, or null while unwritten. Keys are written out literally in
+// t() calls so tests can check them against the catalog. The text may hold inline HTML,
+// such as <code>, and t() returns HTML: values (file names, hashes, browser errors) are
+// escaped before they are inserted.
 "use strict";
 
 const ROM_DB_NAME = "golf-randomizer";
@@ -51,11 +57,30 @@ async function sha1Hex(buffer) {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-const STORED_TEXT = "Verified and stored in this browser.";
+let romStrings;
 
-function setState(article, state, text) {
+const HTML_ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
+
+function t(key, values = {}) {
+  romStrings ??= JSON.parse(document.getElementById("rom-strings").textContent);
+  if (!(key in romStrings)) throw new Error(`no string ${key} on this page`);
+  const text = romStrings[key];
+  if (text === null) {
+    const parts = [key, ...Object.entries(values).map(([name, value]) => `${name}=${value}`)];
+    return escapeHtml(`⟦${parts.join(" ")}⟧`);
+  }
+  return text.replace(/\{\{|\}\}|\{(\w+)\}/g, (match, name) => {
+    if (match === "{{") return "{";
+    if (match === "}}") return "}";
+    if (!(name in values)) throw new Error(`${key} uses {${name}}, which the script does not pass`);
+    return escapeHtml(values[name]);
+  });
+}
+
+function setState(article, state, html) {
   article.dataset.state = state;
-  article.querySelector(".rom-status").textContent = text;
+  article.querySelector(".rom-status").innerHTML = html;
 }
 
 function setupRom(article) {
@@ -67,41 +92,41 @@ function setupRom(article) {
   async function refresh() {
     const record = await getRom(id);
     if (record && record.sha1 === expected) {
-      setState(article, "stored", STORED_TEXT);
+      setState(article, "stored", t("rom.status.stored"));
     } else {
-      setState(article, "empty", "Not provided yet.");
+      setState(article, "empty", t("rom.status.empty"));
     }
   }
 
   input.addEventListener("change", async () => {
     const file = input.files[0];
     if (!file) return;
-    setState(article, "checking", "Checking…");
+    setState(article, "checking", t("rom.status.checking"));
     try {
       const bytes = await file.arrayBuffer();
       const actual = await sha1Hex(bytes);
       if (actual !== expected) {
-        setState(article, "error", `Not stored: ${file.name} has SHA-1 ${actual}. It must be an unmodified dump.`);
+        setState(article, "error", t("rom.status.mismatch", { file: file.name, sha1: actual }));
         return;
       }
       await putRom({ id, sha1: actual, bytes });
-      setState(article, "stored", STORED_TEXT);
+      setState(article, "stored", t("rom.status.stored"));
       forget.focus();
     } catch (error) {
-      setState(article, "error", `Could not check this file: ${error}`);
+      setState(article, "error", t("rom.status.check_failed", { error }));
     } finally {
       input.value = "";
     }
   });
 
   forget.addEventListener("click", async () => {
-    setState(article, "checking", "Forgetting…");
+    setState(article, "checking", t("rom.status.forgetting"));
     try {
       await deleteRom(id);
       await refresh();
       input.focus();
     } catch (error) {
-      setState(article, "error", `Could not forget this ROM: ${error}`);
+      setState(article, "error", t("rom.status.forget_failed", { error }));
     }
   });
 
@@ -113,10 +138,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const articles = document.querySelectorAll("article.rom");
   if (!window.isSecureContext || !window.crypto?.subtle || !window.indexedDB) {
     document.getElementById("rom-unsupported").hidden = false;
-    articles.forEach((article) => setState(article, "unavailable", "Unavailable in this browser."));
+    articles.forEach((article) => setState(article, "unavailable", t("rom.status.unavailable")));
     return;
   }
   articles.forEach((article) => {
-    setupRom(article).catch((error) => setState(article, "error", `ROM storage failed: ${error}`));
+    setupRom(article).catch((error) => setState(article, "error", t("rom.status.storage_failed", { error })));
   });
 });

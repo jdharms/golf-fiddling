@@ -13,15 +13,20 @@ from golf.randomizer.roms import VANILLA_ROMS
 
 from .config import Config
 from .db import Database
+from .strings import Strings
 
 HERE = Path(__file__).resolve().parent
 STATIC_DIR = HERE / "static"
 TEMPLATES_DIR = HERE / "templates"
 
+#: the catalog prefix whose strings the ROM setup page embeds for rom.js
+ROM_SCRIPT_STRINGS = "rom.status"
 
-def create_app(config: Config | None = None) -> FastAPI:
-    """Build the app. With no config, reads it from the environment."""
+
+def create_app(config: Config | None = None, strings: Strings | None = None) -> FastAPI:
+    """Build the app. With no config, reads it from the environment; with no strings, loads the catalog."""
     config = config if config is not None else Config.from_env()
+    strings = strings if strings is not None else Strings.load()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -35,7 +40,10 @@ def create_app(config: Config | None = None) -> FastAPI:
 
     app = FastAPI(title="NES Open Randomizer", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     app.state.config = config
+    app.state.strings = strings
     templates = Jinja2Templates(directory=TEMPLATES_DIR)
+    templates.env.globals["t"] = strings.html
+    templates.env.globals["t_plain"] = strings.plain
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
     @app.get("/", response_class=HTMLResponse)
@@ -44,7 +52,11 @@ def create_app(config: Config | None = None) -> FastAPI:
 
     @app.get("/rom", response_class=HTMLResponse)
     def rom_setup(request: Request):
-        return templates.TemplateResponse(request, "rom.html", {"page": "rom", "roms": VANILLA_ROMS})
+        return templates.TemplateResponse(
+            request,
+            "rom.html",
+            {"page": "rom", "roms": VANILLA_ROMS, "rom_strings": strings.for_script(ROM_SCRIPT_STRINGS)},
+        )
 
     @app.get("/healthz")
     def healthz(request: Request) -> dict[str, str]:
