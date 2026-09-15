@@ -33,14 +33,14 @@ time touches it. So the build is split at the manifest boundary and no job queue
 needed:
 
 - **Unfinished.** Run once at generation time: the base patches, the course, seeded
-  wind, music, mercy tap-in, menu words, signpost, scorecard title, and the scorecard QR
-  image with its credential placeholders unfilled. The result is stored as an IPS blob
+  wind, music, mercy tap-in, the magic words on the menus and scorecard, signpost, and the
+  scorecard QR image with its credential placeholders unfilled. The result is stored as an IPS blob
   on the seed row. The server rejects QR code submissions with all-zero seed IDs, so an
   unfinished ROM cannot cause downstream problems.
 - **Finished.** Run per download, in milliseconds: SRAM defaults for name and clubs
   and one of two flavours.
-  - *Signed in*: a credentials patch of three byte patches writing the seed ID, player
-    ID and MAC keys into the placeholders. Their expected original bytes are the
+  - *Signed in*: a credentials patch of three byte patches writing the seed's `qr_seed_id` as
+    the seed ID, the player ID and the MAC keys into the placeholders. Their expected original bytes are the
     placeholder fill, so finishing can only land on an unfinished image.
   - *Guest*: a two-byte patch reverting the round-end splice to the vanilla scorecard
     wait, so the QR screen never appears. A guest ROM also carries a visible marker on
@@ -66,9 +66,9 @@ applied.
 
 The ROM never leaves the browser. The ROM setup page reads the file, hashes it with
 SubtleCrypto, and keeps the bytes in IndexedDB so players upload once. The download
-request carries the hashes, and the server refuses a finished IPS for a manifest that
-uses Mario Open holes unless the JP hash is present. The seed page says up front which
-ROMs a seed needs. This is a speed bump, as `randomizer.md` accepts.
+request carries the hashes, and the server refuses a finished IPS for a manifest whose
+holes or music come from Mario Open unless the JP hash is present. The seed page says up
+front which ROMs a seed needs, from `required_roms` (`docs/manifest.md`). This is a speed bump, as `randomizer.md` accepts.
 
 ### Users and access
 
@@ -101,7 +101,7 @@ cannot submit.
 | Table | Holds |
 |---|---|
 | `users` | Discord id, username (use Discord "global_name", update on log-in as needed), avatar, a random unique uint32 `player_id` generated at first login, created_at, last_login |
-| `seeds` | Short random id, manifest JSON, generator and catalog versions, curation stamp, the unfinished IPS blob, nullable creator, created_at |
+| `seeds` | A 10-character base62 id for URLs and the same value as an integer, `qr_seed_id`, both unique; manifest JSON, generator and catalog versions, curation stamp, the unfinished IPS blob, nullable creator, created_at |
 | `seed_holes` | seed, position 1-18, catalog hole id, transforms, par, wind seed, pin index, wind direction anchor, wind speed anchor. Pure denormalization of the manifest for SQL stats; a migration can always backfill it |
 | `entries` | One per (seed, user), unique. The player's choices for this seed (name, clubs, optional player 2 name), one MAC key per slot, created_at |
 | `submissions` | entry, slot, raw payload, total strokes, total putts, received_at, flagged. Unique on (entry, slot), which is the first-submission rule |
@@ -145,14 +145,27 @@ with the column declared as:
 player_id INTEGER NOT NULL UNIQUE CHECK (player_id BETWEEN 1 AND 4294967295)
 ```
 
+#### Generating seed ids
+
+A seed's `qr_seed_id` is drawn uniformly from 1 to 62^10 - 1 when the row is inserted, and
+its URL id is that integer in base62 (`0-9A-Za-z`, most significant digit first), padded to
+10 characters. 62^10 is below 2^60, so every URL id converts to a seed ID the QR payload's
+8 bytes hold and SQLite's signed `INTEGER` stores, and zero, which the server rejects as a
+seed ID, is never drawn. A collision on either unique column draws again, as for
+`player_id`:
+
+```sql
+qr_seed_id INTEGER NOT NULL UNIQUE CHECK (qr_seed_id BETWEEN 1 AND 839299365868340223)
+```
+
 ### Routes
 
 | Route | Purpose |
 |---|---|
 | `GET /` | What this is, links to ROM setup and generate |
 | `GET /rom` | ROM setup, pure client-side: pick files, hash, store in IndexedDB, show verified status |
-| `GET /generate`, `POST /generate` | Settings form: pool filters, par target, mercy, menu words, music or random, optional seed string. POST redirects to the seed page |
-| `GET /h/<id>` | Seed page: hole list with source, par and yards, totals, music, settings, required ROMs, the download form, the signed-in user's entry if any, recorded rounds |
+| `GET /generate`, `POST /generate` | Settings form: pool filters, par target, mercy point, club rules, music or random. POST redirects to the seed page |
+| `GET /h/<id>` | Seed page: the magic words, hole list with source, par and yards, totals, music, settings, required ROMs, the download form, the signed-in user's entry if any, recorded rounds |
 | `GET /h/<id>.json` | The manifest |
 | `POST /h/<id>/patch.ips` | Name, clubs, ROM hashes in; the finished IPS out. Signed in, upserts the entry and finishes with credentials; signed out, finishes as a guest. The page's script intercepts the form submit, fetches this, patches the ROM from IndexedDB and triggers the download |
 | `GET /s/<48 chars>` | QR submission: decode, verify MAC, record, render the result or the rejection |
@@ -183,12 +196,13 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
    par 5s. Each par value splits evenly across the nines, an odd count putting its extra
    hole in either nine, and no par 3s or par 5s are consecutive, including holes 9 and 10.
    That leaves 188,802 layouts at par 72, 165,564 at 71 and 35,574 at 70.
-3. **Manifest and generation.** The manifest dataclass and its JSON round-trip with
-   generator and catalog versions and the curation stamp; pool filters from curation
-   tags, the newest drawable version of each lineage, and the family rule;
-   `generate(catalog, curation, settings, rng) -> Manifest`, which draws holes into a
-   layout, chooses the music and derives the wind seed. Tests that the same catalog,
-   curation, settings and seed string reproduce the same manifest.
+3. **Manifest and generation.** Done: `golf/randomizer/manifest.py`, `pool.py`,
+   `generate.py`, `music.py` and `words.py`. The manifest's version fields, settings and
+   concrete course with club rules and magic words, and its strict JSON; the pool from
+   sources, curation tags, the newest drawable version of each lineage and families;
+   `generate(catalog, curation, settings) -> Manifest`, which draws a family per slot into
+   a layout, chooses the music, derives the wind seeds and draws the magic words, each from
+   its own stream of the PRNG seed. See `docs/manifest.md`.
 4. **QR patch split.** `scorecard_qr` writes the image with its placeholders unfilled;
    a new `qr_credentials` patch of three byte patches fills them, with the fill as its
    expected originals; a new `qr_disable` patch reverts the splice for guest ROMs. Both
@@ -210,7 +224,7 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
    unfinished IPS built in the threadpool and stored, the rate limiter, the seed page
    and manifest JSON rendered from the manifest and catalog.
 9. **Download flow.** The download form gated on the ROM store, the IPS endpoint with
-   hash gating and guest finishing, the JavaScript patcher. The site can now run a
+   hash gating on the manifest's required ROMs and guest finishing, the JavaScript patcher. The site can now run a
    league of guest ROMs. Playtest a downloaded ROM.
 10. **Discord sign-in.** The OAuth flow, sessions, the development bypass, the users
     table with its player ID, sign-in and sign-out in the page header.

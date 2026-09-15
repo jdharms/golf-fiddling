@@ -94,7 +94,8 @@ lineage exists in the index.
 the same family, and a lineage is in at most one. Examples are a vanilla hole and its
 Mario Open twin, or a par 5 and its forward-tee par 3. The label is a plain string; by
 convention a family containing an NES Open hole is named after it, as in `nes_uk_01`.
-Whether two holes from one family may share a course is a generation setting.
+Whether two holes from one family may share a course is the `allow_family_repeats`
+generation setting ([manifest.md](manifest.md)).
 
 **Transforms** such as mirroring are applied to a manifest slot after the draw. They
 create no catalog entry and have no family of their own.
