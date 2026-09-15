@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}ROM setup · NES Open Randomizer{% endblock %}
+{% block content %}
+<hgroup>
+  <h1>ROM setup</h1>
+  <p>Choose your ROM files once. They are checked and kept in this browser, and are never uploaded.</p>
+</hgroup>
+
+<p>
+  Every seed needs NES Open Tournament Golf. Seeds with Mario Open Golf holes or music also
+  need Mario Open Golf. Each file must be an unmodified dump, including its iNES header.
+</p>
+
+<noscript><p><mark>ROM setup needs JavaScript.</mark></p></noscript>
+<p id="rom-unsupported" hidden>
+  <mark>This browser cannot check ROMs here.</mark> The page must be served over HTTPS or
+  from localhost, in a browser with IndexedDB.
+</p>
+
+{% for rom in roms %}
+<article class="rom" data-rom-id="{{ rom.id }}" data-sha1="{{ rom.sha1 }}" data-state="checking">
+  <header>
+    <strong>{{ rom.title }}</strong>
+    <span class="rom-check" aria-hidden="true">✓</span>
+  </header>
+  <p class="rom-status" aria-live="polite">Checking…</p>
+  <input type="file" accept=".nes,application/octet-stream" aria-label="{{ rom.title }} ROM file" disabled>
+  <small class="rom-expected">Expected SHA-1 <code>{{ rom.sha1 }}</code></small>
+  <footer>
+    <button type="button" class="secondary outline rom-forget">Forget this ROM</button>
+  </footer>
+</article>
+{% endfor %}
+{% endblock %}
+{% block scripts %}<script src="/static/rom.js" defer></script>{% endblock %}

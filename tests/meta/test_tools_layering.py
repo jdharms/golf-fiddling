@@ -24,7 +24,7 @@ def _imports_tools(path: Path) -> bool:
 def test_nothing_imports_from_tools():
     offenders = [
         str(path.relative_to(ROOT))
-        for package in ("golf", "editor", "tests")
+        for package in ("golf", "editor", "server", "tests")
         for path in sorted((ROOT / package).rglob("*.py"))
         if _imports_tools(path)
     ]

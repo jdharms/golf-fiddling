@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}NES Open Randomizer{% endblock %}</title>
+  <link rel="stylesheet" href="/static/pico.green.min.css">
+  <link rel="stylesheet" href="/static/site.css">
+</head>
+
+<body>
+  <header class="container">
+    <nav>
+      <ul>
+        <li><strong>NES Open Randomizer</strong></li>
+      </ul>
+      <ul>
+        <li><a href="/" {% if page=="home" %} aria-current="page" {% endif %}>Home</a></li>
+        <li><a href="/rom" {% if page=="rom" %} aria-current="page" {% endif %}>ROM setup</a></li>
+        <li><a href="/generate" {% if page=="generate" %} aria-current="page" {% endif %}>Generate</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+
+</html>

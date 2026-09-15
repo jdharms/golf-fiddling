@@ -24,6 +24,10 @@ COURSES = [
 HOLES_PER_COURSE = 18
 TOTAL_HOLES = 90
 
+# SHA-1 of the whole Mario Open Golf ROM file, iNES header included. Taken from the
+# author's own cartridge backup; not checked against a No-Intro entry.
+JP_ROM_SHA1 = "5464fcad88c4734567ab76d44beae903d932d236"
+
 JP_METADATA_BANK = 0x0B
 JP_ATTR_BYTES = 90
 

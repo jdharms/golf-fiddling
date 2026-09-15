@@ -15,6 +15,11 @@ wheels/
 *.mlb
 *.nsf
 
+# Randomizer site database
+/golf_site.db
+/golf_site.db-wal
+/golf_site.db-shm
+
 # AI stuff lmao
 *.skill
 
