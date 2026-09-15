@@ -15,8 +15,8 @@ object storage and sits outside the app.
 **Code layout.** Generation logic lives in a new `golf/randomizer/` package with no web
 dependencies. The FastAPI app lives in a new top-level `site/` package (`web/` is the
 rangefinder) and imports from `golf/` only. A `golf-randomize` CLI drives the same code
-so ROMs can be built and playtested from a manifest file offline. The `tools/randomize.py`
-spike is deleted once the package exists.
+so ROMs can be built and playtested from a manifest file offline; it lives at
+`tools/randomize.py`.
 
 **The catalog** is two checked-in files (`docs/catalog.md`). The frozen, append-only
 index holds versioned hole ids such as `jp_hawaii/07` or `dharms/cliffside@2`, each with
@@ -220,9 +220,12 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
    drawn per seed. NES Open themes use the new `course_theme` patch rather than an import.
    `tests/integration/test_build_rom.py` builds both flavours from generated manifests on
    the real ROM and checks the stages overlap only where `scorecard_qr` wrote.
-6. **`golf-randomize` CLI.** Settings in, manifest out; manifest in, unfinished or
-   finished ROM or IPS out. Registered in `pyproject.toml` and the `README.md` command
-   index. Delete `tools/randomize.py`.
+6. **`golf-randomize` CLI.** Done: `tools/randomize.py`. `generate` turns settings flags
+   into a manifest file, `build` turns a manifest into a finished guest ROM or IPS by
+   running both stages, an unfinished one with `--unfinished` or a signed-in one with a
+   `golf-qr-credentials` file, and `show` prints a manifest's course. See
+   `docs/manifest.md`; `tests/unit/test_randomize_cli.py` and
+   `tests/integration/test_randomize_cli_rom.py` check it against the library.
 7. **Site skeleton.** `site/`: FastAPI app, Jinja2, vendored Pico, sqlite3 with
    migrations, configuration from the environment, health check, home page, and the
    ROM setup page with its hashing and IndexedDB script. Tests against the app with
