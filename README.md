@@ -83,6 +83,7 @@ Build a standalone editor executable with `uv run pyinstaller run_editor.spec`.
 | `golf-analyze-neighbors` | Terrain tile neighbor data -> `data/tables/terrain_neighbors.json` (editor validation) |
 | `golf-analyze-greens-neighbors` | Greens tile neighbor data -> `data/tables/greens_neighbors.json` (fringe generation) |
 | `golf-analyze-putting` | Putting surface sizes -> `data/statistics/putting_surface_sizes.json` |
+| `golf-catalog-sync [courses_root] [--check]` | Add dumped vanilla holes to the randomizer catalog and verify the rest -> `data/catalog/holes.json`; see `docs/catalog.md` |
 
 ### Utilities
 
