@@ -18,10 +18,12 @@ rangefinder) and imports from `golf/` only. A `golf-randomize` CLI drives the sa
 so ROMs can be built and playtested from a manifest file offline. The `tools/randomize.py`
 spike is deleted once the package exists.
 
-**The catalog** is a checked-in JSON index of metadata only: stable, immutable hole ids
-such as `jp_hawaii/07`, par, yardage, source ROM and tags. Hole data lives in a directory
-the server rehydrates from its vanilla ROMs. Manifests reference hole ids and the catalog
-version, never hole data.
+**The catalog** is two checked-in files (`docs/catalog.md`). The frozen, append-only
+index holds versioned hole ids such as `jp_hawaii/07` or `dharms/cliffside@2`, each with
+its source, a content hash, par and yardage. The curation file holds what steers
+generation, keyed by lineage: tags, drawability and hand-assigned families. Hole data
+lives in a directory the server rehydrates from its vanilla ROMs. Manifests reference hole
+ids, the catalog version and the curation stamp, never hole data.
 
 ### Two-stage build
 
@@ -99,7 +101,7 @@ cannot submit.
 | Table | Holds |
 |---|---|
 | `users` | Discord id, username (use Discord "global_name", update on log-in as needed), avatar, a random unique uint32 `player_id` generated at first login, created_at, last_login |
-| `seeds` | Short random id, manifest JSON, generator and catalog versions, the unfinished IPS blob, nullable creator, created_at |
+| `seeds` | Short random id, manifest JSON, generator and catalog versions, curation stamp, the unfinished IPS blob, nullable creator, created_at |
 | `seed_holes` | seed, position 1-18, catalog hole id, transforms, par, wind seed, pin index, wind direction anchor, wind speed anchor. Pure denormalization of the manifest for SQL stats; a migration can always backfill it |
 | `entries` | One per (seed, user), unique. The player's choices for this seed (name, clubs, optional player 2 name), one MAC key per slot, created_at |
 | `submissions` | entry, slot, raw payload, total strokes, total putts, received_at, flagged. Unique on (entry, slot), which is the first-submission rule |
@@ -172,20 +174,20 @@ login bypass.
 Each item is about one pull request of work and ends with tests passing and, where it
 says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the site.
 
-1. **Catalog.** `golf/randomizer/catalog.py`: the hole id scheme, the checked-in JSON
-   index of metadata (par, yardage, source ROM, tags), a loader that resolves ids to
-   hole data in a configured directory, and a `tools/data/` script that regenerates the
-   index from the course directories.
+1. **Catalog.** Done: `golf/randomizer/catalog.py` and `golf/randomizer/curation.py`, the
+   index at `data/catalog/holes.json`, the curation file, and `golf-catalog-sync`, which
+   adds and verifies vanilla entries without ever rewriting one. See `docs/catalog.md`.
 2. **Layout generation.** Distinct permutations of par counts filtered by the
    predicates in `randomizer.md` (four par 3s and four par 5s split evenly across the
    nines, no consecutive 3s or 5s), with par 70, 71 and 72 count tables. A pure
    function with tests, including a check that every surviving layout satisfies every
    predicate and a count that pins the size of the space.
 3. **Manifest and generation.** The manifest dataclass and its JSON round-trip with
-   generator and catalog versions; pool filters from the catalog tags;
-   `generate(settings, rng) -> Manifest`, which draws holes into a layout, chooses the
-   music and derives the wind seed. Tests that the same settings and seed string
-   reproduce the same manifest.
+   generator and catalog versions and the curation stamp; pool filters from curation
+   tags, the newest drawable version of each lineage, and the family rule;
+   `generate(catalog, curation, settings, rng) -> Manifest`, which draws holes into a
+   layout, chooses the music and derives the wind seed. Tests that the same catalog,
+   curation, settings and seed string reproduce the same manifest.
 4. **QR patch split.** `scorecard_qr` writes the image with its placeholders unfilled;
    a new `qr_credentials` patch of three byte patches fills them, with the fill as its
    expected originals; a new `qr_disable` patch reverts the splice for guest ROMs. Both
@@ -218,8 +220,9 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
     `/me`, the teammate slot rule. Playtest a round through to a recorded scan.
 13. **Admin.** Token-gated views of seeds and submissions, flag, and rebuild a seed.
 14. **Vanilla data out of the repository.** The ROM rehydration script that regenerates
-    the course directories and catalog index from the server's vanilla ROMs, then strip
-    the course data from the repository and point the tests at rehydrated data.
+    the course directories from the server's vanilla ROMs, verified against the index's
+    content hashes with `golf-catalog-sync --check`, then strip the course data from the
+    repository and point the tests at rehydrated data.
 15. **Deployment.** A systemd unit or container, reverse proxy configuration,
     Litestream, and a deployment note under `docs/`.
 16. **Polish.** The guest menu marker once its wording is settled, difficulty filters,

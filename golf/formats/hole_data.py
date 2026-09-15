@@ -75,6 +75,14 @@ class HoleData:
         if path is None:
             raise ValueError("No save path specified")
 
+        with open(path, "w") as f:
+            json.dump(self.to_dict(), f, indent=2)
+
+        self.filepath = path
+        self.modified = False
+
+    def to_dict(self) -> dict[str, Any]:
+        """The hole as the JSON-ready dict `save` writes."""
         # Convert terrain to hex strings using shared utility
         terrain_rows = []
         for row in self.terrain:
@@ -87,7 +95,7 @@ class HoleData:
             row_str = hex_utils.format_hex_row(row)
             greens_rows.append(row_str)
 
-        data = {
+        return {
             "hole": self.metadata.get("hole", 1),
             "par": self.metadata.get("par", 4),
             "distance": self.metadata.get("distance", 400),
@@ -113,12 +121,6 @@ class HoleData:
             },
             "_debug": self.metadata.get("_debug", {}),
         }
-
-        with open(path, "w") as f:
-            json.dump(data, f, indent=2)
-
-        self.filepath = path
-        self.modified = False
 
     def get_terrain_height(self) -> int:
         return self.terrain_height

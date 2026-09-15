@@ -28,6 +28,7 @@ golf-extract-tables = "tools.data.extract_tables:main"
 golf-analyze-neighbors = "tools.data.analyze_neighbors:main"
 golf-analyze-greens-neighbors = "tools.data.analyze_greens_neighbors:main"
 golf-analyze-putting = "tools.data.analyze_putting_surface:main"
+golf-catalog-sync = "tools.data.catalog_sync:main"
 
 # Utilities
 golf-hex2bin = "tools.hex2bin:main"
