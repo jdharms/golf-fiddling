@@ -30,6 +30,7 @@ def course(**overrides) -> Course:
         mercy_point=9,
         clubs=ClubRules(),
         magic_words=("DIVOT", "CADDY", "BOGEY"),
+        sram_magic=0x5247,
     )
     return Course(**(fields | overrides))
 
@@ -73,6 +74,24 @@ def test_json_shape():
     assert data["course"]["holes"][0] == {"id": "nes_us/01", "par": 4, "transforms": [], "wind_seed": 1}
     assert data["settings"]["clubs"] == {"max": 14, "banned": [], "required_bag": None}
     assert data["settings"]["sources"] == [US_ROM, JP_ROM]
+
+
+def test_course_json_carries_the_sram_magic():
+    assert manifest().to_json()["course"]["sram_magic"] == 0x5247
+    data = manifest().to_json()
+    del data["course"]["sram_magic"]
+    with pytest.raises(ManifestError, match="missing fields \\['sram_magic'\\]"):
+        Manifest.from_json(data)
+
+
+@pytest.mark.parametrize("sram_magic", [0x0047, 0xFF47, 0x5200, 0x52FF, -1, 0x10000, "0x5247", True, None])
+def test_rejects_a_bad_sram_magic(sram_magic):
+    with pytest.raises(ManifestError, match="sram_magic"):
+        course(sram_magic=sram_magic)
+    data = manifest().to_json()
+    data["course"]["sram_magic"] = sram_magic
+    with pytest.raises(ManifestError, match="sram_magic"):
+        Manifest.from_json(data)
 
 
 def test_course_par_and_layout():

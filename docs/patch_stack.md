@@ -158,9 +158,14 @@ three requirements and the `course` step.
 | `scorecard_qr` | none; the seed ID, player ID and MAC key placeholders are left at the fill | `course_mirrors` |
 | `qr_credentials` | `credentials` (a `golf-qr-credentials` file); fills the placeholders, expecting the fill | `scorecard_qr` |
 | `qr_disable` | none; reverts the round-end splice for a guest ROM, expecting the splice `scorecard_qr` wrote | |
+| `course_theme` | `music` (`$02` US, `$03` Japan or `$04` UK); plays that US ROM theme on every course | |
 | `music_import` | `dump`, `track` (optional; one dump music ID, imported as `$03` and made every course's theme), `transpose_adjust` (default from the dump) | |
 | `sram_defaults` | `player_name` (A-Z, `.` and space, at most 10), `clubs` (up to 14 of `1W`-`4W`, `1I`-`9I`, `PW`, `SW`, `PT`; the putter is added), `bgm` (default true), `sram_magic` (default `0x3553`, "5S"; neither byte `$00` or `$FF`). Only a save being initialised gets them | |
 | `putting_practice` | (experimental) | |
+
+`course_theme` and `music_import` with a `track` both rewrite `CourseBgmTable` at `$DA14`,
+so a stack holds one or the other: `course_theme` for a theme already in the ROM,
+`music_import` for one from another ROM's dump.
 
 `remove_course_banner` and `signpost_random_banner` both rewrite the banner selection at
 bank 12 `$AC5D`, so a stack with both fails: whichever comes second finds the other's bytes

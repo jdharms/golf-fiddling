@@ -36,7 +36,8 @@ With the hole list trimmed to one of its 18 slots:
     "music": "jp_france",
     "mercy_point": 9,
     "clubs": {"max": 14, "banned": [], "required_bag": null},
-    "magic_words": ["DIVOT", "CADDY", "BOGEY"]
+    "magic_words": ["DIVOT", "CADDY", "BOGEY"],
+    "sram_magic": 21063
   }
 }
 ```
@@ -52,6 +53,8 @@ With the hole list trimmed to one of its 18 slots:
 A build reads only `course`, and nothing in `course` needs interpreting: hole ids rather
 than filters, a music slug rather than "random", wind seeds rather than the string they
 were derived from. Loading is strict: a missing or unknown field is an error.
+`golf/randomizer/build.py` turns `course` into the seed's unfinished ROM, and finishes that
+ROM per player (`docs/randomizer_devplan.md`).
 
 **Versions.**
 
@@ -92,11 +95,19 @@ point; the CLI accepts both.
 | `mercy_point` | Copied from the settings |
 | `clubs` | Copied from the settings |
 | `magic_words` | Three words for the title menus, the scorecard title and the seed page |
+| `sram_magic` | The 16-bit value that marks a save as this seed's, neither byte `$00` or `$FF` |
 
 A slot is a catalog hole `id`, its `par` (a copy of the catalog's, for readability),
 `transforms` and a `wind_seed`. Schema 1 defines no transforms, so the list is always
 empty. The wind seed is the 16-bit state the ROM's own RNG starts the hole from
 (`docs/seeded_wind.md`), not a seed for generation. No hole id appears twice.
+
+The SRAM magic is what the ROM's save initialisation compares a save against at boot
+(`sram_defaults`). A save holding any other magic, from the vanilla game or another seed,
+is wiped and rebuilt with the name and bag the player chose at download, so those choices
+always land. Neither byte may be `$00` or `$FF`, what blank SRAM holds, or blank SRAM would
+pass the check. The model refuses any other value when a course is built or loaded, so a
+manifest that would fail at patch time cannot exist.
 
 ### Club rules
 
@@ -127,6 +138,8 @@ A slug names the course a theme belongs to, with the catalog's lineage prefixes:
 | `jp_uk` | Mario Open | $0C |
 
 The ids are those in each ROM's `data/music/` dump, and collide between the two ROMs.
+A build plays a NES Open theme by pointing every course at it (`course_theme`), since its
+data is already in the ROM, and imports a Mario Open theme from its dump (`music_import`).
 
 ### What is not in a manifest
 
@@ -158,8 +171,9 @@ The ids are those in each ROM's `data/music/` dump, and collide between the two 
    from all eight when at least one hole comes from Mario Open.
 6. **Wind.** `derive_hole_seeds(prng_seed)` gives the 18 wind seeds.
 7. **Magic words.** Three distinct words from `golf/randomizer/data/word_bank.txt`.
+8. **SRAM magic.** Two bytes, each uniform over `$01`-`$FE`, high byte first.
 
-The layout, holes, music and magic words each draw from their own generator,
+The layout, holes, music, magic words and SRAM magic each draw from their own generator,
 `random.Random(f"{purpose}\0{prng_seed}")`, and the wind seeds from their own hash, so a
 change to one draw leaves the others as they were.
 
