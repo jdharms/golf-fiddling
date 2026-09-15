@@ -189,3 +189,32 @@ A-Z and 0-9, the characters both the menu header (`menu_trim`) and the scorecard
 checked-in bank. Three words joined by spaces are at most 20 characters, within the
 scorecard title's 26. The words tell a player at a glance that they have the right ROM;
 they do not identify a seed uniquely.
+
+## golf-randomize
+
+```bash
+golf-randomize generate --seed demo -o demo.json
+golf-randomize generate --par 71 --sources nes_open_us --music nes_uk --mercy-point none
+golf-randomize build nes_open_us.nes demo.json -o demo.nes
+golf-randomize build nes_open_us.nes demo.json --unfinished --ips demo.unfinished.ips
+golf-randomize build nes_open_us.nes demo.json --credentials keys.json --name LUIGI --clubs 1W,3W,5I,PW
+golf-randomize show demo.json
+```
+
+- `generate` has one flag per settings field, each defaulting to the field's default:
+  `--seed`, `--par`, `--sources`, `--exclude-tags`, `--allow-family-repeats`, `--music`,
+  `--mercy-point` (a stroke or `none`), and `--clubs-max`, `--banned` and `--required-bag`
+  for the club rules. Lists are comma-separated; clubs use the choose-clubs labels. It
+  writes the manifest to `-o` (default `manifest.json`) and prints the course.
+- `build` runs `build_unfinished` and then `finish` on the unfinished IPS, as the site
+  does. With no stage flag the result is a guest ROM. `--unfinished` stops after the first
+  stage, which is what the site stores. `--credentials` finishes signed in with a
+  `golf-qr-credentials` file.
+- Finishing takes the new-save defaults from `--name` (default `MARIO`), `--clubs` (default
+  the vanilla bag) and `--no-bgm`, and refuses a bag the manifest's club rules forbid.
+- `-o` writes the ROM (default the manifest's path with `.nes`, unless `--ips` is given);
+  `--ips` writes the IPS from the vanilla ROM to the stage built.
+- `--catalog`, `--curation` and `--holes` point at a catalog index, curation file or hole
+  store other than the checked-in ones.
+- `show` prints a manifest's holes with distances, totals, music, mercy point, club rules,
+  magic words and required ROMs.
