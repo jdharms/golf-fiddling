@@ -177,11 +177,12 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
 1. **Catalog.** Done: `golf/randomizer/catalog.py` and `golf/randomizer/curation.py`, the
    index at `data/catalog/holes.json`, the curation file, and `golf-catalog-sync`, which
    adds and verifies vanilla entries without ever rewriting one. See `docs/catalog.md`.
-2. **Layout generation.** Distinct permutations of par counts filtered by the
-   predicates in `randomizer.md` (four par 3s and four par 5s split evenly across the
-   nines, no consecutive 3s or 5s), with par 70, 71 and 72 count tables. A pure
-   function with tests, including a check that every surviving layout satisfies every
-   predicate and a count that pins the size of the space.
+2. **Layout generation.** Done: `golf/randomizer/layout.py`. Distinct permutations of
+   par counts, built a nine at a time and joined, filtered by the predicates in
+   `randomizer.md`. Par 72 is four par 3s, ten par 4s and four par 5s; par 71 and 70 drop
+   par 5s. Each par value splits evenly across the nines, an odd count putting its extra
+   hole in either nine, and no par 3s or par 5s are consecutive, including holes 9 and 10.
+   That leaves 188,802 layouts at par 72, 165,564 at 71 and 35,574 at 70.
 3. **Manifest and generation.** The manifest dataclass and its JSON round-trip with
    generator and catalog versions and the curation stamp; pool filters from curation
    tags, the newest drawable version of each lineage, and the family rule;
