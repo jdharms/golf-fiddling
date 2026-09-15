@@ -36,6 +36,7 @@ class TestRegistry:
     def test_every_patch_type_builds_a_patch_of_its_own_name(self, credentials_file):
         params = {
             "course": {"course": "courses/japan"},
+            "course_theme": {"music": 2},
             "menu_trim": {"words": "ABCD EFGH IJKL"},
             "mercy_tap_in": {"mercy_point": 9},
             "seeded_wind": {"seed": "x"},

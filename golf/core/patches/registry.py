@@ -24,6 +24,7 @@ from .attr_streaming import ATTR_STREAMING_PATCH
 from .base import ROMPatch
 from .composite import CompositePatch
 from .course import CoursePatch
+from .course_theme import course_theme_patch
 from .menu_trim import menu_trim_patch
 from .mercy_tap_in import mercy_tap_in_patches
 from .multi_bank import COURSE_MIRRORS_PATCH, MULTI_BANK_CODE_PATCH
@@ -92,6 +93,12 @@ class CourseParams:
     course: Path | None = None
     #: or the 18 hole files, in play order
     holes: list[Path] | None = None
+
+
+@dataclass(frozen=True)
+class CourseThemeParams:
+    #: a US ROM course theme: $02 (US), $03 (Japan) or $04 (UK)
+    music: int
 
 
 @dataclass(frozen=True)
@@ -313,6 +320,12 @@ PATCH_SPECS: dict[str, PatchSpec] = {
             CourseParams,
             _build_course,
             _report_course,
+        ),
+        PatchSpec(
+            "course_theme",
+            "Play one of the US ROM's course themes on every course",
+            CourseThemeParams,
+            lambda ctx, params: course_theme_patch(params.music),
         ),
         PatchSpec(
             "menu_trim",

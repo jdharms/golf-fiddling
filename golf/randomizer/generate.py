@@ -2,7 +2,7 @@
 Generation: a catalog, a curation snapshot and settings in, a manifest out.
 
 Every random choice comes from `settings.prng_seed`, drawn fresh when the settings have
-none. Each purpose (the layout, the hole draw, the music, the magic words) gets its own
+none. Each purpose (the layout, the hole draw, the music, the magic words, the SRAM magic) gets its own
 generator derived from the seed, and the wind seeds come from `derive_hole_seeds`, so a
 change to how one thing is drawn leaves the others where they were.
 
@@ -32,6 +32,10 @@ GENERATOR_VERSION = 1
 PRNG_SEED_BYTES = 8
 
 
+#: SRAM magic bytes are drawn from this range: neither may be $00 or $FF, what blank SRAM holds
+SRAM_MAGIC_BYTES = range(0x01, 0xFF)
+
+
 class GenerationError(Exception):
     """Settings the catalog cannot satisfy, such as a pool too small for the layout."""
 
@@ -43,6 +47,13 @@ def new_prng_seed() -> str:
 def stream(prng_seed: str, purpose: str) -> random.Random:
     """The generator for one purpose. String seeds are hashed, so this is stable across runs."""
     return random.Random(f"{purpose}\0{prng_seed}")
+
+
+def draw_sram_magic(rng: random.Random) -> int:
+    """A 16-bit SRAM magic, high byte first, with neither byte $00 or $FF."""
+    high = rng.choice(SRAM_MAGIC_BYTES)
+    low = rng.choice(SRAM_MAGIC_BYTES)
+    return (high << 8) | low
 
 
 def _matchable(pars: Sequence[int], families: Sequence[Family]) -> bool:
@@ -124,6 +135,7 @@ def generate(catalog: Catalog, curation: CurationSnapshot, settings: Settings) -
         mercy_point=settings.mercy_point,
         clubs=settings.clubs,
         magic_words=draw_magic_words(stream(prng_seed, "magic_words")),
+        sram_magic=draw_sram_magic(stream(prng_seed, "sram_magic")),
     )
     return Manifest(
         schema=SCHEMA,

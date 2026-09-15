@@ -34,11 +34,13 @@ needed:
 
 - **Unfinished.** Run once at generation time: the base patches, the course, seeded
   wind, music, mercy tap-in, the magic words on the menus and scorecard, signpost, and the
-  scorecard QR image with its credential placeholders unfilled. The result is stored as an IPS blob
+  scorecard QR image with its credential placeholders unfilled. The manifest also carries
+  the seed's SRAM magic, which only finishing writes. The result is stored as an IPS blob
   on the seed row. The server rejects QR code submissions with all-zero seed IDs, so an
   unfinished ROM cannot cause downstream problems.
-- **Finished.** Run per download, in milliseconds: SRAM defaults for name and clubs
-  and one of two flavours.
+- **Finished.** Run per download, in milliseconds: SRAM defaults for name, clubs and
+  music under the seed's SRAM magic, so a save from vanilla or another seed is rebuilt
+  with the player's choices, and one of two flavours.
   - *Signed in*: a credentials patch of three byte patches writing the seed's `qr_seed_id` as
     the seed ID, the player ID and the MAC keys into the placeholders. Their expected original bytes are the
     placeholder fill, so finishing can only land on an unfinished image.
@@ -51,8 +53,9 @@ Finishing applies the stored IPS to the vanilla bytes in memory, runs the finish
 `PatchStack` on that unfinished ROM with the stack's vanilla hash check disabled
 (`base_sha1=None`), and diffs the result against vanilla to produce the finished IPS. Overlap tracking is per stack,
 so a finishing patch rewriting bytes the unfinished stage wrote is allowed. `qr_credentials`
-and `qr_disable` rewrite bytes `scorecard_qr` wrote by design; one unit test builds both
-stages as a single stack and asserts those are the only overlaps.
+and `qr_disable` rewrite bytes `scorecard_qr` wrote by design. An integration test
+(`tests/integration/test_build_rom.py`) asserts those are the only overlaps between the
+stages, and that one stack of both is refused at the QR finishing patch.
 
 Generation runs in a threadpool behind a semaphore so a burst of requests serializes
 instead of piling up. One uvicorn worker is enough to start.
@@ -210,10 +213,13 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
    the fill; `qr_disable` reverts the splice for guest ROMs. All three are registered, and
    `tests/integration/test_qr_patch_rom.py` covers them on the real ROM. See
    `docs/scorecard_qr.md`.
-5. **Build stages.** The unfinished stack from a manifest and the finishing stack from
-   player options in both flavours, in `golf/randomizer/`. The unit test that builds
-   both stages as a single stack to prove no overlap, and an integration test that
-   builds a finished ROM from a manifest on the real ROM. Playtest that ROM.
+5. **Build stages.** Done: `golf/randomizer/build.py`. `build_unfinished` turns a manifest
+   into the unfinished ROM and its IPS; `finish` applies that IPS to vanilla and runs the
+   finishing stack for `PlayerOptions` (name, bag, music), checked against the seed's club
+   rules, with `credentials_for` or as a guest. The manifest's course gained `sram_magic`,
+   drawn per seed. NES Open themes use the new `course_theme` patch rather than an import.
+   `tests/integration/test_build_rom.py` builds both flavours from generated manifests on
+   the real ROM and checks the stages overlap only where `scorecard_qr` wrote.
 6. **`golf-randomize` CLI.** Settings in, manifest out; manifest in, unfinished or
    finished ROM or IPS out. Registered in `pyproject.toml` and the `README.md` command
    index. Delete `tools/randomize.py`.
@@ -231,6 +237,8 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
     table with its player ID, sign-in and sign-out in the page header.
 11. **Entries.** Entries created and updated by the download form, signed-in finishing
     with credentials, settings locked once a submission exists, `/me` listing entries.
+    `sram_defaults` has one default name shared by both players, so a player 2 name
+    needs a patch before the form can offer it.
 12. **Submissions.** The QR endpoint reusing `golf.qr.payload` for decoding and MAC
     verification, submissions and submission_holes rows, rounds on the seed page and
     `/me`, the teammate slot rule. Playtest a round through to a recorded scan.

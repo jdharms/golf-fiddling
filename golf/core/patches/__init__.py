@@ -31,6 +31,7 @@ from .base import PatchError, ROMPatch
 from .byte_patch import BytePatch
 from .composite import CompositePatch
 from .course import CoursePatch, CourseWriteStats
+from .course_theme import course_theme_patch
 from .menu_trim import (
     DEFAULT_WORDS,
     RENDERABLE_CHARS,
@@ -126,6 +127,7 @@ __all__ = [
     "StackError",
     "CoursePatch",
     "CourseWriteStats",
+    "course_theme_patch",
     "PatchError",
     "mercy_tap_in_patches",
     "remove_course_banner_patches",

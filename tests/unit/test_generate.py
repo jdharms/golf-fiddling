@@ -9,6 +9,7 @@ from golf.core.patches.seeded_wind import derive_hole_seeds
 from golf.core.patches.sram_defaults import Club
 from golf.randomizer.catalog import JP_ROM, US_ROM, Catalog, CatalogEntry, HoleId, RomSource
 from golf.randomizer.curation import CurationSnapshot
+from golf.core.patches.sram_defaults import magic_bytes
 from golf.randomizer.generate import GENERATOR_VERSION, GenerationError, generate
 from golf.randomizer.layout import COUNTS, satisfies
 from golf.randomizer.manifest import ClubRules, Manifest, Settings, required_roms
@@ -84,7 +85,17 @@ def test_each_draw_has_its_own_stream(real_catalog, real_curation):
     us_only = generate(real_catalog, real_curation, Settings(prng_seed="abc", sources={US_ROM})).course
     assert both.layout == us_only.layout
     assert both.magic_words == us_only.magic_words
+    assert both.sram_magic == us_only.sram_magic
     assert [s.wind_seed for s in both.holes] == [s.wind_seed for s in us_only.holes]
+
+
+def test_sram_magic_is_drawn_per_seed_and_never_holds_a_blank_sram_byte(real_catalog, real_curation):
+    magics = [
+        generate(real_catalog, real_curation, Settings(prng_seed=str(seed))).course.sram_magic for seed in range(40)
+    ]
+    for magic in magics:
+        assert all(byte not in (0x00, 0xFF) for byte in magic_bytes(magic))
+    assert len(set(magics)) > 1
 
 
 def test_nes_open_seeds_use_nes_open_music(real_catalog, real_curation):

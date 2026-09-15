@@ -18,7 +18,7 @@ error. See docs/manifest.md.
 from collections.abc import Iterable
 from dataclasses import dataclass
 
-from golf.core.patches.sram_defaults import BAG_SIZE, Club, parse_club
+from golf.core.patches.sram_defaults import BAG_SIZE, Club, magic_bytes, parse_club
 
 from .catalog import JP_ROM, US_ROM, Catalog, CatalogError, HoleId, RomSource
 from .layout import COUNTS
@@ -64,6 +64,16 @@ def _strings(value: object, what: str) -> list[str]:
 def _check_mercy(mercy_point: object) -> None:
     if mercy_point is not None and not (_is_int(mercy_point) and mercy_point in MERCY_POINTS):
         raise ManifestError(f"mercy_point must be null or 1-255, got {mercy_point!r}")
+
+
+def check_sram_magic(sram_magic: object) -> None:
+    """A 16-bit value neither of whose stored bytes is $00 or $FF, the rule `sram_defaults` applies."""
+    if not _is_int(sram_magic):
+        raise ManifestError(f"sram_magic must be an integer, got {sram_magic!r}")
+    try:
+        magic_bytes(sram_magic)
+    except ValueError as problem:
+        raise ManifestError(str(problem)) from None
 
 
 def _clubs_from_labels(labels: object, what: str) -> frozenset[Club]:
@@ -257,6 +267,8 @@ class Course:
     clubs: ClubRules
     #: shown on the title menus, joined as the scorecard title, and on the seed page
     magic_words: tuple[str, ...]
+    #: marks a save as this seed's; a save holding any other magic is rebuilt at boot
+    sram_magic: int
 
     def __post_init__(self):
         object.__setattr__(self, "holes", tuple(self.holes))
@@ -279,6 +291,7 @@ class Course:
         if checked != words:
             raise ManifestError(f"magic_words must be uppercase, got {list(words)}")
         object.__setattr__(self, "magic_words", words)
+        check_sram_magic(self.sram_magic)
 
     @property
     def layout(self) -> tuple[int, ...]:
@@ -295,11 +308,12 @@ class Course:
             "mercy_point": self.mercy_point,
             "clubs": self.clubs.to_json(),
             "magic_words": list(self.magic_words),
+            "sram_magic": self.sram_magic,
         }
 
     @classmethod
     def from_json(cls, data: object) -> "Course":
-        data = _fields(data, ("holes", "music", "mercy_point", "clubs", "magic_words"), "course")
+        data = _fields(data, ("holes", "music", "mercy_point", "clubs", "magic_words", "sram_magic"), "course")
         if not isinstance(data["holes"], list):
             raise ManifestError(f"course holes must be a list, got {data['holes']!r}")
         if not isinstance(data["magic_words"], list):
@@ -310,6 +324,7 @@ class Course:
             mercy_point=data["mercy_point"],
             clubs=ClubRules.from_json(data["clubs"]),
             magic_words=tuple(data["magic_words"]),
+            sram_magic=data["sram_magic"],
         )
 
 
