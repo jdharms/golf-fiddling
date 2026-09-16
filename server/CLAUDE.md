@@ -112,3 +112,8 @@ Posting to `/generate` builds a ROM, so unit tests pass `builder=` a `SeedBuilde
 whose `build` returns a fixed blob, and `rate_limiter=` a small `RateLimiter` to test
 refusals (`tests/unit/test_server_app.py`). `tests/integration/test_server_generate_rom.py`
 runs the real builder.
+
+A test that checks *which* refusal notice a page shows names it by string key and builds the
+app with `strings=UNWRITTEN`, a catalog with nothing written, in which every string renders
+as the placeholder naming its key and the values passed to it. The assertion then holds
+whatever `strings.toml` says.

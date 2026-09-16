@@ -150,5 +150,5 @@ and hand-crafted terrain/greens.
 
 ## Claude Code Preferences
 
-- **Commit messages**: Please do not author commit messages. I prefer to write them myself to capture the specific context and rationale.
+- **Commit messages**: Please do not author commit messages. I prefer to write them myself to capture the specific context and rationale.  Claude does not need to happily announce the fact that no commit has been made, it is assumed.
 - **Updating documentation**: When planning changes that would contradict or obsolete information in this CLAUDE.md file, a nested one, a doc under `docs/`, or a skill, include a step in your plan to update it accordingly. This ensures documentation stays current with the codebase; the tests in `tests/meta/` can only check that references exist, not that what they say is still true.

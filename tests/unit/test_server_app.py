@@ -60,6 +60,22 @@ def client(fake_builder):
         yield test_client
 
 
+def _catalog_with_text(text_for) -> Strings:
+    real = Strings.load()
+    return Strings({key: Entry(real.entry(key).note, text_for(key)) for key in real.keys()})  # noqa: SIM118 (Strings, not a dict)
+
+
+#: nothing written, so every string renders as the placeholder naming its key and values
+UNWRITTEN = _catalog_with_text(lambda key: "")
+
+
+@pytest.fixture
+def unwritten_client(fake_builder):
+    """For tests that name the notice a page shows by its key rather than by what it says."""
+    with app_client(strings=UNWRITTEN, builder=fake_builder) as test_client:
+        yield test_client
+
+
 def form_data(form: FormState | None = None) -> dict[str, list[str]]:
     data: dict[str, list[str]] = {}
     for name, value in (form or FormState.default()).to_pairs():
@@ -217,31 +233,31 @@ def test_unknown_manifests_are_json_404s(client, path):
     assert response.json() == {"detail": "Not Found"}
 
 
-def test_a_refused_form_comes_back_with_its_values_and_a_notice(client):
+def test_a_refused_form_comes_back_with_its_values_and_a_notice(unwritten_client):
     form = FormState.default()
     form.par = "70"
     form.sources = set()
     form.banned = {"2W"}
-    response = post_generate(client, form)
+    response = post_generate(unwritten_client, form)
     assert response.status_code == 400
     page = response.text
     assert 'role="alert"' in page and "generate.error.no_sources" in page
     assert re.search(r'name="par" value="70"\s+checked', page)
     assert re.search(r'name="banned" value="2W"\s+checked', page)
-    assert seed_count(client) == 0
+    assert seed_count(unwritten_client) == 0
 
 
-def test_a_club_rule_refusal_names_its_values(client):
+def test_a_club_rule_refusal_names_its_values(unwritten_client):
     form = FormState.default()
     form.clubs_max = "2"
     form.required_bag = {"1W", "PW"}
-    response = post_generate(client, form)
+    response = post_generate(unwritten_client, form)
     assert response.status_code == 400
     assert "generate.error.required_bag_over_max count=3 max=2" in response.text
 
 
 def test_a_pool_that_cannot_fill_the_course_is_refused(catalog, curation, tmp_path):
-    with app_client(builder=PoolTooSmall(catalog, curation, HoleStore(), tmp_path / "x.nes")) as test_client:
+    with app_client(strings=UNWRITTEN, builder=PoolTooSmall(catalog, curation, HoleStore(), tmp_path / "x.nes")) as test_client:
         response = post_generate(test_client)
         assert response.status_code == 400
         assert "generate.error.pool" in response.text
@@ -249,7 +265,7 @@ def test_a_pool_that_cannot_fill_the_course_is_refused(catalog, curation, tmp_pa
 
 
 def test_generating_is_rate_limited_per_client(fake_builder):
-    with app_client(builder=fake_builder, rate_limiter=RateLimiter(1, 3600)) as test_client:
+    with app_client(strings=UNWRITTEN, builder=fake_builder, rate_limiter=RateLimiter(1, 3600)) as test_client:
         assert post_generate(test_client, **{"X-Forwarded-For": "192.0.2.1"}).status_code == 303
         refused = post_generate(test_client, **{"X-Forwarded-For": "192.0.2.1"})
         assert refused.status_code == 429
@@ -268,7 +284,7 @@ def test_a_refused_form_spends_no_token(fake_builder):
 
 def test_generating_without_the_servers_rom_is_unavailable(catalog, curation, tmp_path):
     missing = SeedBuilder(catalog, curation, HoleStore(), tmp_path / "missing.nes")
-    with app_client(builder=missing) as test_client:
+    with app_client(strings=UNWRITTEN, builder=missing) as test_client:
         response = post_generate(test_client)
         assert response.status_code == 503
         assert "generate.error.unavailable" in response.text
@@ -276,11 +292,6 @@ def test_generating_without_the_servers_rom_is_unavailable(catalog, curation, tm
 
 
 # -- Strings ----------------------------------------------------------------------------------
-
-
-def _catalog_with_text(text_for) -> Strings:
-    real = Strings.load()
-    return Strings({key: Entry(real.entry(key).note, text_for(key)) for key in real.keys()})  # noqa: SIM118 (Strings, not a dict)
 
 
 def test_written_strings_render_without_placeholders(fake_builder):
