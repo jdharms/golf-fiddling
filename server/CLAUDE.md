@@ -17,13 +17,19 @@ in this package.
   shared objects live on `app.state`: `config`, `strings` and `rate_limiter`, and `db` and
   `builder` once the lifespan has started. Nothing is module-level state, so each test
   builds its own app.
-- `server/builder.py`'s `SeedBuilder` is the only thing a route calls to generate or build.
-  It holds the catalog and curation the seed page also reads, and reads the server's ROM
-  on first build. Builds run in the threadpool (`run_in_threadpool`), never on the event
+- `server/builder.py`'s `SeedBuilder` is the only thing a route calls to generate, build or
+  finish. It holds the catalog and curation the seed page also reads, and reads the
+  server's ROM on first build. Builds run in the threadpool (`run_in_threadpool`), never on the event
   loop.
-- Route helpers with no web types live beside the app: `server/forms.py` (form to
-  `Settings`), `server/views.py` (what a page shows, as dataclasses) and
+- Route helpers with no web types live beside the app: `server/forms.py` (the generate
+  form to `Settings`, the download form to `PlayerOptions` and ROM hashes),
+  `server/views.py` (what a page shows, as dataclasses, and the download file name) and
   `server/ratelimit.py`.
+- `server/live.py`'s `LiveServer` serves an app on a free localhost port for tools and
+  tests that drive a real browser.
+- A route a script fetches answers a refusal as JSON, `{"error": reason, "values": {...}}`,
+  and the script picks the notice for `error`. A missing seed on a path ending `.json` or
+  `.ips` is a JSON 404 rather than the not-found page.
 - Configuration is `server/config.py`, read from `GOLF_`-prefixed environment variables.
   A new setting is a field there, a variable in the README's "Running the site" list, and
   a line in the devplan's configuration paragraph.
@@ -53,10 +59,15 @@ in this package.
   picks each in an `if` chain calling `t()` with its literal key, never a key built from
   a variable, so the strings test can find every key.
 - JavaScript only where the browser must act: hashing and storing ROMs
-  (`server/static/rom.js`) and, later, applying an IPS. Plain scripts, no build step, no
-  frameworks. Everything else is a form or a link.
+  (`server/static/rom.js`) and fetching and applying a seed's IPS
+  (`server/static/download.js`). Both load `server/static/romstore.js` first, which holds
+  the ROM store and `makeT`. Plain scripts, no build step, no frameworks. Everything else is
+  a form or a link.
 - The ROM store is IndexedDB database `golf-randomizer`, object store `roms`, records
   `{id, sha1, bytes}` keyed by catalog ROM id. It holds only files whose SHA-1 matched.
+- A downloaded ROM is named `notgr_par<par>_<id>.nes` by `download_stem` in
+  `server/views.py`, and reaches the script as a data attribute. A file name is data, never
+  a strings entry.
 
 ## Player-facing text
 
@@ -83,9 +94,11 @@ writes none of it, not even as a draft to be rewritten.
   escaped, or `t_plain(...)` for tab titles, attributes and anything else HTML would break.
   Empty text renders as a marked placeholder showing the key, with the note on hover.
 - A script gets its entries as JSON: the route passes `strings.for_script(prefix)` and the
-  template embeds it in a `<script type="application/json">` element. The script's own
-  `t()` reads it, and calls it with literal keys so the tests can find them. Script
-  strings may hold inline HTML like any other: `t()` escapes the values it inserts and
+  template embeds it in a `<script type="application/json">` element. Each page script's
+  prefix is a constant in `server/app.py` (`ROM_SCRIPT_STRINGS`, `DOWNLOAD_SCRIPT_STRINGS`),
+  and a new script is added to the strings test's list of scripts. The script's `t()`,
+  from `makeT` with the element's id, reads it, and calls it with literal keys so the tests
+  can find them. Script strings may hold inline HTML like any other: `t()` escapes the values it inserts and
   returns HTML, which the script sets with `innerHTML`.
 - `tests/unit/test_server_strings.py` checks that every key a template or script uses is
   in the catalog, and that every entry is used.
@@ -106,7 +119,9 @@ widths in light and dark, and exits 1 on a browser console error or a failed req
 `--rom`, the ROM setup page is captured again after loading those files, and the final card
 states are printed. Pass a patched ROM to capture the mismatch state. With `--generate`,
 the generate form is submitted and the seed page it lands on is captured as
-`<name>-seed.png`; that builds a real seed from the ROM in `GOLF_ROM_DIR`. The tool is
+`<name>-seed.png`, with its download form's state printed; that builds a real seed from the
+ROM in `GOLF_ROM_DIR`. With `--rom` too, the ROMs are loaded before generating, so the
+download form captures ready rather than missing. The tool is
 `tools/site_screenshot.py`; `tests/integration/test_site_screenshot.py` skips without a
 Playwright browser.
 
@@ -119,7 +134,9 @@ database. Database tests use `Database(":memory:")` directly.
 Posting to `/generate` builds a ROM, so unit tests pass `builder=` a `SeedBuilder` subclass
 whose `build` returns a fixed blob, and `rate_limiter=` a small `RateLimiter` to test
 refusals (`tests/unit/test_server_app.py`). `tests/integration/test_server_generate_rom.py`
-runs the real builder.
+runs the real builder. Posting to `/h/<id>/patch.ips` finishes a ROM, so the same
+subclass overrides `finish`; `tests/integration/test_server_download_rom.py` and
+`tests/integration/test_site_download.py` run the real one, the second in a browser.
 
 A test that checks *which* refusal notice a page shows names it by string key and builds the
 app with `strings=UNWRITTEN`, a catalog with nothing written, in which every string renders

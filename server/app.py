@@ -6,28 +6,36 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exception_handlers import http_exception_handler
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from golf.randomizer.generate import GenerationError
+from golf.randomizer.manifest import required_roms
 from golf.randomizer.roms import VANILLA_ROMS
 
 from .builder import BuilderUnavailableError, SeedBuilder
 from .config import Config
 from .db import Database
-from .forms import FormError, FormState, settings_from_state
+from .forms import (
+    DownloadState,
+    FormError,
+    FormState,
+    check_rom_hashes,
+    player_options_from_state,
+    settings_from_state,
+)
 from .ratelimit import (
     GENERATE_CAPACITY,
     GENERATE_REFILL_SECONDS,
     RateLimiter,
     client_key,
 )
-from .seeds import insert_seed, load_seed
+from .seeds import insert_seed, load_seed, load_unfinished_ips
 from .strings import Strings
-from .views import generate_options, seed_view
+from .views import download_stem, generate_options, seed_view
 
 HERE = Path(__file__).resolve().parent
 STATIC_DIR = HERE / "static"
@@ -35,11 +43,21 @@ TEMPLATES_DIR = HERE / "templates"
 
 #: the catalog prefix whose strings the ROM setup page embeds for rom.js
 ROM_SCRIPT_STRINGS = "rom.status"
+#: the catalog prefix whose strings the seed page embeds for download.js
+DOWNLOAD_SCRIPT_STRINGS = "seed.download.status"
 
 #: generate.html shows one notice per value: a FormError reason, or one of these
 RATE_LIMITED = "rate_limited"
 UNAVAILABLE = "unavailable"
 POOL_TOO_SMALL = "pool"
+
+#: paths a missing resource answers with JSON rather than the not-found page
+MACHINE_SUFFIXES = (".json", ".ips")
+
+
+def json_refusal(status_code: int, reason: str, values: dict | None = None) -> JSONResponse:
+    """A download refusal: download.js shows the notice for `error`, filled from `values`."""
+    return JSONResponse({"error": reason, "values": values or {}}, status_code=status_code)
 
 
 def create_app(
@@ -84,7 +102,7 @@ def create_app(
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request: Request, exc: StarletteHTTPException) -> Response:
-        if exc.status_code == 404 and not request.url.path.endswith(".json"):
+        if exc.status_code == 404 and not request.url.path.endswith(MACHINE_SUFFIXES):
             return templates.TemplateResponse(
                 request,
                 "not_found.html",
@@ -172,7 +190,41 @@ def create_app(
             raise not_found()
         seed_builder: SeedBuilder = request.app.state.builder
         view = seed_view(row, seed_builder.catalog, seed_builder.curation)
-        return templates.TemplateResponse(request, "seed.html", {"page": "seed", "seed": view})
+        return templates.TemplateResponse(
+            request,
+            "seed.html",
+            {"page": "seed", "seed": view, "download_strings": strings.for_script(DOWNLOAD_SCRIPT_STRINGS)},
+        )
+
+    @app.post("/h/{seed_id}/patch.ips")
+    async def seed_patch(request: Request, seed_id: str):
+        row = load_seed(request.app.state.db, seed_id)
+        if row is None:
+            raise not_found()
+        seed_builder: SeedBuilder = request.app.state.builder
+        manifest = row.manifest
+        state = DownloadState.from_form(await request.form())
+        try:
+            check_rom_hashes(state, required_roms(manifest, seed_builder.catalog))
+        except FormError as problem:
+            return json_refusal(403, problem.reason, problem.values)
+        try:
+            options = player_options_from_state(state, manifest.course.clubs)
+        except FormError as problem:
+            return json_refusal(400, problem.reason, problem.values)
+
+        unfinished_ips = load_unfinished_ips(request.app.state.db, seed_id)
+        if unfinished_ips is None:  # pragma: no cover - seeds are never deleted
+            raise not_found()
+        try:
+            patch = await run_in_threadpool(seed_builder.finish, manifest, unfinished_ips, options)
+        except BuilderUnavailableError:
+            return json_refusal(503, UNAVAILABLE)
+        return Response(
+            patch,
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": f'attachment; filename="{download_stem(row)}.ips"'},
+        )
 
     @app.get("/healthz")
     def healthz(request: Request) -> dict[str, str]:

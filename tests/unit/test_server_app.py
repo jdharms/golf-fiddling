@@ -1,15 +1,16 @@
-"""The site's app: health check, home, ROM setup, generate, the seed page and static files."""
+"""The site's app: health check, home, ROM setup, generate, the seed page, downloads and static files."""
 
 import re
 
 import pytest
 from fastapi.testclient import TestClient
 
-from golf.randomizer.catalog import Catalog, HoleStore
+from golf.core.patches.sram_defaults import Club
+from golf.randomizer.catalog import JP_ROM, US_ROM, Catalog, HoleStore
 from golf.randomizer.curation import CurationSnapshot
 from golf.randomizer.generate import GenerationError
 from golf.randomizer.manifest import DEFAULT_MERCY_POINT, Manifest
-from golf.randomizer.roms import VANILLA_ROMS
+from golf.randomizer.roms import VANILLA_ROMS, vanilla_rom
 from server.app import create_app
 from server.builder import SeedBuilder
 from server.config import Config
@@ -19,6 +20,7 @@ from server.ratelimit import RateLimiter
 from server.strings import Entry, Strings
 
 IPS = b"PATCH\x00\x00\x10\x00\x01\xeaEOF"
+FINISHED = b"PATCH\x00\x00\x20\x00\x01\x60EOF"
 SEED_URL = re.compile(r"^/h/([0-9A-Za-z]{10})$")
 
 
@@ -38,6 +40,10 @@ class FakeBuilder(SeedBuilder):
     def build(self, manifest):
         self.built = manifest
         return IPS
+
+    def finish(self, manifest, unfinished_ips, options):
+        self.finished = (manifest, unfinished_ips, options)
+        return FINISHED
 
 
 class PoolTooSmall(FakeBuilder):
@@ -87,8 +93,8 @@ def post_generate(client: TestClient, form: FormState | None = None, **headers):
     return client.post("/generate", data=form_data(form), headers=headers, follow_redirects=False)
 
 
-def generate_seed(client: TestClient) -> str:
-    response = post_generate(client)
+def generate_seed(client: TestClient, form: FormState | None = None) -> str:
+    response = post_generate(client, form)
     assert response.status_code == 303, response.text
     return SEED_URL.match(response.headers["location"]).group(1)
 
@@ -130,10 +136,13 @@ def test_rom_setup_lists_every_vanilla_rom_with_its_hash(client):
         assert rom.title in response.text
     assert response.text.count('data-state="checking"') == len(VANILLA_ROMS)
     assert 'id="rom-strings"' in response.text
-    assert 'src="/static/rom.js"' in response.text
+    assert response.text.index('src="/static/romstore.js"') < response.text.index('src="/static/rom.js"')
 
 
-@pytest.mark.parametrize("path", ["/static/pico.green.min.css", "/static/site.css", "/static/rom.js"])
+@pytest.mark.parametrize(
+    "path",
+    ["/static/pico.green.min.css", "/static/site.css", "/static/romstore.js", "/static/rom.js", "/static/download.js"],
+)
 def test_static_files_are_served(client, path):
     response = client.get(path)
     assert response.status_code == 200
@@ -291,6 +300,127 @@ def test_generating_without_the_servers_rom_is_unavailable(catalog, curation, tm
         assert seed_count(test_client) == 0
 
 
+# -- Download ---------------------------------------------------------------------------------
+
+US_HASHES = {f"rom_{US_ROM}": vanilla_rom(US_ROM).sha1}
+ALL_HASHES = {f"rom_{rom.id}": rom.sha1 for rom in VANILLA_ROMS}
+
+
+def seed_form(**changes) -> FormState:
+    form = FormState.default()
+    for name, value in changes.items():
+        setattr(form, name, value)
+    return form
+
+
+#: a seed built from the US ROM alone: its holes and its theme
+US_ONLY = {"sources": {US_ROM}, "music": "nes_us"}
+
+
+def post_download(client: TestClient, seed_id: str, name: str = "luigi", clubs=("1W", "PW"), hashes=None):
+    data = {"player_name": name, "clubs": list(clubs), **(ALL_HASHES if hashes is None else hashes)}
+    return client.post(f"/h/{seed_id}/patch.ips", data=data)
+
+
+def test_the_seed_page_offers_the_download_form(client):
+    seed_id = generate_seed(client, seed_form(**US_ONLY, banned={"1W", "SW"}))
+    page = client.get(f"/h/{seed_id}").text
+    article = page[page.index('<article class="download"') : page.index("</article>", page.index('<article class="download"'))]
+    assert 'data-state="checking"' in article
+    assert f'data-required-roms="{US_ROM}"' in article
+    assert f'data-filename="notgr_par72_{seed_id}.nes"' in article
+    assert f'action="/h/{seed_id}/patch.ips"' in article
+    assert re.search(r'name="player_name" value="MARIO"\s+maxlength="10"', article)
+    assert article.count('name="clubs"') == 15
+    assert 'value="PT"' not in article
+    assert re.search(r'name="clubs" value="1W" disabled', article)
+    assert re.search(r'name="clubs" value="SW" disabled', article)
+    assert re.search(r'name="clubs" value="3W" checked', article)
+    assert not re.search(r'name="clubs" value="4W" checked', article)
+    assert re.search(r'<button type="submit" disabled>', article)
+    assert 'href="/rom"' in article
+    assert 'id="download-strings"' in page
+    assert f'id="download-roms">{{"{US_ROM}": {{"sha1": "{vanilla_rom(US_ROM).sha1}"' in page
+    assert page.index('src="/static/romstore.js"') < page.index('src="/static/download.js"')
+
+
+def test_a_locked_bag_seed_lists_no_clubs(unwritten_client):
+    seed_id = generate_seed(unwritten_client, seed_form(required_bag={"1W", "PW"}))
+    page = unwritten_client.get(f"/h/{seed_id}").text
+    assert 'name="clubs"' not in page
+    assert "seed.download.locked_bag clubs=1W PW PT" in page
+
+
+def test_downloading_finishes_the_stored_seed_as_a_guest(client, fake_builder):
+    seed_id = generate_seed(client)
+    response = post_download(client, seed_id)
+    assert response.status_code == 200
+    assert response.content == FINISHED
+    assert response.headers["content-type"] == "application/octet-stream"
+    par = fake_builder.built.course.par
+    assert response.headers["content-disposition"] == f'attachment; filename="notgr_par{par}_{seed_id}.ips"'
+    manifest, unfinished_ips, options = fake_builder.finished
+    assert manifest == fake_builder.built
+    assert unfinished_ips == IPS
+    assert options.player_name == "LUIGI"
+    assert options.clubs == {Club.W1, Club.PW, Club.PT}
+
+
+def test_a_us_only_seed_needs_only_the_us_hash(client):
+    seed_id = generate_seed(client, seed_form(**US_ONLY))
+    assert post_download(client, seed_id, hashes=US_HASHES).status_code == 200
+
+
+def test_a_seed_with_mario_open_content_is_refused_without_the_jp_hash(client):
+    seed_id = generate_seed(client, seed_form(music="jp_france"))
+    response = post_download(client, seed_id, hashes=US_HASHES)
+    assert response.status_code == 403
+    assert response.json() == {"error": "roms_missing", "values": {"roms": vanilla_rom(JP_ROM).title}}
+
+
+def test_a_download_without_hashes_is_refused(client):
+    seed_id = generate_seed(client, seed_form(**US_ONLY))
+    response = post_download(client, seed_id, hashes={})
+    assert response.status_code == 403
+    assert response.json()["error"] == "roms_missing"
+
+
+@pytest.mark.parametrize(
+    "form, name, clubs, error",
+    [
+        ({}, "LU1GI", ("1W",), {"error": "invalid_name", "values": {"chars": "1"}}),
+        ({}, "", ("1W",), {"error": "invalid_name", "values": {"chars": ""}}),
+        ({}, "LUIGI", ("9W",), {"error": "invalid", "values": {"field": "clubs"}}),
+        ({"banned": {"SW"}}, "LUIGI", ("SW", "PW"), {"error": "clubs_banned", "values": {"clubs": "SW"}}),
+        ({"clubs_max": "2"}, "LUIGI", ("1W", "PW"), {"error": "clubs_over_max", "values": {"count": 3, "max": 2}}),
+    ],
+)
+def test_a_download_the_seed_forbids_is_refused(client, form, name, clubs, error):
+    seed_id = generate_seed(client, seed_form(**form))
+    response = post_download(client, seed_id, name=name, clubs=clubs)
+    assert response.status_code == 400
+    assert response.json() == error
+
+
+def test_downloading_an_unknown_seed_is_a_json_404(client):
+    for seed_id in ("0000000001", "not-a-seed"):
+        response = post_download(client, seed_id)
+        assert response.status_code == 404
+        assert response.json() == {"detail": "Not Found"}
+
+
+def test_downloading_without_the_servers_rom_is_unavailable(catalog, curation, tmp_path):
+    class NoRom(SeedBuilder):
+        def build(self, manifest):
+            return IPS
+
+    with app_client(builder=NoRom(catalog, curation, HoleStore(), tmp_path / "missing.nes")) as test_client:
+        seed_id = generate_seed(test_client)
+        response = post_download(test_client, seed_id)
+        assert response.status_code == 503
+        assert response.json() == {"error": "unavailable", "values": {}}
+
+
 # -- Strings ----------------------------------------------------------------------------------
 
 
@@ -307,6 +437,8 @@ def test_written_strings_render_without_placeholders(fake_builder):
     assert '"TEXT:rom.status.stored"' in pages["/rom"]
     assert "TEXT:generate.clubs.heading" in pages["/generate"]
     assert "TEXT:seed.holes.total" in pages[f"/h/{seed_id}"]
+    assert "TEXT:seed.download.submit" in pages[f"/h/{seed_id}"]
+    assert '"TEXT:seed.download.status.ready"' in pages[f"/h/{seed_id}"]
     assert "TEXT:not_found.heading" in pages["/nope"]
 
 

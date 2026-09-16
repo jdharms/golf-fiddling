@@ -20,6 +20,7 @@ from server.seeds import (
     encode_seed_id,
     insert_seed,
     load_seed,
+    load_unfinished_ips,
     manifest_text,
     new_qr_seed_id,
 )
@@ -157,3 +158,13 @@ def test_load_seed_returns_the_stored_manifest(db, manifest):
 @pytest.mark.parametrize("text", ["0000000001", "not-an-id", "nope.json"])
 def test_load_seed_is_none_for_a_missing_or_malformed_id(db, text):
     assert load_seed(db, text) is None
+
+
+def test_load_unfinished_ips_returns_the_stored_blob(db, manifest):
+    seed_id = insert_seed(db, manifest, IPS)
+    assert load_unfinished_ips(db, seed_id) == IPS
+
+
+@pytest.mark.parametrize("text", ["0000000001", "not-an-id"])
+def test_load_unfinished_ips_is_none_for_a_missing_or_malformed_id(db, text):
+    assert load_unfinished_ips(db, text) is None

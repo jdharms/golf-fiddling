@@ -252,9 +252,21 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
    `test_server_seeds.py`, `test_server_ratelimit.py` and `test_server_builder.py` run
    without a ROM; `tests/integration/test_server_generate_rom.py` checks the stored IPS
    against `build_unfinished`.
-9. **Download flow.** The download form gated on the ROM store, the IPS endpoint with
-   hash gating on the manifest's required ROMs and guest finishing, the JavaScript patcher. The site can now run a
-   league of guest ROMs. Playtest a downloaded ROM.
+9. **Download flow.** Done: the seed page's download form and `POST /h/<id>/patch.ips`.
+   `server/forms.py`'s `DownloadState` reads the player's name and clubs and a `rom_<id>`
+   field per stored ROM holding its SHA-1; `check_rom_hashes` refuses a download missing any
+   of the manifest's required ROMs, and `player_options_from_state` checks the bag against
+   the seed's club rules, a locked bag replacing whatever was sent. `SeedBuilder.finish`
+   finishes the stored IPS as a guest. Refusals are JSON reasons the page's script shows.
+   `server/static/romstore.js` is the ROM store and string lookup both page scripts share;
+   `server/static/download.js` gates the form on the store, fetches the IPS, applies it to
+   the stored US ROM and saves it as `notgr_par<par>_<id>.nes`, a name that marks a
+   randomizer ROM, tells seeds apart by par and leads back to the seed page (`download_stem`
+   in `server/views.py`). `tests/unit/test_server_app.py` and `test_server_forms.py` run
+   without a ROM; `tests/integration/test_server_download_rom.py` checks the served IPS
+   against `finish`, and `tests/integration/test_site_download.py` downloads in headless
+   Chromium and compares the saved ROM with the library's. The site can now run a league
+   of guest ROMs. Playtest a downloaded ROM.
 10. **Discord sign-in.** The OAuth flow, sessions, the development bypass, the users
     table with its player ID, sign-in and sign-out in the page header.
 11. **Entries.** Entries created and updated by the download form, signed-in finishing

@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from markupsafe import Markup, escape
 
-from server.app import ROM_SCRIPT_STRINGS
+from server.app import DOWNLOAD_SCRIPT_STRINGS, ROM_SCRIPT_STRINGS
 from server.strings import CATALOG_DIR, Entry, Strings, StringsError
 
 SERVER = Path(__file__).resolve().parents[2] / "server"
@@ -56,10 +56,22 @@ def test_every_catalog_entry_is_used():
     assert not unused, f"no template or script uses these entries: {sorted(unused)}"
 
 
-def test_script_keys_are_embedded_for_the_script():
-    embedded = Strings.load().for_script(ROM_SCRIPT_STRINGS)
-    missing = script_keys() - embedded.keys()
-    assert not missing, f"rom.js uses keys outside {ROM_SCRIPT_STRINGS!r}: {sorted(missing)}"
+#: each page script, and the catalog prefix its page embeds for it
+SCRIPT_PREFIXES = {"rom.js": ROM_SCRIPT_STRINGS, "download.js": DOWNLOAD_SCRIPT_STRINGS, "romstore.js": None}
+
+
+def test_every_script_is_listed_with_its_prefix():
+    assert {path.name for path in (SERVER / "static").glob("*.js")} == SCRIPT_PREFIXES.keys()
+
+
+@pytest.mark.parametrize("script, prefix", SCRIPT_PREFIXES.items())
+def test_script_keys_are_embedded_for_the_script(script, prefix):
+    keys = used(SCRIPT_USE, [SERVER / "static" / script])
+    if prefix is None:
+        assert not keys, f"{script} is shared and uses no strings of its own: {sorted(keys)}"
+        return
+    missing = keys - Strings.load().for_script(prefix).keys()
+    assert keys and not missing, f"{script} uses keys outside {prefix!r}: {sorted(missing)}"
 
 
 def test_each_namespace_lives_in_exactly_one_file():

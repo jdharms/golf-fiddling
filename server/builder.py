@@ -1,4 +1,4 @@
-"""What the generate route calls: a manifest from settings, and the unfinished IPS from a manifest.
+"""What the site's routes call to build: a manifest from settings, its unfinished IPS, and a finished IPS.
 
 The builder holds the catalog, curation and hole store the site generates from, and reads
 the server's vanilla US ROM on first use. Builds run behind a semaphore, so a burst of
@@ -10,7 +10,7 @@ import hashlib
 import threading
 from pathlib import Path
 
-from golf.randomizer.build import build_unfinished
+from golf.randomizer.build import PlayerOptions, build_unfinished, finish
 from golf.randomizer.catalog import DEFAULT_INDEX, US_ROM, Catalog, HoleStore
 from golf.randomizer.curation import DEFAULT_CURATION, CurationSnapshot
 from golf.randomizer.generate import generate
@@ -72,3 +72,7 @@ class SeedBuilder:
         vanilla = self.vanilla()
         with self._builds:
             return build_unfinished(manifest, self.catalog, self.store, vanilla).ips
+
+    def finish(self, manifest: Manifest, unfinished_ips: bytes, options: PlayerOptions) -> bytes:
+        """A guest player's finished IPS for a stored seed. Finishing takes milliseconds, so it skips the semaphore."""
+        return finish(manifest, self.vanilla(), unfinished_ips, options).ips
