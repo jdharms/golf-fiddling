@@ -1,0 +1,16 @@
+# Not-found page strings (not_found.html).
+# Format: see common.toml, and server/CLAUDE.md "Player-facing text".
+
+[not_found.page_title]
+note = "Not Found - NES Open Randomizer"
+text = "Not Found - NES Open Randomizer"
+
+[not_found.heading]
+note = "not found heading"
+text = "Page Not Found"
+
+[not_found.body]
+note = "no page here; a seed link may be mistyped; link home (/)"
+text = """
+You ended up out of bounds somehow. If you clicked a seed linked from somewhere
+else, ask for a link again. Head back <a href="/">home</a> whenever you're ready."""

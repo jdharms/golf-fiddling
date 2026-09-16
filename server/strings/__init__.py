@@ -1,19 +1,24 @@
 """Player-visible English on the site, from a keyed catalog.
 
-`server/strings.toml` holds one entry per string: a `note` saying what it has to get
-across and the values it receives, and the `text` itself. Templates and scripts refer to
-strings by key only. An entry with empty text renders as a marked placeholder, so a page
-shows where text is still to be written. See server/CLAUDE.md, "Player-facing text".
+`server/strings/` holds the catalog as TOML files: `common.toml` for the elements on every
+page, and one file per page beside it. Each entry is a `note` saying what it has to get
+across and the values it receives, and the `text` itself. Every file under the directory is
+loaded and merged, and entries carry their full dotted key, so a file name is organization
+only. Templates and scripts refer to strings by key only. An entry with empty text renders
+as a marked placeholder, so a page shows where text is still to be written. See
+server/CLAUDE.md, "Player-facing text".
 """
 
 import tomllib
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, overload
 
 from markupsafe import Markup
 
-DEFAULT_PATH = Path(__file__).resolve().parent / "strings.toml"
+#: the catalog: every *.toml beside this module
+CATALOG_DIR = Path(__file__).resolve().parent
 FIELDS = frozenset({"note", "text"})
 
 
@@ -57,9 +62,28 @@ class Strings:
         self._entries = dict(entries)
 
     @classmethod
-    def load(cls, path: Path = DEFAULT_PATH) -> "Strings":
-        with path.open("rb") as file:
-            return cls.from_toml(tomllib.load(file))
+    def load(cls, directory: Path = CATALOG_DIR) -> "Strings":
+        """Every `*.toml` under `directory`, merged into one catalog."""
+        entries: dict[str, Entry] = {}
+        source: dict[str, Path] = {}
+        for file in sorted(directory.rglob("*.toml")):
+            try:
+                with file.open("rb") as handle:
+                    data = tomllib.load(handle)
+            except tomllib.TOMLDecodeError as problem:
+                raise StringsError(f"{file.name}: {problem}") from None
+            found: dict[str, Entry] = {}
+            try:
+                _flatten(data, "", found)
+            except StringsError as problem:
+                raise StringsError(f"{file.name}: {problem}") from None
+            for key, entry in found.items():
+                if key in source:
+                    raise StringsError(f"{key}: defined in both {source[key].name} and {file.name}")
+                source[key], entries[key] = file, entry
+        if not entries:
+            raise StringsError(f"no strings in {directory}")
+        return cls(entries)
 
     @classmethod
     def from_toml(cls, data: Mapping) -> "Strings":
@@ -98,8 +122,21 @@ class Strings:
         start = prefix + "."
         return {key: self._entries[key].text or None for key in self.keys() if key.startswith(start)}
 
+    @overload
     @staticmethod
-    def _format(key: str, text: str, values: Mapping[str, object]) -> str:
+    def _format(key: str, text: Markup, values: Mapping[str, object]) -> Markup: ...
+
+    @overload
+    @staticmethod
+    def _format(key: str, text: str, values: Mapping[str, object]) -> str: ...
+
+    @staticmethod
+    def _format(key: str, text: str, values: Mapping[str, object]) -> Any:
+        """Insert the values, handing back the same kind of string it was given.
+
+        `Markup.format` escapes what it inserts and returns `Markup`; `str.format` does
+        neither. The overloads keep that difference, so `html` stays typed `Markup`.
+        """
         try:
             return text.format(**values)
         except KeyError as problem:

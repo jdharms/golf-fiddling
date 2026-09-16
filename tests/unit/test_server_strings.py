@@ -8,7 +8,7 @@ import pytest
 from markupsafe import Markup, escape
 
 from server.app import ROM_SCRIPT_STRINGS
-from server.strings import Entry, Strings, StringsError
+from server.strings import CATALOG_DIR, Entry, Strings, StringsError
 
 SERVER = Path(__file__).resolve().parents[2] / "server"
 TEMPLATE_USE = re.compile(r"""\bt(?:_plain)?\(\s*["']([^"']+)["']""")
@@ -48,7 +48,7 @@ def test_the_scans_find_keys():
 
 def test_every_key_a_page_uses_is_in_the_catalog():
     missing = (template_keys() | script_keys()) - set(Strings.load().keys())
-    assert not missing, f"add these to server/strings.toml: {sorted(missing)}"
+    assert not missing, f"add these to server/strings/: {sorted(missing)}"
 
 
 def test_every_catalog_entry_is_used():
@@ -60,6 +60,60 @@ def test_script_keys_are_embedded_for_the_script():
     embedded = Strings.load().for_script(ROM_SCRIPT_STRINGS)
     missing = script_keys() - embedded.keys()
     assert not missing, f"rom.js uses keys outside {ROM_SCRIPT_STRINGS!r}: {sorted(missing)}"
+
+
+def test_each_namespace_lives_in_exactly_one_file():
+    """A page's strings sit together, so there is one place to look for `generate.*`."""
+    seen: dict[str, str] = {}
+    for file in sorted(CATALOG_DIR.rglob("*.toml")):
+        keys = Strings.from_toml(tomllib.loads(file.read_text())).keys()
+        for namespace in sorted({key.split(".")[0] for key in keys}):
+            assert namespace not in seen, f"{namespace}.* is in both {seen[namespace]} and {file.name}"
+            seen[namespace] = file.name
+
+
+# -- The catalog directory ----------------------------------------------------------------
+
+
+def write(directory: Path, name: str, text: str) -> None:
+    (directory / name).write_text(text)
+
+
+def test_every_file_in_the_directory_is_merged(tmp_path):
+    write(tmp_path, "a.toml", '[a.one]\nnote = "n"\ntext = "t"\n')
+    write(tmp_path, "b.toml", '[b.two]\nnote = "n"\n')
+    assert Strings.load(tmp_path).keys() == ["a.one", "b.two"]
+
+
+def test_files_in_subdirectories_are_merged_too(tmp_path):
+    (tmp_path / "pages").mkdir()
+    write(tmp_path, "a.toml", '[a.one]\nnote = "n"\n')
+    write(tmp_path / "pages", "b.toml", '[b.two]\nnote = "n"\n')
+    assert Strings.load(tmp_path).keys() == ["a.one", "b.two"]
+
+
+def test_a_key_in_two_files_is_an_error(tmp_path):
+    write(tmp_path, "a.toml", '[dup.key]\nnote = "n"\n')
+    write(tmp_path, "b.toml", '[dup.key]\nnote = "n"\n')
+    with pytest.raises(StringsError, match="defined in both a.toml and b.toml"):
+        Strings.load(tmp_path)
+
+
+def test_a_malformed_file_is_named_in_the_error(tmp_path):
+    write(tmp_path, "bad.toml", '[a]\ntext = "t"\n')
+    with pytest.raises(StringsError, match="bad.toml: a: missing note"):
+        Strings.load(tmp_path)
+
+
+def test_unparsable_toml_is_named_in_the_error(tmp_path):
+    write(tmp_path, "broken.toml", "[a\n")
+    with pytest.raises(StringsError, match="broken.toml"):
+        Strings.load(tmp_path)
+
+
+def test_a_directory_with_no_catalog_files_is_an_error(tmp_path):
+    with pytest.raises(StringsError, match="no strings in"):
+        Strings.load(tmp_path)
 
 
 # -- Loading ------------------------------------------------------------------------------
