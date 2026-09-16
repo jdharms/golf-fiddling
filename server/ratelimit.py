@@ -61,7 +61,18 @@ class RateLimiter:
         return len(self._buckets)
 
 
-def client_key(request: Request) -> str:
+def client_key(request: Request, user_id: int | None = None) -> str:
+    """The bucket key: `user:<users.id>` for a signed-in player, otherwise `ip:<address>`.
+
+    A signed-in player's bucket follows them across addresses, and players sharing an
+    address each get their own.
+    """
+    if user_id is not None:
+        return f"user:{user_id}"
+    return f"ip:{client_address(request)}"
+
+
+def client_address(request: Request) -> str:
     """The client's address, from the reverse proxy's forwarded header when there is one.
 
     The proxy appends the address it saw to whatever the client sent, so the last entry

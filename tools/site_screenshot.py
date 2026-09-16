@@ -9,7 +9,9 @@ final card states are printed. With --generate, the generate form is submitted w
 defaults and the seed page it lands on is captured too, and its download form's state
 printed; that builds a real seed, so it needs the vanilla US ROM in GOLF_ROM_DIR (the
 repository root by default). With --rom as well, the files are loaded on the ROM setup page
-first, so the seed page shows the download form ready. Browser console
+first, so the seed page shows the download form ready. With --login, each browser signs in
+through the development login bypass before capturing, so pages show the signed-in
+header. Browser console
 errors and page errors are printed and make the command exit 1.
 
 Needs the dev dependencies and a Playwright browser (uv run playwright install chromium).
@@ -32,6 +34,7 @@ examples:
   golf-site-screenshot / --viewports phone --schemes dark -o shots
   golf-site-screenshot /rom --rom nes_open_us=nes_open_us.nes --rom mario_open_jp=guest.nes -o shots
   golf-site-screenshot /generate --generate -o shots
+  golf-site-screenshot / /generate --login alice -o shots
 """
 
 
@@ -106,6 +109,14 @@ def capture(base: str, args: argparse.Namespace) -> tuple[list[Path], list[str]]
                         )
                         page.on("pageerror", lambda error, label=label: problems.append(f"{label}: page error: {error}"))
                         try:
+                            if args.login:
+                                # The session cookie is per browser context: sign each one in.
+                                response = page.goto(f"{base}/auth/login?as={args.login}", wait_until="networkidle")
+                                if response is None or not response.ok:
+                                    status = response.status if response is not None else "no response"
+                                    problems.append(f"{label}: signing in as {args.login}: HTTP {status}")
+                                elif not page.locator("form[action='/auth/logout']").count():
+                                    problems.append(f"{label}: signing in as {args.login} left the header signed out")
                             response = page.goto(base + path, wait_until="networkidle")
                             if response is None or not response.ok:
                                 status = response.status if response is not None else "no response"
@@ -177,6 +188,11 @@ def main() -> int:
         help="on the generate page, submit the form and capture the seed page as <name>-seed.png (needs the vanilla US ROM); "
         "with --rom, load the ROMs first so the download form is ready",
     )
+    parser.add_argument(
+        "--login",
+        metavar="NAME",
+        help="sign each browser in as the development user NAME before capturing (turns on the login bypass)",
+    )
     args = parser.parse_args()
 
     try:
@@ -192,6 +208,9 @@ def main() -> int:
 
     # The environment's ROM and hole directories, so --generate can build; never its database.
     config = replace(Config.from_env(), database=":memory:")
+    if args.login:
+        # The bypass only runs on a localhost base URL, which the served app is.
+        config = replace(config, dev_login=True, base_url="http://127.0.0.1:8000")
     # Every viewport and scheme may generate a seed, more than a player's bucket holds.
     limiter = RateLimiter(capacity=1000, refill_seconds=1)
     try:

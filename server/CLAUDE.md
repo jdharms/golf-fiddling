@@ -25,6 +25,12 @@ in this package.
   form to `Settings`, the download form to `PlayerOptions` and ROM hashes),
   `server/views.py` (what a page shows, as dataclasses, and the download file name) and
   `server/ratelimit.py`.
+- `server/auth.py` holds sign-in: `DiscordClient` (the two OAuth2 calls), `safe_next` for
+  return paths, and `current_user(request)`, the one way a route gets the signed-in
+  `User`. Templates get `user`, `sign_in_enabled` and `return_path` from the context
+  processor in `create_app`. The session cookie holds only `users.id`, plus the OAuth
+  state and return path while a Discord sign-in is under way. `app.state.discord` is the
+  client, or None when Discord is not configured.
 - `server/live.py`'s `LiveServer` serves an app on a free localhost port for tools and
   tests that drive a real browser.
 - A route a script fetches answers a refusal as JSON, `{"error": reason, "values": {...}}`,
@@ -44,6 +50,8 @@ in this package.
   A table arrives with the work item that first writes to it.
 - `server/seeds.py` is the only code that writes `seeds` and `seed_holes`, and the only
   place seed ids are drawn or converted.
+- `server/users.py` is the only code that writes `users`, and the only place player ids
+  are drawn. `seeds.creator_id` holds a `users.id`.
 
 ## Pages
 
@@ -80,7 +88,7 @@ writes none of it, not even as a draft to be rewritten.
   words.
 - The catalog is the TOML files under `server/strings/`: `common.toml` for the elements on
   every page (`base.html`), and one file per template named for it - `home.toml`,
-  `rom.toml`, `generate.toml`, `seed.toml`, `not_found.toml`. Every file under the
+  `rom.toml`, `generate.toml`, `seed.toml`, `not_found.toml`, `sign_in_failed.toml`. Every file under the
   directory is loaded and merged, subdirectories included. Entries carry their full dotted
   key (`[home.about]`), so a file name is organization only and a key still greps to its
   entry. A top-level namespace lives in exactly one file, and a new page arrives as a new
@@ -121,7 +129,8 @@ states are printed. Pass a patched ROM to capture the mismatch state. With `--ge
 the generate form is submitted and the seed page it lands on is captured as
 `<name>-seed.png`, with its download form's state printed; that builds a real seed from the
 ROM in `GOLF_ROM_DIR`. With `--rom` too, the ROMs are loaded before generating, so the
-download form captures ready rather than missing. The tool is
+download form captures ready rather than missing. With `--login NAME`, each browser signs
+in through the development bypass first, so the header captures signed in. The tool is
 `tools/site_screenshot.py`; `tests/integration/test_site_screenshot.py` skips without a
 Playwright browser.
 
@@ -137,6 +146,12 @@ refusals (`tests/unit/test_server_app.py`). `tests/integration/test_server_gener
 runs the real builder. Posting to `/h/<id>/patch.ips` finishes a ROM, so the same
 subclass overrides `finish`; `tests/integration/test_server_download_rom.py` and
 `tests/integration/test_site_download.py` run the real one, the second in a browser.
+
+Sign-in tests build the app with `Config(dev_login=True)` and sign in with
+`/auth/login?as=<name>`, or with Discord credentials and `discord=` a `DiscordClient`
+subclass whose `identify` returns a fixed identity (`FakeDiscord` in
+`tests/unit/test_server_app.py`). `tests/unit/test_server_auth.py` runs the real client
+against `httpx2.MockTransport`.
 
 A test that checks *which* refusal notice a page shows names it by string key and builds the
 app with `strings=UNWRITTEN`, a catalog with nothing written, in which every string renders

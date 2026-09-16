@@ -78,11 +78,17 @@ front which ROMs a seed needs, from `required_roms` (`docs/manifest.md`). This i
 ### Users and access
 
 Nothing requires sign-in. Discord OAuth2 with the `identify` scope, hand-rolled with two
-httpx calls, and a signed session cookie through Starlette's session middleware. A
-development-only login bypass behind an environment flag keeps local work off Discord.
+httpx calls (`server/auth.py`): the code is exchanged for a token, the token reads
+`/users/@me`, and the token is thrown away. The session is a signed cookie through
+Starlette's session middleware, SameSite=lax, and holds only the user's `users.id`, plus
+the OAuth `state` and return path while a sign-in is under way. A development-only login
+bypass, `GOLF_DEV_LOGIN`, keeps local work off Discord: `/auth/login?as=<name>` signs in as
+the user `dev:<name>`, and the site refuses to start with it on unless the base URL is
+localhost.
 
 - Seed pages are public.
-- Generating works signed out; the seed records its creator when there is one.
+- Generating works signed out; the seed records its creator's `users.id` when there is
+  one. Seed pages do not show it.
 - Downloading works signed out and produces a guest ROM. Signed in, it creates or
   updates the user's entry and produces a ROM that can submit.
 - The QR endpoint requires nothing: the phone doing the scan may not be signed in, and
@@ -90,7 +96,7 @@ development-only login bypass behind an environment flag keeps local work off Di
 
 Generation is rate limited, since it is the one request a stranger can use to make the
 server do work and store bytes. A token bucket in process memory on `POST /generate`,
-keyed by user id when signed in and by client IP otherwise, answered with a 429 page. A
+keyed `user:<users.id>` when signed in and `ip:<address>` otherwise, answered with a 429 page. A
 bucket holds five seeds and gets one back a minute (`server/ratelimit.py`), and only a
 submission the form accepts spends one. There is no global ceiling: a surge of real users
 should queue on the generation semaphore, not be refused. The client IP is the last entry
@@ -107,7 +113,7 @@ cannot submit.
 
 | Table | Holds |
 |---|---|
-| `users` | Discord id, username (use Discord "global_name", update on log-in as needed), avatar, a random unique uint32 `player_id` generated at first login, created_at, last_login |
+| `users` | Internal id, Discord id (`dev:<name>` for bypass users), Discord `username` and `global_name` (pages show `global_name`, falling back to `username`), avatar hash, a random unique nonzero uint32 `player_id` drawn at first sign-in, created_at, last_login. Names and avatar are refreshed on every sign-in |
 | `seeds` | A 10-character base62 id for URLs and the same value as an integer, `qr_seed_id`, both unique; manifest JSON, generator and catalog versions, curation stamp, the unfinished IPS blob, nullable creator, created_at |
 | `seed_holes` | seed, position 1-18, catalog hole id, transforms, par, wind seed, pin index, wind direction anchor, wind speed anchor. Pure denormalization of the manifest for SQL stats; a migration can always backfill it |
 | `entries` | One per (seed, user), unique. The player's choices for this seed (name, clubs, optional player 2 name), one MAC key per slot, created_at |
@@ -267,8 +273,16 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
    against `finish`, and `tests/integration/test_site_download.py` downloads in headless
    Chromium and compares the saved ROM with the library's. The site can now run a league
    of guest ROMs. Playtest a downloaded ROM.
-10. **Discord sign-in.** The OAuth flow, sessions, the development bypass, the users
-    table with its player ID, sign-in and sign-out in the page header.
+10. **Discord sign-in.** Done: migration 2 adds `users`; `server/users.py` is its only
+    writer, with `sign_in` inserting or refreshing a user and drawing the `player_id`.
+    `server/auth.py` has `DiscordClient`, `safe_next` and `current_user`. `/auth/login`,
+    `/auth/callback` and `/auth/logout` sign in through Discord or the development bypass,
+    and a failed Discord sign-in renders `sign_in_failed.html`. `Config.validate` refuses
+    the bypass off localhost and Discord without a session secret. The page header shows
+    sign-in, or the player's name and sign-out. `POST /generate` records the creator and
+    rate-limits per user. `golf-site-screenshot --login` captures pages signed in.
+    `tests/unit/test_server_users.py` and `test_server_auth.py` (the client against a mock
+    transport), and the sign-in tests in `test_server_app.py`, run without Discord.
 11. **Entries.** Entries created and updated by the download form, signed-in finishing
     with credentials, settings locked once a submission exists, `/me` listing entries.
     `sram_defaults` has one default name shared by both players, so a player 2 name
@@ -282,6 +296,11 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
     content hashes with `golf-catalog-sync --check`, then strip the course data from the
     repository and point the tests at rehydrated data.
 15. **Deployment.** A systemd unit or container, reverse proxy configuration,
-    Litestream, and a deployment note under `docs/`.
+    Litestream, and a deployment note under `docs/`. Configuration reaches the service
+    as environment variables from a root-owned, mode 0600 file the unit names with
+    `EnvironmentFile=` (such as `/etc/golf-site/env`), so the service account never reads
+    the secrets file. `GOLF_DEV_LOGIN` is never set there, and `GOLF_SESSION_SECRET` stays
+    fixed, since changing it signs everyone out. Litestream's storage credentials get a
+    file of their own.
 16. **Polish.** The guest menu marker once its wording is settled, difficulty filters,
     mirrored holes and the transforms column, hole thumbnails, multi-course generation.

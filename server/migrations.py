@@ -32,4 +32,18 @@ MIGRATIONS: list[str] = [
         PRIMARY KEY (seed_id, position)
     );
     """,
+    # 2: users (docs/randomizer_devplan.md, "Data model"). seeds.creator_id holds users.id;
+    # SQLite cannot add a foreign key to an existing column, so it is not declared.
+    """
+    CREATE TABLE users (
+        id INTEGER PRIMARY KEY,
+        discord_id TEXT NOT NULL UNIQUE,
+        username TEXT NOT NULL,
+        global_name TEXT,
+        avatar TEXT,
+        player_id INTEGER NOT NULL UNIQUE CHECK (player_id BETWEEN 1 AND 4294967295),
+        created_at TEXT NOT NULL,
+        last_login TEXT NOT NULL
+    );
+    """,
 ]

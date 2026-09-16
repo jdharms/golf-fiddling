@@ -14,6 +14,8 @@ wheels/
 *.nes
 *.mlb
 *.nsf
+.env
+.env.*
 
 # Randomizer site database
 /golf_site.db

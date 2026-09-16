@@ -10,18 +10,36 @@ cite {
 }
 
 /* Site nav: on narrow screens the links wrap below the site name instead of squeezing
-   each label onto several lines. The second list gets the first's edge alignment. */
+   each label onto several lines. Lists after the first get its edge alignment when they wrap. */
 header nav {
   flex-wrap: wrap;
   column-gap: var(--pico-spacing);
+  justify-content: flex-start;
+}
+
+/* The site name holds the left; the links and sign-in state share the right. */
+header nav ul:first-of-type {
+  margin-right: auto;
 }
 
 header nav a {
   white-space: nowrap;
 }
 
-header nav ul:last-of-type {
+header nav ul:not(:first-of-type) {
   margin-left: calc(var(--pico-nav-element-spacing-horizontal) * -1);
+}
+
+/* Sign-in state at the end of the nav. The sign-out button is a form so it can POST, sized
+   to sit in line with the links. */
+header nav ul.account form {
+  margin: 0;
+}
+
+header nav ul.account button {
+  margin: 0;
+  padding: calc(var(--pico-nav-link-spacing-vertical) * 0.5) var(--pico-nav-link-spacing-horizontal);
+  font-size: inherit;
 }
 
 /* ROM setup cards. rom.js sets data-state: checking, empty, error, stored or unavailable. */

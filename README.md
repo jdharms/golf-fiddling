@@ -107,7 +107,7 @@ Build a standalone editor executable with `uv run pyinstaller run_editor.spec`.
 | Command | Description |
 |---------|-------------|
 | `golf-site [--host H] [--port P] [--reload]` | Run the randomizer website under uvicorn; see "Running the site" below |
-| `golf-site-screenshot [pages] [-o dir] [--viewports ...] [--schemes ...] [--rom ID=PATH] [--generate]` | Render site pages to PNG in headless Chromium at desktop and phone widths, light and dark, and with `--generate` the seed page the generate form lands on, with `--rom` loading the ROMs first so its download form is ready; needs `uv run playwright install chromium` |
+| `golf-site-screenshot [pages] [-o dir] [--viewports ...] [--schemes ...] [--rom ID=PATH] [--generate] [--login NAME]` | Render site pages to PNG in headless Chromium at desktop and phone widths, light and dark, and with `--generate` the seed page the generate form lands on, with `--rom` loading the ROMs first so its download form is ready, and with `--login` signed in as a development user; needs `uv run playwright install chromium` |
 
 ### Reverse-engineering research
 
@@ -175,6 +175,17 @@ reads its configuration from environment variables:
 | `GOLF_SESSION_SECRET` | unset | Signs the session cookie |
 | `GOLF_ADMIN_TOKEN` | unset | Gates the admin pages |
 | `GOLF_DEV_LOGIN` | off | Development-only sign-in bypass (`1`, `true`, `yes` or `on`) |
+
+For development, keep these in a `.env` file in the repository root (gitignored) and run
+`uv run --env-file .env golf-site --reload`, or set `UV_ENV_FILE=.env` in your shell so
+every `uv run` loads it.
+
+Discord sign-in needs the client id, secret and session secret, and the Discord
+application's OAuth2 redirect URI registered as `<GOLF_BASE_URL>/auth/callback`. Without a
+session secret, sessions are signed with a secret that lasts until the process exits. With
+`GOLF_DEV_LOGIN` on, `/auth/login?as=alice` signs in as the development user `alice`
+(created on first use) without Discord; the site refuses to start with it on unless
+`GOLF_BASE_URL` is a localhost address.
 
 ## Running tests
 
