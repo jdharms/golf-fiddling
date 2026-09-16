@@ -175,3 +175,17 @@ def load_seed(db: Database, seed_id: str) -> SeedRow | None:
         creator_id=row["creator_id"],
         created_at=row["created_at"],
     )
+
+
+def load_unfinished_ips(db: Database, seed_id: str) -> bytes | None:
+    """The seed's stored unfinished IPS, or None when there is no such seed.
+
+    A query of its own, so pages that only show a seed never read the blob.
+    """
+    try:
+        decode_seed_id(seed_id)
+    except SeedIdError:
+        return None
+    with db.transaction() as conn:
+        row = conn.execute("SELECT unfinished_ips FROM seeds WHERE id = ?", (seed_id,)).fetchone()
+    return None if row is None else bytes(row["unfinished_ips"])

@@ -9,6 +9,141 @@ text = "{words} - NES Open Randomizer"
 note = "line under the magic words h1; same words show on the game's title menu and scorecard; {id} the seed's id, {created} its UTC creation time (ISO 8601)"
 text = "Created: {created}"
 
+# Download form. The downloaded file's name is data, not a string (server/views.py).
+
+[seed.download.heading]
+note = "h2 over the download form"
+text = "Download"
+
+[seed.download.lead]
+note = "line at the top of the download form; choose a name and bag; the ROM is patched in this browser from the ROM set up there"
+text = """
+Change customizable settings here and download the patched ROM.
+The ROM is patched in this browser."""
+
+[seed.download.noscript]
+note = "shown only with JavaScript off; downloading needs it"
+text = """
+ROM patching happens completely in your browser, so this process requires JavaScript.
+"""
+
+[seed.download.name_label]
+note = "label for the player name input; A-Z, '.' and space, at most 10; what a new save starts with"
+text = "Default Player Name"
+
+[seed.download.clubs_legend]
+note = "legend over club checkboxes (1W, 3I, ...); the bag a new save starts with; putter never listed; banned clubs struck out and disabled"
+text = "Club Bag"
+
+[seed.download.clubs_help]
+note = "small line under the club checkboxes; putter always carried; {max} most clubs this seed allows, putter included"
+text = """
+Select what clubs you want in your bag.  You'll always have a putter.
+This seed's settings allow {max} clubs, including the putter.
+"""
+
+[seed.download.locked_bag]
+note = "shown instead of club checkboxes when the seed has a locked bag; {clubs} its club labels, putter included"
+text = """
+This seed has a Locked Club Bag, with the following clubs: {clubs}
+"""
+
+[seed.download.rom_setup_link]
+note = "link to ROM setup; shown only while a ROM this seed needs is not set up in this browser"
+text = """
+Verify your ROM files here
+"""
+
+[seed.download.submit]
+note = "download form submit button; builds and downloads the patched ROM"
+text = "Save ROM"
+
+# Download statuses. download.js sets these; inline HTML works, and values are escaped.
+
+[seed.download.status.checking]
+note = "download status while looking for this seed's ROMs in the browser"
+text = "Verifying ROMs..."
+
+[seed.download.status.missing]
+note = "download status, a ROM this seed needs isn't set up in this browser; {roms} the missing ROM titles, comma-separated"
+text = """
+Before saving a ROM you'll need to verify your vanilla ROM(s) for {roms}.
+"""
+
+[seed.download.status.ready]
+note = "download status, every ROM this seed needs is set up; ready to download"
+text = "Download ready, all required ROM files present"
+
+[seed.download.status.building]
+note = "download status while the server builds the patch and the browser patches the ROM"
+text = "Patching..."
+
+[seed.download.status.done]
+note = "download status, patched ROM handed to the browser; {file} its file name"
+text = """
+ROM patched, output filename: <code>{file}</code>
+"""
+
+[seed.download.status.unavailable]
+note = "download status, browser has no storage for ROMs (IndexedDB)"
+text = """
+Error: browser reports no storage space for patching ROM file.
+"""
+
+[seed.download.status.storage_failed]
+note = "download status, browser storage wouldn't open or read; {error} the browser's error"
+text = """
+Browser reported storage error: {error}
+"""
+
+[seed.download.status.patch_failed]
+note = "download status, the patch didn't apply to the stored ROM; {error} the error"
+text = """
+Error patching ROM: {error}
+"""
+
+[seed.download.status.failed]
+note = "download status, request failed with no reason the page knows; {status} the HTTP status or network error"
+text = """
+Unknown error downloading Patch from server with status code: {status}
+"""
+
+[seed.download.status.refused.invalid_name]
+note = "download refused, name can't be stored: empty, over 10 characters, or characters outside A-Z, '.' and space; {chars} the offending characters, empty when the length is the problem"
+text = """
+Invalid player name. Found unacceptable characters: {chars}
+"""
+
+[seed.download.status.refused.invalid]
+note = "download refused, a value the form can't produce; {field} which field"
+text = """
+Download refused because of the {field} field
+"""
+
+[seed.download.status.refused.clubs_banned]
+note = "download refused, bag holds clubs this seed bans; {clubs} their labels"
+text = """
+Can't save ROM, Club Bag selection contains clubs banned for this seed: {clubs}
+"""
+
+[seed.download.status.refused.clubs_over_max]
+note = "download refused, bag holds too many clubs; {count} clubs chosen with the putter, {max} this seed's limit"
+text = """
+Can't save ROM, too many clubs in the Club Bag.  The limit is {max}, you selected {count}.
+"""
+
+[seed.download.status.refused.roms_missing]
+note = "download refused by the server, a ROM this seed needs wasn't verified; {roms} their titles, comma-separated"
+text = """
+Couldn't verify ROM file(s): {roms}
+"""
+
+[seed.download.status.refused.unavailable]
+note = "download refused, the server can't build ROMs right now; try later"
+text = """
+The server couldn't build the ROM patch right now.  Try again later.
+"""
+
 [seed.holes.heading]
 note = "h2 over the hole table"
 text = "Course Overview"

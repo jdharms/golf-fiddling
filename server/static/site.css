@@ -169,3 +169,30 @@ table .num {
 table.seed-details th {
   width: 40%;
 }
+
+/* Seed page download form. download.js sets data-state: checking, missing, ready,
+   building, done, error or unavailable. */
+article.download form > :last-child {
+  margin-bottom: 0;
+}
+
+.download-status {
+  margin-bottom: calc(var(--pico-spacing) * 0.5);
+}
+
+article.download[data-state="ready"] .download-status,
+article.download[data-state="done"] .download-status {
+  color: var(--pico-primary);
+  font-weight: 600;
+}
+
+article.download[data-state="missing"] .download-status,
+article.download[data-state="error"] .download-status,
+article.download[data-state="unavailable"] .download-status {
+  color: var(--pico-del-color);
+}
+
+/* The link to ROM setup shows only while a ROM the seed needs is missing. */
+article.download:not([data-state="missing"]) .download-rom-setup {
+  display: none;
+}

@@ -1,20 +1,20 @@
 """What the generate form and the seed page show, built from the library's data.
 
-Nothing here is English: course names, ROM titles, hole ids and club labels are data. The
-templates put them into strings from `server/strings/`.
+Nothing here is English: course names, ROM titles, hole ids, club labels and file names are
+data. The templates put them into strings from `server/strings/`.
 """
 
 from dataclasses import dataclass
 
 from golf.core import jp_rom_utils, rom_utils
-from golf.core.patches.sram_defaults import BAG_SIZE
+from golf.core.patches.sram_defaults import BAG_SIZE, NAME_LENGTH
 from golf.randomizer.catalog import JP_ROM, US_ROM, Catalog, RomSource
 from golf.randomizer.curation import CurationSnapshot
 from golf.randomizer.manifest import SOURCES, required_roms
 from golf.randomizer.music import TRACKS, Track
 from golf.randomizer.roms import VanillaRom, vanilla_rom
 
-from .forms import MUSIC_CHOICES, PARS, RULE_CLUBS
+from .forms import MUSIC_CHOICES, PARS, RULE_CLUBS, DownloadState
 from .seeds import SeedRow
 
 #: (ROM id, course directory name) -> the course's display name
@@ -76,6 +76,44 @@ class HoleView:
     source_hole: int | None
 
 
+#: every downloaded ROM's file name starts with this, so tools can recognise a randomizer ROM
+DOWNLOAD_PREFIX = "notgr"
+
+
+def download_stem(row: SeedRow) -> str:
+    """A seed's download file name without its extension, e.g. `notgr_par72_4np03ChsZL`.
+
+    The prefix marks a randomizer ROM, the par tells seeds apart at a glance, and the id leads
+    back to the seed page. It is a file name, not player-facing text: never a strings entry.
+    """
+    return f"{DOWNLOAD_PREFIX}_par{row.manifest.course.par}_{row.id}"
+
+
+@dataclass(frozen=True)
+class DownloadView:
+    """The seed page's download form."""
+
+    #: where the form posts, and the finished IPS comes from
+    ips_url: str
+    #: the name the patched ROM downloads as
+    filename: str
+    default_name: str
+    name_max: int
+    #: every club the form can list: the putter is always carried and never listed
+    club_labels: tuple[str, ...]
+    default_clubs: frozenset[str]
+    banned: frozenset[str]
+    clubs_max: int
+    #: None when the seed has no required bag, and the form lists clubs
+    required_bag: tuple[str, ...] | None
+    required_roms: tuple[VanillaRom, ...]
+
+    @property
+    def rom_details(self) -> dict[str, dict[str, str]]:
+        """What download.js needs to know of each required ROM: id -> title and SHA-1."""
+        return {rom.id: {"title": rom.title, "sha1": rom.sha1} for rom in self.required_roms}
+
+
 @dataclass(frozen=True)
 class SeedView:
     id: str
@@ -94,6 +132,7 @@ class SeedView:
     #: None when the seed has no required bag
     required_bag: tuple[str, ...] | None
     required_roms: tuple[VanillaRom, ...]
+    download: DownloadView
 
 
 def _hole_view(number: int, slot, catalog: Catalog, curation: CurationSnapshot) -> HoleView:
@@ -121,6 +160,21 @@ def seed_view(row: SeedRow, catalog: Catalog, curation: CurationSnapshot) -> See
         _hole_view(number, slot, catalog, curation) for number, slot in enumerate(course.holes, start=1)
     )
     theme = TRACKS[course.music]
+    rules = course.clubs
+    required = tuple(vanilla_rom(rom) for rom in required_roms(manifest, catalog))
+    required_bag = None if rules.required_bag is None else tuple(club.label for club in sorted(rules.required_bag))
+    download = DownloadView(
+        ips_url=f"/h/{row.id}/patch.ips",
+        filename=download_stem(row) + ".nes",
+        default_name=DownloadState.default(rules).player_name,
+        name_max=NAME_LENGTH,
+        club_labels=tuple(club.label for club in RULE_CLUBS),
+        default_clubs=frozenset(DownloadState.default(rules).clubs),
+        banned=frozenset(club.label for club in rules.banned),
+        clubs_max=rules.max,
+        required_bag=required_bag,
+        required_roms=required,
+    )
     return SeedView(
         id=row.id,
         magic_words=course.magic_words,
@@ -135,8 +189,7 @@ def seed_view(row: SeedRow, catalog: Catalog, curation: CurationSnapshot) -> See
         mercy_point=course.mercy_point,
         clubs_max=course.clubs.max,
         banned=tuple(club.label for club in sorted(course.clubs.banned)),
-        required_bag=None
-        if course.clubs.required_bag is None
-        else tuple(club.label for club in sorted(course.clubs.required_bag)),
-        required_roms=tuple(vanilla_rom(rom) for rom in required_roms(manifest, catalog)),
+        required_bag=required_bag,
+        required_roms=required,
+        download=download,
     )

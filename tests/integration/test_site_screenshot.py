@@ -9,6 +9,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 US_ROM_PATH = ROOT / "nes_open_us.nes"
+JP_ROM_PATH = ROOT / "mario_open_jp.nes"
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 
@@ -68,6 +69,17 @@ def test_rom_cards_verify_a_vanilla_rom_and_refuse_another_file(tmp_path):
 def test_generate_submits_the_form_and_captures_the_seed_page(tmp_path):
     completed = run("/generate", "--generate", "--viewports", "phone", "--schemes", "light", "-o", tmp_path)
     assert completed.returncode == 0, completed.stderr
-    assert re.search(r"seed /h/[0-9A-Za-z]{10}$", completed.stdout, re.M)
+    assert re.search(r"seed /h/[0-9A-Za-z]{10} download missing$", completed.stdout, re.M)
     for name in ("generate-phone-light.png", "generate-phone-light-seed.png"):
         assert (tmp_path / name).read_bytes().startswith(PNG_SIGNATURE)
+
+
+@pytest.mark.skipif(not US_ROM_PATH.exists() or not JP_ROM_PATH.exists(), reason="the vanilla ROMs are not present")
+def test_generate_with_roms_captures_the_download_form_ready(tmp_path):
+    completed = run(
+        "/generate", "--generate", "--viewports", "phone", "--schemes", "dark", "-o", tmp_path,
+        "--rom", f"nes_open_us={US_ROM_PATH}",
+        "--rom", f"mario_open_jp={JP_ROM_PATH}",
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert re.search(r"seed /h/[0-9A-Za-z]{10} download ready$", completed.stdout, re.M)
