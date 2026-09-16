@@ -222,7 +222,7 @@ text = "Maximum number of clubs in bag, including putter"
 
 [generate.clubs.banned_legend]
 note = "legend over club checkboxes (1W, 3I, ...); clubs no bag may hold; putter never listed"
-text = "Banned clubs"
+text = "Banned Clubs"
 
 [generate.clubs.required_legend]
 note = "legend over club checkboxes; the one bag every player carries; none checked = players choose"
@@ -233,7 +233,7 @@ note = "small line under required bag; putter always added; must fit the max and
 text = """
 Checking any of these checkboxes will require all players to use <em>exactly</em>
 the checked clubs, as well as a putter.  You will not have access to any
-unchecked clubs.
+unchecked clubs.  The limit is 14 clubs, plus the putter.
 """
 
 [generate.submit]
@@ -248,22 +248,34 @@ text = "You have to choose at least one source of holes for the randomized cours
 
 [generate.error.required_bag_over_max]
 note = "required bag larger than the max; {count} clubs with the putter, {max} the max"
-text = ""
+text = """
+More clubs chosen in the 'Locked Bag' section than the 'Maximum allowed'.
+Maximum is set to {max}, you chose {count}."""
 
 [generate.error.required_bag_banned]
 note = "required bag includes banned clubs; {clubs} those clubs' labels, space separated"
+text = """
+When using a Locked Bag, don't set any Banned Clubs."""
 
 [generate.error.invalid]
 note = "a value the form can't send (tampered or stale page); {field} the form field name; reload and try again"
+text = """
+Received an error on form submission.  A refresh might fix it.  If not, ask for help and
+mention: <code>generate.error.invalid {field}</code>"""
 
 [generate.error.pool]
 note = "the chosen sources can't fill a course with this par; try more sources or allowing repeats"
+text = """
+Unable to fill out the course with these sources and this Total Par.  Add more sources or
+allow multiple holes in the same family."""
 
 [generate.error.rate_limited]
 note = "too many seeds from this address in a short time; wait a minute and try again"
+text = "Whoa buddy, slow down a bit.  Maybe grab a drink from the clubhouse before rolling your next seed."
 
 [generate.error.unavailable]
 note = "the server can't build seeds right now (its own ROM is missing); not the player's fault; try later"
+text = "It's not you, it's me.  Server unable to build seeds right now, check back later."
 
 # -- Seed page -----------------------------------------------------------------------
 
@@ -321,42 +333,55 @@ text = "Music"
 
 [seed.details.music_value]
 note = "music row value; {course} the course the theme belongs to, {rom} its ROM title"
+text = "\"{course}\", {rom}"
 
 [seed.details.par_target]
 note = "settings row label; par the course was generated for"
+text = "Total Par"
 
 [seed.details.sources]
 note = "settings row label; ROMs the holes were drawn from (ROM titles follow)"
+text = "Hole Sources Enabled"
 
 [seed.details.family_repeats]
 note = "settings row label; whether two versions of the same hole could share the course"
+text = "Allow Family Repeats?"
 
 [seed.details.yes]
 note = "settings value; on"
+text = "Yes"
 
 [seed.details.no]
 note = "settings value; off"
+text = "No"
 
 [seed.details.mercy_point]
 note = "settings row label; the stroke a hole ends on with an automatic tap-in"
+text = "Mercy rule \"tap in\" after stroke..."
 
 [seed.details.mercy_value]
 note = "mercy row value; {stroke} the stroke number"
+text = "{stroke}"
 
 [seed.details.off]
 note = "mercy row value; no tap-in rule"
+text = "None!  Mercy rule disabled"
 
 [seed.details.clubs_max]
 note = "settings row label; most clubs a bag may hold, putter included"
+text = "Max Clubs restriction (default is 14)"
 
 [seed.details.banned]
 note = "settings row label; clubs no bag may hold (labels follow)"
+text = "Banned Clubs"
 
 [seed.details.required_bag]
 note = "settings row label; the one bag every player carries (labels follow)"
+text = "Locked Bag"
 
 [seed.details.none]
 note = "settings value for banned clubs or required bag; nothing set"
+text = "None (default)"
 
 [seed.details.required_roms]
 note = "settings row label; ROMs a player needs set up to download this seed (ROM titles follow)"
@@ -378,3 +403,6 @@ text = "Page Not Found"
 
 [not_found.body]
 note = "no page here; a seed link may be mistyped; link home (/)"
+text = """
+You ended up out of bounds somehow. If you clicked a seed linked from somewhere
+else, ask for a link again. Head back <a href="/">home</a> whenever you're ready."""

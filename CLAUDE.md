@@ -136,11 +136,12 @@ When inspecting JSON files in `courses/` and `data/`, prefer `jq` over `python -
 Tests must be executed and must pass after all changes. There are no "ok failures". Ever.
 
 ```bash
-uv run pytest                                   # everything, with coverage
+uv run pytest                                   # everything, with coverage, across all cores
 uv run pytest tests/unit/                       # unit tests only
 uv run pytest tests/integration/                # integration tests only
 uv run pytest tests/meta/                       # tests of the repo's docs, indexes and layering
 uv run pytest tests/unit/test_vertical_fill.py  # one file
+uv run pytest -n 0                              # serially, when a worker's output is in the way
 ```
 
 Fixtures live in `tests/fixtures/` and `tests/conftest.py`: real compression tables from
