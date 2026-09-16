@@ -20,6 +20,21 @@
         <li><a href="/rom" {% if page=="rom" %} aria-current="page" {% endif %}>{{ t("nav.rom") }}</a></li>
         <li><a href="/generate" {% if page=="generate" %} aria-current="page" {% endif %}>{{ t("nav.generate") }}</a></li>
       </ul>
+      {% if user %}
+      <ul class="account">
+        <li>{{ t("nav.signed_in_as", name=user.display_name) }}</li>
+        <li>
+          <form method="post" action="/auth/logout">
+            <input type="hidden" name="next" value="{{ return_path }}">
+            <button type="submit" class="secondary outline">{{ t("nav.sign_out") }}</button>
+          </form>
+        </li>
+      </ul>
+      {% elif sign_in_enabled %}
+      <ul class="account">
+        <li><a href="/auth/login?next={{ return_path | urlencode }}">{{ t("nav.sign_in") }}</a></li>
+      </ul>
+      {% endif %}
     </nav>
   </header>
   <main class="container">

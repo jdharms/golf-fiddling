@@ -51,6 +51,12 @@ def test_a_missing_page_is_a_problem(tmp_path):
     assert "HTTP 404" in completed.stderr
 
 
+def test_login_signs_each_browser_in_before_capturing(tmp_path):
+    completed = run("/", "--login", "alice", "--viewports", "phone", "--schemes", "light", "-o", tmp_path)
+    assert completed.returncode == 0, completed.stderr
+    assert (tmp_path / "home-phone-light.png").read_bytes().startswith(PNG_SIGNATURE)
+
+
 @pytest.mark.skipif(not US_ROM_PATH.exists(), reason=f"{US_ROM_PATH.name} not present")
 def test_rom_cards_verify_a_vanilla_rom_and_refuse_another_file(tmp_path):
     not_a_rom = tmp_path / "not_a_rom.nes"

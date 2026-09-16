@@ -1,6 +1,8 @@
 """The site's app: health check, home, ROM setup, generate, the seed page, downloads and static files."""
 
 import re
+from dataclasses import replace
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,9 +13,10 @@ from golf.randomizer.curation import CurationSnapshot
 from golf.randomizer.generate import GenerationError
 from golf.randomizer.manifest import DEFAULT_MERCY_POINT, Manifest
 from golf.randomizer.roms import VANILLA_ROMS, vanilla_rom
-from server.app import create_app
+from server.app import SESSION_COOKIE, create_app
+from server.auth import DiscordClient, DiscordError, DiscordIdentity
 from server.builder import SeedBuilder
-from server.config import Config
+from server.config import Config, ConfigError
 from server.forms import FormState
 from server.migrations import MIGRATIONS
 from server.ratelimit import RateLimiter
@@ -450,3 +453,221 @@ def test_unwritten_strings_render_as_placeholders_with_their_notes(fake_builder)
     assert '<span class="unwritten" title="ROM setup page h1">⟦rom.heading⟧</span>' in rom
     assert f"⟦rom.expected_hash sha1={VANILLA_ROMS[0].sha1}⟧" in rom
     assert '"rom.status.stored": null' in rom
+
+
+# -- Sign-in -----------------------------------------------------------------------------
+
+DISCORD_CONFIG = Config(
+    database=":memory:", discord_client_id="client-id", discord_client_secret="client-secret", session_secret="s"
+)
+NELLY = DiscordIdentity("80351110224678912", "nelly", "Nelly", "abc123")
+
+
+class FakeDiscord(DiscordClient):
+    """Answers every code with `identity`, or raises DiscordError when there is none."""
+
+    def __init__(self, identity: DiscordIdentity | None = NELLY):
+        super().__init__("client-id", "client-secret")
+        self.identity = identity
+        self.codes: list[tuple[str, str]] = []
+
+    async def identify(self, code, redirect_uri):
+        self.codes.append((code, redirect_uri))
+        if self.identity is None:
+            raise DiscordError("down")
+        return self.identity
+
+
+def users(client: TestClient) -> list[dict]:
+    with client.app.state.db.transaction() as conn:
+        return [dict(row) for row in conn.execute("SELECT * FROM users ORDER BY id")]
+
+
+def dev_client(fake_builder, **kwargs) -> TestClient:
+    return TestClient(create_app(Config(database=":memory:", dev_login=True), builder=fake_builder, **kwargs))
+
+
+def start_discord_sign_in(client: TestClient, next_path: str = "/generate") -> str:
+    """Begin a Discord sign-in and return the state it sent Discord."""
+    response = client.get("/auth/login", params={"next": next_path}, follow_redirects=False)
+    assert response.status_code == 303
+    query = parse_qs(urlsplit(response.headers["location"]).query)
+    return query["state"][0]
+
+
+def test_sign_in_is_hidden_and_missing_when_not_configured(unwritten_client):
+    assert "nav.sign_in" not in unwritten_client.get("/").text
+    assert unwritten_client.get("/auth/login").status_code == 404
+    assert unwritten_client.get("/auth/callback", params={"state": "x", "code": "y"}).status_code == 404
+
+
+def test_the_bypass_signs_in_as_the_named_user(fake_builder):
+    with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
+        assert "⟦nav.sign_in⟧" in test_client.get("/generate").text
+        response = test_client.get("/auth/login", params={"as": "alice", "next": "/generate"}, follow_redirects=False)
+        assert response.status_code == 303
+        assert response.headers["location"] == "/generate"
+        page = test_client.get("/generate").text
+        assert "⟦nav.signed_in_as name=alice⟧" in page
+        assert "nav.sign_in⟧" not in page
+        [alice] = users(test_client)
+        assert (alice["discord_id"], alice["username"], alice["global_name"]) == ("dev:alice", "alice", None)
+        assert 1 <= alice["player_id"] <= 4294967295
+
+
+def test_the_bypass_without_a_name_signs_in_as_dev(fake_builder):
+    with dev_client(fake_builder) as test_client:
+        assert test_client.get("/auth/login", follow_redirects=False).headers["location"] == "/"
+        assert [user["discord_id"] for user in users(test_client)] == ["dev:dev"]
+
+
+@pytest.mark.parametrize("name", ["", "a b", "x" * 33, "dev:alice"])
+def test_the_bypass_refuses_odd_names(fake_builder, name):
+    with dev_client(fake_builder) as test_client:
+        assert test_client.get("/auth/login", params={"as": name}).status_code == 400
+        assert users(test_client) == []
+
+
+def test_the_bypass_is_refused_off_localhost(fake_builder):
+    with pytest.raises(ConfigError):
+        create_app(Config(database=":memory:", dev_login=True, base_url="https://golf.example"), builder=fake_builder)
+
+
+def test_signing_out_clears_the_session_and_returns(fake_builder):
+    with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
+        test_client.get("/auth/login", params={"as": "alice"})
+        page = test_client.get("/rom").text
+        assert '<input type="hidden" name="next" value="/rom">' in page
+        response = test_client.post("/auth/logout", data={"next": "/rom"}, follow_redirects=False)
+        assert response.status_code == 303
+        assert response.headers["location"] == "/rom"
+        assert "⟦nav.sign_in⟧" in test_client.get("/rom").text
+
+
+def test_the_sign_in_link_returns_to_the_current_page(fake_builder):
+    with dev_client(fake_builder) as test_client:
+        assert 'href="/auth/login?next=/generate%3Fpar%3D71"' in test_client.get("/generate?par=71").text
+
+
+@pytest.mark.parametrize("next_path", ["https://evil.example/", "//evil.example/"])
+def test_sign_in_never_returns_off_site(fake_builder, next_path):
+    with dev_client(fake_builder) as test_client:
+        response = test_client.get("/auth/login", params={"as": "alice", "next": next_path}, follow_redirects=False)
+        assert response.headers["location"] == "/"
+        response = test_client.post("/auth/logout", data={"next": next_path}, follow_redirects=False)
+        assert response.headers["location"] == "/"
+
+
+def test_a_session_for_a_missing_user_is_signed_out(fake_builder):
+    with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
+        test_client.get("/auth/login", params={"as": "alice"})
+        with test_client.app.state.db.transaction() as conn:
+            conn.execute("DELETE FROM users")
+        assert "⟦nav.sign_in⟧" in test_client.get("/").text
+
+
+def test_the_session_cookie_is_lax_and_secure_only_on_https(fake_builder):
+    with dev_client(fake_builder) as test_client:
+        cookie = test_client.get("/auth/login", params={"as": "alice"}, follow_redirects=False).headers["set-cookie"]
+    assert cookie.startswith(f"{SESSION_COOKIE}=")
+    assert "samesite=lax" in cookie.lower()
+    assert "secure" not in cookie.lower()
+    https = replace(DISCORD_CONFIG, base_url="https://golf.example")
+    with TestClient(create_app(https, builder=fake_builder, discord=FakeDiscord()), base_url="https://golf.example") as test_client:
+        cookie = test_client.get("/auth/login", follow_redirects=False).headers["set-cookie"]
+    assert "secure" in cookie.lower()
+
+
+def test_discord_sign_in_redirects_to_discord_with_a_state(fake_builder):
+    with TestClient(create_app(DISCORD_CONFIG, builder=fake_builder)) as test_client:
+        response = test_client.get("/auth/login", follow_redirects=False)
+    location = urlsplit(response.headers["location"])
+    assert f"{location.scheme}://{location.netloc}{location.path}" == "https://discord.com/oauth2/authorize"
+    query = parse_qs(location.query)
+    assert query["client_id"] == ["client-id"]
+    assert query["redirect_uri"] == ["http://127.0.0.1:8000/auth/callback"]
+    assert len(query["state"][0]) >= 32
+
+
+def test_discord_sign_in_records_the_user_and_returns(fake_builder):
+    discord = FakeDiscord()
+    with TestClient(create_app(DISCORD_CONFIG, strings=UNWRITTEN, builder=fake_builder, discord=discord)) as test_client:
+        state = start_discord_sign_in(test_client)
+        response = test_client.get("/auth/callback", params={"code": "abc", "state": state}, follow_redirects=False)
+        assert response.status_code == 303
+        assert response.headers["location"] == "/generate"
+        assert discord.codes == [("abc", "http://127.0.0.1:8000/auth/callback")]
+        assert "⟦nav.signed_in_as name=Nelly⟧" in test_client.get("/").text
+        [nelly] = users(test_client)
+        assert (nelly["discord_id"], nelly["username"], nelly["global_name"], nelly["avatar"]) == (
+            "80351110224678912",
+            "nelly",
+            "Nelly",
+            "abc123",
+        )
+        # The state is spent: replaying the callback does not sign in again.
+        replay = test_client.get("/auth/callback", params={"code": "abc", "state": state})
+        assert replay.status_code == 400
+        assert "⟦sign_in_failed.expired⟧" in replay.text
+
+
+@pytest.mark.parametrize("params", [{"code": "abc", "state": "wrong"}, {"code": "abc"}])
+def test_a_callback_whose_state_does_not_match_is_refused(fake_builder, params):
+    discord = FakeDiscord()
+    with TestClient(create_app(DISCORD_CONFIG, strings=UNWRITTEN, builder=fake_builder, discord=discord)) as test_client:
+        start_discord_sign_in(test_client)
+        response = test_client.get("/auth/callback", params=params)
+        assert response.status_code == 400
+        assert "⟦sign_in_failed.expired⟧" in response.text
+        assert "sign_in_failed.unavailable" not in response.text
+        assert discord.codes == []
+        assert users(test_client) == []
+
+
+def test_turning_discord_down_returns_signed_out(fake_builder):
+    discord = FakeDiscord()
+    with TestClient(create_app(DISCORD_CONFIG, strings=UNWRITTEN, builder=fake_builder, discord=discord)) as test_client:
+        state = start_discord_sign_in(test_client, "/rom")
+        response = test_client.get(
+            "/auth/callback", params={"error": "access_denied", "state": state}, follow_redirects=False
+        )
+        assert response.headers["location"] == "/rom"
+        assert discord.codes == []
+        assert "⟦nav.sign_in⟧" in test_client.get("/rom").text
+
+
+def test_discord_failing_shows_unavailable(fake_builder):
+    with TestClient(
+        create_app(DISCORD_CONFIG, strings=UNWRITTEN, builder=fake_builder, discord=FakeDiscord(None))
+    ) as test_client:
+        state = start_discord_sign_in(test_client)
+        response = test_client.get("/auth/callback", params={"code": "abc", "state": state})
+        assert response.status_code == 502
+        assert "⟦sign_in_failed.unavailable⟧" in response.text
+        assert 'href="/auth/login?next=/"' in response.text
+        assert users(test_client) == []
+
+
+def test_a_seed_records_the_player_who_generated_it(fake_builder):
+    with dev_client(fake_builder) as test_client:
+        guest_seed = generate_seed(test_client)
+        test_client.get("/auth/login", params={"as": "alice"})
+        signed_in_seed = generate_seed(test_client)
+        [alice] = users(test_client)
+        with test_client.app.state.db.transaction() as conn:
+            creators = dict(conn.execute("SELECT id, creator_id FROM seeds").fetchall())
+    assert creators == {guest_seed: None, signed_in_seed: alice["id"]}
+
+
+def test_signed_in_players_are_rate_limited_per_user(fake_builder):
+    with dev_client(fake_builder, rate_limiter=RateLimiter(1, 3600)) as test_client:
+        same_address = {"X-Forwarded-For": "192.0.2.1"}
+        test_client.get("/auth/login", params={"as": "alice"})
+        assert post_generate(test_client, **same_address).status_code == 303
+        assert post_generate(test_client, **same_address).status_code == 429
+        test_client.get("/auth/login", params={"as": "bob"})
+        assert post_generate(test_client, **same_address).status_code == 303
+        test_client.post("/auth/logout")
+        assert post_generate(test_client, **same_address).status_code == 303
+        assert seed_count(test_client) == 3
+

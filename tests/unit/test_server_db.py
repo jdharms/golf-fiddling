@@ -48,7 +48,7 @@ def test_a_fresh_database_migrates_to_the_latest_version(db):
     assert db.version() == 0
     assert db.migrate() == len(MIGRATIONS)
     assert db.version() == len(MIGRATIONS)
-    assert {"seeds", "seed_holes"} <= tables(db)
+    assert {"seeds", "seed_holes", "users"} <= tables(db)
 
 
 def test_migrating_again_changes_nothing(db):
@@ -143,3 +143,61 @@ def test_a_file_database_uses_wal(tmp_path):
         assert reopened.version() == len(MIGRATIONS)
     finally:
         reopened.close()
+
+
+def user_row(**overrides):
+    row = {
+        "discord_id": "80351110224678912",
+        "username": "nelly",
+        "global_name": "Nelly",
+        "avatar": None,
+        "player_id": 1,
+        "created_at": "2026-09-16T00:00:00Z",
+        "last_login": "2026-09-16T00:00:00Z",
+    }
+    row.update(overrides)
+    return row
+
+
+def insert_user(db: Database, **overrides) -> None:
+    row = user_row(**overrides)
+    columns = ", ".join(row)
+    marks = ", ".join(f":{name}" for name in row)
+    with db.transaction() as conn:
+        conn.execute(f"INSERT INTO users ({columns}) VALUES ({marks})", row)
+
+
+def test_a_valid_user_inserts(db):
+    db.migrate()
+    insert_user(db)
+    insert_user(db, discord_id="dev:alice", global_name=None, player_id=4294967295)
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"player_id": 0},
+        {"player_id": 4294967296},
+        {"player_id": None},
+        {"username": None},
+        {"discord_id": None},
+    ],
+)
+def test_user_constraints(db, overrides):
+    db.migrate()
+    with pytest.raises(sqlite3.IntegrityError):
+        insert_user(db, **overrides)
+
+
+def test_discord_ids_are_unique(db):
+    db.migrate()
+    insert_user(db)
+    with pytest.raises(sqlite3.IntegrityError):
+        insert_user(db, player_id=2)
+
+
+def test_player_ids_are_unique(db):
+    db.migrate()
+    insert_user(db)
+    with pytest.raises(sqlite3.IntegrityError):
+        insert_user(db, discord_id="dev:other")

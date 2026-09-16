@@ -14,6 +14,8 @@ dependencies = [
     "uvicorn[standard]>=0.53.0",
     "jinja2>=3.1.6",
     "python-multipart>=0.0.20",
+    "httpx2>=2.13.0",
+    "itsdangerous>=2.2.0",
 ]
 
 [project.scripts]
@@ -101,7 +103,6 @@ dev = [
     "zxing-cpp>=3.1.1",
     "opencv-python-headless>=5.0.0.93",
     "qrcode>=8.2",
-    "httpx2>=2.13.0",
     "playwright>=1.63.0",
     "pytest-xdist>=3.8.0",
 ]

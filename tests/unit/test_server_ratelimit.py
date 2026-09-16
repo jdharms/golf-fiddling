@@ -7,6 +7,7 @@ from server.ratelimit import (
     GENERATE_CAPACITY,
     GENERATE_REFILL_SECONDS,
     RateLimiter,
+    client_address,
     client_key,
 )
 
@@ -95,12 +96,19 @@ def request(headers=(), client=("203.0.113.9", 5000)) -> Request:
     )
 
 
-def test_the_key_is_the_last_forwarded_address():
-    assert client_key(request([("X-Forwarded-For", "198.51.100.1, 192.0.2.7")])) == "192.0.2.7"
-    assert client_key(request([("X-Forwarded-For", "192.0.2.7")])) == "192.0.2.7"
+def test_the_address_is_the_last_forwarded_address():
+    assert client_address(request([("X-Forwarded-For", "198.51.100.1, 192.0.2.7")])) == "192.0.2.7"
+    assert client_address(request([("X-Forwarded-For", "192.0.2.7")])) == "192.0.2.7"
 
 
-def test_without_the_header_the_key_is_the_peer():
-    assert client_key(request()) == "203.0.113.9"
-    assert client_key(request([("X-Forwarded-For", " , ")])) == "203.0.113.9"
-    assert client_key(request(client=None)) == "unknown"
+def test_without_the_header_the_address_is_the_peer():
+    assert client_address(request()) == "203.0.113.9"
+    assert client_address(request([("X-Forwarded-For", " , ")])) == "203.0.113.9"
+    assert client_address(request(client=None)) == "unknown"
+
+
+def test_a_signed_out_client_is_keyed_by_address_and_a_signed_in_one_by_user():
+    assert client_key(request()) == "ip:203.0.113.9"
+    assert client_key(request(), user_id=None) == "ip:203.0.113.9"
+    assert client_key(request(), user_id=42) == "user:42"
+    assert client_key(request([("X-Forwarded-For", "192.0.2.7")]), user_id=42) == "user:42"
