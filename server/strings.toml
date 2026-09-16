@@ -27,7 +27,7 @@ note = "nav link to ROM setup"
 text = "ROM Setup"
 
 [nav.generate]
-note = "nav link to the seed settings form (page not built yet)"
+note = "nav link to the seed settings form"
 text = "Generate Game"
 
 # -- Home ----------------------------------------------------------------------------
@@ -158,3 +158,223 @@ text = "Error accessing browser storage: {error}"
 [rom.status.unavailable]
 note = "card status while the rom.unsupported notice shows"
 text = ""
+
+# -- Generate ------------------------------------------------------------------------
+
+[generate.page_title]
+note = "plain: browser tab title, generate page"
+text = "Randomizer - NES Open Tournament Golf Randomizer"
+
+[generate.heading]
+note = "generate page h1"
+text = "Randomizer"
+
+[generate.tagline]
+note = "line under the h1; choose settings, get a seed page to share"
+text = "Roll a new seed from given settings"
+
+[generate.par.legend]
+note = "legend over the course par radio buttons"
+text = "Total Par"
+
+[generate.par.option]
+note = "one par radio button's label; {par} is 72, 71 or 70"
+text = "{par}"
+
+[generate.sources.legend]
+note = "legend over the source ROM checkboxes (ROM titles beside them); holes come from the checked ROMs; at least one"
+text = "Sources"
+
+[generate.family_repeats.label]
+note = "switch label; allow two versions of the same hole (e.g. a NES Open hole and its Mario Open twin) on one course"
+text = "Allow multiple holes in the same family"
+
+[generate.family_repeats.help]
+note = "small line under the switch; off by default; what a repeat looks like"
+text = "Some Mario Open courses are the same or similar to NES Open courses. You probably want to keep this turned off."
+
+[generate.music.label]
+note = "label over the course music select"
+text = "Course Music"
+
+[generate.music.random]
+note = "plain: first music option; the generator picks a theme"
+text = "Random"
+
+[generate.music.option]
+note = "plain: one music option; {course} the course the theme belongs to, {rom} its ROM title"
+text = "{rom}: {course}"
+
+[generate.clubs.heading]
+note = "header of the club rules card, set apart inside the form"
+text = "Club Restrictions"
+
+[generate.clubs.lead]
+note = "club rules card intro; for special events; most seeds leave these alone"
+text = """
+These settings place restrictions on which or how many clubs players may use.
+Most of the time you'll want to leave all of these fields at their default values.
+"""
+
+[generate.clubs.max_label]
+note = "label for the most clubs a bag may hold, putter included, 1-14"
+text = "Maximum number of clubs in bag, including putter"
+
+[generate.clubs.banned_legend]
+note = "legend over club checkboxes (1W, 3I, ...); clubs no bag may hold; putter never listed"
+text = "Banned clubs"
+
+[generate.clubs.required_legend]
+note = "legend over club checkboxes; the one bag every player carries; none checked = players choose"
+text = "Locked Bag"
+
+[generate.clubs.required_help]
+note = "small line under required bag; putter always added; must fit the max and hold no banned club"
+text = """
+Checking any of these checkboxes will require all players to use <em>exactly</em>
+the checked clubs, as well as a putter.  You will not have access to any
+unchecked clubs.
+"""
+
+[generate.submit]
+note = "form submit button; generates the seed and goes to its page"
+text = "Randomize"
+
+# Notices over the form when a submission is refused. One shows at a time.
+
+[generate.error.no_sources]
+note = "no source ROM checked; check at least one"
+text = "You have to choose at least one source of holes for the randomized course."
+
+[generate.error.required_bag_over_max]
+note = "required bag larger than the max; {count} clubs with the putter, {max} the max"
+text = ""
+
+[generate.error.required_bag_banned]
+note = "required bag includes banned clubs; {clubs} those clubs' labels, space separated"
+
+[generate.error.invalid]
+note = "a value the form can't send (tampered or stale page); {field} the form field name; reload and try again"
+
+[generate.error.pool]
+note = "the chosen sources can't fill a course with this par; try more sources or allowing repeats"
+
+[generate.error.rate_limited]
+note = "too many seeds from this address in a short time; wait a minute and try again"
+
+[generate.error.unavailable]
+note = "the server can't build seeds right now (its own ROM is missing); not the player's fault; try later"
+
+# -- Seed page -----------------------------------------------------------------------
+
+[seed.page_title]
+note = "plain: browser tab title, seed page; {words} the seed's three magic words"
+text = "{words} - NES Open Randomizer"
+
+[seed.tagline]
+note = "line under the magic words h1; same words show on the game's title menu and scorecard; {id} the seed's id, {created} its UTC creation time (ISO 8601)"
+text = "Created: {created}"
+
+[seed.holes.heading]
+note = "h2 over the hole table"
+text = "Course Overview"
+
+[seed.holes.number]
+note = "hole table column header; hole number 1-18"
+text = "#"
+
+[seed.holes.hole]
+note = "hole table column header; the hole's catalog id (and name when it has one)"
+text = "Hole"
+
+[seed.holes.source]
+note = "hole table column header; where the hole comes from"
+text = "Source"
+
+[seed.holes.par]
+note = "hole table column header; par"
+text = "Par"
+
+[seed.holes.distance]
+note = "hole table column header; distance in yards"
+text = "Distance"
+
+[seed.holes.source_rom]
+note = "hole table source cell, vanilla hole; {rom} ROM title, {course} course name, {hole} its hole number there"
+text = "{rom}"
+
+[seed.holes.source_community]
+note = "hole table source cell, community hole; {author} its author"
+text = "Community Hole, by {author}"
+
+[seed.holes.total]
+note = "hole table footer row label; total par and yards follow"
+text = "Totals"
+
+[seed.details.heading]
+note = "h2 over the seed's settings table"
+text = "Details"
+
+[seed.details.music]
+note = "settings row label; course music"
+text = "Music"
+
+[seed.details.music_value]
+note = "music row value; {course} the course the theme belongs to, {rom} its ROM title"
+
+[seed.details.par_target]
+note = "settings row label; par the course was generated for"
+
+[seed.details.sources]
+note = "settings row label; ROMs the holes were drawn from (ROM titles follow)"
+
+[seed.details.family_repeats]
+note = "settings row label; whether two versions of the same hole could share the course"
+
+[seed.details.yes]
+note = "settings value; on"
+
+[seed.details.no]
+note = "settings value; off"
+
+[seed.details.mercy_point]
+note = "settings row label; the stroke a hole ends on with an automatic tap-in"
+
+[seed.details.mercy_value]
+note = "mercy row value; {stroke} the stroke number"
+
+[seed.details.off]
+note = "mercy row value; no tap-in rule"
+
+[seed.details.clubs_max]
+note = "settings row label; most clubs a bag may hold, putter included"
+
+[seed.details.banned]
+note = "settings row label; clubs no bag may hold (labels follow)"
+
+[seed.details.required_bag]
+note = "settings row label; the one bag every player carries (labels follow)"
+
+[seed.details.none]
+note = "settings value for banned clubs or required bag; nothing set"
+
+[seed.details.required_roms]
+note = "settings row label; ROMs a player needs set up to download this seed (ROM titles follow)"
+text = "Required ROMs"
+
+[seed.manifest_link]
+note = "link to the seed's manifest JSON; for the curious and for tools"
+text = "m"
+
+# -- Not found -----------------------------------------------------------------------
+
+[not_found.page_title]
+note = "Not Found - NES Open Randomizer"
+text = "Not Found - NES Open Randomizer"
+
+[not_found.heading]
+note = "not found heading"
+text = "Page Not Found"
+
+[not_found.body]
+note = "no page here; a seed link may be mistyped; link home (/)"

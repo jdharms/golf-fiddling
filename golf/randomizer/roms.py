@@ -1,8 +1,10 @@
 """The vanilla ROMs a randomizer seed can be built from, with the hash that identifies each.
 
 The ids are the catalog's source ROM ids (`US_ROM`, `JP_ROM`), which `required_roms`
-returns for a manifest. A hash covers the whole file, iNES header included. The site's ROM
-setup page checks a player's files against these in the browser (docs/randomizer_devplan.md).
+returns for a manifest. A hash covers the whole file, iNES header included. The file name
+is what the server's ROM directory (`GOLF_ROM_DIR`) and the repository root call each ROM.
+The site's ROM setup page checks a player's files against these in the browser
+(docs/randomizer_devplan.md).
 """
 
 from dataclasses import dataclass
@@ -17,13 +19,15 @@ from .catalog import JP_ROM, US_ROM
 class VanillaRom:
     id: str
     title: str
+    #: the file's name in the server's ROM directory
+    filename: str
     #: lowercase hex SHA-1 of the whole file
     sha1: str
 
 
 VANILLA_ROMS: tuple[VanillaRom, ...] = (
-    VanillaRom(US_ROM, "NES Open Tournament Golf (USA)", US_ROM_SHA1),
-    VanillaRom(JP_ROM, "Mario Open Golf (Japan)", JP_ROM_SHA1),
+    VanillaRom(US_ROM, "NES Open Tournament Golf (USA)", "nes_open_us.nes", US_ROM_SHA1),
+    VanillaRom(JP_ROM, "Mario Open Golf (Japan)", "mario_open_jp.nes", JP_ROM_SHA1),
 )
 
 

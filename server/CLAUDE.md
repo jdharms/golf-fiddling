@@ -14,8 +14,16 @@ in this package.
 ## App
 
 - `server/app.py` has `create_app(config)`, a factory. Routes are defined inside it, and
-  shared objects live on `app.state`: `config`, and `db` once the lifespan has started.
-  Nothing is module-level state, so each test builds its own app.
+  shared objects live on `app.state`: `config`, `strings` and `rate_limiter`, and `db` and
+  `builder` once the lifespan has started. Nothing is module-level state, so each test
+  builds its own app.
+- `server/builder.py`'s `SeedBuilder` is the only thing a route calls to generate or build.
+  It holds the catalog and curation the seed page also reads, and reads the server's ROM
+  on first build. Builds run in the threadpool (`run_in_threadpool`), never on the event
+  loop.
+- Route helpers with no web types live beside the app: `server/forms.py` (form to
+  `Settings`), `server/views.py` (what a page shows, as dataclasses) and
+  `server/ratelimit.py`.
 - Configuration is `server/config.py`, read from `GOLF_`-prefixed environment variables.
   A new setting is a field there, a variable in the README's "Running the site" list, and
   a line in the devplan's configuration paragraph.
@@ -28,6 +36,8 @@ in this package.
 - The schema is `server/migrations.py`, ordered SQL scripts applied by `PRAGMA
   user_version`. A committed script is never edited; a schema change appends a script.
   A table arrives with the work item that first writes to it.
+- `server/seeds.py` is the only code that writes `seeds` and `seed_holes`, and the only
+  place seed ids are drawn or converted.
 
 ## Pages
 
@@ -39,6 +49,9 @@ in this package.
   follows. Components that change look with script state carry a `data-state` attribute
   the stylesheet selects on, rather than the script toggling styles or `hidden`.
 - No English in templates or scripts: see "Player-facing text" below.
+- A page that shows one of several messages, such as the generate form's refusal notices,
+  picks each in an `if` chain calling `t()` with its literal key, never a key built from
+  a variable, so the strings test can find every key.
 - JavaScript only where the browser must act: hashing and storing ROMs
   (`server/static/rom.js`) and, later, applying an IPS. Plain scripts, no build step, no
   frameworks. Everything else is a form or a link.
@@ -76,14 +89,16 @@ After changing a template, `site.css` or a page script, render the pages and loo
 PNGs before reporting the change done:
 
 ```bash
-uv run golf-site-screenshot / /rom -o <scratchpad>/shots \
+uv run golf-site-screenshot / /rom /generate --generate -o <scratchpad>/shots \
   --rom nes_open_us=nes_open_us.nes --rom mario_open_jp=mario_open_jp.nes
 ```
 
 It serves the app on an in-memory database, captures each page at desktop and phone
 widths in light and dark, and exits 1 on a browser console error or a failed request. With
 `--rom`, the ROM setup page is captured again after loading those files, and the final card
-states are printed. Pass a patched ROM to capture the mismatch state. The tool is
+states are printed. Pass a patched ROM to capture the mismatch state. With `--generate`,
+the generate form is submitted and the seed page it lands on is captured as
+`<name>-seed.png`; that builds a real seed from the ROM in `GOLF_ROM_DIR`. The tool is
 `tools/site_screenshot.py`; `tests/integration/test_site_screenshot.py` skips without a
 Playwright browser.
 
@@ -92,3 +107,8 @@ Playwright browser.
 `tests/unit/test_server_*.py`. Build the app with `create_app(Config(database=":memory:"))`
 and use `TestClient` as a context manager so the lifespan opens and migrates the
 database. Database tests use `Database(":memory:")` directly.
+
+Posting to `/generate` builds a ROM, so unit tests pass `builder=` a `SeedBuilder` subclass
+whose `build` returns a fixed blob, and `rate_limiter=` a small `RateLimiter` to test
+refusals (`tests/unit/test_server_app.py`). `tests/integration/test_server_generate_rom.py`
+runs the real builder.

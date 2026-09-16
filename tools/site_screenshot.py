@@ -5,8 +5,10 @@ NES Open Tournament Golf - Randomizer site screenshots
 Serves the site in-process on a free localhost port with an in-memory database, and
 captures full-page PNGs of its pages with Playwright's headless Chromium, at each viewport
 in each color scheme. On the ROM setup page, --rom loads files into the cards and the
-final card states are printed. Browser console errors and page errors are printed and make
-the command exit 1.
+final card states are printed. With --generate, the generate form is submitted with its
+defaults and the seed page it lands on is captured too; that builds a real seed, so it
+needs the vanilla US ROM in GOLF_ROM_DIR (the repository root by default). Browser console
+errors and page errors are printed and make the command exit 1.
 
 Needs the dev dependencies and a Playwright browser (uv run playwright install chromium).
 """
@@ -17,17 +19,20 @@ import socket
 import sys
 import threading
 import time
+from dataclasses import replace
 from pathlib import Path
 
 VIEWPORTS = {"desktop": (1280, 800), "phone": (390, 844)}
 SCHEMES = ("light", "dark")
 SETTLE_MS = 10_000
+GENERATE_MS = 60_000
 
 EXAMPLES = """
 examples:
   golf-site-screenshot -o shots
   golf-site-screenshot / --viewports phone --schemes dark -o shots
   golf-site-screenshot /rom --rom nes_open_us=nes_open_us.nes --rom mario_open_jp=guest.nes -o shots
+  golf-site-screenshot /generate --generate -o shots
 """
 
 
@@ -139,6 +144,18 @@ def capture(base: str, args: argparse.Namespace) -> tuple[list[Path], list[str]]
                                 page.screenshot(path=shot, full_page=True)
                                 written.append(shot)
                                 print(f"{label}: cards {card_states(page)}")
+
+                            if args.generate and page.locator("#generate-form").count():
+                                with page.expect_navigation(timeout=GENERATE_MS) as navigation:
+                                    page.click("#generate-form button[type=submit]")
+                                response = navigation.value
+                                if response is None or not response.ok or "/h/" not in page.url:
+                                    status = response.status if response is not None else "no response"
+                                    problems.append(f"{label}: generating landed on {page.url} (HTTP {status})")
+                                shot = args.out_dir / f"{name}-seed.png"
+                                page.screenshot(path=shot, full_page=True)
+                                written.append(shot)
+                                print(f"{label}: seed {page.url.removeprefix(base)}")
                         finally:
                             context.close()
         finally:
@@ -168,6 +185,11 @@ def main() -> int:
         metavar="ID=PATH",
         help="on pages with ROM cards, load this file into the card for this ROM id, then capture again as <name>-roms.png",
     )
+    parser.add_argument(
+        "--generate",
+        action="store_true",
+        help="on the generate page, submit the form and capture the seed page as <name>-seed.png (needs the vanilla US ROM)",
+    )
     args = parser.parse_args()
 
     try:
@@ -178,9 +200,14 @@ def main() -> int:
 
     from server.app import create_app
     from server.config import Config
+    from server.ratelimit import RateLimiter
 
+    # The environment's ROM and hole directories, so --generate can build; never its database.
+    config = replace(Config.from_env(), database=":memory:")
+    # Every viewport and scheme may generate a seed, more than a player's bucket holds.
+    limiter = RateLimiter(capacity=1000, refill_seconds=1)
     try:
-        with LiveServer(create_app(Config(database=":memory:"))) as base:
+        with LiveServer(create_app(config, rate_limiter=limiter)) as base:
             written, problems = capture(base, args)
     except PlaywrightError as problem:
         print(f"error: {problem}", file=sys.stderr)
