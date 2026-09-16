@@ -60,15 +60,23 @@ in this package.
 
 ## Player-facing text
 
-A trial begun 2026-09-15. jdharms composes every English word a player sees, and Claude
+A human composes every English word a player sees, and Claude
 writes none of it, not even as a draft to be rewritten.
 
 - Every visible string, including tab titles, nav labels, button labels, accessible names
-  and script status messages, comes from `server/strings.toml` by key. No English goes in
+  and script status messages, comes from `server/strings/` by key. No English goes in
   a template or script. Proper nouns and data are not strings: ROM titles, hole ids, magic
   words.
+- The catalog is the TOML files under `server/strings/`: `common.toml` for the elements on
+  every page (`base.html`), and one file per template named for it - `home.toml`,
+  `rom.toml`, `generate.toml`, `seed.toml`, `not_found.toml`. Every file under the
+  directory is loaded and merged, subdirectories included. Entries carry their full dotted
+  key (`[home.about]`), so a file name is organization only and a key still greps to its
+  entry. A top-level namespace lives in exactly one file, and a new page arrives as a new
+  file.
 - An entry is a `note` and a `text`. Claude adds keys and notes and never writes or edits
-  `text`. A note is terse fragments of what the string has to get across and the values it
+  `text`. Claude always adds an empty `text` field to entries.
+  A note is terse fragments of what the string has to get across and the values it
   receives, never wording that could be kept. Notes starting `plain:` mark strings that
   take no HTML.
 - Templates call `t("key", name=value)`, whose text may hold inline HTML with values
@@ -116,4 +124,4 @@ runs the real builder.
 A test that checks *which* refusal notice a page shows names it by string key and builds the
 app with `strings=UNWRITTEN`, a catalog with nothing written, in which every string renders
 as the placeholder naming its key and the values passed to it. The assertion then holds
-whatever `strings.toml` says.
+whatever the catalog says.

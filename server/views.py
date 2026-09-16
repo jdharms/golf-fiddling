@@ -1,7 +1,7 @@
 """What the generate form and the seed page show, built from the library's data.
 
 Nothing here is English: course names, ROM titles, hole ids and club labels are data. The
-templates put them into strings from `server/strings.toml`.
+templates put them into strings from `server/strings/`.
 """
 
 from dataclasses import dataclass

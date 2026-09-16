@@ -1,0 +1,114 @@
+# Seed page strings (seed.html).
+# Format: see common.toml, and server/CLAUDE.md "Player-facing text".
+
+[seed.page_title]
+note = "plain: browser tab title, seed page; {words} the seed's three magic words"
+text = "{words} - NES Open Randomizer"
+
+[seed.tagline]
+note = "line under the magic words h1; same words show on the game's title menu and scorecard; {id} the seed's id, {created} its UTC creation time (ISO 8601)"
+text = "Created: {created}"
+
+[seed.holes.heading]
+note = "h2 over the hole table"
+text = "Course Overview"
+
+[seed.holes.number]
+note = "hole table column header; hole number 1-18"
+text = "#"
+
+[seed.holes.hole]
+note = "hole table column header; the hole's catalog id (and name when it has one)"
+text = "Hole"
+
+[seed.holes.source]
+note = "hole table column header; where the hole comes from"
+text = "Source"
+
+[seed.holes.par]
+note = "hole table column header; par"
+text = "Par"
+
+[seed.holes.distance]
+note = "hole table column header; distance in yards"
+text = "Distance"
+
+[seed.holes.source_rom]
+note = "hole table source cell, vanilla hole; {rom} ROM title, {course} course name, {hole} its hole number there"
+text = "{rom}"
+
+[seed.holes.source_community]
+note = "hole table source cell, community hole; {author} its author"
+text = "Community Hole, by {author}"
+
+[seed.holes.total]
+note = "hole table footer row label; total par and yards follow"
+text = "Totals"
+
+[seed.details.heading]
+note = "h2 over the seed's settings table"
+text = "Details"
+
+[seed.details.music]
+note = "settings row label; course music"
+text = "Music"
+
+[seed.details.music_value]
+note = "music row value; {course} the course the theme belongs to, {rom} its ROM title"
+text = "\"{course}\", {rom}"
+
+[seed.details.par_target]
+note = "settings row label; par the course was generated for"
+text = "Total Par"
+
+[seed.details.sources]
+note = "settings row label; ROMs the holes were drawn from (ROM titles follow)"
+text = "Hole Sources Enabled"
+
+[seed.details.family_repeats]
+note = "settings row label; whether two versions of the same hole could share the course"
+text = "Allow Family Repeats?"
+
+[seed.details.yes]
+note = "settings value; on"
+text = "Yes"
+
+[seed.details.no]
+note = "settings value; off"
+text = "No"
+
+[seed.details.mercy_point]
+note = "settings row label; the stroke a hole ends on with an automatic tap-in"
+text = "Mercy rule \"tap in\" after stroke..."
+
+[seed.details.mercy_value]
+note = "mercy row value; {stroke} the stroke number"
+text = "{stroke}"
+
+[seed.details.off]
+note = "mercy row value; no tap-in rule"
+text = "None!  Mercy rule disabled"
+
+[seed.details.clubs_max]
+note = "settings row label; most clubs a bag may hold, putter included"
+text = "Max Clubs restriction (default is 14)"
+
+[seed.details.banned]
+note = "settings row label; clubs no bag may hold (labels follow)"
+text = "Banned Clubs"
+
+[seed.details.required_bag]
+note = "settings row label; the one bag every player carries (labels follow)"
+text = "Locked Bag"
+
+[seed.details.none]
+note = "settings value for banned clubs or required bag; nothing set"
+text = "None (default)"
+
+[seed.details.required_roms]
+note = "settings row label; ROMs a player needs set up to download this seed (ROM titles follow)"
+text = "Required ROMs"
+
+[seed.manifest_link]
+note = "link to the seed's manifest JSON; for the curious and for tools"
+text = "m"

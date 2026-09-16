@@ -1,0 +1,31 @@
+# Every English string a player can see on the site, keyed. See server/CLAUDE.md,
+# "Player-facing text".
+#
+# note  what the string has to get across, and the values it receives. Claude writes these.
+# text  the string. A human writes these. Empty renders as a marked placeholder.
+#
+# {name} inserts a value the note lists; {{ and }} are literal braces.
+# Notes starting "plain:" land in a tab title or an attribute: no HTML.
+# Other entries may use inline HTML such as <a>, <code>, <strong>, <em> and <mark>.
+
+# -- Every page -----------------------------------------------------------------------
+
+[site.title]
+note = "plain: browser tab title; default for pages without their own"
+text = "NES Open Randomizer"
+
+[nav.brand]
+note = "site name; left end of the nav bar, every page"
+text = "NES Open Tournament Golf Randomizer"
+
+[nav.home]
+note = "nav link to the home page"
+text = "Home"
+
+[nav.rom]
+note = "nav link to ROM setup"
+text = "ROM Setup"
+
+[nav.generate]
+note = "nav link to the seed settings form"
+text = "Generate Game"

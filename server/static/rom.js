@@ -11,7 +11,7 @@
 //   stored       a verified ROM is stored; only Forget is offered
 //   unavailable  this browser cannot hash or store files
 //
-// Player-visible text comes from server/strings.toml, which the page embeds as JSON in
+// Player-visible text comes from server/strings/, which the page embeds as JSON in
 // #rom-strings: key to text, or null while unwritten. Keys are written out literally in
 // t() calls so tests can check them against the catalog. The text may hold inline HTML,
 // such as <code>, and t() returns HTML: values (file names, hashes, browser errors) are
