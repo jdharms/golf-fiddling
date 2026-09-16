@@ -90,10 +90,12 @@ development-only login bypass behind an environment flag keeps local work off Di
 
 Generation is rate limited, since it is the one request a stranger can use to make the
 server do work and store bytes. A token bucket in process memory on `POST /generate`,
-keyed by user id when signed in and by client IP otherwise, answered with a 429 page.
-There is no global ceiling: a surge of real users should queue on the generation
-semaphore, not be refused. The client IP is read from the forwarded header the reverse
-proxy sets and nothing else. Downloads are not limited: finishing takes milliseconds and
+keyed by user id when signed in and by client IP otherwise, answered with a 429 page. A
+bucket holds five seeds and gets one back a minute (`server/ratelimit.py`), and only a
+submission the form accepts spends one. There is no global ceiling: a surge of real users
+should queue on the generation semaphore, not be refused. The client IP is the last entry
+of the forwarded header the reverse proxy sets, the address the proxy saw, or the socket's
+peer when there is no header, as in development. Downloads are not limited: finishing takes milliseconds and
 stores nothing for guests. Seeds are never expired or cleaned up, because seed pages are
 the share link.
 
@@ -169,7 +171,7 @@ qr_seed_id INTEGER NOT NULL UNIQUE CHECK (qr_seed_id BETWEEN 1 AND 8392993658683
 |---|---|
 | `GET /` | What this is, links to ROM setup and generate |
 | `GET /rom` | ROM setup, pure client-side: pick files, hash, store in IndexedDB, show verified status |
-| `GET /generate`, `POST /generate` | Settings form: pool filters, par target, mercy point, club rules, music or random. POST redirects to the seed page |
+| `GET /generate`, `POST /generate` | Settings form: par target, source ROMs, family repeats, music or random, and club rules in a section of their own. The mercy point and tag filters take their defaults. POST redirects to the seed page |
 | `GET /h/<id>` | Seed page: the magic words, hole list with source, par and yards, totals, music, settings, required ROMs, the download form, the signed-in user's entry if any, recorded rounds |
 | `GET /h/<id>.json` | The manifest |
 | `POST /h/<id>/patch.ips` | Name, clubs, ROM hashes in; the finished IPS out. Signed in, upserts the entry and finishes with credentials; signed out, finishes as a guest. The page's script intercepts the form submit, fetches this, patches the ROM from IndexedDB and triggers the download |
@@ -182,7 +184,8 @@ qr_seed_id INTEGER NOT NULL UNIQUE CHECK (qr_seed_id BETWEEN 1 AND 8392993658683
 Everything is a form or a link. The only fetch from JavaScript is the IPS.
 
 **Configuration** from the environment (`server/config.py`): the database path
-`GOLF_DATABASE`, the server's vanilla ROM directory `GOLF_ROM_DIR`, the rehydrated holes
+`GOLF_DATABASE`, the server's vanilla ROM directory `GOLF_ROM_DIR` holding the ROMs under
+the file names in `golf/randomizer/roms.py` (`nes_open_us.nes`, `mario_open_jp.nes`), the rehydrated holes
 directory `GOLF_HOLES_DIR`, the public base URL `GOLF_BASE_URL` (also the OAuth redirect
 base; the QR URL prefix is assembled into the port and fixed before the first public seed
 ships), the Discord client id and secret `GOLF_DISCORD_CLIENT_ID` and
@@ -238,9 +241,17 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
    file with SubtleCrypto and stores verified bytes in IndexedDB. `golf-site` launches
    it. `tests/unit/test_server_app.py`, `test_server_db.py` and `test_server_config.py`
    run against an in-memory database. See `server/CLAUDE.md`.
-8. **Generate and seed page.** The settings form, the seed and seed_holes rows, the
-   unfinished IPS built in the threadpool and stored, the rate limiter, the seed page
-   and manifest JSON rendered from the manifest and catalog.
+8. **Generate and seed page.** Done: `/generate`, `/h/<id>` and `/h/<id>.json`.
+   `server/forms.py` turns the form into `Settings`, refusing with a reason the page shows;
+   `server/builder.py`'s `SeedBuilder` generates and builds the unfinished IPS behind a
+   semaphore, reading the server's ROM on first use; `server/seeds.py` draws the base62
+   id and writes the seed and its 18 `seed_holes` rows, with the pin and wind anchors from
+   `predict_hole`; `server/ratelimit.py` is the token bucket; `server/views.py` shapes the
+   form's choices and the seed page from the manifest and catalog. A missing page renders
+   `not_found.html`. `tests/unit/test_server_app.py`, `test_server_forms.py`,
+   `test_server_seeds.py`, `test_server_ratelimit.py` and `test_server_builder.py` run
+   without a ROM; `tests/integration/test_server_generate_rom.py` checks the stored IPS
+   against `build_unfinished`.
 9. **Download flow.** The download form gated on the ROM store, the IPS endpoint with
    hash gating on the manifest's required ROMs and guest finishing, the JavaScript patcher. The site can now run a
    league of guest ROMs. Playtest a downloaded ROM.

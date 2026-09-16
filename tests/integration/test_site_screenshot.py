@@ -1,5 +1,6 @@
 """golf-site-screenshot against the real app in headless Chromium. Skipped without a Playwright browser."""
 
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -61,3 +62,12 @@ def test_rom_cards_verify_a_vanilla_rom_and_refuse_another_file(tmp_path):
     assert completed.returncode == 0, completed.stderr
     assert "cards nes_open_us=stored mario_open_jp=error" in completed.stdout
     assert (tmp_path / "shots" / "rom-desktop-light-roms.png").read_bytes().startswith(PNG_SIGNATURE)
+
+
+@pytest.mark.skipif(not US_ROM_PATH.exists(), reason=f"{US_ROM_PATH.name} not present")
+def test_generate_submits_the_form_and_captures_the_seed_page(tmp_path):
+    completed = run("/generate", "--generate", "--viewports", "phone", "--schemes", "light", "-o", tmp_path)
+    assert completed.returncode == 0, completed.stderr
+    assert re.search(r"seed /h/[0-9A-Za-z]{10}$", completed.stdout, re.M)
+    for name in ("generate-phone-light.png", "generate-phone-light-seed.png"):
+        assert (tmp_path / name).read_bytes().startswith(PNG_SIGNATURE)

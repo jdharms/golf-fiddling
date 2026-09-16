@@ -107,7 +107,7 @@ Build a standalone editor executable with `uv run pyinstaller run_editor.spec`.
 | Command | Description |
 |---------|-------------|
 | `golf-site [--host H] [--port P] [--reload]` | Run the randomizer website under uvicorn; see "Running the site" below |
-| `golf-site-screenshot [pages] [-o dir] [--viewports ...] [--schemes ...] [--rom ID=PATH]` | Render site pages to PNG in headless Chromium at desktop and phone widths, light and dark; needs `uv run playwright install chromium` |
+| `golf-site-screenshot [pages] [-o dir] [--viewports ...] [--schemes ...] [--rom ID=PATH] [--generate]` | Render site pages to PNG in headless Chromium at desktop and phone widths, light and dark, and with `--generate` the seed page the generate form lands on; needs `uv run playwright install chromium` |
 
 ### Reverse-engineering research
 
@@ -168,7 +168,7 @@ reads its configuration from environment variables:
 | Variable | Default | Meaning |
 |----------|---------|---------|
 | `GOLF_DATABASE` | `golf_site.db` | SQLite database path, created and migrated at startup |
-| `GOLF_ROM_DIR` | the repository root | Directory holding the server's vanilla ROMs |
+| `GOLF_ROM_DIR` | the repository root | Directory holding the server's vanilla ROMs as `nes_open_us.nes` and `mario_open_jp.nes`; generating a seed needs the first |
 | `GOLF_HOLES_DIR` | `courses/` | Hole store root |
 | `GOLF_BASE_URL` | `http://127.0.0.1:8000` | Public base URL, also the OAuth redirect base |
 | `GOLF_DISCORD_CLIENT_ID`, `GOLF_DISCORD_CLIENT_SECRET` | unset | Discord sign-in |

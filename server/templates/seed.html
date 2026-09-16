@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}{{ t_plain("seed.page_title", words=seed.magic_words|join(" ")) }}{% endblock %}
+{% block content %}
+<hgroup>
+  <h1 class="magic-words">{{ seed.magic_words|join(" ") }}</h1>
+  <p>{{ t("seed.tagline", id=seed.id, created=seed.created_at) }}</p>
+</hgroup>
+
+{# Development plan item 9: the download form goes here. #}
+
+<section>
+  <h2>{{ t("seed.holes.heading") }}</h2>
+  <div class="overflow-auto">
+    <table class="holes striped">
+      <thead>
+        <tr>
+          <th scope="col" class="num">{{ t("seed.holes.number") }}</th>
+          <th scope="col">{{ t("seed.holes.hole") }}</th>
+          <th scope="col">{{ t("seed.holes.source") }}</th>
+          <th scope="col" class="num">{{ t("seed.holes.par") }}</th>
+          <th scope="col" class="num">{{ t("seed.holes.distance") }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for hole in seed.holes %}
+        <tr>
+          <td class="num">{{ hole.number }}</td>
+          <td>
+            {% if hole.display_name %}{{ hole.display_name }}<br>{% endif %}
+            <code>{{ hole.id }}</code>
+          </td>
+          <td>
+            {% if hole.rom_title %}
+            {{ t("seed.holes.source_rom", rom=hole.rom_title, course=hole.course, hole=hole.source_hole) }}
+            {% else %}
+            {{ t("seed.holes.source_community", author=hole.author) }}
+            {% endif %}
+          </td>
+          <td class="num">{{ hole.par }}</td>
+          <td class="num">{{ hole.distance }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th scope="row" colspan="3">{{ t("seed.holes.total") }}</th>
+          <td class="num">{{ seed.total_par }}</td>
+          <td class="num">{{ seed.total_distance }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>{{ t("seed.details.heading") }}</h2>
+  <div class="overflow-auto">
+    <table class="seed-details">
+      <tbody>
+        <tr>
+          <th scope="row">{{ t("seed.details.music") }}</th>
+          <td>{{ t("seed.details.music_value", course=seed.music.course, rom=seed.music.rom_title) }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{{ t("seed.details.par_target") }}</th>
+          <td>{{ seed.par_target }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{{ t("seed.details.sources") }}</th>
+          <td>{% for rom in seed.sources %}<cite>{{ rom.title }}</cite>{% if not loop.last %}<br>{% endif %}{% endfor %}</td>
+        </tr>
+        <tr>
+          <th scope="row">{{ t("seed.details.family_repeats") }}</th>
+          <td>{% if seed.allow_family_repeats %}{{ t("seed.details.yes") }}{% else %}{{ t("seed.details.no") }}{% endif %}</td>
+        </tr>
+        <tr>
+          <th scope="row">{{ t("seed.details.mercy_point") }}</th>
+          <td>
+            {% if seed.mercy_point is none %}{{ t("seed.details.off") }}
+            {% else %}{{ t("seed.details.mercy_value", stroke=seed.mercy_point) }}{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th scope="row">{{ t("seed.details.clubs_max") }}</th>
+          <td>{{ seed.clubs_max }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{{ t("seed.details.banned") }}</th>
+          <td>{% if seed.banned %}{{ seed.banned|join(" ") }}{% else %}{{ t("seed.details.none") }}{% endif %}</td>
+        </tr>
+        <tr>
+          <th scope="row">{{ t("seed.details.required_bag") }}</th>
+          <td>{% if seed.required_bag %}{{ seed.required_bag|join(" ") }}{% else %}{{ t("seed.details.none") }}{% endif %}</td>
+        </tr>
+        <tr>
+          <th scope="row">{{ t("seed.details.required_roms") }}</th>
+          <td>{% for rom in seed.required_roms %}<cite>{{ rom.title }}</cite>{% if not loop.last %}<br>{% endif %}{% endfor %}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<p><a href="/h/{{ seed.id }}.json">{{ t("seed.manifest_link") }}</a></p>
+{% endblock %}

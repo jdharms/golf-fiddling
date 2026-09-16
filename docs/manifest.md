@@ -83,8 +83,9 @@ ROM per player (`docs/randomizer_devplan.md`).
 | `clubs` | no limits | Club rules, below |
 
 Generation draws a `prng_seed` of 16 hex characters when the settings have none, and
-records it. The web UI never exposes the PRNG seed, and does not offer a `null` mercy
-point; the CLI accepts both.
+records it. The web UI offers neither the PRNG seed, the mercy point nor excluded tags,
+so a seed from the site has a drawn seed, the default mercy point and no excluded tags;
+the CLI sets all three.
 
 ### Course
 

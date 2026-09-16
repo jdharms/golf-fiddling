@@ -133,3 +133,39 @@ article.rom:not([data-state="stored"]) > footer {
   color: var(--pico-del-color);
   cursor: help;
 }
+
+/* Generate form. A refused submission's notice sits above the form. */
+.form-error {
+  color: var(--pico-del-color);
+  box-shadow: var(--pico-card-box-shadow), 0 0 0 2px var(--pico-del-color);
+}
+
+/* Club rules: a card inside the form, set apart from the everyday settings because they
+   are for special events. */
+form article.club-rules {
+  margin-block: calc(var(--pico-spacing) * 2);
+}
+
+.club-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
+  column-gap: var(--pico-spacing);
+}
+
+.club-grid label {
+  white-space: nowrap;
+}
+
+/* Seed page. */
+.magic-words {
+  letter-spacing: 0.08em;
+}
+
+table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+table.seed-details th {
+  width: 40%;
+}

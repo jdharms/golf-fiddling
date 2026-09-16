@@ -10,7 +10,6 @@ from golf.randomizer.manifest import SOURCES
 from golf.randomizer.roms import VANILLA_ROMS, vanilla_rom
 
 ROOT = Path(__file__).resolve().parents[2]
-LOCAL_FILES = {US_ROM: ROOT / "nes_open_us.nes", JP_ROM: ROOT / "mario_open_jp.nes"}
 
 
 def test_the_roms_are_the_manifest_sources_in_order():
@@ -24,6 +23,11 @@ def test_hashes_are_lowercase_sha1_hex():
         int(rom.sha1, 16)
 
 
+def test_file_names_are_the_ones_the_repository_uses():
+    assert vanilla_rom(US_ROM).filename == "nes_open_us.nes"
+    assert vanilla_rom(JP_ROM).filename == "mario_open_jp.nes"
+
+
 def test_lookup_by_id():
     assert vanilla_rom(JP_ROM).id == JP_ROM
     with pytest.raises(KeyError):
@@ -32,7 +36,7 @@ def test_lookup_by_id():
 
 @pytest.mark.parametrize("rom", VANILLA_ROMS, ids=lambda rom: rom.id)
 def test_the_hash_matches_a_local_rom(rom):
-    path = LOCAL_FILES[rom.id]
+    path = ROOT / rom.filename
     if not path.exists():
         pytest.skip(f"{path.name} not present")
     assert hashlib.sha1(path.read_bytes()).hexdigest() == rom.sha1
