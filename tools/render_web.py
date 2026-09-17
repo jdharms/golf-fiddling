@@ -13,12 +13,11 @@ from pathlib import Path
 
 from golf.core.chr_tile import TilesetData
 from golf.rendering.pil_renderer import (
-    render_hole_to_image,
-    render_greens_to_image,
     render_all_flags_to_images,
+    render_greens_to_image,
+    render_hole_to_image,
 )
 from golf.rendering.pil_sprite import load_sprites
-
 
 # Courses to process, in dropdown order: (course id, path under courses/, group label).
 # The group label becomes an <optgroup> in the web app's course selector, so the two
@@ -169,15 +168,15 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Example:
-  python render_web.py data/chr-ram.bin data/green-ram.bin courses/ web/
+  golf-render-web data/chr-ram.bin data/green-ram.bin courses/ server/static/rangefinder/
 
 This will create:
-  web/images/japan/hole_01.png ... hole_18.png
-  web/images/japan/hole_01_green.png ... hole_18_green.png
-  web/images/japan/hole_01_flag_0.png ... hole_18_flag_3.png
+  server/static/rangefinder/images/japan/hole_01.png ... hole_18.png
+  server/static/rangefinder/images/japan/hole_01_green.png ... hole_18_green.png
+  server/static/rangefinder/images/japan/hole_01_flag_0.png ... hole_18_flag_3.png
   (same for us/, uk/, and the five Mario Open Golf courses jp_japan/,
    jp_australia/, jp_france/, jp_hawaii/, jp_uk/)
-  web/metadata.json
+  server/static/rangefinder/metadata.json
         """,
     )
     parser.add_argument("tileset", help="Path to terrain CHR tileset binary file")

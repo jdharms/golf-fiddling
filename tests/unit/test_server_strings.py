@@ -7,7 +7,11 @@ from pathlib import Path
 import pytest
 from markupsafe import Markup, escape
 
-from server.app import DOWNLOAD_SCRIPT_STRINGS, ROM_SCRIPT_STRINGS
+from server.app import (
+    DOWNLOAD_SCRIPT_STRINGS,
+    RANGEFINDER_SCRIPT_STRINGS,
+    ROM_SCRIPT_STRINGS,
+)
 from server.strings import CATALOG_DIR, Entry, Strings, StringsError
 
 SERVER = Path(__file__).resolve().parents[2] / "server"
@@ -34,7 +38,7 @@ def template_keys() -> set[str]:
 
 
 def script_keys() -> set[str]:
-    return used(SCRIPT_USE, (SERVER / "static").glob("*.js"))
+    return used(SCRIPT_USE, (SERVER / "static").rglob("*.js"))
 
 
 # -- The checked-in catalog ---------------------------------------------------------------
@@ -70,16 +74,33 @@ def test_every_catalog_entry_is_used():
 
 
 #: each page script, and the catalog prefix its page embeds for it
-SCRIPT_PREFIXES = {"rom.js": ROM_SCRIPT_STRINGS, "download.js": DOWNLOAD_SCRIPT_STRINGS, "romstore.js": None}
+SCRIPT_PREFIXES = {
+    "download.js": DOWNLOAD_SCRIPT_STRINGS,
+    "rom.js": ROM_SCRIPT_STRINGS,
+    "romstore.js": None,
+    "rangefinder/app.js": RANGEFINDER_SCRIPT_STRINGS,
+    "rangefinder/green-modal.js": None,
+    "rangefinder/measure.js": None,
+    "rangefinder/renderer.js": None,
+    "rangefinder/strings.js": None,
+    "rangefinder/ui.js": None,
+}
+
+
+def page_scripts() -> dict[str, Path]:
+    return {
+        path.relative_to(SERVER / "static").as_posix(): path
+        for path in (SERVER / "static").rglob("*.js")
+    }
 
 
 def test_every_script_is_listed_with_its_prefix():
-    assert {path.name for path in (SERVER / "static").glob("*.js")} == SCRIPT_PREFIXES.keys()
+    assert page_scripts().keys() == SCRIPT_PREFIXES.keys()
 
 
 @pytest.mark.parametrize("script, prefix", SCRIPT_PREFIXES.items())
 def test_script_keys_are_embedded_for_the_script(script, prefix):
-    keys = used(SCRIPT_USE, [SERVER / "static" / script])
+    keys = used(SCRIPT_USE, [page_scripts()[script]])
     if prefix is None:
         assert not keys, f"{script} is shared and uses no strings of its own: {sorted(keys)}"
         return

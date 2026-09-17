@@ -1,0 +1,109 @@
+# Player-visible text for the rangefinder page. See server/CLAUDE.md.
+
+[rangefinder.title]
+note = "plain: browser tab title for the rangefinder"
+text = "Rangefinder - NES Open Golf"
+
+[rangefinder.heading]
+note = "page heading naming the course distance measuring tool"
+text = "Rangefinder"
+
+[rangefinder.intro]
+note = "short explanation that points on a course map can be joined to measure a route"
+text = "Small tool to measure distances between two points"
+
+[rangefinder.course]
+note = "label for the course selector"
+text = "Course"
+
+[rangefinder.hole]
+note = "label for the hole selector"
+text = "Hole"
+
+[rangefinder.zoom]
+note = "label introducing the map zoom controls"
+text = "Zoom Level"
+
+[rangefinder.zoom_controls]
+note = "plain: accessible label for the group of zoom out, zoom level and zoom in controls"
+text = "Zoom Level Controls"
+
+[rangefinder.zoom_out]
+note = "plain: accessible label for the minus button that decreases map zoom"
+text = "Zoom Out"
+
+[rangefinder.zoom_in]
+note = "plain: accessible label for the plus button that increases map zoom"
+text = "Zoom In"
+
+[rangefinder.zoom_reset]
+note = "button restoring the default map zoom"
+text = "Reset Zoom"
+
+[rangefinder.green_view]
+note = "button opening the detailed view of the current green"
+text = "Green"
+
+[rangefinder.clear]
+note = "button removing every measurement waypoint"
+text = "Clear"
+
+[rangefinder.load_error]
+note = "notice shown when the rangefinder metadata cannot be loaded"
+text = "Error loading Rangefinder metadata"
+
+[rangefinder.hole_image_alt]
+note = "plain: alternative text for the current hole map"
+text = "map of hole"
+
+[rangefinder.instructions]
+note = "brief pointer instructions: activate the map to add a waypoint; secondary click clears all waypoints"
+text = "Instructions: Left-click to add waypoint • Right-click to clear all"
+
+[rangefinder.close_green]
+note = "plain: accessible label for the button closing the detailed green view"
+text = "Close Green view"
+
+[rangefinder.green_heading]
+note = "heading for the detailed view of a green"
+text = "Green View"
+
+[rangefinder.green_image_alt]
+note = "plain: alternative text for the detailed green image"
+text = "Detailed green image"
+
+[rangefinder.flag_image_alt]
+note = "plain: alternative text for the flag-position overlay"
+text = "Flag position overlay"
+
+[rangefinder.green_instructions]
+note = "keyboard instructions: left and right arrows change flag position; Escape closes"
+text = "← → Change flag | ESC Close"
+
+[rangefinder.script.hole_option]
+note = "plain: hole selector option; receives number"
+text = "Hole {number}"
+
+[rangefinder.script.hole_info]
+note = "plain: current hole summary; receives par and distance in yards"
+text = "Par {par} • {distance}y"
+
+[rangefinder.script.distance_empty]
+note = "plain: measurement total before two waypoints have been placed"
+text = "--"
+
+[rangefinder.script.distance]
+note = "plain: measurement total; receives distance in yards"
+text = "{distance}y"
+
+[rangefinder.script.zoom]
+note = "plain: current integer zoom level; receives level"
+text = "{level}x"
+
+[rangefinder.script.segment]
+note = "plain: distance label on a measured map segment; receives distance in yards"
+text = "{distance}y"
+
+[rangefinder.script.flag]
+note = "plain: selected flag position and total positions; receives current and total"
+text = "Flag {current}/{total}"

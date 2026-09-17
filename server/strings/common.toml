@@ -30,6 +30,10 @@ text = "ROM Setup"
 note = "nav link to the seed settings form"
 text = "Generate Game"
 
+[nav.rangefinder]
+note = "nav link to the course distance measuring tool"
+text = "Rangefinder"
+
 [nav.pages]
 note = "label for the dropdown of document-like pages"
 text = "Pages"
