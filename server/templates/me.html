@@ -45,7 +45,6 @@
       <thead>
         <tr>
           <th scope="col">{{ t("me.rounds.seed") }}</th>
-          <th scope="col">{{ t("me.rounds.player") }}</th>
           <th scope="col" class="num">{{ t("me.rounds.par") }}</th>
           <th scope="col" class="num">{{ t("me.rounds.strokes") }}</th>
           <th scope="col" class="num">{{ t("me.rounds.putts") }}</th>
@@ -55,8 +54,8 @@
       <tbody>
         {% for round in rounds %}
         <tr>
-          <td><a href="/h/{{ round.seed_id }}" class="magic-words">{{ round.magic_words|join(" ") }}</a></td>
-          <td>{% if round.slot == 1 %}{{ t("me.rounds.player_two") }}{% else %}{{ t("me.rounds.player_one") }}{% endif %}</td>
+          {# a round played as player 2 is marked with an asterisk #}
+          <td><a href="/h/{{ round.seed_id }}" class="magic-words">{{ round.magic_words|join(" ") }}</a>{% if round.slot == 1 %}*{% endif %}</td>
           <td class="num">{{ round.par }}</td>
           <td class="num">{{ round.total_strokes }}</td>
           <td class="num">{{ round.total_putts }}</td>

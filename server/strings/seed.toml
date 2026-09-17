@@ -192,31 +192,31 @@ text = "Totals"
 
 [seed.rounds.heading]
 note = "h2 over the table of rounds players have submitted for this seed by scanning the end-of-round QR code"
-text = ""
+text = "Completed Rounds"
 
 [seed.rounds.player]
 note = "rounds table column header; the player's Discord display name"
-text = ""
+text = "Player"
 
 [seed.rounds.player_two]
 note = "rounds table player cell for a round played as player 2 on the player's ROM; {name} the ROM owner's Discord display name"
-text = ""
+text = "Teammate - {name}"
 
 [seed.rounds.strokes]
 note = "rounds table column header; total strokes for the round"
-text = ""
+text = "Total Strokes"
 
 [seed.rounds.putts]
 note = "rounds table column header; total putts for the round"
-text = ""
+text = "Putts"
 
 [seed.rounds.received]
 note = "rounds table column header; when the scan was recorded, UTC ISO 8601"
-text = ""
+text = "Submitted"
 
 [seed.rounds.none]
 note = "shown instead of the rounds table when no round has been submitted for this seed yet"
-text = ""
+text = "Nobody's submitted a score for this seed yet."
 
 [seed.details.heading]
 note = "h2 over the seed's settings table"
