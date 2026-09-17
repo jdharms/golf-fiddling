@@ -2,6 +2,7 @@
   "courses": {
     "japan": {
       "name": "Japan",
+      "group": "NES Open Tournament Golf",
       "holes": [
         {
           "number": 1,
@@ -277,6 +278,7 @@
     },
     "us": {
       "name": "US",
+      "group": "NES Open Tournament Golf",
       "holes": [
         {
           "number": 1,
@@ -552,6 +554,7 @@
     },
     "uk": {
       "name": "UK",
+      "group": "NES Open Tournament Golf",
       "holes": [
         {
           "number": 1,
@@ -821,6 +824,1386 @@
             "images/uk/hole_18_flag_1.png",
             "images/uk/hole_18_flag_2.png",
             "images/uk/hole_18_flag_3.png"
+          ]
+        }
+      ]
+    },
+    "jp_japan": {
+      "name": "Japan",
+      "group": "Mario Open Golf (JP)",
+      "holes": [
+        {
+          "number": 1,
+          "par": 4,
+          "distance": 412,
+          "image": "images/jp_japan/hole_01.png",
+          "width": 176,
+          "height": 288,
+          "green_image": "images/jp_japan/hole_01_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_01_flag_0.png",
+            "images/jp_japan/hole_01_flag_1.png",
+            "images/jp_japan/hole_01_flag_2.png",
+            "images/jp_japan/hole_01_flag_3.png"
+          ]
+        },
+        {
+          "number": 2,
+          "par": 4,
+          "distance": 405,
+          "image": "images/jp_japan/hole_02.png",
+          "width": 176,
+          "height": 304,
+          "green_image": "images/jp_japan/hole_02_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_02_flag_0.png",
+            "images/jp_japan/hole_02_flag_1.png",
+            "images/jp_japan/hole_02_flag_2.png",
+            "images/jp_japan/hole_02_flag_3.png"
+          ]
+        },
+        {
+          "number": 3,
+          "par": 3,
+          "distance": 220,
+          "image": "images/jp_japan/hole_03.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_japan/hole_03_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_03_flag_0.png",
+            "images/jp_japan/hole_03_flag_1.png",
+            "images/jp_japan/hole_03_flag_2.png",
+            "images/jp_japan/hole_03_flag_3.png"
+          ]
+        },
+        {
+          "number": 4,
+          "par": 5,
+          "distance": 547,
+          "image": "images/jp_japan/hole_04.png",
+          "width": 176,
+          "height": 352,
+          "green_image": "images/jp_japan/hole_04_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_04_flag_0.png",
+            "images/jp_japan/hole_04_flag_1.png",
+            "images/jp_japan/hole_04_flag_2.png",
+            "images/jp_japan/hole_04_flag_3.png"
+          ]
+        },
+        {
+          "number": 5,
+          "par": 3,
+          "distance": 171,
+          "image": "images/jp_japan/hole_05.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_japan/hole_05_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_05_flag_0.png",
+            "images/jp_japan/hole_05_flag_1.png",
+            "images/jp_japan/hole_05_flag_2.png",
+            "images/jp_japan/hole_05_flag_3.png"
+          ]
+        },
+        {
+          "number": 6,
+          "par": 4,
+          "distance": 397,
+          "image": "images/jp_japan/hole_06.png",
+          "width": 176,
+          "height": 304,
+          "green_image": "images/jp_japan/hole_06_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_06_flag_0.png",
+            "images/jp_japan/hole_06_flag_1.png",
+            "images/jp_japan/hole_06_flag_2.png",
+            "images/jp_japan/hole_06_flag_3.png"
+          ]
+        },
+        {
+          "number": 7,
+          "par": 4,
+          "distance": 414,
+          "image": "images/jp_japan/hole_07.png",
+          "width": 176,
+          "height": 288,
+          "green_image": "images/jp_japan/hole_07_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_07_flag_0.png",
+            "images/jp_japan/hole_07_flag_1.png",
+            "images/jp_japan/hole_07_flag_2.png",
+            "images/jp_japan/hole_07_flag_3.png"
+          ]
+        },
+        {
+          "number": 8,
+          "par": 5,
+          "distance": 524,
+          "image": "images/jp_japan/hole_08.png",
+          "width": 176,
+          "height": 368,
+          "green_image": "images/jp_japan/hole_08_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_08_flag_0.png",
+            "images/jp_japan/hole_08_flag_1.png",
+            "images/jp_japan/hole_08_flag_2.png",
+            "images/jp_japan/hole_08_flag_3.png"
+          ]
+        },
+        {
+          "number": 9,
+          "par": 4,
+          "distance": 393,
+          "image": "images/jp_japan/hole_09.png",
+          "width": 176,
+          "height": 288,
+          "green_image": "images/jp_japan/hole_09_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_09_flag_0.png",
+            "images/jp_japan/hole_09_flag_1.png",
+            "images/jp_japan/hole_09_flag_2.png",
+            "images/jp_japan/hole_09_flag_3.png"
+          ]
+        },
+        {
+          "number": 10,
+          "par": 4,
+          "distance": 417,
+          "image": "images/jp_japan/hole_10.png",
+          "width": 176,
+          "height": 304,
+          "green_image": "images/jp_japan/hole_10_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_10_flag_0.png",
+            "images/jp_japan/hole_10_flag_1.png",
+            "images/jp_japan/hole_10_flag_2.png",
+            "images/jp_japan/hole_10_flag_3.png"
+          ]
+        },
+        {
+          "number": 11,
+          "par": 3,
+          "distance": 164,
+          "image": "images/jp_japan/hole_11.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_japan/hole_11_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_11_flag_0.png",
+            "images/jp_japan/hole_11_flag_1.png",
+            "images/jp_japan/hole_11_flag_2.png",
+            "images/jp_japan/hole_11_flag_3.png"
+          ]
+        },
+        {
+          "number": 12,
+          "par": 4,
+          "distance": 433,
+          "image": "images/jp_japan/hole_12.png",
+          "width": 176,
+          "height": 272,
+          "green_image": "images/jp_japan/hole_12_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_12_flag_0.png",
+            "images/jp_japan/hole_12_flag_1.png",
+            "images/jp_japan/hole_12_flag_2.png",
+            "images/jp_japan/hole_12_flag_3.png"
+          ]
+        },
+        {
+          "number": 13,
+          "par": 5,
+          "distance": 581,
+          "image": "images/jp_japan/hole_13.png",
+          "width": 176,
+          "height": 352,
+          "green_image": "images/jp_japan/hole_13_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_13_flag_0.png",
+            "images/jp_japan/hole_13_flag_1.png",
+            "images/jp_japan/hole_13_flag_2.png",
+            "images/jp_japan/hole_13_flag_3.png"
+          ]
+        },
+        {
+          "number": 14,
+          "par": 4,
+          "distance": 404,
+          "image": "images/jp_japan/hole_14.png",
+          "width": 176,
+          "height": 320,
+          "green_image": "images/jp_japan/hole_14_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_14_flag_0.png",
+            "images/jp_japan/hole_14_flag_1.png",
+            "images/jp_japan/hole_14_flag_2.png",
+            "images/jp_japan/hole_14_flag_3.png"
+          ]
+        },
+        {
+          "number": 15,
+          "par": 4,
+          "distance": 424,
+          "image": "images/jp_japan/hole_15.png",
+          "width": 176,
+          "height": 304,
+          "green_image": "images/jp_japan/hole_15_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_15_flag_0.png",
+            "images/jp_japan/hole_15_flag_1.png",
+            "images/jp_japan/hole_15_flag_2.png",
+            "images/jp_japan/hole_15_flag_3.png"
+          ]
+        },
+        {
+          "number": 16,
+          "par": 3,
+          "distance": 174,
+          "image": "images/jp_japan/hole_16.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_japan/hole_16_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_16_flag_0.png",
+            "images/jp_japan/hole_16_flag_1.png",
+            "images/jp_japan/hole_16_flag_2.png",
+            "images/jp_japan/hole_16_flag_3.png"
+          ]
+        },
+        {
+          "number": 17,
+          "par": 4,
+          "distance": 445,
+          "image": "images/jp_japan/hole_17.png",
+          "width": 176,
+          "height": 288,
+          "green_image": "images/jp_japan/hole_17_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_17_flag_0.png",
+            "images/jp_japan/hole_17_flag_1.png",
+            "images/jp_japan/hole_17_flag_2.png",
+            "images/jp_japan/hole_17_flag_3.png"
+          ]
+        },
+        {
+          "number": 18,
+          "par": 5,
+          "distance": 564,
+          "image": "images/jp_japan/hole_18.png",
+          "width": 176,
+          "height": 336,
+          "green_image": "images/jp_japan/hole_18_green.png",
+          "flag_images": [
+            "images/jp_japan/hole_18_flag_0.png",
+            "images/jp_japan/hole_18_flag_1.png",
+            "images/jp_japan/hole_18_flag_2.png",
+            "images/jp_japan/hole_18_flag_3.png"
+          ]
+        }
+      ]
+    },
+    "jp_australia": {
+      "name": "Australia",
+      "group": "Mario Open Golf (JP)",
+      "holes": [
+        {
+          "number": 1,
+          "par": 4,
+          "distance": 400,
+          "image": "images/jp_australia/hole_01.png",
+          "width": 176,
+          "height": 304,
+          "green_image": "images/jp_australia/hole_01_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_01_flag_0.png",
+            "images/jp_australia/hole_01_flag_1.png",
+            "images/jp_australia/hole_01_flag_2.png",
+            "images/jp_australia/hole_01_flag_3.png"
+          ]
+        },
+        {
+          "number": 2,
+          "par": 3,
+          "distance": 171,
+          "image": "images/jp_australia/hole_02.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_australia/hole_02_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_02_flag_0.png",
+            "images/jp_australia/hole_02_flag_1.png",
+            "images/jp_australia/hole_02_flag_2.png",
+            "images/jp_australia/hole_02_flag_3.png"
+          ]
+        },
+        {
+          "number": 3,
+          "par": 5,
+          "distance": 609,
+          "image": "images/jp_australia/hole_03.png",
+          "width": 176,
+          "height": 304,
+          "green_image": "images/jp_australia/hole_03_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_03_flag_0.png",
+            "images/jp_australia/hole_03_flag_1.png",
+            "images/jp_australia/hole_03_flag_2.png",
+            "images/jp_australia/hole_03_flag_3.png"
+          ]
+        },
+        {
+          "number": 4,
+          "par": 4,
+          "distance": 417,
+          "image": "images/jp_australia/hole_04.png",
+          "width": 176,
+          "height": 288,
+          "green_image": "images/jp_australia/hole_04_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_04_flag_0.png",
+            "images/jp_australia/hole_04_flag_1.png",
+            "images/jp_australia/hole_04_flag_2.png",
+            "images/jp_australia/hole_04_flag_3.png"
+          ]
+        },
+        {
+          "number": 5,
+          "par": 4,
+          "distance": 440,
+          "image": "images/jp_australia/hole_05.png",
+          "width": 176,
+          "height": 304,
+          "green_image": "images/jp_australia/hole_05_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_05_flag_0.png",
+            "images/jp_australia/hole_05_flag_1.png",
+            "images/jp_australia/hole_05_flag_2.png",
+            "images/jp_australia/hole_05_flag_3.png"
+          ]
+        },
+        {
+          "number": 6,
+          "par": 4,
+          "distance": 386,
+          "image": "images/jp_australia/hole_06.png",
+          "width": 176,
+          "height": 272,
+          "green_image": "images/jp_australia/hole_06_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_06_flag_0.png",
+            "images/jp_australia/hole_06_flag_1.png",
+            "images/jp_australia/hole_06_flag_2.png",
+            "images/jp_australia/hole_06_flag_3.png"
+          ]
+        },
+        {
+          "number": 7,
+          "par": 3,
+          "distance": 200,
+          "image": "images/jp_australia/hole_07.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_australia/hole_07_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_07_flag_0.png",
+            "images/jp_australia/hole_07_flag_1.png",
+            "images/jp_australia/hole_07_flag_2.png",
+            "images/jp_australia/hole_07_flag_3.png"
+          ]
+        },
+        {
+          "number": 8,
+          "par": 4,
+          "distance": 397,
+          "image": "images/jp_australia/hole_08.png",
+          "width": 176,
+          "height": 256,
+          "green_image": "images/jp_australia/hole_08_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_08_flag_0.png",
+            "images/jp_australia/hole_08_flag_1.png",
+            "images/jp_australia/hole_08_flag_2.png",
+            "images/jp_australia/hole_08_flag_3.png"
+          ]
+        },
+        {
+          "number": 9,
+          "par": 5,
+          "distance": 573,
+          "image": "images/jp_australia/hole_09.png",
+          "width": 176,
+          "height": 336,
+          "green_image": "images/jp_australia/hole_09_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_09_flag_0.png",
+            "images/jp_australia/hole_09_flag_1.png",
+            "images/jp_australia/hole_09_flag_2.png",
+            "images/jp_australia/hole_09_flag_3.png"
+          ]
+        },
+        {
+          "number": 10,
+          "par": 3,
+          "distance": 216,
+          "image": "images/jp_australia/hole_10.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_australia/hole_10_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_10_flag_0.png",
+            "images/jp_australia/hole_10_flag_1.png",
+            "images/jp_australia/hole_10_flag_2.png",
+            "images/jp_australia/hole_10_flag_3.png"
+          ]
+        },
+        {
+          "number": 11,
+          "par": 4,
+          "distance": 405,
+          "image": "images/jp_australia/hole_11.png",
+          "width": 176,
+          "height": 272,
+          "green_image": "images/jp_australia/hole_11_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_11_flag_0.png",
+            "images/jp_australia/hole_11_flag_1.png",
+            "images/jp_australia/hole_11_flag_2.png",
+            "images/jp_australia/hole_11_flag_3.png"
+          ]
+        },
+        {
+          "number": 12,
+          "par": 4,
+          "distance": 424,
+          "image": "images/jp_australia/hole_12.png",
+          "width": 176,
+          "height": 352,
+          "green_image": "images/jp_australia/hole_12_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_12_flag_0.png",
+            "images/jp_australia/hole_12_flag_1.png",
+            "images/jp_australia/hole_12_flag_2.png",
+            "images/jp_australia/hole_12_flag_3.png"
+          ]
+        },
+        {
+          "number": 13,
+          "par": 5,
+          "distance": 566,
+          "image": "images/jp_australia/hole_13.png",
+          "width": 176,
+          "height": 336,
+          "green_image": "images/jp_australia/hole_13_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_13_flag_0.png",
+            "images/jp_australia/hole_13_flag_1.png",
+            "images/jp_australia/hole_13_flag_2.png",
+            "images/jp_australia/hole_13_flag_3.png"
+          ]
+        },
+        {
+          "number": 14,
+          "par": 4,
+          "distance": 388,
+          "image": "images/jp_australia/hole_14.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_australia/hole_14_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_14_flag_0.png",
+            "images/jp_australia/hole_14_flag_1.png",
+            "images/jp_australia/hole_14_flag_2.png",
+            "images/jp_australia/hole_14_flag_3.png"
+          ]
+        },
+        {
+          "number": 15,
+          "par": 3,
+          "distance": 194,
+          "image": "images/jp_australia/hole_15.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_australia/hole_15_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_15_flag_0.png",
+            "images/jp_australia/hole_15_flag_1.png",
+            "images/jp_australia/hole_15_flag_2.png",
+            "images/jp_australia/hole_15_flag_3.png"
+          ]
+        },
+        {
+          "number": 16,
+          "par": 4,
+          "distance": 459,
+          "image": "images/jp_australia/hole_16.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_australia/hole_16_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_16_flag_0.png",
+            "images/jp_australia/hole_16_flag_1.png",
+            "images/jp_australia/hole_16_flag_2.png",
+            "images/jp_australia/hole_16_flag_3.png"
+          ]
+        },
+        {
+          "number": 17,
+          "par": 5,
+          "distance": 619,
+          "image": "images/jp_australia/hole_17.png",
+          "width": 176,
+          "height": 336,
+          "green_image": "images/jp_australia/hole_17_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_17_flag_0.png",
+            "images/jp_australia/hole_17_flag_1.png",
+            "images/jp_australia/hole_17_flag_2.png",
+            "images/jp_australia/hole_17_flag_3.png"
+          ]
+        },
+        {
+          "number": 18,
+          "par": 4,
+          "distance": 468,
+          "image": "images/jp_australia/hole_18.png",
+          "width": 176,
+          "height": 288,
+          "green_image": "images/jp_australia/hole_18_green.png",
+          "flag_images": [
+            "images/jp_australia/hole_18_flag_0.png",
+            "images/jp_australia/hole_18_flag_1.png",
+            "images/jp_australia/hole_18_flag_2.png",
+            "images/jp_australia/hole_18_flag_3.png"
+          ]
+        }
+      ]
+    },
+    "jp_france": {
+      "name": "France",
+      "group": "Mario Open Golf (JP)",
+      "holes": [
+        {
+          "number": 1,
+          "par": 4,
+          "distance": 438,
+          "image": "images/jp_france/hole_01.png",
+          "width": 176,
+          "height": 288,
+          "green_image": "images/jp_france/hole_01_green.png",
+          "flag_images": [
+            "images/jp_france/hole_01_flag_0.png",
+            "images/jp_france/hole_01_flag_1.png",
+            "images/jp_france/hole_01_flag_2.png",
+            "images/jp_france/hole_01_flag_3.png"
+          ]
+        },
+        {
+          "number": 2,
+          "par": 4,
+          "distance": 452,
+          "image": "images/jp_france/hole_02.png",
+          "width": 176,
+          "height": 304,
+          "green_image": "images/jp_france/hole_02_green.png",
+          "flag_images": [
+            "images/jp_france/hole_02_flag_0.png",
+            "images/jp_france/hole_02_flag_1.png",
+            "images/jp_france/hole_02_flag_2.png",
+            "images/jp_france/hole_02_flag_3.png"
+          ]
+        },
+        {
+          "number": 3,
+          "par": 5,
+          "distance": 624,
+          "image": "images/jp_france/hole_03.png",
+          "width": 176,
+          "height": 320,
+          "green_image": "images/jp_france/hole_03_green.png",
+          "flag_images": [
+            "images/jp_france/hole_03_flag_0.png",
+            "images/jp_france/hole_03_flag_1.png",
+            "images/jp_france/hole_03_flag_2.png",
+            "images/jp_france/hole_03_flag_3.png"
+          ]
+        },
+        {
+          "number": 4,
+          "par": 3,
+          "distance": 200,
+          "image": "images/jp_france/hole_04.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_france/hole_04_green.png",
+          "flag_images": [
+            "images/jp_france/hole_04_flag_0.png",
+            "images/jp_france/hole_04_flag_1.png",
+            "images/jp_france/hole_04_flag_2.png",
+            "images/jp_france/hole_04_flag_3.png"
+          ]
+        },
+        {
+          "number": 5,
+          "par": 4,
+          "distance": 350,
+          "image": "images/jp_france/hole_05.png",
+          "width": 176,
+          "height": 304,
+          "green_image": "images/jp_france/hole_05_green.png",
+          "flag_images": [
+            "images/jp_france/hole_05_flag_0.png",
+            "images/jp_france/hole_05_flag_1.png",
+            "images/jp_france/hole_05_flag_2.png",
+            "images/jp_france/hole_05_flag_3.png"
+          ]
+        },
+        {
+          "number": 6,
+          "par": 4,
+          "distance": 357,
+          "image": "images/jp_france/hole_06.png",
+          "width": 176,
+          "height": 256,
+          "green_image": "images/jp_france/hole_06_green.png",
+          "flag_images": [
+            "images/jp_france/hole_06_flag_0.png",
+            "images/jp_france/hole_06_flag_1.png",
+            "images/jp_france/hole_06_flag_2.png",
+            "images/jp_france/hole_06_flag_3.png"
+          ]
+        },
+        {
+          "number": 7,
+          "par": 5,
+          "distance": 645,
+          "image": "images/jp_france/hole_07.png",
+          "width": 176,
+          "height": 352,
+          "green_image": "images/jp_france/hole_07_green.png",
+          "flag_images": [
+            "images/jp_france/hole_07_flag_0.png",
+            "images/jp_france/hole_07_flag_1.png",
+            "images/jp_france/hole_07_flag_2.png",
+            "images/jp_france/hole_07_flag_3.png"
+          ]
+        },
+        {
+          "number": 8,
+          "par": 3,
+          "distance": 198,
+          "image": "images/jp_france/hole_08.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_france/hole_08_green.png",
+          "flag_images": [
+            "images/jp_france/hole_08_flag_0.png",
+            "images/jp_france/hole_08_flag_1.png",
+            "images/jp_france/hole_08_flag_2.png",
+            "images/jp_france/hole_08_flag_3.png"
+          ]
+        },
+        {
+          "number": 9,
+          "par": 4,
+          "distance": 338,
+          "image": "images/jp_france/hole_09.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_france/hole_09_green.png",
+          "flag_images": [
+            "images/jp_france/hole_09_flag_0.png",
+            "images/jp_france/hole_09_flag_1.png",
+            "images/jp_france/hole_09_flag_2.png",
+            "images/jp_france/hole_09_flag_3.png"
+          ]
+        },
+        {
+          "number": 10,
+          "par": 5,
+          "distance": 566,
+          "image": "images/jp_france/hole_10.png",
+          "width": 176,
+          "height": 368,
+          "green_image": "images/jp_france/hole_10_green.png",
+          "flag_images": [
+            "images/jp_france/hole_10_flag_0.png",
+            "images/jp_france/hole_10_flag_1.png",
+            "images/jp_france/hole_10_flag_2.png",
+            "images/jp_france/hole_10_flag_3.png"
+          ]
+        },
+        {
+          "number": 11,
+          "par": 4,
+          "distance": 440,
+          "image": "images/jp_france/hole_11.png",
+          "width": 176,
+          "height": 256,
+          "green_image": "images/jp_france/hole_11_green.png",
+          "flag_images": [
+            "images/jp_france/hole_11_flag_0.png",
+            "images/jp_france/hole_11_flag_1.png",
+            "images/jp_france/hole_11_flag_2.png",
+            "images/jp_france/hole_11_flag_3.png"
+          ]
+        },
+        {
+          "number": 12,
+          "par": 3,
+          "distance": 224,
+          "image": "images/jp_france/hole_12.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_france/hole_12_green.png",
+          "flag_images": [
+            "images/jp_france/hole_12_flag_0.png",
+            "images/jp_france/hole_12_flag_1.png",
+            "images/jp_france/hole_12_flag_2.png",
+            "images/jp_france/hole_12_flag_3.png"
+          ]
+        },
+        {
+          "number": 13,
+          "par": 4,
+          "distance": 440,
+          "image": "images/jp_france/hole_13.png",
+          "width": 176,
+          "height": 288,
+          "green_image": "images/jp_france/hole_13_green.png",
+          "flag_images": [
+            "images/jp_france/hole_13_flag_0.png",
+            "images/jp_france/hole_13_flag_1.png",
+            "images/jp_france/hole_13_flag_2.png",
+            "images/jp_france/hole_13_flag_3.png"
+          ]
+        },
+        {
+          "number": 14,
+          "par": 4,
+          "distance": 421,
+          "image": "images/jp_france/hole_14.png",
+          "width": 176,
+          "height": 272,
+          "green_image": "images/jp_france/hole_14_green.png",
+          "flag_images": [
+            "images/jp_france/hole_14_flag_0.png",
+            "images/jp_france/hole_14_flag_1.png",
+            "images/jp_france/hole_14_flag_2.png",
+            "images/jp_france/hole_14_flag_3.png"
+          ]
+        },
+        {
+          "number": 15,
+          "par": 4,
+          "distance": 424,
+          "image": "images/jp_france/hole_15.png",
+          "width": 176,
+          "height": 288,
+          "green_image": "images/jp_france/hole_15_green.png",
+          "flag_images": [
+            "images/jp_france/hole_15_flag_0.png",
+            "images/jp_france/hole_15_flag_1.png",
+            "images/jp_france/hole_15_flag_2.png",
+            "images/jp_france/hole_15_flag_3.png"
+          ]
+        },
+        {
+          "number": 16,
+          "par": 3,
+          "distance": 235,
+          "image": "images/jp_france/hole_16.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_france/hole_16_green.png",
+          "flag_images": [
+            "images/jp_france/hole_16_flag_0.png",
+            "images/jp_france/hole_16_flag_1.png",
+            "images/jp_france/hole_16_flag_2.png",
+            "images/jp_france/hole_16_flag_3.png"
+          ]
+        },
+        {
+          "number": 17,
+          "par": 4,
+          "distance": 440,
+          "image": "images/jp_france/hole_17.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_france/hole_17_green.png",
+          "flag_images": [
+            "images/jp_france/hole_17_flag_0.png",
+            "images/jp_france/hole_17_flag_1.png",
+            "images/jp_france/hole_17_flag_2.png",
+            "images/jp_france/hole_17_flag_3.png"
+          ]
+        },
+        {
+          "number": 18,
+          "par": 5,
+          "distance": 700,
+          "image": "images/jp_france/hole_18.png",
+          "width": 176,
+          "height": 400,
+          "green_image": "images/jp_france/hole_18_green.png",
+          "flag_images": [
+            "images/jp_france/hole_18_flag_0.png",
+            "images/jp_france/hole_18_flag_1.png",
+            "images/jp_france/hole_18_flag_2.png",
+            "images/jp_france/hole_18_flag_3.png"
+          ]
+        }
+      ]
+    },
+    "jp_hawaii": {
+      "name": "Hawaii",
+      "group": "Mario Open Golf (JP)",
+      "holes": [
+        {
+          "number": 1,
+          "par": 4,
+          "distance": 435,
+          "image": "images/jp_hawaii/hole_01.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_hawaii/hole_01_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_01_flag_0.png",
+            "images/jp_hawaii/hole_01_flag_1.png",
+            "images/jp_hawaii/hole_01_flag_2.png",
+            "images/jp_hawaii/hole_01_flag_3.png"
+          ]
+        },
+        {
+          "number": 2,
+          "par": 4,
+          "distance": 440,
+          "image": "images/jp_hawaii/hole_02.png",
+          "width": 176,
+          "height": 272,
+          "green_image": "images/jp_hawaii/hole_02_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_02_flag_0.png",
+            "images/jp_hawaii/hole_02_flag_1.png",
+            "images/jp_hawaii/hole_02_flag_2.png",
+            "images/jp_hawaii/hole_02_flag_3.png"
+          ]
+        },
+        {
+          "number": 3,
+          "par": 3,
+          "distance": 240,
+          "image": "images/jp_hawaii/hole_03.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_hawaii/hole_03_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_03_flag_0.png",
+            "images/jp_hawaii/hole_03_flag_1.png",
+            "images/jp_hawaii/hole_03_flag_2.png",
+            "images/jp_hawaii/hole_03_flag_3.png"
+          ]
+        },
+        {
+          "number": 4,
+          "par": 4,
+          "distance": 405,
+          "image": "images/jp_hawaii/hole_04.png",
+          "width": 176,
+          "height": 288,
+          "green_image": "images/jp_hawaii/hole_04_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_04_flag_0.png",
+            "images/jp_hawaii/hole_04_flag_1.png",
+            "images/jp_hawaii/hole_04_flag_2.png",
+            "images/jp_hawaii/hole_04_flag_3.png"
+          ]
+        },
+        {
+          "number": 5,
+          "par": 5,
+          "distance": 773,
+          "image": "images/jp_hawaii/hole_05.png",
+          "width": 176,
+          "height": 464,
+          "green_image": "images/jp_hawaii/hole_05_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_05_flag_0.png",
+            "images/jp_hawaii/hole_05_flag_1.png",
+            "images/jp_hawaii/hole_05_flag_2.png",
+            "images/jp_hawaii/hole_05_flag_3.png"
+          ]
+        },
+        {
+          "number": 6,
+          "par": 4,
+          "distance": 400,
+          "image": "images/jp_hawaii/hole_06.png",
+          "width": 176,
+          "height": 256,
+          "green_image": "images/jp_hawaii/hole_06_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_06_flag_0.png",
+            "images/jp_hawaii/hole_06_flag_1.png",
+            "images/jp_hawaii/hole_06_flag_2.png",
+            "images/jp_hawaii/hole_06_flag_3.png"
+          ]
+        },
+        {
+          "number": 7,
+          "par": 3,
+          "distance": 212,
+          "image": "images/jp_hawaii/hole_07.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_hawaii/hole_07_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_07_flag_0.png",
+            "images/jp_hawaii/hole_07_flag_1.png",
+            "images/jp_hawaii/hole_07_flag_2.png",
+            "images/jp_hawaii/hole_07_flag_3.png"
+          ]
+        },
+        {
+          "number": 8,
+          "par": 5,
+          "distance": 678,
+          "image": "images/jp_hawaii/hole_08.png",
+          "width": 176,
+          "height": 368,
+          "green_image": "images/jp_hawaii/hole_08_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_08_flag_0.png",
+            "images/jp_hawaii/hole_08_flag_1.png",
+            "images/jp_hawaii/hole_08_flag_2.png",
+            "images/jp_hawaii/hole_08_flag_3.png"
+          ]
+        },
+        {
+          "number": 9,
+          "par": 4,
+          "distance": 412,
+          "image": "images/jp_hawaii/hole_09.png",
+          "width": 176,
+          "height": 320,
+          "green_image": "images/jp_hawaii/hole_09_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_09_flag_0.png",
+            "images/jp_hawaii/hole_09_flag_1.png",
+            "images/jp_hawaii/hole_09_flag_2.png",
+            "images/jp_hawaii/hole_09_flag_3.png"
+          ]
+        },
+        {
+          "number": 10,
+          "par": 4,
+          "distance": 464,
+          "image": "images/jp_hawaii/hole_10.png",
+          "width": 176,
+          "height": 320,
+          "green_image": "images/jp_hawaii/hole_10_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_10_flag_0.png",
+            "images/jp_hawaii/hole_10_flag_1.png",
+            "images/jp_hawaii/hole_10_flag_2.png",
+            "images/jp_hawaii/hole_10_flag_3.png"
+          ]
+        },
+        {
+          "number": 11,
+          "par": 4,
+          "distance": 456,
+          "image": "images/jp_hawaii/hole_11.png",
+          "width": 176,
+          "height": 304,
+          "green_image": "images/jp_hawaii/hole_11_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_11_flag_0.png",
+            "images/jp_hawaii/hole_11_flag_1.png",
+            "images/jp_hawaii/hole_11_flag_2.png",
+            "images/jp_hawaii/hole_11_flag_3.png"
+          ]
+        },
+        {
+          "number": 12,
+          "par": 3,
+          "distance": 231,
+          "image": "images/jp_hawaii/hole_12.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_hawaii/hole_12_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_12_flag_0.png",
+            "images/jp_hawaii/hole_12_flag_1.png",
+            "images/jp_hawaii/hole_12_flag_2.png",
+            "images/jp_hawaii/hole_12_flag_3.png"
+          ]
+        },
+        {
+          "number": 13,
+          "par": 4,
+          "distance": 416,
+          "image": "images/jp_hawaii/hole_13.png",
+          "width": 176,
+          "height": 288,
+          "green_image": "images/jp_hawaii/hole_13_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_13_flag_0.png",
+            "images/jp_hawaii/hole_13_flag_1.png",
+            "images/jp_hawaii/hole_13_flag_2.png",
+            "images/jp_hawaii/hole_13_flag_3.png"
+          ]
+        },
+        {
+          "number": 14,
+          "par": 5,
+          "distance": 762,
+          "image": "images/jp_hawaii/hole_14.png",
+          "width": 176,
+          "height": 384,
+          "green_image": "images/jp_hawaii/hole_14_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_14_flag_0.png",
+            "images/jp_hawaii/hole_14_flag_1.png",
+            "images/jp_hawaii/hole_14_flag_2.png",
+            "images/jp_hawaii/hole_14_flag_3.png"
+          ]
+        },
+        {
+          "number": 15,
+          "par": 4,
+          "distance": 452,
+          "image": "images/jp_hawaii/hole_15.png",
+          "width": 176,
+          "height": 336,
+          "green_image": "images/jp_hawaii/hole_15_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_15_flag_0.png",
+            "images/jp_hawaii/hole_15_flag_1.png",
+            "images/jp_hawaii/hole_15_flag_2.png",
+            "images/jp_hawaii/hole_15_flag_3.png"
+          ]
+        },
+        {
+          "number": 16,
+          "par": 4,
+          "distance": 455,
+          "image": "images/jp_hawaii/hole_16.png",
+          "width": 176,
+          "height": 352,
+          "green_image": "images/jp_hawaii/hole_16_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_16_flag_0.png",
+            "images/jp_hawaii/hole_16_flag_1.png",
+            "images/jp_hawaii/hole_16_flag_2.png",
+            "images/jp_hawaii/hole_16_flag_3.png"
+          ]
+        },
+        {
+          "number": 17,
+          "par": 3,
+          "distance": 238,
+          "image": "images/jp_hawaii/hole_17.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_hawaii/hole_17_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_17_flag_0.png",
+            "images/jp_hawaii/hole_17_flag_1.png",
+            "images/jp_hawaii/hole_17_flag_2.png",
+            "images/jp_hawaii/hole_17_flag_3.png"
+          ]
+        },
+        {
+          "number": 18,
+          "par": 5,
+          "distance": 750,
+          "image": "images/jp_hawaii/hole_18.png",
+          "width": 176,
+          "height": 432,
+          "green_image": "images/jp_hawaii/hole_18_green.png",
+          "flag_images": [
+            "images/jp_hawaii/hole_18_flag_0.png",
+            "images/jp_hawaii/hole_18_flag_1.png",
+            "images/jp_hawaii/hole_18_flag_2.png",
+            "images/jp_hawaii/hole_18_flag_3.png"
+          ]
+        }
+      ]
+    },
+    "jp_uk": {
+      "name": "UK",
+      "group": "Mario Open Golf (JP)",
+      "holes": [
+        {
+          "number": 1,
+          "par": 4,
+          "distance": 470,
+          "image": "images/jp_uk/hole_01.png",
+          "width": 176,
+          "height": 272,
+          "green_image": "images/jp_uk/hole_01_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_01_flag_0.png",
+            "images/jp_uk/hole_01_flag_1.png",
+            "images/jp_uk/hole_01_flag_2.png",
+            "images/jp_uk/hole_01_flag_3.png"
+          ]
+        },
+        {
+          "number": 2,
+          "par": 3,
+          "distance": 226,
+          "image": "images/jp_uk/hole_02.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_uk/hole_02_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_02_flag_0.png",
+            "images/jp_uk/hole_02_flag_1.png",
+            "images/jp_uk/hole_02_flag_2.png",
+            "images/jp_uk/hole_02_flag_3.png"
+          ]
+        },
+        {
+          "number": 3,
+          "par": 4,
+          "distance": 452,
+          "image": "images/jp_uk/hole_03.png",
+          "width": 176,
+          "height": 288,
+          "green_image": "images/jp_uk/hole_03_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_03_flag_0.png",
+            "images/jp_uk/hole_03_flag_1.png",
+            "images/jp_uk/hole_03_flag_2.png",
+            "images/jp_uk/hole_03_flag_3.png"
+          ]
+        },
+        {
+          "number": 4,
+          "par": 5,
+          "distance": 576,
+          "image": "images/jp_uk/hole_04.png",
+          "width": 176,
+          "height": 352,
+          "green_image": "images/jp_uk/hole_04_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_04_flag_0.png",
+            "images/jp_uk/hole_04_flag_1.png",
+            "images/jp_uk/hole_04_flag_2.png",
+            "images/jp_uk/hole_04_flag_3.png"
+          ]
+        },
+        {
+          "number": 5,
+          "par": 4,
+          "distance": 440,
+          "image": "images/jp_uk/hole_05.png",
+          "width": 176,
+          "height": 320,
+          "green_image": "images/jp_uk/hole_05_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_05_flag_0.png",
+            "images/jp_uk/hole_05_flag_1.png",
+            "images/jp_uk/hole_05_flag_2.png",
+            "images/jp_uk/hole_05_flag_3.png"
+          ]
+        },
+        {
+          "number": 6,
+          "par": 4,
+          "distance": 428,
+          "image": "images/jp_uk/hole_06.png",
+          "width": 176,
+          "height": 288,
+          "green_image": "images/jp_uk/hole_06_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_06_flag_0.png",
+            "images/jp_uk/hole_06_flag_1.png",
+            "images/jp_uk/hole_06_flag_2.png",
+            "images/jp_uk/hole_06_flag_3.png"
+          ]
+        },
+        {
+          "number": 7,
+          "par": 3,
+          "distance": 227,
+          "image": "images/jp_uk/hole_07.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_uk/hole_07_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_07_flag_0.png",
+            "images/jp_uk/hole_07_flag_1.png",
+            "images/jp_uk/hole_07_flag_2.png",
+            "images/jp_uk/hole_07_flag_3.png"
+          ]
+        },
+        {
+          "number": 8,
+          "par": 4,
+          "distance": 464,
+          "image": "images/jp_uk/hole_08.png",
+          "width": 176,
+          "height": 304,
+          "green_image": "images/jp_uk/hole_08_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_08_flag_0.png",
+            "images/jp_uk/hole_08_flag_1.png",
+            "images/jp_uk/hole_08_flag_2.png",
+            "images/jp_uk/hole_08_flag_3.png"
+          ]
+        },
+        {
+          "number": 9,
+          "par": 5,
+          "distance": 766,
+          "image": "images/jp_uk/hole_09.png",
+          "width": 176,
+          "height": 448,
+          "green_image": "images/jp_uk/hole_09_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_09_flag_0.png",
+            "images/jp_uk/hole_09_flag_1.png",
+            "images/jp_uk/hole_09_flag_2.png",
+            "images/jp_uk/hole_09_flag_3.png"
+          ]
+        },
+        {
+          "number": 10,
+          "par": 3,
+          "distance": 200,
+          "image": "images/jp_uk/hole_10.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_uk/hole_10_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_10_flag_0.png",
+            "images/jp_uk/hole_10_flag_1.png",
+            "images/jp_uk/hole_10_flag_2.png",
+            "images/jp_uk/hole_10_flag_3.png"
+          ]
+        },
+        {
+          "number": 11,
+          "par": 4,
+          "distance": 471,
+          "image": "images/jp_uk/hole_11.png",
+          "width": 176,
+          "height": 304,
+          "green_image": "images/jp_uk/hole_11_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_11_flag_0.png",
+            "images/jp_uk/hole_11_flag_1.png",
+            "images/jp_uk/hole_11_flag_2.png",
+            "images/jp_uk/hole_11_flag_3.png"
+          ]
+        },
+        {
+          "number": 12,
+          "par": 4,
+          "distance": 464,
+          "image": "images/jp_uk/hole_12.png",
+          "width": 176,
+          "height": 336,
+          "green_image": "images/jp_uk/hole_12_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_12_flag_0.png",
+            "images/jp_uk/hole_12_flag_1.png",
+            "images/jp_uk/hole_12_flag_2.png",
+            "images/jp_uk/hole_12_flag_3.png"
+          ]
+        },
+        {
+          "number": 13,
+          "par": 4,
+          "distance": 447,
+          "image": "images/jp_uk/hole_13.png",
+          "width": 176,
+          "height": 288,
+          "green_image": "images/jp_uk/hole_13_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_13_flag_0.png",
+            "images/jp_uk/hole_13_flag_1.png",
+            "images/jp_uk/hole_13_flag_2.png",
+            "images/jp_uk/hole_13_flag_3.png"
+          ]
+        },
+        {
+          "number": 14,
+          "par": 5,
+          "distance": 778,
+          "image": "images/jp_uk/hole_14.png",
+          "width": 176,
+          "height": 480,
+          "green_image": "images/jp_uk/hole_14_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_14_flag_0.png",
+            "images/jp_uk/hole_14_flag_1.png",
+            "images/jp_uk/hole_14_flag_2.png",
+            "images/jp_uk/hole_14_flag_3.png"
+          ]
+        },
+        {
+          "number": 15,
+          "par": 3,
+          "distance": 251,
+          "image": "images/jp_uk/hole_15.png",
+          "width": 176,
+          "height": 240,
+          "green_image": "images/jp_uk/hole_15_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_15_flag_0.png",
+            "images/jp_uk/hole_15_flag_1.png",
+            "images/jp_uk/hole_15_flag_2.png",
+            "images/jp_uk/hole_15_flag_3.png"
+          ]
+        },
+        {
+          "number": 16,
+          "par": 4,
+          "distance": 464,
+          "image": "images/jp_uk/hole_16.png",
+          "width": 176,
+          "height": 352,
+          "green_image": "images/jp_uk/hole_16_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_16_flag_0.png",
+            "images/jp_uk/hole_16_flag_1.png",
+            "images/jp_uk/hole_16_flag_2.png",
+            "images/jp_uk/hole_16_flag_3.png"
+          ]
+        },
+        {
+          "number": 17,
+          "par": 4,
+          "distance": 450,
+          "image": "images/jp_uk/hole_17.png",
+          "width": 176,
+          "height": 304,
+          "green_image": "images/jp_uk/hole_17_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_17_flag_0.png",
+            "images/jp_uk/hole_17_flag_1.png",
+            "images/jp_uk/hole_17_flag_2.png",
+            "images/jp_uk/hole_17_flag_3.png"
+          ]
+        },
+        {
+          "number": 18,
+          "par": 5,
+          "distance": 838,
+          "image": "images/jp_uk/hole_18.png",
+          "width": 176,
+          "height": 448,
+          "green_image": "images/jp_uk/hole_18_green.png",
+          "flag_images": [
+            "images/jp_uk/hole_18_flag_0.png",
+            "images/jp_uk/hole_18_flag_1.png",
+            "images/jp_uk/hole_18_flag_2.png",
+            "images/jp_uk/hole_18_flag_3.png"
           ]
         }
       ]

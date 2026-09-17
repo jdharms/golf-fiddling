@@ -254,7 +254,8 @@ class InstrumentedRomWriter(RomWriter):
         """Write a single byte to PRG ROM with logging."""
         data = bytes([value])
         self._log_operation("write", prg_offset, 1, data)
-        super().write_prg_byte(prg_offset, value)
+        with self._suppress_nested_logging():
+            super().write_prg_byte(prg_offset, value)
 
     def write_prg_word(self, prg_offset: int, value: int):
         """Write 16-bit word to PRG ROM with logging."""
@@ -267,14 +268,16 @@ class InstrumentedRomWriter(RomWriter):
         """Write bytes to fixed bank with logging."""
         prg_offset = cpu_to_prg_fixed(cpu_addr)
         self._log_operation("write", prg_offset, len(data), data, cpu_addr=cpu_addr)
-        super().write_fixed(cpu_addr, data)
+        with self._suppress_nested_logging():
+            super().write_fixed(cpu_addr, data)
 
     def write_fixed_byte(self, cpu_addr: int, value: int):
         """Write a single byte to fixed bank with logging."""
         prg_offset = cpu_to_prg_fixed(cpu_addr)
         data = bytes([value])
         self._log_operation("write", prg_offset, 1, data, cpu_addr=cpu_addr)
-        super().write_fixed_byte(cpu_addr, value)
+        with self._suppress_nested_logging():
+            super().write_fixed_byte(cpu_addr, value)
 
     def write_fixed_word(self, cpu_addr: int, value: int):
         """Write 16-bit word to fixed bank with logging."""
@@ -288,7 +291,8 @@ class InstrumentedRomWriter(RomWriter):
         """Write bytes to switched bank with logging."""
         prg_offset = cpu_to_prg_switched(cpu_addr, bank)
         self._log_operation("write", prg_offset, len(data), data, cpu_addr=cpu_addr, bank=bank)
-        super().write_switched(cpu_addr, bank, data)
+        with self._suppress_nested_logging():
+            super().write_switched(cpu_addr, bank, data)
 
     # Override read methods to log
 

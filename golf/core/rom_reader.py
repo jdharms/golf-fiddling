@@ -33,7 +33,23 @@ class RomReader:
             ValueError: If file is not a valid iNES ROM
         """
         with open(rom_path, "rb") as f:
-            self.data = f.read()
+            self._load(f.read())
+
+        print(f"ROM loaded: {self.prg_banks} PRG banks ({self.prg_size // 1024}KB)")
+
+    @classmethod
+    def from_bytes(cls, data: bytes) -> "RomReader":
+        """
+        Read a ROM image already in memory.
+
+        Subclasses whose `__init__` sets up extra state must override this.
+        """
+        reader = cls.__new__(cls)
+        reader._load(bytes(data))
+        return reader
+
+    def _load(self, data: bytes) -> None:
+        self.data = data
 
         # Verify iNES header
         if self.data[:4] != b"NES\x1a":
@@ -43,8 +59,6 @@ class RomReader:
         self.chr_banks = self.data[5]
         self.prg_size = self.prg_banks * PRG_BANK_SIZE
         self.prg_start = INES_HEADER_SIZE
-
-        print(f"ROM loaded: {self.prg_banks} PRG banks ({self.prg_size // 1024}KB)")
 
     def read_prg(self, prg_offset: int, length: int = 1) -> bytes:
         """

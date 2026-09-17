@@ -1,0 +1,72 @@
+# The player's own page strings (me.html).
+# Format: see common.toml, and server/CLAUDE.md "Player-facing text".
+
+[me.page_title]
+note = "plain: browser tab title, the signed-in player's own page (/me); {name} their Discord display name"
+text = "{name} - NES Open Randomizer"
+
+[me.heading]
+note = "h1 of the player's own page; {name} their Discord display name"
+text = "{name}"
+
+[me.entries.heading]
+note = "h2 over the table of seeds the player has entered (downloaded while signed in); the player's rounds are a table of their own below (me.rounds.heading)"
+text = "Downloaded Seeds"
+
+[me.entries.seed]
+note = "entries table column header; the seed's magic words, linking to its seed page"
+text = "Seed Link"
+
+[me.entries.par]
+note = "entries table column header; the seed's total par"
+text = "Total Par"
+
+[me.entries.name]
+note = "entries table column header; the player name chosen at the latest download, a new save's default"
+text = "Player Name"
+
+[me.entries.clubs]
+note = "entries table column header; club labels chosen at the latest download, a new save's default bag, putter included"
+text = "Club Bag"
+
+[me.entries.entered]
+note = "entries table column header; when the player first downloaded the seed signed in, UTC ISO 8601"
+text = "Downloaded"
+
+[me.entries.none]
+note = "shown instead of the entries table when the player has entered no seeds; entering is downloading a seed while signed in; may link to /generate"
+text = """
+You haven't downloaded any seeds yet! Once you do, this page will show
+a list of the seeds you've downloaded and played."""
+
+[me.rounds.heading]
+note = "h2 over the table of rounds the player has submitted by scanning the end-of-round QR code, newest first"
+text = "Completed Rounds"
+
+[me.rounds.seed]
+note = "rounds table column header; the seed's magic words, linking to its seed page, followed by an asterisk when the round was played as player 2"
+text = "Seed Link"
+
+[me.rounds.par]
+note = "rounds table column header; the seed's total par"
+text = "Par"
+
+[me.rounds.strokes]
+note = "rounds table column header; total strokes for the round"
+text = "Total Strokes"
+
+[me.rounds.putts]
+note = "rounds table column header; total putts for the round"
+text = "Putts"
+
+[me.rounds.received]
+note = "rounds table column header; when the scan was recorded, UTC ISO 8601"
+text = "Submitted"
+
+[me.rounds.flagged]
+note = "marker after one of the player's rounds' total strokes when an admin has flagged it: the round is being questioned but still counts; short, fits in a table cell"
+text = "(Under review)"
+
+[me.rounds.none]
+note = "shown instead of the rounds table when the player has submitted no rounds; a round is submitted by scanning the QR code shown after the scorecard with a phone"
+text = "After you've completed a round and submitted the scorecard, this will be a table listing all your completed rounds."

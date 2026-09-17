@@ -1,0 +1,274 @@
+/* Rules Pico has no class for. Colors come from Pico's variables, so dark mode follows. */
+
+/* Titles of games, written as <cite> in server/strings.toml: italic by convention, with
+   weight and the strongest text color so they stand out in running text without looking
+   like links. */
+cite {
+  font-style: italic;
+  font-weight: 600;
+  color: var(--pico-contrast);
+}
+
+/* Site nav: on narrow screens the links wrap below the site name instead of squeezing
+   each label onto several lines. Lists after the first get its edge alignment when they wrap. */
+header nav {
+  flex-wrap: wrap;
+  column-gap: var(--pico-spacing);
+  justify-content: flex-start;
+}
+
+/* The site name holds the left; the links and sign-in state share the right. */
+header nav ul:first-of-type {
+  margin-right: auto;
+}
+
+header nav a {
+  white-space: nowrap;
+}
+
+header nav ul:not(:first-of-type) {
+  margin-left: calc(var(--pico-nav-element-spacing-horizontal) * -1);
+}
+
+/* Sign-in state at the end of the nav. The sign-out button is a form so it can POST, sized
+   to sit in line with the links. */
+header nav ul.account form {
+  margin: 0;
+}
+
+header nav ul.account button {
+  margin: 0;
+  padding: calc(var(--pico-nav-link-spacing-vertical) * 0.5) var(--pico-nav-link-spacing-horizontal);
+  font-size: inherit;
+}
+
+/* ROM setup cards. rom.js sets data-state: checking, empty, error, stored or unavailable. */
+
+article.rom > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pico-spacing);
+}
+
+article.rom input[type="file"] {
+  width: auto;
+}
+
+.rom-status {
+  margin-bottom: calc(var(--pico-spacing) * 0.5);
+}
+
+/* Hashes in a card wrap evenly on narrow screens instead of leaving a stray character. */
+article.rom code {
+  word-break: break-all;
+}
+
+article.rom > footer button {
+  margin-bottom: 0;
+}
+
+.rom-check,
+.step-number {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background-color: var(--pico-primary-background);
+  color: var(--pico-primary-inverse);
+  font-weight: bold;
+  line-height: 1;
+}
+
+.rom-check {
+  display: none;
+}
+
+article.rom[data-state="stored"] {
+  background-color: color-mix(in srgb, var(--pico-primary-background) 10%, var(--pico-card-background-color));
+  box-shadow: var(--pico-card-box-shadow), 0 0 0 2px var(--pico-primary-background);
+}
+
+article.rom[data-state="stored"] > header,
+article.rom[data-state="stored"] > footer {
+  background-color: color-mix(in srgb, var(--pico-primary-background) 20%, var(--pico-card-sectioning-background-color));
+}
+
+article.rom[data-state="stored"] .rom-check {
+  display: inline-flex;
+}
+
+article.rom[data-state="stored"] .rom-status {
+  color: var(--pico-primary);
+  font-weight: 600;
+}
+
+article.rom[data-state="error"] .rom-status {
+  color: var(--pico-del-color);
+}
+
+/* A stored ROM offers only Forget; anything else offers only the file input. */
+article.rom[data-state="stored"] input[type="file"],
+article.rom[data-state="stored"] .rom-expected,
+article.rom[data-state="unavailable"] input[type="file"],
+article.rom:not([data-state="stored"]) > footer {
+  display: none;
+}
+
+/* Home page steps: numbered cards in Pico's grid, inside an ordered list. */
+
+.steps {
+  padding: 0;
+}
+
+/* Each card spans two grid rows, header and body, shared with the cards beside it
+   through subgrid, so a header that wraps keeps every card's header the same height. */
+.steps > li,
+.steps > li > article {
+  display: grid;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  row-gap: 0;
+  margin: 0;
+}
+
+.steps > li {
+  list-style: none;
+}
+
+.steps article > header {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--pico-spacing) * 0.75);
+}
+
+/* An unwritten string from server/strings.toml: its key, marked, with the note on hover. */
+.unwritten {
+  outline: 1px dashed var(--pico-del-color);
+  color: var(--pico-del-color);
+  cursor: help;
+}
+
+/* Generate form. A refused submission's notice sits above the form. */
+.form-error {
+  color: var(--pico-del-color);
+  box-shadow: var(--pico-card-box-shadow), 0 0 0 2px var(--pico-del-color);
+}
+
+/* Club rules: a card inside the form, set apart from the everyday settings because they
+   are for special events. */
+form article.club-rules {
+  margin-block: calc(var(--pico-spacing) * 2);
+}
+
+.club-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
+  column-gap: var(--pico-spacing);
+}
+
+.club-grid label {
+  white-space: nowrap;
+}
+
+/* Seed page. */
+.magic-words {
+  letter-spacing: 0.08em;
+}
+
+table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+table.seed-details th {
+  width: 40%;
+}
+
+/* Seed page download form. download.js sets data-state: checking, missing, ready,
+   building, done, error or unavailable. */
+article.download form > :last-child {
+  margin-bottom: 0;
+}
+
+.download-status {
+  margin-bottom: calc(var(--pico-spacing) * 0.5);
+}
+
+article.download[data-state="ready"] .download-status,
+article.download[data-state="done"] .download-status {
+  color: var(--pico-primary);
+  font-weight: 600;
+}
+
+article.download[data-state="missing"] .download-status,
+article.download[data-state="error"] .download-status,
+article.download[data-state="unavailable"] .download-status {
+  color: var(--pico-del-color);
+}
+
+/* The link to ROM setup shows only while a ROM the seed needs is missing. */
+article.download:not([data-state="missing"]) .download-rom-setup {
+  display: none;
+}
+
+/* Scan page: one table per nine, side by side while both fit and stacked when they don't.
+   Fixed layout and set column widths make the two tables line up either way. */
+.nines {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  column-gap: calc(var(--pico-spacing) * 2);
+}
+
+table.nine {
+  table-layout: fixed;
+  width: 26rem;
+  max-width: 100%;
+}
+
+table.nine col.hole,
+table.nine col.putts {
+  width: 24%;
+}
+
+table.nine col.par {
+  width: 18%;
+}
+
+table.nine col.strokes {
+  width: 34%;
+}
+
+/* Strokes against par: over par red, under par green, level par left as it is. The admin
+   round page colors its holes the same way. */
+table .over-par {
+  color: var(--pico-del-color);
+}
+
+table .under-par {
+  color: var(--pico-ins-color);
+}
+
+/* Admin pages: a row of links under the site header, and buttons that sit in a table row. */
+nav.admin-nav {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-bottom: var(--pico-spacing);
+}
+
+nav.admin-nav ul {
+  flex-wrap: wrap;
+}
+
+form.admin-inline,
+form.admin-inline button {
+  margin: 0;
+}
+
+form.admin-inline button {
+  padding: calc(var(--pico-form-element-spacing-vertical) * 0.5) var(--pico-form-element-spacing-horizontal);
+}

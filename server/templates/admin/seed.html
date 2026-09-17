@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% import "admin/_admin.html" as admin %}
+{% set seed = detail.seed %}
+{% block title %}{{ seed.manifest.course.magic_words|join(" ") }} - Admin{% endblock %}
+{% block content %}
+{{ admin.nav() }}
+<hgroup>
+  <h1 class="magic-words">{{ seed.manifest.course.magic_words|join(" ") }}</h1>
+  <p><code>{{ seed.id }}</code> &middot; <a href="/h/{{ seed.id }}">Seed page</a> &middot; <a href="/h/{{ seed.id }}.json">Manifest</a></p>
+</hgroup>
+{{ admin.result_notice(result) }}
+{% if error %}<p class="admin-result"><del>{{ error }}</del></p>{% endif %}
+
+<section>
+  <h2>Seed</h2>
+  <div class="overflow-auto">
+    <table>
+      <tbody>
+        <tr><th scope="row">QR seed id</th><td><code>{{ seed.qr_seed_id }}</code> (<code>{{ '%016x' % seed.qr_seed_id }}</code>)</td></tr>
+        <tr><th scope="row">Created</th><td>{{ seed.created_at }}</td></tr>
+        <tr><th scope="row">Creator</th><td>{% if detail.creator %}<a href="/admin/users/{{ detail.creator.id }}">{{ detail.creator.display_name }}</a>{% else %}signed out{% endif %}</td></tr>
+        <tr><th scope="row">Generator version</th><td>{{ detail.generator_version }}</td></tr>
+        <tr><th scope="row">Catalog version</th><td>{{ detail.catalog_version }}</td></tr>
+        <tr><th scope="row">Curation stamp</th><td><code>{{ detail.curation_stamp }}</code></td></tr>
+        <tr><th scope="row">Unfinished IPS</th><td>{{ detail.ips_size }} bytes</td></tr>
+        <tr><th scope="row">Rebuilt</th><td>{% if seed.rebuilt_at %}{{ seed.rebuilt_at }}{% if detail.rebuilt_by %} by <a href="/admin/users/{{ detail.rebuilt_by.admin_id }}">{{ detail.rebuilt_by.admin_name }}</a>{% endif %}{% else %}never{% endif %}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>Rebuild</h2>
+  <p>Builds the unfinished IPS again from the stored manifest with the current patches and
+    catalog. A different IPS replaces the stored one and the seed page shows the rebuild date;
+    downloads made before it keep working.</p>
+  {% if detail.withdrawn %}
+  <p><del>Withdrawn holes: {% for hole in detail.withdrawn %}<code>{{ hole.id }}</code> (hole {{ hole.number }}){% if not loop.last %}, {% endif %}{% endfor %}. A rebuild will fail.</del></p>
+  {% endif %}
+  <form method="post" action="/admin/seeds/{{ seed.id }}/rebuild">
+    <button type="submit" class="secondary">Rebuild this seed</button>
+  </form>
+</section>
+
+<section>
+  <h2>Rounds</h2>
+  {% if detail.rounds %}{{ admin.rounds_table(detail.rounds, show_seed=false) }}{% else %}<p>No rounds.</p>{% endif %}
+</section>
+
+<section>
+  <h2>Entries</h2>
+  {% if detail.entries %}{{ admin.entries_table(detail.entries, show_seed=false) }}{% else %}<p>No entries.</p>{% endif %}
+</section>
+
+<section>
+  <h2>Admin history</h2>
+  {% if detail.history %}{{ admin.history_table(detail.history) }}{% else %}<p>No admin action on this seed.</p>{% endif %}
+</section>
+
+<section>
+  <h2>Holes</h2>
+  <div class="overflow-auto">
+    <table class="striped">
+      <thead><tr><th scope="col" class="num">#</th><th scope="col">Hole</th><th scope="col" class="num">Par</th></tr></thead>
+      <tbody>
+        {% for hole in detail.holes %}
+        <tr>
+          <td class="num">{{ hole.number }}</td>
+          <td><code>{{ hole.id }}</code>{% if hole.withdrawn %} <del>withdrawn</del>{% endif %}</td>
+          <td class="num">{{ hole.par }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

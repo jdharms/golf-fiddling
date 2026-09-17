@@ -6,6 +6,7 @@ Mirrors the pygame sprite system but uses PIL for rendering.
 """
 
 import json
+from pathlib import Path
 
 try:
     from PIL import Image
@@ -123,3 +124,31 @@ class PILSprite:
 
             # Paste with alpha compositing (third argument is the alpha mask)
             base_image.paste(tile_img, (final_x, final_y), tile_img)
+
+
+SPRITE_DIR = Path(__file__).resolve().parents[2] / "data" / "sprites"
+
+SPRITE_FILES = {
+    # Terrain sprites
+    "tee": "tee-block.json",
+    "ball": "ball.json",
+    "flag": "flag.json",
+    # Green view sprites
+    "green-flag": "green-flag.json",
+    "green-cup": "green-cup.json",
+}
+
+
+def load_sprites(sprite_dir: Path = SPRITE_DIR) -> dict[str, PILSprite]:
+    """Load the terrain and green view sprites from data/sprites/."""
+    sprites = {}
+    for name, filename in SPRITE_FILES.items():
+        sprite_path = sprite_dir / filename
+        if sprite_path.exists():
+            try:
+                sprites[name] = PILSprite(str(sprite_path))
+            except Exception as e:
+                print(f"Warning: Failed to load sprite {name}: {e}")
+        else:
+            print(f"Warning: Sprite file not found: {sprite_path}")
+    return sprites

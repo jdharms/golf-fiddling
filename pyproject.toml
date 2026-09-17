@@ -6,26 +6,66 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2.4.0",
+    "py65>=1.2.0",
     "pillow>=12.0.0",
     "plyer>=2.1.0",
     "pygame>=2.6.1",
+    "fastapi>=0.141.1",
+    "uvicorn[standard]>=0.53.0",
+    "jinja2>=3.1.6",
+    "python-multipart>=0.0.20",
+    "httpx2>=2.13.0",
+    "itsdangerous>=2.2.0",
 ]
 
 [project.scripts]
+# Course editor
 golf-editor = "editor.main:main"
+
+# Course data: dump, write, render
 golf-dump = "tools.dump:main"
+golf-dump-jp = "tools.dump_jp_courses:main"
 golf-write = "tools.write:main"
-golf-analyze = "tools.analyze:main"
 golf-visualize = "tools.visualize:main"
+golf-render-web = "tools.render_web:main"
+
+# Regenerate checked-in data/ files
+golf-extract-tables = "tools.data.extract_tables:main"
+golf-analyze-neighbors = "tools.data.analyze_neighbors:main"
+golf-analyze-greens-neighbors = "tools.data.analyze_greens_neighbors:main"
+golf-analyze-putting = "tools.data.analyze_putting_surface:main"
+golf-catalog-sync = "tools.data.catalog_sync:main"
+
+# Utilities
 golf-hex2bin = "tools.hex2bin:main"
 golf-expand-dict = "tools.expand_dict:main"
-golf-extract-tables = "tools.extract_tables:main"
-golf-analyze-transform = "tools.analyze_transform:main"
-golf-analyze-neighbors = "tools.analyze_neighbors:main"
-golf-analyze-greens-neighbors = "tools.analyze_greens_neighbors:main"
-golf-render-web = "tools.render_web:main"
-golf-analyze-putting = "tools.analyze_putting_surface:main"
-golf-compare-traces = "tools.compare_traces:main"
+
+# ROM patches
+golf-patch = "tools.patch:main"
+golf-randomize = "tools.randomize:main"
+
+# Randomizer site
+golf-site = "tools.site:main"
+golf-site-screenshot = "tools.site_screenshot:main"
+golf-site-strings = "tools.site_strings:main"
+
+# Reverse-engineering research
+golf-rom-peek = "tools.research.rom_peek:main"
+golf-labels = "tools.research.labels:main"
+
+# Art round-trips
+golf-golfer-export = "tools.art.golfer_export:main"
+golf-signpost-import = "tools.art.signpost_import:main"
+
+# Music
+golf-export-music = "tools.music.export:main"
+
+# Scorecard QR
+golf-qr-preview = "tools.qr.preview:main"
+golf-qr-validate = "tools.qr.validate:main"
+golf-qr-tables = "tools.qr.tables:main"
+golf-qr-port = "tools.qr.port:main"
+golf-qr-credentials = "tools.qr.credentials:main"
 
 [tool.uv]
 package = true
@@ -36,13 +76,19 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
-    "-v",
+    "-n",
+    "auto",
     "--strict-markers",
     "--tb=short",
     "--cov=golf",
     "--cov=editor",
+    "--cov=server",
     "--cov-report=term-missing",
 ]
+
+[tool.coverage.run]
+# sys.monitoring instead of the C tracer: same numbers, ~2.4x faster
+core = "sysmon"
 
 [build-system]
 requires = ["hatchling"]
@@ -55,10 +101,15 @@ dev = [
     "pyright>=1.1.407",
     "ruff>=0.14.10",
     "pyinstaller>=6.18.0",
+    "zxing-cpp>=3.1.1",
+    "opencv-python-headless>=5.0.0.93",
+    "qrcode>=8.2",
+    "playwright>=1.63.0",
+    "pytest-xdist>=3.8.0",
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["golf", "editor", "tools"]
+packages = ["golf", "editor", "server", "tools"]
 
 [tool.ruff]
 line-length = 88

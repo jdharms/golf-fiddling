@@ -1,0 +1,102 @@
+{
+  "tool": "golf-qr-tables",
+  "source": "golf.qr.tables",
+  "mask": 5,
+  "url_prefix": "https://nesopengolf.com/s/",
+  "url_length": 74,
+  "protocol_version": 1,
+  "data_codewords": 86,
+  "ec_codewords_per_block": 24,
+  "matrix_size": 37,
+  "free_module_sentinels": [
+    254,
+    255
+  ],
+  "matrix_stride": 38,
+  "matrix_rows": 38,
+  "total_bytes": 2329,
+  "sha256": "722c39c1e2e306ab0143134169103062cb22ee5ab0a21e634bb5590412633e9d",
+  "region_bytes": 8661,
+  "region_remaining": 6332,
+  "origin": 33792,
+  "origin_hex": "$8400",
+  "tables": [
+    {
+      "name": "antilog",
+      "label": "QrAntilogTable",
+      "description": "GF(256) antilog, index = exponent",
+      "size": 256,
+      "offset": 0,
+      "sha256": "8262c77b024996fe63bfa734855c87410a2e5a9b18b019693896f60f23838142",
+      "address": 33792,
+      "address_hex": "$8400",
+      "page_aligned": true
+    },
+    {
+      "name": "log",
+      "label": "QrLogTable",
+      "description": "GF(256) log, index = field element (entry 0 unused)",
+      "size": 256,
+      "offset": 256,
+      "sha256": "aeaa639586841d2e0434d8198a86c91623e672d9c0012b4f8f6692768fe1bbf4",
+      "address": 34048,
+      "address_hex": "$8500",
+      "page_aligned": true
+    },
+    {
+      "name": "chr",
+      "label": "QrChrTiles",
+      "description": "16 QR CHR tiles, 2x2 modules each, plane 1 empty",
+      "size": 256,
+      "offset": 512,
+      "sha256": "3fa68ce97614bebe6f862823ad74199919a84b6f1c40e8720782473d504f8ed8",
+      "address": 34304,
+      "address_hex": "$8600",
+      "page_aligned": true
+    },
+    {
+      "name": "base64",
+      "label": "QrBase64Alphabet",
+      "description": "base64url alphabet, index order",
+      "size": 64,
+      "offset": 768,
+      "sha256": "775ad11d37eebfe985acd54acdaa5d2c40181421389044b87d29d62182a43e6c",
+      "address": 34560,
+      "address_hex": "$8700",
+      "page_aligned": true
+    },
+    {
+      "name": "codeword_head",
+      "label": "QrCodewordHead",
+      "description": "data code words 0-27, payload-invariant",
+      "size": 28,
+      "offset": 832,
+      "sha256": "caeaccc658fc6f85b8d8550a547146f970ba34b1d0ebd4f22b5b160b000a6b38",
+      "address": 34624,
+      "address_hex": "$8740",
+      "page_aligned": false
+    },
+    {
+      "name": "generator",
+      "label": "QrGeneratorPoly",
+      "description": "RS generator for 24 EC code words, highest power first; the LFSR reads bytes 1-24",
+      "size": 25,
+      "offset": 860,
+      "sha256": "b1cf0589cb152fab185e3fd5e88a2c254273ee1d92f8345f1580935dfcb66ed7",
+      "address": 34652,
+      "address_hex": "$875C",
+      "page_aligned": false
+    },
+    {
+      "name": "static_matrix",
+      "label": "QrStaticMatrix",
+      "description": "38x38 function patterns and format info, mask 5 baked in: $00 light, $01 dark, $FE/$FF free with the mask bit in bit 0",
+      "size": 1444,
+      "offset": 885,
+      "sha256": "93dd33447cd38720370e56f0fed5c234875913c8efea537338e91763550a549f",
+      "address": 34677,
+      "address_hex": "$8775",
+      "page_aligned": false
+    }
+  ]
+}

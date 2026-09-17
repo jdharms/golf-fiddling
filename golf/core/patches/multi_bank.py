@@ -8,22 +8,30 @@ See docs/multi_bank_terrain.md for full details.
 """
 
 from .byte_patch import BytePatch
+from .composite import CompositePatch
 
-# Code patch to change terrain bank lookup from course-based to hole-based
+# Code patch to change terrain bank lookup from course-based to hole-based.
 #
-# Original code at $DB68 looks up bank by course number (3 entries):
-#   LDX CourseNumber; LDA BankNumTerrainDataTable,X; JSR BankSwitchRoutine
+# LoadTerrainAndAttrs ($DB5D) looks up the terrain bank by course number:
+#   $DB68  LDX CurrCourse
+#   $DB6B  LDA BankNumTerrainDataTable,X   ; 3 entries
+#   $DB6E  JSR BankSwitchRoutine
 #
-# Patched code uses doubled hole index ($31) to look up per-hole table at $A700:
-#   LDX $31; LDA $A700,X; JSR BankSwitchRoutine; NOP
+# The first two instructions become a lookup by doubled hole index ($31) into
+# the per-hole table at $A700 in bank 3, which is still switched in from
+# DecompressGreen:
+#   $DB68  LDX $31
+#   $DB6A  LDA $A700,X
+#   $DB6D  NOP
 #
-# This enables 54 per-hole bank entries instead of 3 per-course entries.
+# The JSR at $DB6E is left in place, so ATTR_STREAMING_BANK_SWITCH_PATCH
+# (attr_streaming.py) can redirect it independently of this patch.
 MULTI_BANK_CODE_PATCH = BytePatch(
     name="multi_bank_lookup",
     description="Change terrain bank lookup from course-based to hole-based",
     prg_offset=0x3DB68,  # CPU $DB68 in fixed bank (bank 15)
-    original=bytes([0xAE, 0x02, 0x01, 0xBD, 0xBE, 0xDB, 0x20, 0x52, 0xD3]),
-    patched=bytes([0xA6, 0x31, 0xBD, 0x00, 0xA7, 0x20, 0x52, 0xD3, 0xEA]),
+    original=bytes([0xAE, 0x02, 0x01, 0xBD, 0xBE, 0xDB]),
+    patched=bytes([0xA6, 0x31, 0xBD, 0x00, 0xA7, 0xEA]),
 )
 
 # Course 2 mirror patch - makes US (course 2) mirror Japan (course 1)
@@ -56,8 +64,46 @@ COURSE3_MIRROR_PATCH = BytePatch(
     patched=bytes([0x00]),
 )
 
+# Bank 2 contains its own private copy of the hole-offset table at CPU
+# $B1F1-$B1F3, used by the scorecard's eagle/birdie/par/bogey face-drawing
+# routine to index into the Par table ($DD05, fixed bank). This routine lives
+# entirely in bank 2 and reads its local copy instead of the fixed-bank
+# CourseHoleOffsetTable at $DBBB - the two tables hold identical values but
+# are patched independently. Without these, the scorecard faces still use
+# the original per-course offsets even after COURSE2/3_MIRROR_PATCH make the
+# actual course data mirror course 1.
+COURSE2_MIRROR_PATCH_SCORECARD = BytePatch(
+    name="course2_mirror_scorecard",
+    description="Make course 2 (US) mirror course 1 in the bank 2 scorecard face table",
+    prg_offset=0xB1F2,  # CPU $B1F2 in bank 2 (scorecard hole-offset table + 1)
+    original=bytes([0x12]),
+    patched=bytes([0x00]),
+)
+
+COURSE3_MIRROR_PATCH_SCORECARD = BytePatch(
+    name="course3_mirror_scorecard",
+    description="Make course 3 (UK) mirror course 1 in the bank 2 scorecard face table",
+    prg_offset=0xB1F3,  # CPU $B1F3 in bank 2 (scorecard hole-offset table + 2)
+    original=bytes([0x24]),
+    patched=bytes([0x00]),
+)
+
+# A ROM carries one course: every course slot plays holes 0-17, in both the
+# fixed-bank offset table and the scorecard's bank 2 copy. Hole slots 18-53
+# are never read.
+COURSE_MIRRORS_PATCH = CompositePatch(
+    name="course_mirrors",
+    description="Make courses 2 (US) and 3 (UK) mirror course 1 (Japan)",
+    patches=[
+        COURSE2_MIRROR_PATCH,
+        COURSE3_MIRROR_PATCH,
+        COURSE2_MIRROR_PATCH_SCORECARD,
+        COURSE3_MIRROR_PATCH_SCORECARD,
+    ],
+)
+
 # All multi-bank patches in recommended application order
 MULTI_BANK_PATCHES = [
     MULTI_BANK_CODE_PATCH,
-    COURSE3_MIRROR_PATCH,
+    COURSE_MIRRORS_PATCH,
 ]
