@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ content_page.title }} — {{ t_plain("site.title") }}{% endblock %}
+{% block metadata %}{% if not content_page.listed %}<meta name="robots" content="noindex, nofollow">{% endif %}{% endblock %}
+{% block content %}
+<article class="content-page">
+  <h1>{{ content_page.title }}</h1>
+  {{ content_page.body_html }}
+</article>
+{% endblock %}
