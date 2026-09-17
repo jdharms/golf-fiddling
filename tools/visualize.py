@@ -16,33 +16,7 @@ from golf.rendering.pil_renderer import (
     render_greens_to_image,
     render_hole_to_image,
 )
-from golf.rendering.pil_sprite import PILSprite
-
-
-def load_sprites() -> dict[str, PILSprite]:
-    """Load all terrain sprites from data/sprites/."""
-    sprite_dir = Path(__file__).parent.parent / "data" / "sprites"
-    sprites = {}
-
-    sprite_files = {
-        "tee": "tee-block.json",
-        "ball": "ball.json",
-        "flag": "flag.json",
-        "green-flag": "green-flag.json",
-        "green-cup": "green-cup.json",
-    }
-
-    for name, filename in sprite_files.items():
-        sprite_path = sprite_dir / filename
-        if sprite_path.exists():
-            try:
-                sprites[name] = PILSprite(str(sprite_path))
-            except Exception as e:
-                print(f"Warning: Failed to load sprite {name}: {e}")
-        else:
-            print(f"Warning: Sprite file not found: {sprite_path}")
-
-    return sprites
+from golf.rendering.pil_sprite import PILSprite, load_sprites
 
 
 def render_hole(

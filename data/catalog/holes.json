@@ -1,0 +1,1589 @@
+{
+  "version": 1,
+  "holes": {
+    "jp_australia/01": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 1
+      },
+      "content_hash": "6bbb8f0d608c7a6d30cf0ddab0c7acc3e8b4a1d50f7764876226963cb39846e4",
+      "par": 4,
+      "distance": 400,
+      "author": "Nintendo"
+    },
+    "jp_australia/02": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 2
+      },
+      "content_hash": "c9e3de25712ee3db59e22d1e12ba86de708ecea7351ff2a93a1c7c073029e27b",
+      "par": 3,
+      "distance": 171,
+      "author": "Nintendo"
+    },
+    "jp_australia/03": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 3
+      },
+      "content_hash": "793b5353a25f5c35819a278a602274fe43960c2a06c8cfdee4009ca97892a47c",
+      "par": 5,
+      "distance": 609,
+      "author": "Nintendo"
+    },
+    "jp_australia/04": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 4
+      },
+      "content_hash": "714ab4557d3a74a62a7a528dbe26480e88bdb9a3e0824963d8996de65828f49f",
+      "par": 4,
+      "distance": 417,
+      "author": "Nintendo"
+    },
+    "jp_australia/05": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 5
+      },
+      "content_hash": "43ac428034ff7558d47f8033cbdf3628b74495698cd94d79d9d61efe89484ec0",
+      "par": 4,
+      "distance": 440,
+      "author": "Nintendo"
+    },
+    "jp_australia/06": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 6
+      },
+      "content_hash": "f625fde2c5ea350a7c6884998a463e294024895000b3290f373065cdeb2c53b1",
+      "par": 4,
+      "distance": 386,
+      "author": "Nintendo"
+    },
+    "jp_australia/07": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 7
+      },
+      "content_hash": "bc5c3ca9f574f74d3108e77d284c62212a8fe0efe58e0008dd562c20af2d9b61",
+      "par": 3,
+      "distance": 200,
+      "author": "Nintendo"
+    },
+    "jp_australia/08": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 8
+      },
+      "content_hash": "17c9d9cc88e69d51037d8e32e3eff4d65a169a583de68681a0fad304b2020438",
+      "par": 4,
+      "distance": 397,
+      "author": "Nintendo"
+    },
+    "jp_australia/09": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 9
+      },
+      "content_hash": "9fff763902235ab2ab53ded0d2cec478593847b4e5c282c9a191dd3bc47a6a99",
+      "par": 5,
+      "distance": 573,
+      "author": "Nintendo"
+    },
+    "jp_australia/10": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 10
+      },
+      "content_hash": "9aa516880d5e8ab49198058f7664de645262075ef624394e58c20a60b62e8b2e",
+      "par": 3,
+      "distance": 216,
+      "author": "Nintendo"
+    },
+    "jp_australia/11": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 11
+      },
+      "content_hash": "6b0f6f28ddf0e0a4e6b9c660b9e47358d40fbd5fb182fe2b7300d4dfb2f42270",
+      "par": 4,
+      "distance": 405,
+      "author": "Nintendo"
+    },
+    "jp_australia/12": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 12
+      },
+      "content_hash": "0c39e21dab7f6763e433055d6f0fd339a525179340663758e23d5a57215af2c3",
+      "par": 4,
+      "distance": 424,
+      "author": "Nintendo"
+    },
+    "jp_australia/13": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 13
+      },
+      "content_hash": "801d855b7b6b9776be11ea9b6c6289d5d3090db8dc9e16e658a921c5749ff2d5",
+      "par": 5,
+      "distance": 566,
+      "author": "Nintendo"
+    },
+    "jp_australia/14": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 14
+      },
+      "content_hash": "323101f780a1adb5fe729ae3fa029f867d76ac1eea54d3495b5dba2f7fd1eed0",
+      "par": 4,
+      "distance": 388,
+      "author": "Nintendo"
+    },
+    "jp_australia/15": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 15
+      },
+      "content_hash": "f5c5d84370ea81adc226f886ce00fb4689b06020c739318ebb0cda5e64be8862",
+      "par": 3,
+      "distance": 194,
+      "author": "Nintendo"
+    },
+    "jp_australia/16": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 16
+      },
+      "content_hash": "98ec08044833291a2d011b9a138974f16ccd9e1e8cc0637300b16bef9220c154",
+      "par": 4,
+      "distance": 459,
+      "author": "Nintendo"
+    },
+    "jp_australia/17": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 17
+      },
+      "content_hash": "6549e690dbc3dce8913bcabdfd1fc7ae04df4f3ce32e5b86a9dc112d828f0d58",
+      "par": 5,
+      "distance": 619,
+      "author": "Nintendo"
+    },
+    "jp_australia/18": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_australia",
+        "hole": 18
+      },
+      "content_hash": "8382b61256d90b8bda37e1efa3491cae6d45f0dda5ae87076f2579891c2dd51a",
+      "par": 4,
+      "distance": 468,
+      "author": "Nintendo"
+    },
+    "jp_france/01": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 1
+      },
+      "content_hash": "3e16e73ac3777f605088b0fe294278b92f1550d0898d832befe0e32feb3f38ba",
+      "par": 4,
+      "distance": 438,
+      "author": "Nintendo"
+    },
+    "jp_france/02": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 2
+      },
+      "content_hash": "5585d47dfca7e79eccc6776e4a5d1656331582a028aeb0838607903657c3327d",
+      "par": 4,
+      "distance": 452,
+      "author": "Nintendo"
+    },
+    "jp_france/03": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 3
+      },
+      "content_hash": "0b030bc25d572df3227044a30815812deffa8183b5f98deb6352e696599e2856",
+      "par": 5,
+      "distance": 624,
+      "author": "Nintendo"
+    },
+    "jp_france/04": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 4
+      },
+      "content_hash": "c7e16fc09ee136ac89f23e612174b6d7b410e464efa55d0576991551b55565b1",
+      "par": 3,
+      "distance": 200,
+      "author": "Nintendo"
+    },
+    "jp_france/05": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 5
+      },
+      "content_hash": "7a6008abdc0ba67f5c493701fa2332e567b95feeb088021884a8c02f7e3a1d32",
+      "par": 4,
+      "distance": 350,
+      "author": "Nintendo"
+    },
+    "jp_france/06": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 6
+      },
+      "content_hash": "21454ee80ef4df7c1e06974d286480bc52e2dd1036c8e456950ce4e674b1aef6",
+      "par": 4,
+      "distance": 357,
+      "author": "Nintendo"
+    },
+    "jp_france/07": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 7
+      },
+      "content_hash": "ed3db17c3df4b7d58f1d67c64b50366cf2b5df1f63179e62d9f228792ffce043",
+      "par": 5,
+      "distance": 645,
+      "author": "Nintendo"
+    },
+    "jp_france/08": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 8
+      },
+      "content_hash": "a0522a8f4e4b0a357c9f1bbc49412541db0f017abac4224104a7a120f870257a",
+      "par": 3,
+      "distance": 198,
+      "author": "Nintendo"
+    },
+    "jp_france/09": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 9
+      },
+      "content_hash": "e31f8692f4c2cf78e3ea9ab48dbe67f3e8e69ec0237ac97c67209da92f7609bd",
+      "par": 4,
+      "distance": 338,
+      "author": "Nintendo"
+    },
+    "jp_france/10": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 10
+      },
+      "content_hash": "fc81d0b9525c3787bfbe18a91b0edf785ff4f1299fc98acfcaa4e5fe68b9abbc",
+      "par": 5,
+      "distance": 566,
+      "author": "Nintendo"
+    },
+    "jp_france/11": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 11
+      },
+      "content_hash": "20f38b3949e195e5cc93434bdd64e09bb5a614989fb92d77f0aa6e537c1b9275",
+      "par": 4,
+      "distance": 440,
+      "author": "Nintendo"
+    },
+    "jp_france/12": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 12
+      },
+      "content_hash": "d0531e319d00ada28475a6c577e232f235e598f30ed942023be1cca2dfaee500",
+      "par": 3,
+      "distance": 224,
+      "author": "Nintendo"
+    },
+    "jp_france/13": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 13
+      },
+      "content_hash": "3ab65124b4c8ceb4777e811a96bfc6fa7a138715ee2111ae74636872143d7def",
+      "par": 4,
+      "distance": 440,
+      "author": "Nintendo"
+    },
+    "jp_france/14": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 14
+      },
+      "content_hash": "a57aacd8f6c510c28ea843ad4a9d3faba9e0b703d725a172813614f7d0f33c4e",
+      "par": 4,
+      "distance": 421,
+      "author": "Nintendo"
+    },
+    "jp_france/15": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 15
+      },
+      "content_hash": "09bb197bfc1c6772fe315a436a8580247539a6c9b633ced5b311abe4dabd1c0d",
+      "par": 4,
+      "distance": 424,
+      "author": "Nintendo"
+    },
+    "jp_france/16": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 16
+      },
+      "content_hash": "e3050d940c80828acecfacaa1910dc0f4214a0a96b3b70d552038ee938b15c5e",
+      "par": 3,
+      "distance": 235,
+      "author": "Nintendo"
+    },
+    "jp_france/17": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 17
+      },
+      "content_hash": "379fef74042eafc75c3c20b35586e73e1174941e390a7935564343b79ec46c47",
+      "par": 4,
+      "distance": 440,
+      "author": "Nintendo"
+    },
+    "jp_france/18": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_france",
+        "hole": 18
+      },
+      "content_hash": "e9febb7a88f240c3d1c3f561de2d83e9abfe5cfb1a4e846359f7c1c7f1787fb8",
+      "par": 5,
+      "distance": 700,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/01": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 1
+      },
+      "content_hash": "f617ffeea375ae217d3e0309a8722a6f019d122d941103033b19fa9b3594e5cc",
+      "par": 4,
+      "distance": 435,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/02": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 2
+      },
+      "content_hash": "9afb43201a1cf7e1cec665b698f9458d4576ca590bc227d1e436702e0d9b35d0",
+      "par": 4,
+      "distance": 440,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/03": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 3
+      },
+      "content_hash": "4ecc58b397b2bd90f16d23f62c042d0ba569366c8414d0d30b1fe7c9c6a74d16",
+      "par": 3,
+      "distance": 240,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/04": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 4
+      },
+      "content_hash": "801287cf49a6a1b9ad2a169475a1f85fb53335a5db6f149e4c846ece7a875c30",
+      "par": 4,
+      "distance": 405,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/05": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 5
+      },
+      "content_hash": "6033c81276a46d95f68cdf08cc1f24448356d6e3518bf70040783880d4b98227",
+      "par": 5,
+      "distance": 773,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/06": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 6
+      },
+      "content_hash": "2d99baf11b4c5c698a8d34c346e802db419c0f28484191cb7b783137c1f31263",
+      "par": 4,
+      "distance": 400,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/07": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 7
+      },
+      "content_hash": "6fe2480969682b85ccb22620b3a5245fe830def1d78f78d8b710bc5fd04b94be",
+      "par": 3,
+      "distance": 212,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/08": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 8
+      },
+      "content_hash": "568d5289db7b9ce246f50643de204d7522a46cefb2004e8a8137f1a8ead3b94b",
+      "par": 5,
+      "distance": 678,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/09": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 9
+      },
+      "content_hash": "ca6b2d483b11d8783a6960d63b4abf0880bd9b007f539efce1dc2ed31aaaa018",
+      "par": 4,
+      "distance": 412,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/10": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 10
+      },
+      "content_hash": "cb83d2126e584dd2b776a7f4e525895ade38bdfa4bfe287798dd74b4e545cf35",
+      "par": 4,
+      "distance": 464,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/11": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 11
+      },
+      "content_hash": "068703f5a74493d929fe0a1ce7ad60662bb8aae09149954148194f0bdf71ffe7",
+      "par": 4,
+      "distance": 456,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/12": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 12
+      },
+      "content_hash": "258a8548fd994a830bc92edd183139f995e503d2f30582dd38741b7b42e8e49e",
+      "par": 3,
+      "distance": 231,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/13": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 13
+      },
+      "content_hash": "ee9b6466b9937f038daf863b790e77ac195c7358c475611eed9326641198cb82",
+      "par": 4,
+      "distance": 416,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/14": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 14
+      },
+      "content_hash": "238d2b3f9c28eb6120fac8b9ccae6bf22c566ad748e1d616ad6dc9a046c61dfb",
+      "par": 5,
+      "distance": 762,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/15": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 15
+      },
+      "content_hash": "a9e98503f34e21690b63b6a6c2c61647babc21d44f9e5ebdb771016c28ed0175",
+      "par": 4,
+      "distance": 452,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/16": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 16
+      },
+      "content_hash": "741ed7e213132abd7cd5b14d4e0fef5ca190ed7175b48ed8c96e4cbbea01f778",
+      "par": 4,
+      "distance": 455,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/17": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 17
+      },
+      "content_hash": "970e7105db5ea2364f759a71ef829650c24d09159364a8b2be48fa5fce2924a1",
+      "par": 3,
+      "distance": 238,
+      "author": "Nintendo"
+    },
+    "jp_hawaii/18": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_hawaii",
+        "hole": 18
+      },
+      "content_hash": "5149661660c830134d5672f79141c71fac7d84ad24c087a21db4565017a3e763",
+      "par": 5,
+      "distance": 750,
+      "author": "Nintendo"
+    },
+    "jp_japan/01": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 1
+      },
+      "content_hash": "58757041c96551f0c42ac945133a587be0df4cc209b42bce1fa1ccf8d885ad9c",
+      "par": 4,
+      "distance": 412,
+      "author": "Nintendo"
+    },
+    "jp_japan/02": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 2
+      },
+      "content_hash": "b7638abd15a79be538238416aa5bfb85475bbd24045484643cfa590543ebd745",
+      "par": 4,
+      "distance": 405,
+      "author": "Nintendo"
+    },
+    "jp_japan/03": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 3
+      },
+      "content_hash": "3264191aac7bcd11ff2aaaf7b75ce23d5507ee055659a4d6cad5e8b85b195b8a",
+      "par": 3,
+      "distance": 220,
+      "author": "Nintendo"
+    },
+    "jp_japan/04": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 4
+      },
+      "content_hash": "a4b1b83a8b28b660aeb19c17c1e447ac9ae98b69212dad1c49f8e5a5e50e210b",
+      "par": 5,
+      "distance": 547,
+      "author": "Nintendo"
+    },
+    "jp_japan/05": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 5
+      },
+      "content_hash": "38cec07183fc47930e5a4952ce450a58d560f37a36a8b739c3187575cd572afe",
+      "par": 3,
+      "distance": 171,
+      "author": "Nintendo"
+    },
+    "jp_japan/06": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 6
+      },
+      "content_hash": "4f5d0f3c6fcad6841450de63b0f60ddc6a5ae2162a49f23ace403700528b0ded",
+      "par": 4,
+      "distance": 397,
+      "author": "Nintendo"
+    },
+    "jp_japan/07": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 7
+      },
+      "content_hash": "0369c4144004be2906fff089970fde9cb8da498f91758e01cf9c3a36400409c8",
+      "par": 4,
+      "distance": 414,
+      "author": "Nintendo"
+    },
+    "jp_japan/08": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 8
+      },
+      "content_hash": "15023aff89444891bf1e45cf004680d0da73d82e0c81601ce7f200d55e48f08c",
+      "par": 5,
+      "distance": 524,
+      "author": "Nintendo"
+    },
+    "jp_japan/09": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 9
+      },
+      "content_hash": "8a5cf8be8067c0bb3320906152af16b449bcc1b3f5b327b0bfb5784f1b760935",
+      "par": 4,
+      "distance": 393,
+      "author": "Nintendo"
+    },
+    "jp_japan/10": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 10
+      },
+      "content_hash": "c2d317d49a0d1031ba6b24da9322a9988d93e97da968437e3cf22aa71a0486ba",
+      "par": 4,
+      "distance": 417,
+      "author": "Nintendo"
+    },
+    "jp_japan/11": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 11
+      },
+      "content_hash": "81ad2dbffbe15db01482a39a57b622ee5452af50ec581ac1458d52bbcadc3ff6",
+      "par": 3,
+      "distance": 164,
+      "author": "Nintendo"
+    },
+    "jp_japan/12": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 12
+      },
+      "content_hash": "34fb1fbf68c8bcd2d614e3ed44e8b9cdb1095518b1b6d9a77b72deda4041fb8c",
+      "par": 4,
+      "distance": 433,
+      "author": "Nintendo"
+    },
+    "jp_japan/13": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 13
+      },
+      "content_hash": "ae5ad3b4a01efc0e1e80df9fa8d4585957de95c161516f85ac890d728b651321",
+      "par": 5,
+      "distance": 581,
+      "author": "Nintendo"
+    },
+    "jp_japan/14": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 14
+      },
+      "content_hash": "b47257b11d8e6db20af0ab3fc7d0372740ace02ff10c709671a4c5a08a42b7a7",
+      "par": 4,
+      "distance": 404,
+      "author": "Nintendo"
+    },
+    "jp_japan/15": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 15
+      },
+      "content_hash": "3820735bd27ac2580c85fef1d05cf0a6a0e4931725ccec284ca695993c17b99f",
+      "par": 4,
+      "distance": 424,
+      "author": "Nintendo"
+    },
+    "jp_japan/16": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 16
+      },
+      "content_hash": "211c0179c72c4bcbb824497b361ce1f890c1b12b4e45c60371ea1b8183b0d3e8",
+      "par": 3,
+      "distance": 174,
+      "author": "Nintendo"
+    },
+    "jp_japan/17": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 17
+      },
+      "content_hash": "7d4b1b87a7e2d37e6d70cb9eae26759808d09d98c3339480ce72a7730e5a2a0d",
+      "par": 4,
+      "distance": 445,
+      "author": "Nintendo"
+    },
+    "jp_japan/18": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_japan",
+        "hole": 18
+      },
+      "content_hash": "e308bb0a2ee2206ee3e1b2781adeaeb3d173650b70550a146ac955f401e4dd6f",
+      "par": 5,
+      "distance": 564,
+      "author": "Nintendo"
+    },
+    "jp_uk/01": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 1
+      },
+      "content_hash": "94e205ae7c7e48a5ae3c47e7e411f3900f192d11fd3403aabb76c6b4b406e15d",
+      "par": 4,
+      "distance": 470,
+      "author": "Nintendo"
+    },
+    "jp_uk/02": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 2
+      },
+      "content_hash": "6a9831c2ae72cdb2ee6fcef04ee01d6ecf8b0f799024b4025905daae838e89d3",
+      "par": 3,
+      "distance": 226,
+      "author": "Nintendo"
+    },
+    "jp_uk/03": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 3
+      },
+      "content_hash": "732a1900a5abf7fc5c3d41e01c042b9a4986e7954d8f92991eabaee1ce7bf403",
+      "par": 4,
+      "distance": 452,
+      "author": "Nintendo"
+    },
+    "jp_uk/04": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 4
+      },
+      "content_hash": "17fe10dc96542bb9d29d601fa83ebf60d4f052a1600e155e36405e1b4dd6cc38",
+      "par": 5,
+      "distance": 576,
+      "author": "Nintendo"
+    },
+    "jp_uk/05": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 5
+      },
+      "content_hash": "6ae67b61d4b1f1d6fb8e5686d22d19daf09d507ee7e82a22a76ee17e36940dd0",
+      "par": 4,
+      "distance": 440,
+      "author": "Nintendo"
+    },
+    "jp_uk/06": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 6
+      },
+      "content_hash": "52297ca232ef26ab70d7db756261387e0332845a66d6ffc54f68dbdfe4181790",
+      "par": 4,
+      "distance": 428,
+      "author": "Nintendo"
+    },
+    "jp_uk/07": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 7
+      },
+      "content_hash": "214826144670139dbffc7ea9b0e3fa5275fa19e8a5ee63504f9c3983ade916ba",
+      "par": 3,
+      "distance": 227,
+      "author": "Nintendo"
+    },
+    "jp_uk/08": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 8
+      },
+      "content_hash": "df0f14f958be0bb058206635124da35e3b140a176965e2af24bcc6311cc60200",
+      "par": 4,
+      "distance": 464,
+      "author": "Nintendo"
+    },
+    "jp_uk/09": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 9
+      },
+      "content_hash": "80034799e679805297c0f199d4b8f2067b63e3de8581547601eb9309409db5be",
+      "par": 5,
+      "distance": 766,
+      "author": "Nintendo"
+    },
+    "jp_uk/10": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 10
+      },
+      "content_hash": "453c15be1f18ced72abf4deffab1e55d3c8ba7b63a3486cc3376391d5cdf7a63",
+      "par": 3,
+      "distance": 200,
+      "author": "Nintendo"
+    },
+    "jp_uk/11": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 11
+      },
+      "content_hash": "d456688fe8e92e1406cfda08cbc8af95235b273034db62b72d3ce74256b98a8e",
+      "par": 4,
+      "distance": 471,
+      "author": "Nintendo"
+    },
+    "jp_uk/12": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 12
+      },
+      "content_hash": "6a70b298a00246ccb39c8ef076d4057a596f69927d9245736675d3c5014fa8cc",
+      "par": 4,
+      "distance": 464,
+      "author": "Nintendo"
+    },
+    "jp_uk/13": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 13
+      },
+      "content_hash": "ca058cf6a0feb1d32aff864c661493fa638c529ae9e06342395b9b96f6af51c6",
+      "par": 4,
+      "distance": 447,
+      "author": "Nintendo"
+    },
+    "jp_uk/14": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 14
+      },
+      "content_hash": "d0ccea526a6200c3b8c93452c8ae6851dbc7f5cc369a13566f295adeab43e15d",
+      "par": 5,
+      "distance": 778,
+      "author": "Nintendo"
+    },
+    "jp_uk/15": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 15
+      },
+      "content_hash": "15d93f85a8f9fd7991093024c834221e986371951d8685bb727fa1f3a8dcb8ba",
+      "par": 3,
+      "distance": 251,
+      "author": "Nintendo"
+    },
+    "jp_uk/16": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 16
+      },
+      "content_hash": "eea9b2faad678615af108743bdb87f9949dbfb3f6fad0f185da9565b22102501",
+      "par": 4,
+      "distance": 464,
+      "author": "Nintendo"
+    },
+    "jp_uk/17": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 17
+      },
+      "content_hash": "d6f32f45f3e417cd2a44b526640cc790dfed4eb3437b952179329950a097ea4c",
+      "par": 4,
+      "distance": 450,
+      "author": "Nintendo"
+    },
+    "jp_uk/18": {
+      "source": {
+        "rom": "mario_open_jp",
+        "course": "jp_uk",
+        "hole": 18
+      },
+      "content_hash": "a4d63658f6f22c133c32b0f26a1663e4aa5d7c733d2249836546f1e58855f991",
+      "par": 5,
+      "distance": 838,
+      "author": "Nintendo"
+    },
+    "nes_japan/01": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 1
+      },
+      "content_hash": "14fa63980827aa415447c432982581d9fa5c0bc650f8ec483eb8087c915ab073",
+      "par": 4,
+      "distance": 400,
+      "author": "Nintendo"
+    },
+    "nes_japan/02": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 2
+      },
+      "content_hash": "4d524f7c5d303bf64aad745c9d50fdac32510e11ffc4d65fb0557f162fcb348e",
+      "par": 4,
+      "distance": 392,
+      "author": "Nintendo"
+    },
+    "nes_japan/03": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 3
+      },
+      "content_hash": "c881a43c632f141507d959ebac9471482c505e0fd6610d696a1b6a948e4f5a2e",
+      "par": 5,
+      "distance": 534,
+      "author": "Nintendo"
+    },
+    "nes_japan/04": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 4
+      },
+      "content_hash": "a60cdc4f3be58c203367525e7c499da36fce900469bb7d661b53252f513485ff",
+      "par": 3,
+      "distance": 202,
+      "author": "Nintendo"
+    },
+    "nes_japan/05": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 5
+      },
+      "content_hash": "3ce516bb42d0dee89e9a5f694a18d4fe027e987f395988c0ebf0f4feafbe9295",
+      "par": 4,
+      "distance": 410,
+      "author": "Nintendo"
+    },
+    "nes_japan/06": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 6
+      },
+      "content_hash": "d71af503203582a46c79afc4c4537b1a5e7e84151359bb352cf5dc999a6492d4",
+      "par": 3,
+      "distance": 166,
+      "author": "Nintendo"
+    },
+    "nes_japan/07": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 7
+      },
+      "content_hash": "7b53210dd4c78489bb58d1929375991465d17dd3133bf067290c39a8b3b88b09",
+      "par": 5,
+      "distance": 535,
+      "author": "Nintendo"
+    },
+    "nes_japan/08": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 8
+      },
+      "content_hash": "40f627a3b1e3590a456479585c8bdaf4bbb55b7e7efb1ebcd21e0eb62e9d8c16",
+      "par": 4,
+      "distance": 464,
+      "author": "Nintendo"
+    },
+    "nes_japan/09": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 9
+      },
+      "content_hash": "0fd85a0f02c1b97c7dd95d59f8fccd0fc79ab845db7c6b9ea522f0adc3b38b02",
+      "par": 4,
+      "distance": 418,
+      "author": "Nintendo"
+    },
+    "nes_japan/10": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 10
+      },
+      "content_hash": "6d13cae8600cb271745effdd22c98f4ef0acf0de5aea0b548467c80ffef60687",
+      "par": 4,
+      "distance": 350,
+      "author": "Nintendo"
+    },
+    "nes_japan/11": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 11
+      },
+      "content_hash": "b6ab77cc62ac54e06339ea4bff2e1ca16f6a35af2b5e22a495a469ecef1fbdc3",
+      "par": 4,
+      "distance": 368,
+      "author": "Nintendo"
+    },
+    "nes_japan/12": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 12
+      },
+      "content_hash": "a10945ef50f080195cfc20464de5c06841b22bbf5a3a41b0a6fcc6c589427017",
+      "par": 5,
+      "distance": 535,
+      "author": "Nintendo"
+    },
+    "nes_japan/13": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 13
+      },
+      "content_hash": "0ed19ddff59154835af9ba5f6fa6bff7c53a904d34e896471b8102c7d3f2b185",
+      "par": 3,
+      "distance": 160,
+      "author": "Nintendo"
+    },
+    "nes_japan/14": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 14
+      },
+      "content_hash": "cbcf9219622c0c9d8071350063f14f007ec2a2751964e43a02541b0a8759ff18",
+      "par": 4,
+      "distance": 464,
+      "author": "Nintendo"
+    },
+    "nes_japan/15": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 15
+      },
+      "content_hash": "48a3a1368ee94bec58f0d105eef854c30f5b8c27fef1a51e5e5819cbd6b30e67",
+      "par": 4,
+      "distance": 410,
+      "author": "Nintendo"
+    },
+    "nes_japan/16": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 16
+      },
+      "content_hash": "0c5e460c874894d6b878c9fa4cca5b466532c1553f6b6b97b7a6a0a989c1d1d1",
+      "par": 3,
+      "distance": 192,
+      "author": "Nintendo"
+    },
+    "nes_japan/17": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 17
+      },
+      "content_hash": "ba883b6620a66642b47a1f5756ee259cf445e79baac84964059cc8e8a81c29db",
+      "par": 4,
+      "distance": 432,
+      "author": "Nintendo"
+    },
+    "nes_japan/18": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "japan",
+        "hole": 18
+      },
+      "content_hash": "ceb1e6eebf9df2702843ec200be614ddd4b355a79a7289b75ddbaafb85b82a57",
+      "par": 5,
+      "distance": 605,
+      "author": "Nintendo"
+    },
+    "nes_uk/01": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 1
+      },
+      "content_hash": "1dcf8587a065105de2255109df5aefa4240c908785a2ea01ad5c12a2a107c0af",
+      "par": 4,
+      "distance": 418,
+      "author": "Nintendo"
+    },
+    "nes_uk/02": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 2
+      },
+      "content_hash": "e1e5e3564e9ac1c721d85013c45e7375f8bf8af21a9c5b56be47fd73915e352a",
+      "par": 4,
+      "distance": 393,
+      "author": "Nintendo"
+    },
+    "nes_uk/03": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 3
+      },
+      "content_hash": "8ac2bb1cd14f81220bd5cdbc2ed9b33ad67a1dffb6fa6bd67153131758e1ed3e",
+      "par": 5,
+      "distance": 550,
+      "author": "Nintendo"
+    },
+    "nes_uk/04": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 4
+      },
+      "content_hash": "8b842b8a705a35f24c0920fe5ce46daff0cba9b1a2155a915f6b2b4d4cb17306",
+      "par": 3,
+      "distance": 221,
+      "author": "Nintendo"
+    },
+    "nes_uk/05": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 5
+      },
+      "content_hash": "89bdbada8d8f82b88b29186523880d78b766d1075d63d29e180cbd2757b56fde",
+      "par": 4,
+      "distance": 431,
+      "author": "Nintendo"
+    },
+    "nes_uk/06": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 6
+      },
+      "content_hash": "3dc1f24d34bfaf28f9c716ad00db3820dbd0223251aa1275d669d8733e88cc85",
+      "par": 4,
+      "distance": 357,
+      "author": "Nintendo"
+    },
+    "nes_uk/07": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 7
+      },
+      "content_hash": "74c8fcf7855a2bf9d804e525d3bae39e1b9aeeda5dc00a67b2eefbbad078e377",
+      "par": 4,
+      "distance": 428,
+      "author": "Nintendo"
+    },
+    "nes_uk/08": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 8
+      },
+      "content_hash": "8b4f6c57ed6e4812d93484e8c7d1a4501e11f4a26b602febcb725ac59a20e62c",
+      "par": 3,
+      "distance": 201,
+      "author": "Nintendo"
+    },
+    "nes_uk/09": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 9
+      },
+      "content_hash": "b4600f310d57eed467f0b3fc13c14507c4c59366806e6bf905affed511c4f61e",
+      "par": 5,
+      "distance": 528,
+      "author": "Nintendo"
+    },
+    "nes_uk/10": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 10
+      },
+      "content_hash": "163b5ee03762ffa389909196b171304991faaf20933cbf6d3beccdea8e1f1177",
+      "par": 4,
+      "distance": 325,
+      "author": "Nintendo"
+    },
+    "nes_uk/11": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 11
+      },
+      "content_hash": "758fc1cc1208756e5a1abbdfbb5b4d7d80af2e6309821cab45c98dc084a69dd5",
+      "par": 4,
+      "distance": 424,
+      "author": "Nintendo"
+    },
+    "nes_uk/12": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 12
+      },
+      "content_hash": "73c01dacb90faa616cb1a7e91de3801a6556541cc91f837cd9ff9b229346d862",
+      "par": 3,
+      "distance": 162,
+      "author": "Nintendo"
+    },
+    "nes_uk/13": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 13
+      },
+      "content_hash": "871b33187a123d95595e2c1cc7b0df8227ed394b69c47378e2e3f8150afc635a",
+      "par": 5,
+      "distance": 571,
+      "author": "Nintendo"
+    },
+    "nes_uk/14": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 14
+      },
+      "content_hash": "7cdadc911c661b98b8f61c3f6e5f238525f469cb071dfc40efbfe66972bffbc0",
+      "par": 4,
+      "distance": 403,
+      "author": "Nintendo"
+    },
+    "nes_uk/15": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 15
+      },
+      "content_hash": "3cdd701242fc524886de943e49475bd5513cc5d8f24513d75bd62571f2c41006",
+      "par": 4,
+      "distance": 410,
+      "author": "Nintendo"
+    },
+    "nes_uk/16": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 16
+      },
+      "content_hash": "6e42841840ee62b57cfcc49ed5505565851c1f7ea87be08b0c278a00da35d668",
+      "par": 5,
+      "distance": 571,
+      "author": "Nintendo"
+    },
+    "nes_uk/17": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 17
+      },
+      "content_hash": "6ec77ae547b73eec91922970767938fa8441c55e34b2e6f212ec9e56672d1bec",
+      "par": 3,
+      "distance": 196,
+      "author": "Nintendo"
+    },
+    "nes_uk/18": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "uk",
+        "hole": 18
+      },
+      "content_hash": "35ef870ce566da146a4280ca4ec2bdb96d5a5a6280ee6052002edd5432845cf7",
+      "par": 4,
+      "distance": 460,
+      "author": "Nintendo"
+    },
+    "nes_us/01": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 1
+      },
+      "content_hash": "376bee887d627ccb58acc1255966eb4b293d9befc4f8f8b3cb7f625a8a508b74",
+      "par": 4,
+      "distance": 328,
+      "author": "Nintendo"
+    },
+    "nes_us/02": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 2
+      },
+      "content_hash": "e06651db386d193ebe80c76e59b89ff71c8b9644f104d4e892caf0ebcd4d2746",
+      "par": 5,
+      "distance": 481,
+      "author": "Nintendo"
+    },
+    "nes_us/03": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 3
+      },
+      "content_hash": "f8ee9b1d72f60fb018d52d96ddddedfe5216d15c73031b2c5b1579d4d70af5c9",
+      "par": 4,
+      "distance": 446,
+      "author": "Nintendo"
+    },
+    "nes_us/04": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 4
+      },
+      "content_hash": "5662777753ead8491de5f98d02b87bfb7f0fc8a6a6f3cda8fabe41abf5a203b8",
+      "par": 3,
+      "distance": 154,
+      "author": "Nintendo"
+    },
+    "nes_us/05": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 5
+      },
+      "content_hash": "ea4785cda1159ea759d61c3802cb6d093feaa5f16fe1197ea801031dd8fb2b30",
+      "par": 4,
+      "distance": 392,
+      "author": "Nintendo"
+    },
+    "nes_us/06": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 6
+      },
+      "content_hash": "0ffd04f039746b202db207cc2b793f4108dbba4a45f24cccc1fec85e94204424",
+      "par": 4,
+      "distance": 400,
+      "author": "Nintendo"
+    },
+    "nes_us/07": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 7
+      },
+      "content_hash": "8a830265febb3465ba199b5338afd6a4dcc85ef8658a8b4c8601798f0e953344",
+      "par": 3,
+      "distance": 167,
+      "author": "Nintendo"
+    },
+    "nes_us/08": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 8
+      },
+      "content_hash": "b594e6c182dc615f06a694f2df6a7ae8f8382f4128fd07f1097e477f1a3936e2",
+      "par": 5,
+      "distance": 560,
+      "author": "Nintendo"
+    },
+    "nes_us/09": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 9
+      },
+      "content_hash": "204db3b15d7cd792f041905d1b5c19628a165d236d1f723daa26f3529c949244",
+      "par": 4,
+      "distance": 410,
+      "author": "Nintendo"
+    },
+    "nes_us/10": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 10
+      },
+      "content_hash": "43ae64ea06f882c2d5b63adf74c1b0102f572524e0d64c65a01ba79ef8d7a649",
+      "par": 3,
+      "distance": 217,
+      "author": "Nintendo"
+    },
+    "nes_us/11": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 11
+      },
+      "content_hash": "cb63a817dd11e9d772e395f6b53263c5b222f8b10b6518ae9c16586afc9522b6",
+      "par": 4,
+      "distance": 421,
+      "author": "Nintendo"
+    },
+    "nes_us/12": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 12
+      },
+      "content_hash": "20deec03a317c6ce10ee1075031d534ae476340aafb56ea9a8ca2b0dc5a33149",
+      "par": 5,
+      "distance": 642,
+      "author": "Nintendo"
+    },
+    "nes_us/13": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 13
+      },
+      "content_hash": "86871baccb9e4fb9ee0e4eb3e2c0537498acf7db1683d1e5d0951ce150ccd298",
+      "par": 4,
+      "distance": 420,
+      "author": "Nintendo"
+    },
+    "nes_us/14": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 14
+      },
+      "content_hash": "a3860d79e7b279097c59f9f3add35c8071de9691c08182fa2a9150b36f7fdcdf",
+      "par": 4,
+      "distance": 400,
+      "author": "Nintendo"
+    },
+    "nes_us/15": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 15
+      },
+      "content_hash": "89df600e6527b55ac90f4fcfb8dfa55e79f8c4e0aad376c929cab0ed5e432bd8",
+      "par": 4,
+      "distance": 428,
+      "author": "Nintendo"
+    },
+    "nes_us/16": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 16
+      },
+      "content_hash": "5043f67dc36074f078a43ee8756574ddfec9f7f3f8960f31c3bfe65b269da359",
+      "par": 3,
+      "distance": 230,
+      "author": "Nintendo"
+    },
+    "nes_us/17": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 17
+      },
+      "content_hash": "6d3646741c0f72b9405745e63ea67714c958ec1f8383e198ff89c262815e06f4",
+      "par": 4,
+      "distance": 435,
+      "author": "Nintendo"
+    },
+    "nes_us/18": {
+      "source": {
+        "rom": "nes_open_us",
+        "course": "us",
+        "hole": 18
+      },
+      "content_hash": "61b3d176611b85d0139caf88dbecab43ed2ef86cdb81e8433c1801c7944c771d",
+      "par": 5,
+      "distance": 571,
+      "author": "Nintendo"
+    }
+  }
+}

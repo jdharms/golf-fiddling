@@ -10,8 +10,9 @@ def pack_attributes(attr_rows: list[list[int]]) -> bytes:
     """
     Pack 2D palette indices into NES attribute bytes.
 
-    Inverse of unpack_attributes(). Takes 11-column attribute rows
-    and packs them into 72 bytes with HUD column prepended.
+    Inverse of unpack_attributes(). Takes 11-column attribute rows and packs
+    them into bytes with HUD column prepended, one byte per 2x2-supertile
+    megatile: ((len(attr_rows) + 1) // 2) * 6 bytes total.
 
     The NES attribute format uses one byte to encode 4 supertile palettes
     (2x2 tile blocks). Each byte covers a 4x4 tile area (megatile).
@@ -22,11 +23,19 @@ def pack_attributes(attr_rows: list[list[int]]) -> bytes:
     - BL = bottom-left supertile palette (bits 4-5)
     - BR = bottom-right supertile palette (bits 6-7)
 
+    Output length is not padded or truncated to any fixed size. The
+    vanilla game's course-load routine always copies a fixed 72-byte
+    window regardless of a hole's real height, but only ever reads back
+    as many bytes as that hole's actual height needs - anything beyond a
+    short hole's real data is copied but never used (in the vanilla
+    layout, it's simply the start of the next hole's data). There is no
+    reason to write that unused padding into the ROM.
+
     Args:
         attr_rows: Array of shape (num_rows, 11) with palette values 0-3
 
     Returns:
-        72 bytes of packed attribute data
+        Packed attribute data, ((len(attr_rows) + 1) // 2) * 6 bytes
 
     Raises:
         ValueError: If attr_rows is empty or contains invalid palette values
@@ -78,11 +87,7 @@ def pack_attributes(attr_rows: list[list[int]]) -> bytes:
             )
             output.append(attr_byte)
 
-    # Pad to exactly 72 bytes
-    while len(output) < 72:
-        output.append(0x00)
-
-    return bytes(output[:72])
+    return bytes(output)
 
 
 def int_to_bcd(value: int) -> tuple[int, int, int]:

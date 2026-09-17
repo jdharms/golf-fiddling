@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% import "admin/_admin.html" as admin %}
+{% set account = detail.user %}
+{% block title %}{{ account.display_name }} - Admin{% endblock %}
+{% block content %}
+{{ admin.nav() }}
+<h1>{{ account.display_name }}</h1>
+
+<section>
+  <div class="overflow-auto">
+    <table>
+      <tbody>
+        <tr><th scope="row">Discord username</th><td>{{ account.username }}</td></tr>
+        <tr><th scope="row">Discord id</th><td><code>{{ account.discord_id }}</code></td></tr>
+        <tr><th scope="row">Player id</th><td><code>{{ account.player_id }}</code> (<code>{{ '%08x' % account.player_id }}</code>)</td></tr>
+        <tr><th scope="row">First sign-in</th><td>{{ account.created_at }}</td></tr>
+        <tr><th scope="row">Last sign-in</th><td>{{ account.last_login }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>Rounds</h2>
+  {% if detail.rounds %}{{ admin.rounds_table(detail.rounds, show_player=false) }}{% else %}<p>No rounds.</p>{% endif %}
+</section>
+
+<section>
+  <h2>Entries</h2>
+  {% if detail.entries %}{{ admin.entries_table(detail.entries, show_player=false) }}{% else %}<p>No entries.</p>{% endif %}
+</section>
+
+<section>
+  <h2>Admin actions taken</h2>
+  {% if detail.actions %}{{ admin.activity_table(detail.actions) }}{% else %}<p>None.</p>{% endif %}
+</section>
+
+<section>
+  <h2>Seeds created</h2>
+  {% if detail.seeds_created %}{{ admin.seeds_table(detail.seeds_created, show_creator=false) }}{% else %}<p>No seeds.</p>{% endif %}
+</section>
+{% endblock %}

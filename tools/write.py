@@ -2,12 +2,11 @@
 """
 NES Open Tournament Golf - ROM Writer
 
-Writes course data from JSON files back to ROM.
+Writes one course from JSON files back to ROM.
 
-Uses packed multi-bank mode:
-  - Writes 1 or 2 courses packed across 3 terrain banks
-  - Uses per-hole bank lookup for maximum space efficiency
-  - Automatically applies required ROM patches
+Applies the course patch (golf/core/patches/courses.py), which packs the
+course's terrain across banks 0 and 1, after the code patches it requires:
+multi-bank lookup, course mirrors and attribute streaming.
 """
 
 import argparse
@@ -16,8 +15,7 @@ from pathlib import Path
 
 from golf.core import rom_utils
 from golf.core.course_validation import InvalidTileError
-from golf.core.packed_course_writer import PackedCourseWriter
-from golf.core.patches import PatchError
+from golf.core.patches import CoursePatch, CourseWriteStats, PatchError
 from golf.core.rom_writer import BankOverflowError, RomWriter
 from golf.formats.hole_data import HoleData
 
@@ -55,132 +53,53 @@ def load_course_data(course_dir: Path) -> list[HoleData]:
     return holes
 
 
-def validate_packed(
-    rom_path: str, course_dirs: list[Path], verbose: bool
-) -> bool:
-    """
-    Validate packed courses will fit without writing.
-
-    Args:
-        rom_path: ROM file path
-        course_dirs: List of 1 or 2 course directories
-        verbose: Show detailed statistics
-
-    Returns:
-        True if validation passes, False otherwise
-    """
-    print("Validation mode: checking if courses will fit...")
-    print(f"ROM: {rom_path}")
-    for i, d in enumerate(course_dirs):
-        print(f"Course {i+1}: {d}")
+def print_stats(stats: CourseWriteStats) -> None:
+    """Print how the holes were packed."""
     print()
+    print("Bank usage:")
+    for bank, capacity in stats.bank_capacity.items():
+        used = stats.bank_usage.get(bank, 0)
+        pct = (used / capacity * 100) if capacity > 0 else 0
+        print(f"  Bank {bank}: {used:,} / {capacity:,} bytes ({pct:.1f}%)")
 
-    try:
-        # Load all courses
-        courses = []
-        for course_dir in course_dirs:
-            holes = load_course_data(course_dir)
-            courses.append(holes)
+    total_capacity = sum(stats.bank_capacity.values())
+    total_pct = (stats.total_terrain_bytes / total_capacity * 100) if total_capacity > 0 else 0
+    print(f"  Total:  {stats.total_terrain_bytes:,} / {total_capacity:,} bytes ({total_pct:.1f}%)")
+    print()
+    print(f"Greens: {stats.total_greens_bytes:,} bytes")
 
-        # Create writers
-        rom_writer = RomWriter(rom_path, "/dev/null")
-        packed_writer = PackedCourseWriter(rom_writer, apply_patches=False)
 
-        # Validate
-        result = packed_writer.validate_courses(courses, verbose=verbose)
-
-        if result.valid:
-            print("Validation PASSED - courses will fit in ROM")
-            return True
+def report_requirements(patch: CoursePatch, rom_writer: RomWriter) -> bool:
+    """Print each required patch's state. Returns False if any is blocked."""
+    ok = True
+    for required in patch.requires:
+        if required.is_applied(rom_writer):
+            state = "already applied"
+        elif required.can_apply(rom_writer):
+            state = "pending"
         else:
-            print(f"Validation FAILED: {result.message}")
-            return False
-
-    except Exception as e:
-        print(f"Validation FAILED: {e}")
-        return False
-
-
-def write_packed(
-    rom_path: str,
-    course_dirs: list[Path],
-    output_path: str,
-    verbose: bool,
-    trace_io: bool,
-) -> None:
-    """
-    Write 1 or 2 courses using packed multi-bank mode.
-
-    Args:
-        rom_path: Source ROM file
-        course_dirs: List of 1 or 2 course directories
-        output_path: Output ROM file
-        verbose: Show detailed statistics
-        trace_io: Output ROM write trace
-    """
-    print(f"Loading ROM: {rom_path}")
-    print(f"Writing {len(course_dirs)} course(s):")
-    for i, d in enumerate(course_dirs):
-        print(f"  Course {i+1}: {d}")
-    print()
-
-    # Load all courses
-    courses = []
-    for course_dir in course_dirs:
-        holes = load_course_data(course_dir)
-        courses.append(holes)
-        print(f"Loaded {len(holes)} holes from {course_dir}")
-
-    # Create writers
-    if trace_io:
-        from golf.core.instrumented_io import InstrumentedRomWriter
-        rom_writer = InstrumentedRomWriter(str(rom_path), output_path)
-    else:
-        rom_writer = RomWriter(str(rom_path), output_path)
-
-    packed_writer = PackedCourseWriter(rom_writer, apply_patches=True)
-
-    # Write courses
-    print()
-    print("Compressing and writing course data...")
-    stats = packed_writer.write_courses(courses, verbose=verbose)
-
-    # Save ROM
-    print()
-    rom_writer.save()
-
-    # Write trace if instrumented
-    if trace_io and hasattr(rom_writer, "write_trace"):
-        trace_path = str(Path(output_path).parent / "write_trace.json")
-        rom_writer.write_trace(trace_path)
-
-    print()
-    print("Done!")
+            state = "CONFLICT (unexpected bytes)"
+            ok = False
+        print(f"  [{state:27}] {required.name}: {required.description}")
+    return ok
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Write course data from JSON files back to NES ROM",
+        description="Write one course from JSON files back to NES ROM",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Write 1 course (all 3 course slots show the same course)
+  # Write a course (all 3 course slots play it)
   golf-write rom.nes courses/japan/ -o output.nes
 
-  # Write 2 courses (Japan slot shows course 1, US slot shows course 2, UK mirrors Japan)
-  golf-write rom.nes courses/japan/ courses/us/ -o output.nes
-
   # Validate without writing
-  golf-write rom.nes courses/japan/ courses/us/ --validate-only --verbose
+  golf-write rom.nes courses/japan/ --validate-only --verbose
 """,
     )
 
-    parser.add_argument("rom_file", nargs="?", help="Source ROM file (read-only)")
-    parser.add_argument(
-        "course_dirs",
-        nargs="*",
-        help="Course directory/directories (1 or 2)",
-    )
+    parser.add_argument("rom_file", help="Source ROM file (read-only)")
+    parser.add_argument("course_dir", help="Course directory (hole_01.json-hole_18.json)")
     parser.add_argument(
         "-o",
         "--output",
@@ -203,48 +122,59 @@ Examples:
 
     args = parser.parse_args()
 
-    # Validate required arguments
-    if not args.rom_file:
-        parser.error("the following arguments are required: rom_file")
-    if not args.course_dirs:
-        parser.error("the following arguments are required: course_dirs")
-
-    # Validate ROM exists
     rom_path = Path(args.rom_file)
     if not rom_path.exists():
         print(f"Error: ROM file not found: {rom_path}")
         sys.exit(1)
 
-    # Validate course directories
-    course_dirs = [Path(d) for d in args.course_dirs]
-    for d in course_dirs:
-        if not d.is_dir():
-            print(f"Error: Course directory not found: {d}")
-            sys.exit(1)
-
-    # Validate course count
-    if len(course_dirs) > 2:
-        print("Error: At most 2 course directories are supported")
+    course_dir = Path(args.course_dir)
+    if not course_dir.is_dir():
+        print(f"Error: Course directory not found: {course_dir}")
         sys.exit(1)
 
-    # Determine output path
     if args.output:
         output_path = args.output
     else:
         output_path = str(rom_path.with_suffix("")) + ".modified.nes"
 
     try:
-        if args.validate_only:
-            success = validate_packed(str(rom_path), course_dirs, args.verbose)
-            sys.exit(0 if success else 1)
+        print(f"ROM: {rom_path}")
+        holes = load_course_data(course_dir)
+        print(f"Loaded {len(holes)} holes from {course_dir}")
+        print("Compressing course data...")
+        patch = CoursePatch(holes)
+        if args.verbose:
+            print_stats(patch.stats)
 
-        write_packed(
-            str(rom_path),
-            course_dirs,
-            output_path,
-            args.verbose,
-            args.trace_io,
-        )
+        if args.trace_io and not args.validate_only:
+            from golf.core.instrumented_io import InstrumentedRomWriter
+
+            rom_writer = InstrumentedRomWriter(str(rom_path), output_path)
+        else:
+            rom_writer = RomWriter(str(rom_path), output_path)
+
+        print()
+        print("Required patches:")
+        requirements_ok = report_requirements(patch, rom_writer)
+
+        if args.validate_only:
+            if not requirements_ok:
+                print("Validation FAILED: a required patch cannot be applied to this ROM")
+                sys.exit(1)
+            print("Validation PASSED - course will fit in ROM")
+            sys.exit(0)
+
+        for required in patch.requires:
+            required.apply(rom_writer)
+        patch.apply(rom_writer)
+        rom_writer.save()
+
+        if args.trace_io and hasattr(rom_writer, "write_trace"):
+            trace_path = str(Path(output_path).parent / "write_trace.json")
+            rom_writer.write_trace(trace_path)
+
+        print()
+        print("Done!")
 
     except FileNotFoundError as e:
         print(f"Error: {e}")
@@ -263,11 +193,6 @@ Examples:
         sys.exit(1)
     except ValueError as e:
         print(f"Error: {e}")
-        sys.exit(1)
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-        import traceback
-        traceback.print_exc()
         sys.exit(1)
 
 

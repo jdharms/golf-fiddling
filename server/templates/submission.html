@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{% if submission %}{{ t_plain("submission.page_title", words=submission.magic_words|join(" ")) }}{% else %}{{ t_plain("submission.rejected.page_title") }}{% endif %}{% endblock %}
+{% block content %}
+{# a stroke count's class against its par: over-par and under-par color it, level par stays plain #}
+{% macro to_par(strokes, par) %}{% if strokes > par %} over-par{% elif strokes < par %} under-par{% endif %}{% endmacro %}
+{# one nine as a table of its own; the back nine's also carries the round's totals #}
+{% macro nine_table(nine, total_label, totals=none) %}
+<table class="nine striped">
+  <colgroup><col class="hole"><col class="par"><col class="strokes"><col class="putts"></colgroup>
+  <thead>
+    <tr>
+      <th scope="col" class="num">{{ t("submission.holes.number") }}</th>
+      <th scope="col" class="num">{{ t("submission.holes.par") }}</th>
+      <th scope="col" class="num">{{ t("submission.holes.strokes") }}</th>
+      <th scope="col" class="num">{{ t("submission.holes.putts") }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for hole in nine.holes %}
+    <tr>
+      <td class="num">{{ hole.number }}</td>
+      <td class="num">{{ hole.par }}</td>
+      <td class="num{{ to_par(hole.strokes, hole.par) }}">{{ hole.strokes }}</td>
+      <td class="num">{{ hole.putts }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <th scope="row" class="num">{{ total_label }}</th>
+      <td class="num">{{ nine.par }}</td>
+      <td class="num{{ to_par(nine.strokes, nine.par) }}">{{ nine.strokes }}</td>
+      <td class="num">{{ nine.putts }}</td>
+    </tr>
+    {% if totals %}
+    <tr>
+      <th scope="row" class="num">{{ t("submission.holes.total") }}</th>
+      <td class="num">{{ totals.total_par }}</td>
+      <td class="num{{ to_par(totals.total_strokes, totals.total_par) }}">{{ totals.total_strokes }}</td>
+      <td class="num">{{ totals.total_putts }}</td>
+    </tr>
+    {% endif %}
+  </tfoot>
+</table>
+{% endmacro %}
+{% if submission %}
+<hgroup>
+  <h1>{% if submission.new %}{{ t("submission.recorded.heading_new") }}{% else %}{{ t("submission.recorded.heading_earlier") }}{% endif %}</h1>
+  <p>
+    {% if submission.slot == 1 %}{{ t("submission.recorded.player_two", name=submission.player_name, received=submission.received_at) }}
+    {% else %}{{ t("submission.recorded.player_one", name=submission.player_name, received=submission.received_at) }}{% endif %}
+  </p>
+</hgroup>
+
+<p>{{ t("submission.recorded.seed") }} <a href="/h/{{ submission.seed_id }}" class="magic-words">{{ submission.magic_words|join(" ") }}</a></p>
+
+<div class="nines">
+  {{ nine_table(submission.front, t("submission.holes.front_total")) }}
+  {{ nine_table(submission.back, t("submission.holes.back_total"), submission) }}
+</div>
+{% else %}
+<hgroup>
+  <h1>{{ t("submission.rejected.heading") }}</h1>
+  <p>
+    {% if rejection == "malformed" %}{{ t("submission.rejected.malformed") }}
+    {% elif rejection == "unfinished" %}{{ t("submission.rejected.unfinished") }}
+    {% else %}{{ t("submission.rejected.unrecognized") }}{% endif %}
+  </p>
+</hgroup>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<hgroup>
+  <h1>{{ t("home.heading") }}</h1>
+  <p>{{ t("home.tagline") }}</p>
+</hgroup>
+
+<p>{{ t("home.about") }}</p>
+
+<ol class="grid steps" role="list">
+  <li>
+    <article>
+      <header><span class="step-number" aria-hidden="true">1</span><strong>{{ t("home.step_rom.header") }}</strong></header>
+      <div>{{ t("home.step_rom.body") }}</div>
+    </article>
+  </li>
+  <li>
+    <article>
+      <header><span class="step-number" aria-hidden="true">2</span><strong>{{ t("home.step_generate.header") }}</strong></header>
+      <div>{{ t("home.step_generate.body") }}</div>
+    </article>
+  </li>
+  <li>
+    <article>
+      <header><span class="step-number" aria-hidden="true">3</span><strong>{{ t("home.step_play.header") }}</strong></header>
+      <div>{{ t("home.step_play.body") }}</div>
+    </article>
+  </li>
+</ol>
+{% endblock %}

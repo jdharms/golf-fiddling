@@ -1,0 +1,84 @@
+# ROM setup page strings (rom.html and static/rom.js).
+# Format: see common.toml, and server/CLAUDE.md "Player-facing text".
+
+[rom.page_title]
+note = "plain: browser tab title, ROM setup page"
+text = "ROM Management - NES Open Randomizer"
+
+[rom.heading]
+note = "ROM setup page h1"
+text = "ROM Setup"
+
+[rom.tagline]
+note = "line under the h1; choose files once; checked and kept in this browser; never uploaded"
+text = "Choose your ROM files once.  Your browser will check them and keep them--they won't be uploaded."
+
+[rom.requirements]
+note = "which ROMs: NES Open (USA) for every seed; Mario Open Golf (Japan) too when a seed has its holes or music; unmodified dumps, iNES header included"
+text = """
+You'll always need the <cite>NES Open Tournament Golf (USA)</cite> ROM.
+It's the randomizer's base ROM.
+If you provide a <cite>Mario Open Golf (Japan)</cite> ROM, you'll get access
+to more courses and music."""
+
+[rom.noscript]
+note = "shown only with JavaScript off; this page needs it"
+text = """
+Unfortunately this site (really!) requires JavaScript to function. Allow it in your
+browser for this site or come back in another browser that supports it."""
+
+[rom.unsupported]
+note = "shown when the browser can't hash or store files; needs HTTPS or localhost, and IndexedDB"
+text = """
+Looks like you can't upload ROM files on this device.  You need to be accessing this site
+over HTTPS and your browser needs to support IndexedDB."""
+
+[rom.file_input_label]
+note = "plain: screen-reader name for a card's file input; {title} is the ROM's title"
+text = "{title} ROM file"
+
+[rom.expected_hash]
+note = "small line on a card with no stored ROM; {sha1} is the hash an unmodified dump has"
+text = "Expected file hash (sha1): <code>{sha1}</code>"
+
+[rom.forget]
+note = "button on a stored card; removes that ROM from this browser"
+text = "Forget ROM"
+
+# Card statuses. rom.js sets these; inline HTML works, and values are escaped.
+
+[rom.status.checking]
+note = "card status while looking up the stored ROM or hashing a chosen file"
+text = "Checking..."
+
+[rom.status.empty]
+note = "card status, no ROM stored"
+text = "No ROM uploaded"
+
+[rom.status.stored]
+note = "card status, ROM verified and stored; card is green"
+text = "ROM Verified"
+
+[rom.status.mismatch]
+note = "card status, chosen file isn't an unmodified dump, nothing stored; {file} file name, {sha1} its hash"
+text = "File \"{file}\" didn't match what we expected. It's not stored, you can try again. It hashed to: <code>{sha1}</code>"
+
+[rom.status.check_failed]
+note = "card status, file couldn't be read or hashed; {error} the browser's error"
+text = "Encountered an error reading or verifying the file: \"{error}\""
+
+[rom.status.forgetting]
+note = "card status while removing the stored ROM"
+text = "Removing..."
+
+[rom.status.forget_failed]
+note = "card status, removing failed; {error} the browser's error"
+text = "Received an error removing the file from the browser's storage: {error}"
+
+[rom.status.storage_failed]
+note = "card status, browser storage wouldn't open on page load; {error} the browser's error"
+text = "Error accessing browser storage: {error}"
+
+[rom.status.unavailable]
+note = "card status while the rom.unsupported notice shows"
+text = "Verification Unavailable"

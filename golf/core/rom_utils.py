@@ -16,6 +16,9 @@ INES_HEADER_SIZE = 0x10
 PRG_BANK_SIZE = 0x4000  # 16KB banks
 FIXED_BANK_PRG_START = 0x3C000  # Bank 15, maps to $C000-$FFFF
 
+# SHA-1 of the whole vanilla US ROM file (iNES header included)
+US_ROM_SHA1 = "53b47f2b68c353afbc822baee0a9172eb16e38af"
+
 # ============================================================================
 # Course Structure Constants
 # ============================================================================
@@ -124,3 +127,20 @@ def prg_to_bank_and_cpu(prg_offset: int) -> tuple[int, int]:
         bank = prg_offset // PRG_BANK_SIZE
         cpu_addr = 0x8000 + (prg_offset % PRG_BANK_SIZE)
         return (bank, cpu_addr)
+
+
+def parse_cpu_or_prg_address(address: str, bank: int | None = None) -> int:
+    """
+    Parse a "$XXXX" CPU address or raw hex PRG offset into a PRG offset.
+
+    "$XXXX" resolves via the switchable-bank mapping when `bank` is given,
+    otherwise via the fixed-bank mapping. A bare hex string (no "$" prefix)
+    is used as-is as a PRG offset.
+    """
+    address = address.strip()
+    if address.startswith("$"):
+        cpu_addr = int(address[1:], 16)
+        if bank is not None:
+            return cpu_to_prg_switched(cpu_addr, bank)
+        return cpu_to_prg_fixed(cpu_addr)
+    return int(address, 16)

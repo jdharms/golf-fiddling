@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ t_plain("sign_in_failed.page_title") }}{% endblock %}
+{% block content %}
+<hgroup>
+  <h1>{{ t("sign_in_failed.heading") }}</h1>
+  {% if reason == "expired" %}
+  <p>{{ t("sign_in_failed.expired") }}</p>
+  {% elif reason == "unavailable" %}
+  <p>{{ t("sign_in_failed.unavailable") }}</p>
+  {% endif %}
+</hgroup>
+<p><a href="/auth/login">{{ t("sign_in_failed.retry") }}</a></p>
+{% endblock %}

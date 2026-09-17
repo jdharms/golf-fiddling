@@ -1,0 +1,45 @@
+# Home page strings (home.html).
+# Format: see common.toml, and server/CLAUDE.md "Player-facing text".
+
+[home.heading]
+note = "home page h1"
+text = "NES Open Tournament Golf Randomizer"
+
+[home.tagline]
+note = "line under the h1; what the site is"
+text = """Play a new 18 holes every time you step onto the course."""
+
+[home.about]
+note = "what a seed is (18 holes, par layout, course music, wind); same holes and wind for everyone on a seed"
+text = "Inspired by other randomizer projects like The ALTTP Randomizer, Super Mario World Randomizer, and The Legend of Zelda Randomizer, this site allows you to patch your copy of NES Open Tournament Golf with a course made up of a random selection of 18 holes from both the U.S. and Japanese (Mario Open Golf) releases of the game."
+
+[home.step_rom.header]
+note = "card 1 of 3, header; set up ROMs"
+text = "Get the ROM."
+
+[home.step_rom.body]
+note = "card 1 of 3, body; set up ROMs, link /rom; files stay in the browser, only checked for being unmodified"
+text = """You'll need a copy of the NES Open Tournament Golf (US)
+ROM, and preferably a copy of the Mario Open Golf (Japan) ROM.  Currently only
+version 1.0 of Mario Open Golf is supported."""
+
+[home.step_generate.header]
+note = "card 2 of 3, header; generate a seed"
+text = "Generate a randomized game."
+
+[home.step_generate.body]
+note = "card 2 of 3, body; generate a seed, link /generate; share the seed page"
+text = """Head on over to
+<a href="/generate">Generate Game</a>.  This screen shows a variety of options.  When you're
+satisfied, hit the Randomize! button and it'll take you to the "seed page"."""
+
+[home.step_play.header]
+note = "card 3 of 3, header; play"
+text = "Get playing!"
+
+[home.step_play.body]
+note = "card 3 of 3, body; download from the seed page; play Stroke Play"
+text = """From the seed page, you can download the patched ROM file.
+Sending the link to a friend will let them download the same course.  You'll need
+something to run your game on.  An emulator (like <a href="https://www.mesen.ca/">Mesen</a>) is
+a good choice.  You can also play on original hardware using flash carts."""

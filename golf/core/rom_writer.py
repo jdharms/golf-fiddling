@@ -28,9 +28,11 @@ class RomWriter:
     Low-level ROM byte writing with address translation.
 
     Provides symmetric write operations to match RomReader's read operations.
+    Every write method goes through `write_prg`, so a subclass sees every
+    write by overriding that one method.
     """
 
-    def __init__(self, rom_path: str, output_path: str):
+    def __init__(self, rom_path: str, output_path: str | None):
         """
         Load ROM for writing.
 
@@ -41,9 +43,22 @@ class RomWriter:
         Raises:
             ValueError: If ROM is not valid iNES format
         """
-        # Read entire ROM into bytearray for modification
         with open(rom_path, "rb") as f:
-            self.rom_data = bytearray(f.read())
+            self._load(f.read(), output_path)
+
+    @classmethod
+    def from_bytes(cls, data: bytes, output_path: str | None = None) -> "RomWriter":
+        """
+        Wrap a ROM image already in memory. The data is copied.
+
+        Subclasses whose `__init__` sets up extra state must override this.
+        """
+        writer = cls.__new__(cls)
+        writer._load(data, output_path)
+        return writer
+
+    def _load(self, data: bytes, output_path: str | None) -> None:
+        self.rom_data = bytearray(data)
 
         # Validate iNES header
         if self.rom_data[:4] != b"NES\x1a":
@@ -70,12 +85,11 @@ class RomWriter:
 
     def write_prg_byte(self, prg_offset: int, value: int):
         """Write a single byte to PRG ROM."""
-        self.rom_data[self.prg_start + prg_offset] = value
+        self.write_prg(prg_offset, bytes([value]))
 
     def write_prg_word(self, prg_offset: int, value: int):
         """Write 16-bit little-endian word to PRG ROM."""
-        self.write_prg_byte(prg_offset, value & 0xFF)
-        self.write_prg_byte(prg_offset + 1, (value >> 8) & 0xFF)
+        self.write_prg(prg_offset, bytes([value & 0xFF, (value >> 8) & 0xFF]))
 
     def write_fixed(self, cpu_addr: int, data: bytes):
         """
@@ -85,18 +99,15 @@ class RomWriter:
             cpu_addr: CPU address in range $C000-$FFFF
             data: Bytes to write
         """
-        prg_offset = cpu_to_prg_fixed(cpu_addr)
-        self.write_prg(prg_offset, data)
+        self.write_prg(cpu_to_prg_fixed(cpu_addr), data)
 
     def write_fixed_byte(self, cpu_addr: int, value: int):
         """Write a single byte to fixed bank."""
-        prg_offset = cpu_to_prg_fixed(cpu_addr)
-        self.rom_data[self.prg_start + prg_offset] = value
+        self.write_prg(cpu_to_prg_fixed(cpu_addr), bytes([value]))
 
     def write_fixed_word(self, cpu_addr: int, value: int):
         """Write 16-bit little-endian word to fixed bank."""
-        self.write_fixed_byte(cpu_addr, value & 0xFF)
-        self.write_fixed_byte(cpu_addr + 1, (value >> 8) & 0xFF)
+        self.write_prg(cpu_to_prg_fixed(cpu_addr), bytes([value & 0xFF, (value >> 8) & 0xFF]))
 
     def write_switched(self, cpu_addr: int, bank: int, data: bytes):
         """
@@ -107,8 +118,7 @@ class RomWriter:
             bank: Bank number
             data: Bytes to write
         """
-        prg_offset = cpu_to_prg_switched(cpu_addr, bank)
-        self.write_prg(prg_offset, data)
+        self.write_prg(cpu_to_prg_switched(cpu_addr, bank), data)
 
     # =========================================================================
     # Read methods (for reading current ROM state)
@@ -174,6 +184,8 @@ class RomWriter:
 
     def save(self):
         """Write modified ROM to output file."""
+        if self.output_path is None:
+            raise ValueError("this RomWriter has no output path to save to")
         with open(self.output_path, "wb") as f:
             f.write(self.rom_data)
         print(f"Wrote modified ROM to: {self.output_path}")

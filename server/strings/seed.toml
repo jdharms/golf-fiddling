@@ -1,0 +1,295 @@
+# Seed page strings (seed.html).
+# Format: see common.toml, and server/CLAUDE.md "Player-facing text".
+
+[seed.page_title]
+note = "plain: browser tab title, seed page; {words} the seed's three magic words"
+text = "{words} - NES Open Randomizer"
+
+[seed.tagline]
+note = "line under the magic words h1; same words show on the game's title menu and scorecard; {id} the seed's id, {created} its UTC creation time (ISO 8601)"
+text = "Created: {created}"
+
+[seed.rebuilt]
+note = "shown under the tagline only once an admin has rebuilt the seed's ROM with a fix; ROMs downloaded before then still submit, a new download has the fix; {rebuilt} the rebuild's UTC time (ISO 8601)"
+text = "Admin Note: Rebuilt at {rebuilt}.  Redownload this ROM if you haven't already."
+
+# Download form. The downloaded file's name is data, not a string (server/views.py).
+
+[seed.download.heading]
+note = "h2 over the download form"
+text = "Download"
+
+[seed.download.lead]
+note = "line at the top of the download form; choose a name and bag; the ROM is patched in this browser from the ROM set up there"
+text = """
+Change customizable settings here and download the patched ROM.
+The ROM is patched in this browser."""
+
+[seed.download.noscript]
+note = "shown only with JavaScript off; downloading needs it"
+text = """
+ROM patching happens completely in your browser, so this process requires JavaScript.
+"""
+
+[seed.download.guest_notice]
+note = "signed out only, under the download lead; this download is a guest ROM whose scorecard can't be submitted; signing in makes a ROM that records rounds to the player's account; seed.download.guest_sign_in link follows"
+text = "You're currently <mark>not signed in</mark>, so this download would be a \"Guest ROM\".  If you sign in before downloading we'll track your stats for you and tie them to your account."
+
+[seed.download.guest_sign_in]
+note = "plain: link after seed.download.guest_notice; signs in with Discord and comes back to this seed page"
+text = "Log in here"
+
+[seed.download.name_label]
+note = "label for the player name input; A-Z, '.' and space, at most 10; what a new save starts with"
+text = "Default Player Name"
+
+[seed.download.clubs_legend]
+note = "legend over club checkboxes (1W, 3I, ...); the bag a new save starts with; putter never listed; banned clubs struck out and disabled"
+text = "Club Bag"
+
+[seed.download.clubs_help]
+note = "small line under the club checkboxes; putter always carried; {max} most clubs this seed allows, putter included"
+text = """
+Select what clubs you want in your bag.  You'll always have a putter.
+This seed's settings allow {max} clubs, including the putter.
+"""
+
+[seed.download.locked_bag]
+note = "shown instead of club checkboxes when the seed has a locked bag; {clubs} its club labels, putter included"
+text = """
+This seed has a Locked Club Bag, with the following clubs: {clubs}
+"""
+
+[seed.download.rom_setup_link]
+note = "link to ROM setup; shown only while a ROM this seed needs is not set up in this browser"
+text = """
+Verify your ROM files here
+"""
+
+[seed.download.submit]
+note = "download form submit button; builds and downloads the patched ROM"
+text = "Save ROM"
+
+# Download statuses. download.js sets these; inline HTML works, and values are escaped.
+
+[seed.download.status.checking]
+note = "download status while looking for this seed's ROMs in the browser"
+text = "Verifying ROMs..."
+
+[seed.download.status.missing]
+note = "download status, a ROM this seed needs isn't set up in this browser; {roms} the missing ROM titles, comma-separated"
+text = """
+Before saving a ROM you'll need to verify your vanilla ROM(s) for {roms}.
+"""
+
+[seed.download.status.ready]
+note = "download status, every ROM this seed needs is set up; ready to download"
+text = "Download ready, all required ROM files present"
+
+[seed.download.status.building]
+note = "download status while the server builds the patch and the browser patches the ROM"
+text = "Patching..."
+
+[seed.download.status.done]
+note = "download status, patched ROM handed to the browser; {file} its file name"
+text = """
+ROM patched, output filename: <code>{file}</code>
+"""
+
+[seed.download.status.unavailable]
+note = "download status, browser has no storage for ROMs (IndexedDB)"
+text = """
+Error: browser reports no storage space for patching ROM file.
+"""
+
+[seed.download.status.storage_failed]
+note = "download status, browser storage wouldn't open or read; {error} the browser's error"
+text = """
+Browser reported storage error: {error}
+"""
+
+[seed.download.status.patch_failed]
+note = "download status, the patch didn't apply to the stored ROM; {error} the error"
+text = """
+Error patching ROM: {error}
+"""
+
+[seed.download.status.failed]
+note = "download status, request failed with no reason the page knows; {status} the HTTP status or network error"
+text = """
+Unknown error downloading Patch from server with status code: {status}
+"""
+
+[seed.download.status.refused.invalid_name]
+note = "download refused, name can't be stored: empty, over 10 characters, or characters outside A-Z, '.' and space; {chars} the offending characters, empty when the length is the problem"
+text = """
+Invalid player name. Found unacceptable characters: {chars}
+"""
+
+[seed.download.status.refused.invalid]
+note = "download refused, a value the form can't produce; {field} which field"
+text = """
+Download refused because of the {field} field
+"""
+
+[seed.download.status.refused.clubs_banned]
+note = "download refused, bag holds clubs this seed bans; {clubs} their labels"
+text = """
+Can't save ROM, Club Bag selection contains clubs banned for this seed: {clubs}
+"""
+
+[seed.download.status.refused.clubs_over_max]
+note = "download refused, bag holds too many clubs; {count} clubs chosen with the putter, {max} this seed's limit"
+text = """
+Can't save ROM, too many clubs in the Club Bag.  The limit is {max}, you selected {count}.
+"""
+
+[seed.download.status.refused.roms_missing]
+note = "download refused by the server, a ROM this seed needs wasn't verified; {roms} their titles, comma-separated"
+text = """
+Couldn't verify ROM file(s): {roms}
+"""
+
+[seed.download.status.refused.unavailable]
+note = "download refused, the server can't build ROMs right now; try later"
+text = """
+The server couldn't build the ROM patch right now.  Try again later.
+"""
+
+[seed.holes.heading]
+note = "h2 over the hole table"
+text = "Course Overview"
+
+[seed.holes.number]
+note = "hole table column header; hole number 1-18"
+text = "#"
+
+[seed.holes.hole]
+note = "hole table column header; the hole's catalog id (and name when it has one)"
+text = "Hole"
+
+[seed.holes.source]
+note = "hole table column header; where the hole comes from"
+text = "Source"
+
+[seed.holes.par]
+note = "hole table column header; par"
+text = "Par"
+
+[seed.holes.distance]
+note = "hole table column header; distance in yards"
+text = "Distance"
+
+[seed.holes.source_rom]
+note = "hole table source cell, vanilla hole; {rom} ROM title, {course} course name, {hole} its hole number there"
+text = "{rom}"
+
+[seed.holes.source_community]
+note = "hole table source cell, community hole; {author} its author"
+text = "Community Hole, by {author}"
+
+[seed.holes.total]
+note = "hole table footer row label; total par and yards follow"
+text = "Totals"
+
+# Recorded rounds: every round scanned from this seed's ROMs, fewest strokes first.
+
+[seed.rounds.heading]
+note = "h2 over the table of rounds players have submitted for this seed by scanning the end-of-round QR code"
+text = "Completed Rounds"
+
+[seed.rounds.player]
+note = "rounds table column header; the player's Discord display name"
+text = "Player"
+
+[seed.rounds.player_two]
+note = "rounds table player cell for a round played as player 2 on the player's ROM; {name} the ROM owner's Discord display name"
+text = "Teammate - {name}"
+
+[seed.rounds.strokes]
+note = "rounds table column header; total strokes for the round"
+text = "Total Strokes"
+
+[seed.rounds.putts]
+note = "rounds table column header; total putts for the round"
+text = "Putts"
+
+[seed.rounds.received]
+note = "rounds table column header; when the scan was recorded, UTC ISO 8601"
+text = "Submitted"
+
+[seed.rounds.flagged]
+note = "marker after a round's total strokes when an admin has flagged it: the round is being questioned but still counts; short, fits in a table cell"
+text = "*"
+
+[seed.rounds.none]
+note = "shown instead of the rounds table when no round has been submitted for this seed yet"
+text = "Nobody's submitted a score for this seed yet."
+
+[seed.details.heading]
+note = "h2 over the seed's settings table"
+text = "Details"
+
+[seed.details.music]
+note = "settings row label; course music"
+text = "Music"
+
+[seed.details.music_value]
+note = "music row value; {course} the course the theme belongs to, {rom} its ROM title"
+text = "\"{course}\", {rom}"
+
+[seed.details.par_target]
+note = "settings row label; par the course was generated for"
+text = "Total Par"
+
+[seed.details.sources]
+note = "settings row label; ROMs the holes were drawn from (ROM titles follow)"
+text = "Hole Sources Enabled"
+
+[seed.details.family_repeats]
+note = "settings row label; whether two versions of the same hole could share the course"
+text = "Allow Family Repeats?"
+
+[seed.details.yes]
+note = "settings value; on"
+text = "Yes"
+
+[seed.details.no]
+note = "settings value; off"
+text = "No"
+
+[seed.details.mercy_point]
+note = "settings row label; the stroke a hole ends on with an automatic tap-in"
+text = "Mercy rule \"tap in\" after stroke..."
+
+[seed.details.mercy_value]
+note = "mercy row value; {stroke} the stroke number"
+text = "{stroke}"
+
+[seed.details.off]
+note = "mercy row value; no tap-in rule"
+text = "None!  Mercy rule disabled"
+
+[seed.details.clubs_max]
+note = "settings row label; most clubs a bag may hold, putter included"
+text = "Max Clubs restriction (default is 14)"
+
+[seed.details.banned]
+note = "settings row label; clubs no bag may hold (labels follow)"
+text = "Banned Clubs"
+
+[seed.details.required_bag]
+note = "settings row label; the one bag every player carries (labels follow)"
+text = "Locked Bag"
+
+[seed.details.none]
+note = "settings value for banned clubs or required bag; nothing set"
+text = "None (default)"
+
+[seed.details.required_roms]
+note = "settings row label; ROMs a player needs set up to download this seed (ROM titles follow)"
+text = "Required ROMs"
+
+[seed.manifest_link]
+note = "link to the seed's manifest JSON; for the curious and for tools"
+text = "m"

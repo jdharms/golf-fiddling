@@ -1,0 +1,24 @@
+# Sign-in failed page strings (sign_in_failed.html), shown when a Discord sign-in could not
+# finish. Format: see common.toml, and server/CLAUDE.md "Player-facing text".
+
+[sign_in_failed.page_title]
+note = "plain: browser tab title"
+text = "Sign In Failed -- NES Open Randomizer"
+
+[sign_in_failed.heading]
+note = "sign-in did not work"
+text = """
+Sign In Failed
+"""
+
+[sign_in_failed.expired]
+note = "the sign-in attempt was stale or didn't start from this site (e.g. an old tab, or cookies blocked); try again"
+text = "Sign-in attempt was stale or interrupted, try again"
+
+[sign_in_failed.unavailable]
+note = "Discord could not be reached or refused the sign-in; try again later"
+text = "Unable to reach Discord, try again later"
+
+[sign_in_failed.retry]
+note = "link that starts sign-in again"
+text = "Retry sign-in"

@@ -4,110 +4,55 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a toolset for reverse engineering and editing NES Open Tournament Golf ROM data. The project includes:
-- ROM reading and decompression tools
-- Course data extraction and visualization
-- A graphical course editor built with Pygame
+A toolset for reverse engineering, editing and patching the NES Open Tournament Golf ROM:
 
-## Development Commands
+- Course extraction, compression and writing, plus a Pygame course editor
+- ROM research tooling (reads, disassembly, reference finding, a Mesen label file)
+- Gameplay and presentation patches (seeded wind, practice swing, signpost art, music, ...)
+- An end-of-round scorecard QR code with a 6502 port
+- Groundwork for a randomizer website (`docs/randomizer.md`)
 
-### Setup
-```bash
-# Install dependencies (uses uv for package management)
-uv sync
-```
+## Finding Things
 
-### Running Tools
-The project provides several command-line tools via entry points (defined in `pyproject.toml`):
+- **Commands**: every CLI tool is indexed in `README.md`; each tool's `--help` is its
+  full reference. Run them with `uv run <command>`.
+- **Docs**: `docs/README.md` indexes the design and reverse-engineering notes.
+- **Area-specific guidance** loads from nested files when you work there:
+  `editor/CLAUDE.md` (editor architecture, adding editor tools), `golf/qr/CLAUDE.md`
+  (the QR oracle and its 6502 port) and `server/CLAUDE.md` (the randomizer website).
+- **Skills** in `.claude/skills/`:
+  - `nes-open-golf-rom-layout` - memory map, pointer tables, bank layouts, data region
+    boundaries. Use for ROM reading/writing and course data work.
+  - `nes-open-golf-rom-peek` - **use whenever inspecting a ROM**: reading bytes,
+    disassembling, tracing callers, looking for reclaimable space.
+  - `nes-open-golf-label-conventions` - naming rules for the `.mlb` label file.
 
-```bash
-# Extract all course data from ROM to JSON files with compression statistics
-golf-dump <rom_file.nes> <output_dir>
+## Repository Layout
 
-# Write course data from JSON files back to ROM (inverse of golf-dump)
-# Writes 1-2 courses across 3 banks with auto-patching
-golf-write <rom_file.nes> <course_dir> [course_dir2] [options]
-# Options:
-#   -o, --output PATH    Output ROM file (default: <rom>.modified.nes)
-#   --validate-only      Compress and validate without writing
-#   --verbose            Show compression statistics
+- `golf/` - shared library
+  - `core/` - ROM reading/writing, both compression codecs, NES graphics, golfer sprites,
+    signpost, audio, `asm6502.py` assembler, `rom_analysis.py`, `ips.py` (IPS patch files)
+  - `golf/core/patches/` - ROM patches (`ROMPatch`, `BytePatch`, `CompositePatch`), and
+    `PatchStack` for building a ROM from an ordered list of them (`docs/patch_stack.md`)
+  - `formats/` - hole data model and JSON serialization (see `docs/course_data.md`)
+  - `rendering/` - PIL rendering for static images
+  - `qr/` - scorecard QR reference implementation and 6502 port
+- `editor/` - the course editor
+- `server/` - the randomizer website (FastAPI); conventions in `server/CLAUDE.md`, design in
+  `docs/randomizer_devplan.md`
+- `tools/` - CLI entry points: `data/` (regenerates checked-in `data/` files), `research/`,
+  `art/`, `music/`, `qr/`; course and patch tools at the top level; `archive/` for retired
+  one-off scripts (no entry points)
+- `docs/`, `data/`, `courses/`, `web/` (course measurement app), `renders/` (render scripts and output)
+- `tests/unit/`, `tests/integration/` - integration tests need `nes_open_us.nes` in the repo root
 
-# Analyze ROM structure and show technical details
-golf-analyze <rom_file.nes> [hole_number]
+## Key Concepts
 
-# Visualize a hole as PNG (renders terrain + greens with sprites)
-golf-visualize <tileset.bin> <hole.json> [output.png]
+**ROM memory model**: NES ROMs use bank switching. The fixed bank ($C000-$FFFF, bank 15)
+holds pointer tables and lookup data; switchable banks ($8000-$BFFF) hold compressed
+course data. `RomReader` translates CPU addresses to PRG ROM offsets.
 
-# Visualize an entire course directory
-golf-visualize <tileset.bin> <course_dir> [output_dir]
-
-# Convert hex string to binary file
-golf-hex2bin
-
-# Expand dictionary codes into their complete horizontal transition sequences
-golf-expand-dict <meta.json> [terrain|greens]
-
-# Launch the course editor (CHR files optional, defaults to data/ files)
-golf-editor [terrain_chr.bin] [greens_chr.bin] [hole.json]
-```
-
-### Example Workflow
-```bash
-# Extract all courses from ROM
-golf-dump nes_open_us.nes courses/
-
-# Edit a hole using the course editor
-golf-editor courses/japan/hole_01.json
-
-# Write 1 course (all 3 course slots show the same course)
-golf-write nes_open_us.nes courses/japan/ -o modified.nes
-
-# Write 2 courses (Japan slot shows course 1, US slot shows course 2, UK mirrors Japan)
-golf-write nes_open_us.nes courses/japan/ courses/us/ -o modified.nes
-
-# Validate courses will fit without writing
-golf-write nes_open_us.nes courses/japan/ courses/us/ --validate-only --verbose
-
-# Visualize a specific hole
-golf-visualize data/chr-ram.bin courses/japan/hole_01.json output.png
-
-# Or visualize an entire course
-golf-visualize data/chr-ram.bin courses/japan/ renders/japan/
-```
-
-### JSON Inspection
-
-When inspecting JSON files in `courses/` and `data/`, prefer using `jq` over `python -c` one-liners for readability and convenience.
-
-## Code Architecture
-
-### Package Structure
-
-The codebase is organized into three main packages:
-
-**`golf/`** - Shared library for ROM reading and data formats
-- `core/` - ROM reading, decompression, NES graphics (CHR tiles, palettes)
-- `formats/` - Hole data model, JSON serialization, hex utilities
-- `rendering/` - PIL-based rendering for visualization
-
-**`editor/`** - Interactive Pygame-based course editor
-- `core/` - Pygame rendering primitives (tilesets, sprites)
-- `ui/` - Widgets, dialogs, tile pickers, toolbar
-- `controllers/` - Editor state, event handling, view state, undo management
-- `rendering/` - Specialized renderers (terrain, greens, grid, sprites)
-- `tools/` - Editor tools (paint, transform, eyedropper, forest fill, etc.)
-
-**`tools/`** - Command-line utilities
-- `dump.py` - Extract course data from ROM to JSON
-- `analyze.py` - ROM structure analysis
-- `visualize.py` - Static rendering of holes to PNG
-- `hex2bin.py` - Hex string converter
-
-### Key Architecture Concepts
-
-**ROM Memory Model**: NES ROMs use bank switching. The game has a fixed bank ($C000-$FFFF, bank 15) containing pointer tables and lookup data, plus switchable banks ($8000-$BFFF) containing compressed course data. The `RomReader` class handles CPU address translation to PRG ROM offsets.
-
-**Bank Layout Constraints**: The switchable banks contain not just course data but also critical lookup tables and code that must be preserved:
+**Bank layout constraints**: the switchable banks hold tables and code as well as course data:
 
 | Bank | Contents | Course Data Region | Available Space |
 |------|----------|-------------------|-----------------|
@@ -116,515 +61,94 @@ The codebase is organized into three main packages:
 | 2 | UK terrain + tables | $837F-$A553 | 8,661 bytes |
 | 3 | All greens + code | $81C0-$A773 | 9,652 bytes |
 
-**Important**: Bank 2 (UK) has tables BEFORE terrain at $8000-$837E. Bank 3 has decompression tables at $8000-$81BF and executable code at $A774-$BFFF. The `PackedCourseWriter` class enforces these boundaries when writing course data.
+Bank 2 has tables *before* terrain at $8000-$837E. Bank 3 has decompression tables at
+$8000-$81BF and executable code at $A774-$BFFF. `CoursePatch` (`golf/core/patches/course.py`) enforces these
+boundaries, and uses only banks 0 and 1 for terrain. Full details: the `nes-open-golf-rom-layout` skill.
 
-**Multi-Bank Mode (PackedCourseWriter)**: The default write mode packs 1-2 courses across all 3 terrain banks using per-hole bank lookup instead of per-course. This provides ~26,100 bytes total for 36 holes (~725 bytes/hole average), a 50% increase over vanilla. Key changes:
-- ROM code patch changes bank lookup from course-based to hole-based
-- Per-hole bank table written at $A700 in bank 3 (72 bytes for 36 holes)
-- Course 3 (UK) mirrors Course 1 (Japan) to support 2-course mode
-- Greens region shrinks slightly to accommodate bank table
+**One course per ROM**: `golf-write` writes a single 18-hole course with `CoursePatch`,
+packing terrain across banks 0 and 1 with a per-hole bank table at $A700 in bank 3. The
+patch requires `multi_bank_lookup`, `course_mirrors` (every course slot plays course 1)
+and `attr_streaming`, which `golf-write` applies first. See `docs/multi_bank_terrain.md`.
 
-For complete ROM layout details (all pointer table addresses, metadata tables, etc.), use the `nes-open-golf-rom-layout` skill.
+**Building ROMs**: `golf-patch` builds a ROM or IPS patch from a JSON recipe and/or inline
+`-p` steps through `PatchStack`, which checks the base ROM hash, each patch's `requires`,
+and that no two steps write the same byte. Patch types are registered in
+`golf/core/patches/registry.py`; a new patch needs an entry there to be reachable from
+recipes and the CLI. See `docs/patch_stack.md`.
 
-**Decompression**: Course terrain and greens use a custom compression scheme with three stages:
-1. RLE + dictionary expansion (codes $E0+ expand to multiple bytes)
-2. Horizontal transitions (low byte values trigger table lookups)
-3. Vertical fill (0 bytes copy from row above with transformation)
+**Two compression schemes**, easily confused:
+- Course terrain/greens: RLE + dictionary, horizontal transitions, vertical fill
+  (`golf/core/decompressor.py`, `compressor.py`; `golf/core/compression.md`). Terrain
+  tables live in the fixed bank, greens tables in bank 3.
+- *Everything the PPU displays* - pattern data, nametables, attribute tables - uses a
+  separate stream codec (`$D4C3`, `golf/core/graphics_codec.py`). The cartridge has no CHR
+  ROM, so about a third of the PRG is data in this format. See `docs/course_intro_scene.md`.
 
-Separate decompression tables exist for terrain (in fixed bank) and greens (in switchable banks).
+**Inspecting the ROM**: use `golf-rom-peek` (logic in `golf/core/rom_analysis.py`) and its
+skill rather than one-off Python. The skill documents three ways a naive byte search or
+linear disassembly silently lies about this ROM; a "no references found" is never proof
+an address is dead.
 
-**Data Model**: `HoleData` is the central model for hole information. It stores:
-- Terrain tiles (22 columns wide, variable height)
-- Terrain height (`terrain_height` field) - visible height, separate from physical terrain data length
-- Greens tiles (24x24 grid)
-- Attributes (palette indices for 2x2 supertiles)
-- Metadata (par, distance, tee/green positions, flag positions, scroll_limit)
-
-**Terrain Height Architecture**: The editor uses a dual-height system for terrain:
-- **Physical terrain data** (`terrain` list): Can hold up to 48 rows of tile data
-- **Visible terrain height** (`terrain_height` field): Controls how many rows are rendered (30-48 rows)
-- **Soft removal**: Removing rows decreases `terrain_height` but preserves data in the `terrain` list
-- **Smart restoration**: Adding rows restores hidden data (if present) before creating new rows
-- **Scroll limit**: Auto-calculated as `(terrain_height - 28) / 2` and updated on every add/remove operation
-
-**Row Operations Constraints**:
-- **Minimum**: 30 rows (firm minimum)
-- **Maximum**: 48 rows (firm maximum)
-- **Pair operations**: Rows are always added/removed in pairs of 2 to maintain even count
-- **Even row count**: All holes must have an even number of rows
-
-**JSON Format**: Holes are stored as JSON with hex-encoded tile rows (e.g., "A2 A3 A0 A1"). This compact format is human-readable and can be directly edited. The `terrain.height` field stores the visible terrain height, which may be less than the number of rows in the `terrain.rows` array (soft removal).
-
-**CHR Graphics**: NES graphics use 8x8 tiles stored in CHR format. The codebase requires extracted CHR binaries for terrain and greens tilesets. `Tileset` class handles loading and rendering CHR tiles with NES palettes.
-
-**Sprite Rendering**: Sprite definitions in `data/sprites/*.json` define NES sprite-based objects (ball, flag, tee markers) with tile data and palette information.
-
-### Course Data Organization
-
-- **3 courses**: Japan, US, UK (in that order - Japan was developed first)
-- **18 holes per course** (54 total holes)
-- **Course files**: `courses/{country}/hole_{01-18}.json` and `courses/{country}/course.json`
-- **Coordinates**: All positions use pixel coordinates (x, y)
-
-### Important Coordinate Systems
-
-- **Terrain tiles**: 22 tiles wide, visible height 30-48 rows (always even)
-- **Supertiles**: 2x2 tile blocks used for attribute (palette) mapping
-- **Attributes**: 11 columns wide (12 supertiles minus 1 HUD column)
-- **Greens tiles**: Fixed 24x24 grid centered at green position
-- **Screen coordinates**: Editor uses scrollable viewport with zoom
-
-### NES-Specific Details
-
-- **Palettes**: 4 palettes of 4 colors each for terrain; separate palettes for greens
-- **Attributes**: Packed as 4 2-bit values per byte covering 4x4 tile areas
-- **BCD encoding**: Distances stored as Binary-Coded Decimal
-- **Bank numbers**: Course data bank determined by `TABLE_COURSE_BANK_TERRAIN`
-
-### Editor Architecture (THREE-LAYER PATTERN)
-
-The editor uses a **strict three-layer architecture**. Violating these boundaries causes architectural drift and should be avoided:
-
-#### Layer 1: Input Translation (EventHandler)
-**Purpose:** Translate pygame events into high-level actions
-**Location:** `editor/controllers/event_handler.py`
-
-**MUST:**
-- Route events to appropriate handlers (tools, pickers, toolbar)
-- Call Application callbacks for state-changing operations
-- Delegate tool operations to ToolManager
-
-**MUST NOT:**
-- Modify EditorState, HoleData, or any application state directly
-- Implement tool logic (that belongs in tools)
-- Make decisions about what state to change
-
-**Example:**
-```python
-# GOOD: Delegate to callback
-if key == pygame.K_TAB:
-    self.on_mode_change()
-
-# BAD: Change state directly
-if key == pygame.K_TAB:
-    self.state.mode = "terrain"  # WRONG LAYER!
-```
-
-#### Layer 2: Coordination (Application)
-**Purpose:** Coordinate between components and manage state
-**Location:** `editor/application.py`
-
-**MUST:**
-- Handle callbacks from EventHandler
-- Update EditorState and HoleData
-- Delegate operations to tools via ToolManager
-- Invalidate caches when state changes
-- Create context objects (ViewState, RenderContext, HighlightState) for rendering
-
-**MUST NOT:**
-- Directly handle pygame events (EventHandler does this)
-- Implement tool logic (tools do this)
-
-**Example:**
-```python
-# GOOD: Coordination
-def _set_mode(self, mode: str):
-    self.state.mode = mode
-    self.invalidate_terrain_validation_cache()
-    self._update_mode_buttons()
-
-# BAD: Tool implementation
-def _paint_tile(self, pos):
-    tile = self._screen_to_tile(pos)  # Tool logic doesn't belong here
-```
-
-#### Layer 3: Execution (Tools)
-**Purpose:** Execute specific editing operations
-**Location:** `editor/tools/*.py`
-
-**MUST:**
-- Receive ToolContext with access to state
-- Execute the specific operation (paint, transform, sample, etc.)
-- Return ToolResult to signal what changed
-- Own their own state (e.g., TransformTool owns TransformToolState)
-
-**MUST NOT:**
-- Directly access Application or EventHandler
-- Handle raw pygame events (EventHandler routes them)
-
-**Example:**
-```python
-# GOOD: Tool execution
-def handle_mouse_down(self, pos, button, modifiers, context):
-    tile = view_state.screen_to_tile(pos)
-    if tile:
-        context.hole_data.set_terrain_tile(row, col, value)
-        return ToolResult.modified(terrain=True)
-```
-
-#### Context Objects
-
-The refactored architecture uses three context objects to reduce parameter passing:
-
-**ViewState** (`editor/controllers/view_state.py`)
-- Manages viewport camera (offset_x, offset_y, scale)
-- Provides coordinate conversions: `screen_to_tile()`, `tile_to_screen()`, etc.
-- **Always use ViewState methods for coordinate conversion** - don't duplicate this logic
-
-**RenderContext** (`editor/rendering/render_context.py`)
-- Bundles rendering resources: tileset, sprites, mode
-- Bundles rendering settings: show_grid, show_sprites, selected_flag_index
-
-**HighlightState** (`editor/controllers/highlight_state.py`)
-- Manages temporary visual highlights: hover, transform preview, invalid tiles
-- Updated via callbacks (event-driven, not polled)
-
-#### State Management
-
-**EditorState** (`editor/controllers/editor_state.py`)
-- Application-level state: mode, canvas offset, zoom, selected palette, flags
-- Managed by Application, never by EventHandler or Tools
-
-**HoleData** (`golf/formats/hole_data.py`)
-- Course data model: terrain tiles, greens tiles, attributes, metadata
-- Modified by Tools via ToolContext
-- Supports undo/redo via UndoManager
-
-**UndoManager** (`editor/controllers/undo_manager.py`)
-- Manages undo/redo stack via snapshots
-- Tools call `context.state.undo_manager.push_state()` before modifications
-
-### Common Pitfalls to Avoid
-
-**❌ DON'T: Put state changes in EventHandler**
-```python
-# BAD - EventHandler should not modify state
-def _handle_key_down(self, event):
-    if event.key == pygame.K_g:
-        self.state.show_grid = not self.state.show_grid  # WRONG!
-```
-
-```python
-# GOOD - EventHandler calls callback, Application changes state
-def _handle_key_down(self, event):
-    if event.key == pygame.K_g:
-        self.on_toggle_grid()  # Application handles it
-```
-
-**❌ DON'T: Duplicate coordinate conversion logic**
-```python
-# BAD - Reimplementing screen_to_tile
-local_x = pos[0] - canvas_rect.x + offset_x
-local_y = pos[1] - canvas_rect.y + offset_y
-tile_col = local_x // tile_size
-```
-
-```python
-# GOOD - Use ViewState
-tile = view_state.screen_to_tile(pos)
-```
-
-**❌ DON'T: Bypass ToolManager**
-```python
-# BAD - Directly calling tool methods
-if shift_held:
-    transform_tool.handle_mouse_down(pos, button, mods, ctx)
-```
-
-```python
-# GOOD - Let ToolManager route
-tool = self.tool_manager.get_active_tool()
-if tool:
-    result = tool.handle_mouse_down(pos, button, mods, ctx)
-```
-
-**❌ DON'T: Recreate UI components on resize**
-```python
-# BAD - Creates new buttons every resize
-def on_resize(self, width, height):
-    self.buttons = self._create_buttons()  # Memory leak!
-```
-
-```python
-# GOOD - Update existing components
-def on_resize(self, width, height):
-    self.toolbar.resize(width)  # Updates positions only
-```
-
-**❌ DON'T: Poll for state in render loop**
-```python
-# BAD - Checking state every frame
-def render(self):
-    if pygame.key.get_mods() & pygame.KMOD_SHIFT:
-        hover = self.picker.get_hovered_tile()  # Inefficient!
-```
-
-```python
-# GOOD - Use callbacks
-def __init__(self):
-    self.picker = TilePicker(..., on_hover_change=self._on_hover)
-
-def _on_hover(self, tile):
-    if pygame.key.get_mods() & pygame.KMOD_SHIFT:
-        self.highlight_state.set_picker_hover(tile)  # Event-driven
-```
+**Writing new 6502 code**: use `golf/core/asm6502.py` (two-pass, labels, local labels,
+`.org/.byte/.word/.res/.align`, branch-range checks) rather than hand-assembling byte
+arrays. Existing small patches in `golf/core/patches/` predate it and stay as they are.
 
 ## Development Notes
 
-### Adding New Tools
+### Adding CLI tools
 
-To add a new command-line tool:
-1. Create the tool as a Python module in `tools/` with a `main()` function
-2. Add an entry point in `pyproject.toml` under `[project.scripts]`
-3. Tools become available as `golf-<tool-name>` after running `uv sync`
+1. Put the tool in the matching `tools/` subpackage (or the top level if none fits) with a
+   `main()` function. Keep it a thin CLI: logic that tests or other tools would import
+   belongs in `golf/`.
+2. Add an entry point under the matching comment group in `[project.scripts]` in
+   `pyproject.toml`, then `uv sync`.
+3. Add it to the command index in `README.md`.
 
-Example: `golf-expand-dict = "tools.expand_dict:main"` makes `golf-expand-dict` available as a command.
+### Keeping the repo navigable
 
-### Adding Editor Tools
+The indexes and pointers above only stay useful if changes keep them current:
 
-Editor tools are classes that handle specific editing operations. The editor uses three types of tools:
+- **New or renamed doc**: add it to `docs/README.md`.
+- **Moving or renaming a file**: grep for the old path across the CLAUDE.md files,
+  `docs/` and `.claude/skills/`, and fix every reference - tests catch backticked paths in
+  the agent-facing docs, but not prose or the individual docs under `docs/`.
+- **Rules that only apply to one area** go in that area's nested CLAUDE.md (create one if
+  needed), keeping this file about repo-wide concerns.
+- **Skills are versioned in `.claude/skills/`**: when you learn something a skill should
+  say, or find a statement in one that is no longer true, edit the skill.
 
-**Tool Types:**
+`tests/meta/` holds tests of the repository itself, which enforce the mechanical parts:
 
-1. **Modal Tools** (Paint, Transform, Forest Fill): Persistent modes shown in tool picker
-   - Remain active until user switches to another tool
-   - Implement `get_hotkey()` to define activation hotkey ('P', 'T', 'F')
-   - Use `on_activated`/`on_deactivated` for lifecycle management
-   - Example: Forest Fill stays active; each click fills a region
+- `test_cli_index.py` - every entry point is in the `README.md` command index
+- `test_entry_points.py` - every entry point's module and function resolve
+- `test_docs_index.py` - every doc is in `docs/README.md`, and its links resolve
+- `test_referenced_paths.py` - backticked paths in the CLAUDE.md files, `README.md`,
+  `docs/README.md` and the skills exist
+- `test_tools_layering.py` - nothing imports from `tools/`, and `tools/archive/` has no entry points
+- `test_import_order.py` - every `golf` module imports cleanly in a fresh interpreter
 
-2. **Service Tools** (Eyedropper): Not in picker, used via delegation
-   - Called by other tools (e.g., Paint delegates right-click to Eyedropper)
-   - No hotkey, no picker presence
-   - Accessed via `context.get_eyedropper_tool()`
+### JSON inspection
 
-3. **Action Tools** (Add Row, Remove Row): Tool picker buttons that execute immediately
-   - Appear in tool picker with icon and hotkey
-   - Execute operation in `on_activated()` when clicked or hotkey pressed
-   - Don't change active tool (previous tool stays active)
-   - Can be clicked multiple times in succession to repeat the action
-   - Implement `is_action_tool()` returning `True` for identification
-   - Registered with `is_action=True` in ToolPicker
-   - ToolManager detects and handles specially in `set_active_tool()`
-   - Example: Add Row adds a terrain row at bottom, Remove Row removes a row
-
-4. **Dialog Tools** (Metadata Editor): Tools that open a dialog and revert when done
-   - Appear in tool picker with icon and hotkey
-   - Show as active in picker while dialog is open
-   - Open modal dialog in `on_activated()`
-   - Call `context.request_revert_to_previous_tool()` when dialog closes
-   - Automatically switch back to the previously active tool
-   - Example: Metadata Editor opens dialog, shows as active, reverts to Paint when closed
-
-**To add a modal tool:**
-
-1. Create tool class implementing Tool protocol in `editor/tools/your_tool.py`:
-```python
-import pygame
-
-class YourTool:
-    def handle_mouse_down(self, pos, button, modifiers, context):
-        # Handle mouse press
-        return ToolResult.handled()
-
-    def handle_mouse_up(self, pos, button, context):
-        return ToolResult.not_handled()
-
-    def handle_mouse_motion(self, pos, context):
-        return ToolResult.not_handled()
-
-    def handle_key_down(self, key, modifiers, context):
-        return ToolResult.not_handled()
-
-    def handle_key_up(self, key, context):
-        return ToolResult.not_handled()
-
-    def on_activated(self, context):
-        pass
-
-    def on_deactivated(self, context):
-        pass
-
-    def reset(self):
-        pass
-
-    def get_hotkey(self):
-        """Return pygame key constant for activation hotkey."""
-        return pygame.K_y  # 'Y' key activates this tool
-```
-
-2. Register in Application.__init__:
-```python
-self.tool_manager.register_tool("your_tool", YourTool())
-```
-
-3. Add to tool picker:
-```python
-self.tool_picker.register_tool("your_tool", "Your Tool", "🔧")
-```
-
-**To add an action tool:**
-
-1. Create tool class implementing Tool protocol with `is_action_tool()` in `editor/tools/your_action_tool.py`:
-```python
-import pygame
-from .base_tool import ToolContext, ToolResult
-
-class YourActionTool:
-    def handle_mouse_down(self, pos, button, modifiers, context):
-        return ToolResult.not_handled()  # All handlers return not_handled
-
-    def handle_mouse_up(self, pos, button, context):
-        return ToolResult.not_handled()
-
-    def handle_mouse_motion(self, pos, context):
-        return ToolResult.not_handled()
-
-    def handle_key_down(self, key, modifiers, context):
-        return ToolResult.not_handled()
-
-    def handle_key_up(self, key, context):
-        return ToolResult.not_handled()
-
-    def on_activated(self, context: ToolContext):
-        """Execute the action here."""
-        # Push undo, modify data, etc.
-        context.state.undo_manager.push_state(context.hole_data)
-        # Perform operation...
-
-    def on_deactivated(self, context: ToolContext):
-        pass
-
-    def reset(self):
-        pass
-
-    def get_hotkey(self):
-        """Return pygame key constant for hotkey."""
-        return pygame.K_y  # Example: 'Y' key
-
-    def is_action_tool(self):
-        """Identify this as an action tool."""
-        return True
-```
-
-2. Register in Application.__init__:
-```python
-self.tool_manager.register_tool("your_action", YourActionTool())
-```
-
-3. Add to tool picker with is_action=True:
-```python
-self.tool_picker.register_tool("your_action", "Your Action", "⚡", is_action=True)
-```
-
-The `is_action=True` parameter tells the tool picker to:
-- Always execute the tool when clicked (even if already "selected")
-- Never update the selected tool (keeps previous modal tool active)
-- This enables clicking the button multiple times in succession
-
-**To add a dialog tool:**
-
-1. Create tool class that opens a dialog and requests revert on close:
-```python
-import pygame
-from .base_tool import ToolContext, ToolResult
-
-class YourDialogTool:
-    def __init__(self):
-        self.dialog = None
-
-    def handle_mouse_down(self, pos, button, modifiers, context):
-        if self.dialog:
-            # Delegate to dialog, check if it wants to close
-            if self.dialog.handle_event(...):
-                return self._close_dialog(context)
-        return ToolResult.handled()
-
-    def on_activated(self, context: ToolContext):
-        """Create and show dialog when activated."""
-        self.dialog = YourDialog(...)
-
-    def on_deactivated(self, context: ToolContext):
-        """Clean up when tool is deactivated."""
-        self.dialog = None
-
-    def _close_dialog(self, context: ToolContext) -> ToolResult:
-        """Close dialog and revert to previous tool."""
-        self.dialog = None
-        # Request automatic revert to previous tool
-        context.request_revert_to_previous_tool()
-        return ToolResult.handled()
-
-    def get_hotkey(self):
-        return pygame.K_d  # Example: 'D' key
-
-    def render_overlay(self, screen):
-        """Render dialog if active."""
-        if self.dialog:
-            self.dialog.render(screen)
-```
-
-2. Register normally (no special parameters needed):
-```python
-self.tool_manager.register_tool("your_dialog", YourDialogTool())
-self.tool_picker.register_tool("your_dialog", "Your Dialog", "💬")
-```
-
-The dialog tool pattern:
-- Shows as active in picker while dialog is open
-- User can interact with dialog via tool's event handlers
-- When dialog closes, `context.request_revert_to_previous_tool()` switches back
-- Previous tool becomes active again automatically
-
-**Hotkey Conflicts**: ToolManager validates uniqueness on registration and throws ValueError on conflicts.
-
-**Reserved Keys**: G (grid), Tab (mode), 1-3 (flags), Ctrl+Z/Y (undo/redo), Ctrl+S (save), Ctrl+X (invalid tiles), P/T/F/C/S/M/D/U (tool hotkeys), = (add row), - (remove row)
-
-**Tool Best Practices:**
-- Return `ToolResult.modified()` when data changes (triggers re-render)
-- Return `ToolResult.handled()` when event is consumed but no change
-- Return `ToolResult.not_handled()` to let other handlers process event
-- Push undo state BEFORE modifying data: `context.state.undo_manager.push_state(context.hole_data)`
-- Use `context.get_selected_tile()` / `context.set_selected_tile()` for mode-agnostic tile access
-- Store tool-specific state as instance variables (e.g., `self.is_painting`)
-
-**Forest Fill Behavior**: When Forest Fill tool is active, clicking inside a forest placeholder region fills only that region (not all regions). Tool stays active for multiple clicks.
+When inspecting JSON files in `courses/` and `data/`, prefer `jq` over `python -c` one-liners.
 
 ## Testing
 
-### Running Tests
-
-A comprehensive test suite for the compression system is located in the `tests/` directory. Tests are written using pytest and cover both unit and integration testing.
-
-Tests must be executed and must pass after all changes.  There are no "ok failures".  Ever.
+Tests must be executed and must pass after all changes. There are no "ok failures". Ever.
 
 ```bash
-# Run all tests with coverage
-pytest
-
-# Run only unit tests
-pytest tests/unit/
-
-# Run only integration tests
-pytest tests/integration/
-
-# Run specific test file
-pytest tests/unit/test_vertical_fill.py -v
-
-# Run with verbose output and see print statements
-pytest -v -s
+uv run pytest                                   # everything, with coverage, across all cores
+uv run pytest tests/unit/                       # unit tests only
+uv run pytest tests/integration/                # integration tests only
+uv run pytest tests/meta/                       # tests of the repo's docs, indexes and layering
+uv run pytest tests/unit/test_vertical_fill.py  # one file
+uv run pytest -n 0                              # serially, when a worker's output is in the way
 ```
 
-### Test Structure
-
-- **Unit Tests** (`tests/unit/`)
-- **Integration Tests** (`tests/integration/`)
-- **Test Fixtures** (`tests/fixtures/` and `tests/conftest.py`):
-  - Real compression tables from `data/tables/compression_tables.json`
-  - Mock minimal tables for unit testing
-  - Real hole data from `courses/japan/`
-  - Hand-crafted test fixtures (simple terrain/greens)
+Fixtures live in `tests/fixtures/` and `tests/conftest.py`: real compression tables from
+`data/tables/compression_tables.json`, minimal mock tables, real holes from `courses/japan/`,
+and hand-crafted terrain/greens.
 
 ## Claude Code Preferences
 
-- **Commit messages**: Please do not author commit messages. I prefer to write them myself to capture the specific context and rationale.
-- **Updating this file**: When planning changes that would contradict or obsolete information in this CLAUDE.md file, include a step in your plan to update CLAUDE.md accordingly. This ensures architectural documentation stays current with the codebase.
+- **Commit messages**: Please do not author commit messages. I prefer to write them myself to capture the specific context and rationale.  Claude does not need to happily announce the fact that no commit has been made, it is assumed.
+- **Updating documentation**: When planning changes that would contradict or obsolete information in this CLAUDE.md file, a nested one, a doc under `docs/`, or a skill, include a step in your plan to update it accordingly. This ensures documentation stays current with the codebase; the tests in `tests/meta/` can only check that references exist, not that what they say is still true.
