@@ -93,6 +93,10 @@ localhost.
   updates the user's entry and produces a ROM that can submit.
 - The QR endpoint requires nothing: the phone doing the scan may not be signed in, and
   the MAC is the authentication.
+- The admin pages under `/admin` admit the signed-in users whose Discord ids
+  `GOLF_ADMIN_USERS` lists (`dev:<name>` under the bypass), checked on every request.
+  Anyone else gets the not-found page, and nothing links to them. Admin actions are POSTs,
+  which a cross-site form cannot make signed in under the SameSite=lax cookie.
 
 Generation is rate limited, since it is the one request a stranger can use to make the
 server do work and store bytes. A token bucket in process memory on `POST /generate`,
@@ -114,11 +118,13 @@ cannot submit.
 | Table | Holds |
 |---|---|
 | `users` | Internal id, Discord id (`dev:<name>` for bypass users), Discord `username` and `global_name` (pages show `global_name`, falling back to `username`), avatar hash, a random unique nonzero uint32 `player_id` drawn at first sign-in, created_at, last_login. Names and avatar are refreshed on every sign-in |
-| `seeds` | A 10-character base62 id for URLs and the same value as an integer, `qr_seed_id`, both unique; manifest JSON, generator and catalog versions, curation stamp, the unfinished IPS blob, nullable creator, created_at |
+| `seeds` | A 10-character base62 id for URLs and the same value as an integer, `qr_seed_id`, both unique; manifest JSON, generator and catalog versions, curation stamp, the unfinished IPS blob, nullable creator, created_at, and `rebuilt_at` once an admin's rebuild changed the IPS |
 | `seed_holes` | seed, position 1-18, catalog hole id, transforms, par, wind seed, pin index, wind direction anchor, wind speed anchor. Pure denormalization of the manifest for SQL stats; a migration can always backfill it |
 | `entries` | One per (seed, user), unique. The player's choices at their latest download (name, clubs), one MAC key per slot, created_at, updated_at |
-| `submissions` | entry, slot, raw payload, total strokes, total putts, received_at, flagged. Unique on (entry, slot), which is the first-submission rule |
+| `submissions` | entry, slot, raw payload, total strokes, total putts, received_at, flagged, with an admin-only flag note. Unique on (entry, slot), which is the first-submission rule |
 | `submission_holes` | submission, position, strokes, putts. Joins to `seed_holes` on (seed, position) |
+| `voided_submissions` | A round an admin voided: entry, slot, the payload (unique, and holding every hole, so no hole rows), received_at, its flag and note, voided_at, an admin-only note. A scan of a voided payload is refused; restoring moves it back while its slot is empty |
+| `admin_actions` | The audit log: admin, action, target type and id, the admin's note, a JSON detail object, created_at. Who flagged, voided, restored or rebuilt anything, and every target's history, is read from here rather than from columns on the thing itself |
 
 An entry is the record that a signed-in player has entered a seed, in the tournament
 sense. Downloading again updates the entry's choices and finishes with the same
@@ -135,6 +141,14 @@ two apart, so a slot 1 submission is recorded against the same entry as the team
 round. Keys are per (entry, slot) so a leaked key is good for one seed only, and they
 never appear in a manifest. Resolving a scan is: seed ID to seed, player ID to user, the
 entry for that pair, the key for that slot.
+
+#### The audit log
+
+Each admin action inserts one `admin_actions` row through `audit.record`, on the connection
+of the transaction that makes the change. Nothing records who acted in a column of its own,
+so adding an action needs no migration, nothing overwrites an earlier action, and an action
+whose transaction rolls back leaves no row. `detail` holds what the action needs remembered
+beyond its target, such as `{"changed": false}` for a rebuild that produced the same IPS.
 
 #### Generating player_id
 
@@ -190,7 +204,9 @@ qr_seed_id INTEGER NOT NULL UNIQUE CHECK (qr_seed_id BETWEEN 1 AND 8392993658683
 | `GET /s/<48 chars>` | QR submission: decode, verify MAC, record, render the result or the rejection |
 | `GET /auth/login`, `GET /auth/callback`, `POST /auth/logout` | Discord sign-in |
 | `GET /me` | The player's entries and rounds. Signed out, redirects to sign-in |
-| `GET /admin/...` | Seeds, submissions, flag, rebuild. Token gated |
+| `GET /admin/...` | Counts, seeds, rounds (flagged filter), users, voided rounds, admin activity, and each seed, round and user. Admins only |
+| `POST /admin/seeds/<id>/rebuild` | Build the unfinished IPS again; a changed one is stored and stamped, an identical one writes nothing |
+| `POST /admin/submissions/<id>/flag`, `.../unflag`, `.../void`; `POST /admin/voided/<id>/restore` | Flag with a note, clear the flag, void with a note, restore into an empty slot |
 | `GET /healthz` | For the reverse proxy |
 
 Everything is a form or a link. The only fetch from JavaScript is the IPS.
@@ -201,8 +217,8 @@ the file names in `golf/randomizer/roms.py` (`nes_open_us.nes`, `mario_open_jp.n
 directory `GOLF_HOLES_DIR`, the public base URL `GOLF_BASE_URL` (also the OAuth redirect
 base; the QR URL prefix is assembled into the port and fixed before the first public seed
 ships), the Discord client id and secret `GOLF_DISCORD_CLIENT_ID` and
-`GOLF_DISCORD_CLIENT_SECRET`, the session secret `GOLF_SESSION_SECRET`, the admin token
-`GOLF_ADMIN_TOKEN`, and the development login bypass `GOLF_DEV_LOGIN`.
+`GOLF_DISCORD_CLIENT_SECRET`, the session secret `GOLF_SESSION_SECRET`, the admin users
+`GOLF_ADMIN_USERS`, and the development login bypass `GOLF_DEV_LOGIN`.
 
 ## Development plan
 
@@ -316,7 +332,23 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
     `tests/integration/test_server_submission_rom.py` downloads a signed-in ROM, builds both
     players' URLs by running its QR routine in the simulator, and records them. Playtest a
     round through to a recorded scan.
-13. **Admin.** Token-gated views of seeds and submissions, flag, and rebuild a seed.
+13. **Admin.** Done: migration 5 adds `seeds.rebuilt_at` and `rebuilt_by`, the flag note and
+    `flagged_by`, and `voided_submissions`. `Config.admin_users` (`GOLF_ADMIN_USERS`) replaces
+    the token. `server/admin.py` holds the admin pages' queries and `server/admin_routes.py`
+    their router, behind `require_admin`; the templates in `server/templates/admin/` write
+    their own English. `server/seeds.py`'s `rebuild_seed` stores a changed IPS only;
+    `server/submissions.py` gains `flag_round`, `unflag_round`, `void_round` and
+    `restore_round`, refuses a voided payload as unrecognized, and logs every rejection's
+    exact cause at WARNING. Every action logs itself through `server/audit.py`, the only
+    writer of `admin_actions`, inside the transaction that makes the change; the admin pages
+    read who acted and each seed's and round's history from that log, and `/admin/activity`
+    lists it. A round is logged by its payload as base64url, not its `submissions.id`, which
+    changes across a void and restore and can be reused, so one history follows a round
+    through being voided and restored. The seed page and `/me` mark flagged rounds, and the
+    seed page shows a rebuild's date. `tests/unit/test_server_admin.py` and the admin tests in
+    `test_server_submissions.py`, `test_server_seeds.py`, `test_server_db.py` and
+    `test_server_config.py` run without a ROM; `tests/integration/test_server_generate_rom.py`
+    rebuilds a fresh seed with the real builder and finds it unchanged.
 14. **Vanilla data out of the repository.** The ROM rehydration script that regenerates
     the course directories from the server's vanilla ROMs, verified against the index's
     content hashes with `golf-catalog-sync --check`, then strip the course data from the

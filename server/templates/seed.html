@@ -4,6 +4,7 @@
 <hgroup>
   <h1 class="magic-words">{{ seed.magic_words|join(" ") }}</h1>
   <p>{{ t("seed.tagline", id=seed.id, created=seed.created_at) }}</p>
+  {% if seed.rebuilt_at %}<p>{{ t("seed.rebuilt", rebuilt=seed.rebuilt_at) }}</p>{% endif %}
 </hgroup>
 
 {% set download = seed.download %}
@@ -120,7 +121,7 @@
         {% for round in rounds %}
         <tr>
           <td>{% if round.slot == 1 %}{{ t("seed.rounds.player_two", name=round.player_name) }}{% else %}{{ round.player_name }}{% endif %}</td>
-          <td class="num">{{ round.total_strokes }}</td>
+          <td class="num">{{ round.total_strokes }}{% if round.flagged %} {{ t("seed.rounds.flagged") }}{% endif %}</td>
           <td class="num">{{ round.total_putts }}</td>
           <td>{{ round.received_at }}</td>
         </tr>

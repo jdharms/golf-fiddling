@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% import "admin/_admin.html" as admin %}
+{% block title %}Voided rounds - Admin{% endblock %}
+{% block content %}
+{{ admin.nav() }}
+<h1>Voided rounds</h1>
+{{ admin.result_notice(result) }}
+{% if listing.items %}
+<div class="overflow-auto">
+  <table class="striped">
+    <thead>
+      <tr>
+        <th scope="col">Seed</th>
+        <th scope="col">Player</th>
+        <th scope="col">Slot</th>
+        <th scope="col" class="num">Strokes</th>
+        <th scope="col" class="num">Putts</th>
+        <th scope="col">Received</th>
+        <th scope="col">Voided</th>
+        <th scope="col">Note</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for round in listing.items %}
+      <tr>
+        <td>{{ admin.words(round.seed_id, round.magic_words) }}</td>
+        <td><a href="/admin/users/{{ round.user_id }}">{{ round.user_name }}</a></td>
+        <td>{{ admin.slot_label(round.slot) }}</td>
+        <td class="num">{{ round.total_strokes }}</td>
+        <td class="num">{{ round.total_putts }}</td>
+        <td>{{ round.received_at }}</td>
+        <td>{{ round.voided_at }}{% if round.voided_by_name %} by {{ round.voided_by_name }}{% endif %}</td>
+        <td>{{ round.void_note or "" }}{% if round.flagged %} {{ admin.flag_cell(round) }}{% endif %}</td>
+        <td>
+          {% if round.slot_taken %}
+          <small>slot has a round</small>
+          {% else %}
+          <form method="post" action="/admin/voided/{{ round.id }}/restore" class="admin-inline">
+            <button type="submit" class="secondary outline">Restore</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p>No voided rounds{% if listing.number > 1 %} on this page{% endif %}.</p>
+{% endif %}
+{{ admin.pager(listing, "/admin/voided") }}
+{% endblock %}

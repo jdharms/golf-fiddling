@@ -174,7 +174,7 @@ reads its configuration from environment variables:
 | `GOLF_BASE_URL` | `http://127.0.0.1:8000` | Public base URL, also the OAuth redirect base |
 | `GOLF_DISCORD_CLIENT_ID`, `GOLF_DISCORD_CLIENT_SECRET` | unset | Discord sign-in |
 | `GOLF_SESSION_SECRET` | unset | Signs the session cookie |
-| `GOLF_ADMIN_TOKEN` | unset | Gates the admin pages |
+| `GOLF_ADMIN_USERS` | unset | Discord ids, separated by commas or spaces, of the users the `/admin` pages admit; `dev:<name>` ids only with `GOLF_DEV_LOGIN` |
 | `GOLF_DEV_LOGIN` | off | Development-only sign-in bypass (`1`, `true`, `yes` or `on`) |
 
 For development, keep these in a `.env` file in the repository root (gitignored) and run

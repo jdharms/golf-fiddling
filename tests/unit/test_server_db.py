@@ -350,3 +350,107 @@ def test_one_row_per_submission_hole(submitter_db):
     insert_submission_hole(submitter_db)
     with pytest.raises(sqlite3.IntegrityError):
         insert_submission_hole(submitter_db, strokes=5)
+
+
+# -- admin --------------------------------------------------------------------------------
+
+
+def voided_row(**overrides):
+    row = {
+        "entry_id": 1,
+        "slot": 0,
+        "payload": bytes(36),
+        "received_at": "2026-09-17T00:00:00Z",
+        "flagged": 0,
+        "voided_at": "2026-09-18T00:00:00Z",
+    }
+    row.update(overrides)
+    return row
+
+
+def insert_voided(db: Database, **overrides) -> None:
+    row = voided_row(**overrides)
+    columns = ", ".join(row)
+    marks = ", ".join(f":{name}" for name in row)
+    with db.transaction() as conn:
+        conn.execute(f"INSERT INTO voided_submissions ({columns}) VALUES ({marks})", row)
+
+
+def test_seeds_and_submissions_gain_admin_columns(submitter_db):
+    insert_submission(submitter_db)
+    with submitter_db.transaction() as conn:
+        assert conn.execute("SELECT rebuilt_at FROM seeds").fetchone()[0] is None
+        assert conn.execute("SELECT flag_note FROM submissions").fetchone()[0] is None
+
+
+def test_a_valid_voided_round_inserts(submitter_db):
+    insert_voided(submitter_db, flag_note="note", void_note="why")
+    assert "voided_submissions" in tables(submitter_db)
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"slot": 2},
+        {"payload": bytes(35)},
+        {"entry_id": 2},
+        {"flagged": 2},
+        {"received_at": None},
+        {"voided_at": None},
+    ],
+)
+def test_voided_round_constraints(submitter_db, overrides):
+    with pytest.raises(sqlite3.IntegrityError):
+        insert_voided(submitter_db, **overrides)
+
+
+def test_a_payload_is_voided_once(submitter_db):
+    insert_voided(submitter_db)
+    insert_voided(submitter_db, payload=b"\x01" * 36)
+    with pytest.raises(sqlite3.IntegrityError):
+        insert_voided(submitter_db, slot=1)
+
+
+def action_row(**overrides):
+    row = {
+        "admin_id": 1,
+        "action": "flag",
+        "target_type": "round",
+        "target_id": "A" * 48,
+        "created_at": "2026-09-18T00:00:00Z",
+    }
+    row.update(overrides)
+    return row
+
+
+def insert_action(db: Database, **overrides) -> None:
+    row = action_row(**overrides)
+    columns = ", ".join(row)
+    marks = ", ".join(f":{name}" for name in row)
+    with db.transaction() as conn:
+        conn.execute(f"INSERT INTO admin_actions ({columns}) VALUES ({marks})", row)
+
+
+def test_an_action_inserts_with_an_empty_detail(submitter_db):
+    insert_action(submitter_db, note="why 6?")
+    with submitter_db.transaction() as conn:
+        assert tuple(conn.execute("SELECT note, detail FROM admin_actions").fetchone()) == ("why 6?", "{}")
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"admin_id": 99},
+        {"admin_id": None},
+        {"action": None},
+        {"target_type": None},
+        {"target_id": None},
+        {"created_at": None},
+        {"detail": "not json"},
+        {"detail": "[1]"},
+        {"detail": None},
+    ],
+)
+def test_action_constraints(submitter_db, overrides):
+    with pytest.raises(sqlite3.IntegrityError):
+        insert_action(submitter_db, **overrides)

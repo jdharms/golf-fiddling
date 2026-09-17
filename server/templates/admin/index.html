@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% import "admin/_admin.html" as admin %}
+{% block title %}Admin{% endblock %}
+{% block content %}
+{{ admin.nav() }}
+<h1>Admin</h1>
+<div class="overflow-auto">
+  <table class="admin-counts">
+    <tbody>
+      <tr><th scope="row"><a href="/admin/seeds">Seeds</a></th><td class="num">{{ counts.seeds }}</td></tr>
+      <tr><th scope="row"><a href="/admin/users">Users</a></th><td class="num">{{ counts.users }}</td></tr>
+      <tr><th scope="row">Entries</th><td class="num">{{ counts.entries }}</td></tr>
+      <tr><th scope="row"><a href="/admin/submissions">Rounds</a></th><td class="num">{{ counts.rounds }}</td></tr>
+      <tr><th scope="row"><a href="/admin/submissions?flagged=true">Flagged rounds</a></th><td class="num">{{ counts.flagged }}</td></tr>
+      <tr><th scope="row"><a href="/admin/voided">Voided rounds</a></th><td class="num">{{ counts.voided }}</td></tr>
+      <tr><th scope="row"><a href="/admin/activity">Admin actions</a></th><td class="num">{{ counts.actions }}</td></tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -19,6 +19,7 @@ from golf.randomizer.generate import GenerationError
 from golf.randomizer.manifest import required_roms
 from golf.randomizer.roms import VANILLA_ROMS
 
+from .admin_routes import admin_router
 from .auth import (
     DEV_DISCORD_PREFIX,
     DEV_NAME,
@@ -156,6 +157,7 @@ def create_app(
     templates.env.globals["t"] = strings.html
     templates.env.globals["t_plain"] = strings.plain
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    app.include_router(admin_router(templates))
 
     def not_found() -> HTTPException:
         return HTTPException(status_code=404)

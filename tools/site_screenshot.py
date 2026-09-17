@@ -191,7 +191,8 @@ def main() -> int:
     parser.add_argument(
         "--login",
         metavar="NAME",
-        help="sign each browser in as the development user NAME before capturing (turns on the login bypass)",
+        help="sign each browser in as the development user NAME before capturing (turns on the login bypass, "
+        "and makes NAME an admin so /admin pages capture)",
     )
     args = parser.parse_args()
 
@@ -210,7 +211,9 @@ def main() -> int:
     config = replace(Config.from_env(), database=":memory:")
     if args.login:
         # The bypass only runs on a localhost base URL, which the served app is.
-        config = replace(config, dev_login=True, base_url="http://127.0.0.1:8000")
+        config = replace(
+            config, dev_login=True, base_url="http://127.0.0.1:8000", admin_users=frozenset({f"dev:{args.login}"})
+        )
     # Every viewport and scheme may generate a seed, more than a player's bucket holds.
     limiter = RateLimiter(capacity=1000, refill_seconds=1)
     try:
