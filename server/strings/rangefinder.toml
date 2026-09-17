@@ -48,6 +48,10 @@ text = "Green"
 note = "button removing every measurement waypoint"
 text = "Clear"
 
+[rangefinder.copy_permalink]
+note = "button copying a link to the selected course and hole"
+text = "Copy Permalink"
+
 [rangefinder.load_error]
 note = "notice shown when the rangefinder metadata cannot be loaded"
 text = "Error loading Rangefinder metadata"
@@ -107,3 +111,11 @@ text = "{distance}y"
 [rangefinder.script.flag]
 note = "plain: selected flag position and total positions; receives current and total"
 text = "Flag {current}/{total}"
+
+[rangefinder.script.permalink_copied]
+note = "plain: status confirming that the link to the selected course and hole was copied"
+text = "Copied!"
+
+[rangefinder.script.permalink_failed]
+note = "plain: status saying that the browser could not copy the link"
+text = "Couldn't save link to the clipboard"

@@ -14,6 +14,8 @@ const text = {
   zoom: (level) => t("rangefinder.script.zoom", { level }),
   segment: (distance) => t("rangefinder.script.segment", { distance: distance.toFixed(1) }),
   flag: (current, total) => t("rangefinder.script.flag", { current, total }),
+  permalinkCopied: () => t("rangefinder.script.permalink_copied"),
+  permalinkFailed: () => t("rangefinder.script.permalink_failed"),
 };
 
 function resolveAssetPaths(metadata, metadataUrl) {
@@ -35,15 +37,38 @@ function pointOnImage(event, ui) {
   };
 }
 
+function locationFromUrl(metadata) {
+  const params = new URLSearchParams(window.location.search);
+  const requestedCourse = params.get("course");
+  const courseId = Object.hasOwn(metadata.courses, requestedCourse)
+    ? requestedCourse
+    : Object.keys(metadata.courses)[0];
+  const course = metadata.courses[courseId];
+  const requestedHole = Number(params.get("hole"));
+  const holeNumber = course.holes.some((hole) => hole.number === requestedHole)
+    ? requestedHole
+    : course.holes[0].number;
+  return { courseId, holeNumber };
+}
+
+function updatePermalink(courseId, holeNumber) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("course", courseId);
+  url.searchParams.set("hole", String(holeNumber));
+  window.history.replaceState(window.history.state, "", url);
+  document.getElementById("permalink-status").textContent = "";
+}
+
 async function initialize() {
   try {
     const metadataUrl = new URL(root.dataset.metadataUrl, document.baseURI);
     const response = await fetch(metadataUrl);
     if (!response.ok) throw new Error(`metadata request returned ${response.status}`);
     const metadata = resolveAssetPaths(await response.json(), metadataUrl);
+    const initialLocation = locationFromUrl(metadata);
     const state = new MeasurementState();
     const renderer = new OverlayRenderer(document.getElementById("overlay-canvas"), text.segment);
-    const ui = new UIController(metadata, state, renderer, text);
+    const ui = new UIController(metadata, state, renderer, text, updatePermalink);
     const greenModal = new GreenModal(text.flag);
     const container = document.querySelector(".rangefinder-image-container");
 
@@ -68,6 +93,16 @@ async function initialize() {
     document.getElementById("green-view").addEventListener("click", () => {
       if (ui.currentHole) greenModal.open(ui.currentHole, ui.zoomLevel);
     });
+    document.getElementById("copy-permalink").addEventListener("click", async () => {
+      const status = document.getElementById("permalink-status");
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        status.textContent = text.permalinkCopied();
+      } catch (error) {
+        console.warn("Could not copy rangefinder permalink", error);
+        status.textContent = text.permalinkFailed();
+      }
+    });
     document.addEventListener("keydown", (event) => {
       if (greenModal.isOpen) {
         if (event.key === "ArrowLeft" || event.key === "ArrowRight") event.preventDefault();
@@ -81,7 +116,7 @@ async function initialize() {
       if (event.key.toLowerCase() === "g" && ui.currentHole) greenModal.open(ui.currentHole, ui.zoomLevel);
     });
 
-    ui.loadHole(Object.keys(metadata.courses)[0], 1);
+    ui.loadHole(initialLocation.courseId, initialLocation.holeNumber);
     root.dataset.state = "ready";
   } catch (error) {
     console.error("Failed to initialize rangefinder", error);
