@@ -35,7 +35,8 @@ class Config:
     discord_client_id: str | None = None
     discord_client_secret: str | None = None
     session_secret: str | None = None
-    admin_token: str | None = None
+    #: the Discord ids (`dev:<name>` under the bypass) of the users the admin pages admit
+    admin_users: frozenset[str] = frozenset()
     #: the development-only login bypass
     dev_login: bool = False
 
@@ -54,7 +55,7 @@ class Config:
             discord_client_id=get("discord_client_id"),
             discord_client_secret=get("discord_client_secret"),
             session_secret=get("session_secret"),
-            admin_token=get("admin_token"),
+            admin_users=frozenset((get("admin_users") or "").replace(",", " ").split()),
             dev_login=(get("dev_login") or "").strip().lower() in TRUE_WORDS,
         )
 
@@ -67,9 +68,15 @@ class Config:
         """Discord sign-in is configured, or the development bypass stands in for it."""
         return self.dev_login or self.discord_enabled
 
+    def is_admin(self, discord_id: str) -> bool:
+        return discord_id in self.admin_users
+
     def validate(self) -> None:
         """Refuse settings that would be unsafe to serve. Raises ConfigError."""
         if self.dev_login and urlsplit(self.base_url).hostname not in LOCAL_HOSTS:
             raise ConfigError(f"the development login bypass only runs on localhost, not {self.base_url}")
         if self.discord_enabled and not self.session_secret:
             raise ConfigError("Discord sign-in needs a session secret (GOLF_SESSION_SECRET)")
+        dev_admins = sorted(user for user in self.admin_users if user.startswith("dev:"))
+        if dev_admins and not self.dev_login:
+            raise ConfigError(f"development users can only be admins with the login bypass on: {dev_admins}")

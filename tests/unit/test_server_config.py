@@ -29,7 +29,7 @@ def test_every_variable_overrides_its_field():
             "GOLF_DISCORD_CLIENT_ID": "client",
             "GOLF_DISCORD_CLIENT_SECRET": "secret",
             "GOLF_SESSION_SECRET": "session",
-            "GOLF_ADMIN_TOKEN": "admin",
+            "GOLF_ADMIN_USERS": "1234, 5678",
             "GOLF_DEV_LOGIN": "1",
         }
     )
@@ -41,13 +41,13 @@ def test_every_variable_overrides_its_field():
         discord_client_id="client",
         discord_client_secret="secret",
         session_secret="session",
-        admin_token="admin",
+        admin_users=frozenset({"1234", "5678"}),
         dev_login=True,
     )
 
 
 def test_empty_values_count_as_unset():
-    assert Config.from_env({"GOLF_DATABASE": "", "GOLF_ADMIN_TOKEN": ""}) == Config()
+    assert Config.from_env({"GOLF_DATABASE": "", "GOLF_ADMIN_USERS": ""}) == Config()
 
 
 @pytest.mark.parametrize("value", ["1", "true", "TRUE", "yes", "on", " Yes "])
@@ -84,3 +84,21 @@ def test_discord_sign_in_needs_a_session_secret():
     Config(discord_client_id="id", discord_client_secret="secret", session_secret="s").validate()
     Config().validate()
 
+
+
+@pytest.mark.parametrize("value", ["1234 5678", "1234,5678", " 1234 ,\t5678, "])
+def test_admin_users_are_separated_by_commas_or_whitespace(value):
+    assert Config.from_env({"GOLF_ADMIN_USERS": value}).admin_users == {"1234", "5678"}
+
+
+def test_only_listed_discord_ids_are_admins():
+    config = Config(admin_users=frozenset({"1234"}))
+    assert config.is_admin("1234")
+    assert not config.is_admin("5678")
+    assert not Config().is_admin("1234")
+
+
+def test_development_admins_need_the_bypass():
+    with pytest.raises(ConfigError, match="dev:alice"):
+        Config(admin_users=frozenset({"1234", "dev:alice"})).validate()
+    Config(admin_users=frozenset({"dev:alice"}), dev_login=True).validate()

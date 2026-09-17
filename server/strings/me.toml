@@ -63,6 +63,10 @@ text = "Putts"
 note = "rounds table column header; when the scan was recorded, UTC ISO 8601"
 text = "Submitted"
 
+[me.rounds.flagged]
+note = "marker after one of the player's rounds' total strokes when an admin has flagged it: the round is being questioned but still counts; short, fits in a table cell"
+text = "(Under review)"
+
 [me.rounds.none]
 note = "shown instead of the rounds table when the player has submitted no rounds; a round is submitted by scanning the QR code shown after the scorecard with a phone"
 text = "After you've completed a round and submitted the scorecard, this will be a table listing all your completed rounds."

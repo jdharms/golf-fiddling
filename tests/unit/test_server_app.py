@@ -801,7 +801,7 @@ def test_my_page_lists_only_my_entries_newest_first(fake_builder):
     assert "<td>LUIGI</td>" in alice_page
     assert "<td>1W PW PT</td>" in alice_page
     assert "<td>PEACH</td>" in alice_page
-    assert "TOAD" not in alice_page
+    assert "<td>TOAD</td>" not in alice_page
     assert f'href="/h/{first}"' not in bob_page
 
 

@@ -57,7 +57,7 @@
           {# a round played as player 2 is marked with an asterisk #}
           <td><a href="/h/{{ round.seed_id }}" class="magic-words">{{ round.magic_words|join(" ") }}</a>{% if round.slot == 1 %}*{% endif %}</td>
           <td class="num">{{ round.par }}</td>
-          <td class="num">{{ round.total_strokes }}</td>
+          <td class="num">{{ round.total_strokes }}{% if round.flagged %} {{ t("me.rounds.flagged") }}{% endif %}</td>
           <td class="num">{{ round.total_putts }}</td>
           <td>{{ round.received_at }}</td>
         </tr>

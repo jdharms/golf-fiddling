@@ -9,6 +9,10 @@ text = "{words} - NES Open Randomizer"
 note = "line under the magic words h1; same words show on the game's title menu and scorecard; {id} the seed's id, {created} its UTC creation time (ISO 8601)"
 text = "Created: {created}"
 
+[seed.rebuilt]
+note = "shown under the tagline only once an admin has rebuilt the seed's ROM with a fix; ROMs downloaded before then still submit, a new download has the fix; {rebuilt} the rebuild's UTC time (ISO 8601)"
+text = "Admin Note: Rebuilt at {rebuilt}.  Redownload this ROM if you haven't already."
+
 # Download form. The downloaded file's name is data, not a string (server/views.py).
 
 [seed.download.heading]
@@ -213,6 +217,10 @@ text = "Putts"
 [seed.rounds.received]
 note = "rounds table column header; when the scan was recorded, UTC ISO 8601"
 text = "Submitted"
+
+[seed.rounds.flagged]
+note = "marker after a round's total strokes when an admin has flagged it: the round is being questioned but still counts; short, fits in a table cell"
+text = "*"
 
 [seed.rounds.none]
 note = "shown instead of the rounds table when no round has been submitted for this seed yet"

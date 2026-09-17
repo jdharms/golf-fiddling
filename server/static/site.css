@@ -243,11 +243,32 @@ table.nine col.strokes {
   width: 34%;
 }
 
-/* Strokes against par: over par red, under par green, level par left as it is. */
-table.nine .over-par {
+/* Strokes against par: over par red, under par green, level par left as it is. The admin
+   round page colors its holes the same way. */
+table .over-par {
   color: var(--pico-del-color);
 }
 
-table.nine .under-par {
+table .under-par {
   color: var(--pico-ins-color);
+}
+
+/* Admin pages: a row of links under the site header, and buttons that sit in a table row. */
+nav.admin-nav {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-bottom: var(--pico-spacing);
+}
+
+nav.admin-nav ul {
+  flex-wrap: wrap;
+}
+
+form.admin-inline,
+form.admin-inline button {
+  margin: 0;
+}
+
+form.admin-inline button {
+  padding: calc(var(--pico-form-element-spacing-vertical) * 0.5) var(--pico-form-element-spacing-horizontal);
 }

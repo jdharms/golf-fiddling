@@ -1,5 +1,7 @@
 """Submissions: a scan records a verified round once per entry and slot, and rejects anything else."""
 
+import logging
+
 import pytest
 
 from golf.core.patches.sram_defaults import Club
@@ -9,6 +11,7 @@ from golf.randomizer.catalog import Catalog
 from golf.randomizer.curation import CurationSnapshot
 from golf.randomizer.generate import generate
 from golf.randomizer.manifest import Settings
+from server.audit import FLAG, RESTORE, ROUND, UNFLAG, VOID, round_target
 from server.db import Database
 from server.entries import load_entry, upsert_entry
 from server.seeds import MAX_QR_SEED_ID, insert_seed, load_seed
@@ -18,9 +21,15 @@ from server.submissions import (
     UNRECOGNIZED,
     HoleResult,
     ScanError,
+    SlotTakenError,
+    flag_round,
+    load_round,
+    restore_round,
     rounds_for_seed,
     rounds_for_user,
     submit_scan,
+    unflag_round,
+    void_round,
 )
 from server.users import sign_in
 
@@ -237,3 +246,154 @@ def test_a_players_rounds_list_newest_first_with_their_seeds(db, manifest, seed_
     assert listings[1].par == manifest.course.par
     assert listings[1].total_strokes == 74
     assert rounds_for_user(db, sign_in(db, "dev:carol", "carol", None, None).id) == []
+
+
+
+# -- Rejection logging --------------------------------------------------------------------
+
+
+def rejection_log(caplog, text: str, db: Database) -> str:
+    caplog.clear()
+    with caplog.at_level(logging.WARNING, logger="server.submissions"), pytest.raises(ScanError):
+        submit_scan(db, text)
+    [record] = caplog.records
+    return record.getMessage()
+
+
+def test_a_rejection_logs_its_exact_cause(db, manifest, seed_id, alice, caplog):
+    bob = sign_in(db, "dev:bob", "bob", None, None)
+    unknown_seed = (alice.qr_seed_id % MAX_QR_SEED_ID + 1).to_bytes(8, "big")
+    cases = {
+        "A" * 47: "malformed: length",
+        "!" * 48: "malformed: alphabet",
+        alice.scan(protocol_version=2): "malformed: protocol version",
+        alice.scan(reserved_flags=1): "malformed: reserved flags",
+        alice.scan(player_slot=2, key=alice.entry.keys[0]): "malformed: slot",
+        alice.scan(seed_id=bytes(8)): "unfinished: zero seed id",
+        alice.scan(player_id=bytes(4)): "unfinished: zero player id",
+        alice.scan(seed_id=b"\xff" * 8): "unrecognized: seed id past the range",
+        alice.scan(seed_id=unknown_seed): "unrecognized: unknown seed",
+        alice.scan(player_id=(alice.user.player_id ^ 1 or 2).to_bytes(4, "big")): "unrecognized: unknown player",
+        alice.scan(player_id=bob.player_id.to_bytes(4, "big")): "unrecognized: no entry for the seed and player",
+        alice.scan(key=b"\x00" * 8): "unrecognized: MAC does not verify",
+    }
+    for text, cause in cases.items():
+        assert rejection_log(caplog, text, db).startswith(f"scan rejected as {cause}"), cause
+    message = rejection_log(caplog, alice.scan(key=b"\x00" * 8), db)
+    assert f"seed={seed_id} player_id={alice.user.player_id} slot=0" in message
+
+
+# -- Admin actions ------------------------------------------------------------------------
+
+
+def audit_rows(db: Database) -> list[dict]:
+    with db.transaction() as conn:
+        return [dict(row) for row in conn.execute("SELECT * FROM admin_actions ORDER BY id")]
+
+
+def test_flagging_marks_the_round_everywhere_it_is_listed(db, seed_id, alice):
+    recorded = submit_scan(db, alice.scan()).round
+    flag_round(db, recorded.id, admin_id=alice.user.id, note="  six on 18?  ")
+    flagged = load_round(db, recorded.id)
+    assert (flagged.flagged, flagged.flag_note) == (True, "six on 18?")
+    assert rounds_for_seed(db, seed_id)[0].flagged
+    assert rounds_for_user(db, alice.user.id)[0].flagged
+    unflag_round(db, recorded.id, admin_id=alice.user.id)
+    unflagged = load_round(db, recorded.id)
+    assert (unflagged.flagged, unflagged.flag_note) == (False, None)
+    assert not rounds_for_seed(db, seed_id)[0].flagged
+
+
+def test_every_action_logs_itself_against_the_round(db, seed_id, alice):
+    recorded = submit_scan(db, alice.scan()).round
+    target = round_target(alice.payload())
+    flag_round(db, recorded.id, admin_id=alice.user.id, note="why 6?", now="2026-09-18T00:00:00Z")
+    unflag_round(db, recorded.id, admin_id=alice.user.id, now="2026-09-18T01:00:00Z")
+    voided_id = void_round(db, recorded.id, admin_id=alice.user.id, note="warm-up", now="2026-09-18T02:00:00Z")
+    restored_id = restore_round(db, voided_id, admin_id=alice.user.id, now="2026-09-18T03:00:00Z")
+    rows = audit_rows(db)
+    assert [(row["action"], row["target_type"], row["target_id"], row["note"], row["created_at"]) for row in rows] == [
+        (FLAG, ROUND, target, "why 6?", "2026-09-18T00:00:00Z"),
+        (UNFLAG, ROUND, target, None, "2026-09-18T01:00:00Z"),
+        (VOID, ROUND, target, "warm-up", "2026-09-18T02:00:00Z"),
+        (RESTORE, ROUND, target, None, "2026-09-18T03:00:00Z"),
+    ]
+    assert {row["admin_id"] for row in rows} == {alice.user.id}
+    assert {row["detail"] for row in rows} == {"{}"}
+    # a restored round can even take the voided round's id back, so the payload, not the id,
+    # is what keeps one history across a void
+    assert round_target(alice.payload()) == target
+    assert load_round(db, restored_id).flagged is False
+
+
+def test_a_failed_action_logs_nothing(db, alice):
+    recorded = submit_scan(db, alice.scan()).round
+    voided_id = void_round(db, recorded.id, admin_id=alice.user.id)
+    submit_scan(db, alice.scan(holes=(HoleRecord(3, 1),) * 18))
+    with pytest.raises(SlotTakenError):
+        restore_round(db, voided_id, admin_id=alice.user.id)
+    with pytest.raises(KeyError):
+        flag_round(db, 99, admin_id=alice.user.id)
+    assert [row["action"] for row in audit_rows(db)] == [VOID]
+
+
+def test_a_blank_flag_note_is_no_note(db, alice):
+    recorded = submit_scan(db, alice.scan()).round
+    flag_round(db, recorded.id, admin_id=alice.user.id, note="   ")
+    assert load_round(db, recorded.id).flag_note is None
+
+
+@pytest.mark.parametrize(
+    "action", [lambda db: flag_round(db, 99, admin_id=1), lambda db: unflag_round(db, 99, admin_id=1)]
+)
+def test_flagging_a_missing_round_is_an_error(db, action):
+    with pytest.raises(KeyError):
+        action(db)
+
+
+def test_voiding_frees_the_slot_and_refuses_the_same_round(db, seed_id, alice):
+    recorded = submit_scan(db, alice.scan()).round
+    void_round(db, recorded.id, admin_id=alice.user.id, note="warm-up round")
+    assert submission_rows(db) == []
+    assert load_round(db, recorded.id) is None
+    assert rounds_for_seed(db, seed_id) == []
+    with pytest.raises(ScanError) as rejected:
+        submit_scan(db, alice.scan())
+    assert rejected.value.reason == UNRECOGNIZED
+    replacement = submit_scan(db, alice.scan(holes=(HoleRecord(3, 1),) * 18))
+    assert replacement.new
+    assert replacement.round.total_strokes == 54
+
+
+def test_voiding_a_missing_round_is_an_error(db):
+    with pytest.raises(KeyError):
+        void_round(db, 99, admin_id=1)
+
+
+def test_restoring_puts_the_round_back_as_it_was(db, seed_id, alice):
+    recorded = submit_scan(db, alice.scan(), now="2026-09-17T12:00:00Z").round
+    flag_round(db, recorded.id, admin_id=alice.user.id, note="check")
+    voided_id = void_round(db, recorded.id, admin_id=alice.user.id)
+    restored_id = restore_round(db, voided_id, admin_id=alice.user.id)
+    restored = load_round(db, restored_id)
+    assert restored.holes == recorded.holes
+    assert (restored.total_strokes, restored.total_putts, restored.received_at) == (
+        recorded.total_strokes,
+        recorded.total_putts,
+        "2026-09-17T12:00:00Z",
+    )
+    assert (restored.flagged, restored.flag_note) == (True, "check")
+    again = submit_scan(db, alice.scan())
+    assert not again.new
+    assert again.round.id == restored_id
+    with pytest.raises(KeyError):
+        restore_round(db, voided_id, admin_id=alice.user.id)
+
+
+def test_restoring_into_a_taken_slot_is_refused(db, alice):
+    recorded = submit_scan(db, alice.scan()).round
+    voided_id = void_round(db, recorded.id, admin_id=alice.user.id)
+    replacement = submit_scan(db, alice.scan(holes=(HoleRecord(3, 1),) * 18)).round
+    with pytest.raises(SlotTakenError):
+        restore_round(db, voided_id, admin_id=alice.user.id)
+    assert [row["id"] for row in submission_rows(db)] == [replacement.id]

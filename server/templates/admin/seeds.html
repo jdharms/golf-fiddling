@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% import "admin/_admin.html" as admin %}
+{% block title %}Seeds - Admin{% endblock %}
+{% block content %}
+{{ admin.nav() }}
+<h1>Seeds</h1>
+{% if listing.items %}
+{{ admin.seeds_table(listing.items) }}
+{% else %}
+<p>No seeds{% if listing.number > 1 %} on this page{% endif %}.</p>
+{% endif %}
+{{ admin.pager(listing, "/admin/seeds") }}
+{% endblock %}

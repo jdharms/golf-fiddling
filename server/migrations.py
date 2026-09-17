@@ -87,4 +87,40 @@ MIGRATIONS: list[str] = [
         PRIMARY KEY (submission_id, position)
     );
     """,
+    # 5: admin (docs/randomizer_devplan.md, "Data model"). A voided round keeps its payload,
+    # which carries every hole, so it has no hole rows; UNIQUE (payload) is the refusal to
+    # record it again. admin_actions is the audit log: who did what to which seed or round.
+    # target_id is text, since a seed's id is and a round's is not.
+    """
+    ALTER TABLE seeds ADD COLUMN rebuilt_at TEXT;
+    ALTER TABLE submissions ADD COLUMN flag_note TEXT;
+
+    CREATE TABLE voided_submissions (
+        id INTEGER PRIMARY KEY,
+        entry_id INTEGER NOT NULL REFERENCES entries (id),
+        slot INTEGER NOT NULL CHECK (slot IN (0, 1)),
+        payload BLOB NOT NULL UNIQUE CHECK (length(payload) = 36),
+        received_at TEXT NOT NULL,
+        flagged INTEGER NOT NULL CHECK (flagged IN (0, 1)),
+        flag_note TEXT,
+        voided_at TEXT NOT NULL,
+        void_note TEXT
+    );
+
+    CREATE INDEX voided_submissions_by_entry ON voided_submissions (entry_id, slot);
+
+    CREATE TABLE admin_actions (
+        id INTEGER PRIMARY KEY,
+        admin_id INTEGER NOT NULL REFERENCES users (id),
+        action TEXT NOT NULL,
+        target_type TEXT NOT NULL,
+        target_id TEXT NOT NULL,
+        note TEXT,
+        detail TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(detail) AND json_type(detail) = 'object'),
+        created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX admin_actions_by_target ON admin_actions (target_type, target_id, id);
+    CREATE INDEX admin_actions_by_admin ON admin_actions (admin_id, id);
+    """,
 ]

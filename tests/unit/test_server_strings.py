@@ -23,8 +23,14 @@ def used(pattern: re.Pattern, paths) -> set[str]:
     return {key for path in paths for key in pattern.findall(path.read_text())}
 
 
+#: admin pages are for admins only and hold their English themselves (server/CLAUDE.md)
+ADMIN_TEMPLATES = SERVER / "templates" / "admin"
+
+
 def template_keys() -> set[str]:
-    return used(TEMPLATE_USE, (SERVER / "templates").glob("*.html"))
+    """The keys the player-facing templates use: every template outside `ADMIN_TEMPLATES`."""
+    paths = (SERVER / "templates").rglob("*.html")
+    return used(TEMPLATE_USE, (path for path in paths if ADMIN_TEMPLATES not in path.parents))
 
 
 def script_keys() -> set[str]:
@@ -44,6 +50,13 @@ def test_the_catalog_loads_and_every_entry_has_a_note():
 def test_the_scans_find_keys():
     assert "rom.heading" in template_keys()
     assert "rom.status.stored" in script_keys()
+
+
+def test_admin_templates_use_no_strings():
+    """The carve-out runs one way: an admin page's text is its own, never half in the catalog."""
+    paths = list(ADMIN_TEMPLATES.rglob("*.html"))
+    assert paths
+    assert not used(TEMPLATE_USE, paths)
 
 
 def test_every_key_a_page_uses_is_in_the_catalog():

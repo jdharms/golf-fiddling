@@ -13,7 +13,8 @@ in this package.
 
 ## App
 
-- `server/app.py` has `create_app(config)`, a factory. Routes are defined inside it, and
+- `server/app.py` has `create_app(config)`, a factory. Routes are defined inside it, except
+  the admin pages' (see "Admin" below), and
   shared objects live on `app.state`: `config`, `strings` and `rate_limiter`, and `db` and
   `builder` once the lifespan has started. Nothing is module-level state, so each test
   builds its own app.
@@ -55,9 +56,34 @@ in this package.
   are drawn. `seeds.creator_id` holds a `users.id`.
 - `server/entries.py` is the only code that writes `entries`, and the only place MAC keys
   are drawn. `Entry.keys` stays out of `repr`; keys never go in a page, a log or a manifest.
-- `server/submissions.py` is the only code that writes `submissions` and
-  `submission_holes`, and the only place a scan is decoded and verified. Its rejection
-  reasons deliberately do not say which lookup or check failed.
+- `server/audit.py` is the only code that writes `admin_actions`, the admin audit log. Its
+  `record` takes the caller's connection, so an action and its log row commit together. A
+  new admin action adds its name there and records a row; nothing needs a migration, and no
+  table carries a "who did this" column of its own.
+- `server/submissions.py` is the only code that writes `submissions`,
+  `submission_holes` and `voided_submissions`, and the only place a scan is decoded and
+  verified. Its rejection reasons deliberately do not say which lookup or check failed; the
+  exact cause goes only to the log, at WARNING, through `logging.getLogger(__name__)`.
+
+## Admin
+
+- The `/admin` pages admit the signed-in users `Config.admin_users` (`GOLF_ADMIN_USERS`)
+  lists. `server/admin_routes.py`'s `admin_router(templates)` builds their `APIRouter`, which
+  `create_app` includes, and every route sits behind `require_admin`, a 404 for anyone else.
+  No page links to them.
+- `server/admin.py` holds the admin pages' reads and view dataclasses, with no web types.
+  When it grows, split it into a package by area (seeds, rounds, users, the audit log). Admin actions write
+  through the owning modules: `rebuild_seed` in `server/seeds.py`, and `flag_round`,
+  `unflag_round`, `void_round` and `restore_round` in `server/submissions.py`. Each takes the
+  admin's `users.id` and logs itself through `server/audit.py`.
+- Who acted, and a seed's or round's history, are read from the audit log, never from a
+  column. A round's log rows are keyed by its payload (`audit.round_target`), because a
+  `submissions.id` changes when a round is voided and restored and SQLite can hand it to a
+  later round.
+- Actions are POST forms that redirect back with `?result=`, which the page shows. State
+  never changes on a GET.
+- Templates live in `server/templates/admin/`, extend `base.html`, and share the macros in
+  `server/templates/admin/_admin.html`.
 
 ## Pages
 
@@ -88,6 +114,10 @@ in this package.
 A human composes every English word a player sees, and Claude
 writes none of it, not even as a draft to be rewritten.
 
+The admin pages are the one exception: only admins see them, so their English is written in
+`server/templates/admin/` directly, and they call no `t()`. A string an admin action puts on
+a public page, such as the flagged marker, is still a catalog key.
+
 - Every visible string, including tab titles, nav labels, button labels, accessible names
   and script status messages, comes from `server/strings/` by key. No English goes in
   a template or script. Proper nouns and data are not strings: ROM titles, hole ids, magic
@@ -116,7 +146,7 @@ writes none of it, not even as a draft to be rewritten.
   can find them. Script strings may hold inline HTML like any other: `t()` escapes the values it inserts and
   returns HTML, which the script sets with `innerHTML`.
 - `tests/unit/test_server_strings.py` checks that every key a template or script uses is
-  in the catalog, and that every entry is used.
+  in the catalog, that every entry is used, and that the admin templates use none.
 - `golf-site-strings` (`tools/site_strings.py`) lists the entries whose text is still empty,
   by file; `--notes` adds what each has to say.
 - `golf-site --reload` restarts on changes to the catalog, since the app loads it once.
@@ -139,7 +169,8 @@ the generate form is submitted and the seed page it lands on is captured as
 `<name>-seed.png`, with its download form's state printed; that builds a real seed from the
 ROM in `GOLF_ROM_DIR`. With `--rom` too, the ROMs are loaded before generating, so the
 download form captures ready rather than missing. With `--login NAME`, each browser signs
-in through the development bypass first, so the header captures signed in. The tool is
+in through the development bypass first, so the header captures signed in, and `NAME` is
+an admin, so `/admin` pages capture too. The tool is
 `tools/site_screenshot.py`; `tests/integration/test_site_screenshot.py` skips without a
 Playwright browser.
 
@@ -165,6 +196,9 @@ Sign-in tests build the app with `Config(dev_login=True)` and sign in with
 subclass whose `identify` returns a fixed identity (`FakeDiscord` in
 `tests/unit/test_server_app.py`). `tests/unit/test_server_auth.py` runs the real client
 against `httpx2.MockTransport`.
+
+Admin tests (`tests/unit/test_server_admin.py`) build the app with `dev_login=True` and
+`admin_users={"dev:admin"}`, and sign in as `admin`.
 
 A test that checks *which* refusal notice a page shows names it by string key and builds the
 app with `strings=UNWRITTEN`, a catalog with nothing written, in which every string renders

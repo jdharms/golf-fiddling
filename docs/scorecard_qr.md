@@ -615,7 +615,11 @@ arrays at `$0158` (strokes) and `$018E` (putts), with `PlayerCount` `$9A` = 1.
 - A seed ID or player ID of all zeros is the placeholder fill of an unfinished ROM and is
   rejected.
 - **First submission per (entry, slot) is authoritative.** A later scan that verifies
-  records nothing and shows the round already recorded.
+  records nothing and shows the round already recorded. An admin can void a round, which
+  frees the slot for a different round; a scan of the voided payload itself is rejected as
+  unrecognized until an admin restores it.
+- Every rejection logs its exact cause (which check or lookup failed) with the decoded ids
+  at WARNING, while the page stays as vague as above.
 - Two players on one cart are treated as teammates. Both slots carry the downloader's
   player ID, and a slot 1 submission is recorded against the same entry as slot 0, under
   the slot 1 key.
