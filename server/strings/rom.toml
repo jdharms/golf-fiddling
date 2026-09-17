@@ -81,4 +81,4 @@ text = "Error accessing browser storage: {error}"
 
 [rom.status.unavailable]
 note = "card status while the rom.unsupported notice shows"
-text = ""
+text = "Verification Unavailable"

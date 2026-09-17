@@ -940,10 +940,15 @@ def test_my_page_lists_my_rounds(fake_builder):
         assert "me.rounds.none" in test_client.get("/me").text
         test_client.get(scan_path(test_client, seed_id, "alice", slot=1, strokes=5))
         test_client.get(scan_path(test_client, seed_id, "bob", strokes=3))
+        player_two_only = test_client.get("/me").text
+        test_client.get(scan_path(test_client, seed_id, "alice", slot=0, strokes=4))
         page = test_client.get("/me").text
     assert "me.rounds.none" not in page
     rounds = page[page.index('class="rounds') :]
-    assert "me.rounds.player_two" in rounds
+    # only the player 2 round's magic words carry the asterisk
+    assert rounds.count("</a>*</td>") == 1
+    assert rounds.count("</a></td>") == 1
+    assert "</a>*</td>" in player_two_only[player_two_only.index('class="rounds') :]
     assert '<td class="num">90</td>' in rounds
     assert '<td class="num">54</td>' not in rounds
 
