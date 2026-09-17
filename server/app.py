@@ -14,6 +14,7 @@ from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
+from golf.randomizer.build import credentials_for
 from golf.randomizer.generate import GenerationError
 from golf.randomizer.manifest import required_roms
 from golf.randomizer.roms import VANILLA_ROMS
@@ -32,6 +33,7 @@ from .auth import (
 from .builder import BuilderUnavailableError, SeedBuilder
 from .config import Config
 from .db import Database
+from .entries import entries_for_user, upsert_entry
 from .forms import (
     DownloadState,
     FormError,
@@ -265,11 +267,19 @@ def create_app(
         except FormError as problem:
             return json_refusal(400, problem.reason, problem.values)
 
-        unfinished_ips = load_unfinished_ips(request.app.state.db, seed_id)
+        db: Database = request.app.state.db
+        unfinished_ips = load_unfinished_ips(db, seed_id)
         if unfinished_ips is None:  # pragma: no cover - seeds are never deleted
             raise not_found()
+        # Signed in, the download enters the player in the seed and finishes with their
+        # credentials; signed out, it finishes a guest ROM and records nothing.
+        user = current_user(request)
+        credentials = None
+        if user is not None:
+            entry = upsert_entry(db, row.id, user.id, options)
+            credentials = credentials_for(row.qr_seed_id, user.player_id, entry.keys)
         try:
-            patch = await run_in_threadpool(seed_builder.finish, manifest, unfinished_ips, options)
+            patch = await run_in_threadpool(seed_builder.finish, manifest, unfinished_ips, options, credentials)
         except BuilderUnavailableError:
             return json_refusal(503, UNAVAILABLE)
         return Response(
@@ -277,6 +287,16 @@ def create_app(
             media_type="application/octet-stream",
             headers={"Content-Disposition": f'attachment; filename="{download_stem(row)}.ips"'},
         )
+
+    @app.get("/me", response_class=HTMLResponse)
+    def me(request: Request):
+        user = current_user(request)
+        if user is None:
+            if not config.sign_in_enabled:
+                raise not_found()
+            return RedirectResponse("/auth/login?next=/me", status_code=303)
+        entries = entries_for_user(request.app.state.db, user.id)
+        return templates.TemplateResponse(request, "me.html", {"page": "me", "entries": entries})
 
     def sign_in_failed(request: Request, reason: str, status_code: int):
         return templates.TemplateResponse(

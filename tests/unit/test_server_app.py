@@ -44,8 +44,9 @@ class FakeBuilder(SeedBuilder):
         self.built = manifest
         return IPS
 
-    def finish(self, manifest, unfinished_ips, options):
+    def finish(self, manifest, unfinished_ips, options, credentials=None):
         self.finished = (manifest, unfinished_ips, options)
+        self.credentials = credentials
         return FINISHED
 
 
@@ -367,6 +368,7 @@ def test_downloading_finishes_the_stored_seed_as_a_guest(client, fake_builder):
     assert unfinished_ips == IPS
     assert options.player_name == "LUIGI"
     assert options.clubs == {Club.W1, Club.PW, Club.PT}
+    assert fake_builder.credentials is None
 
 
 def test_a_us_only_seed_needs_only_the_us_hash(client):
@@ -671,3 +673,130 @@ def test_signed_in_players_are_rate_limited_per_user(fake_builder):
         assert post_generate(test_client, **same_address).status_code == 303
         assert seed_count(test_client) == 3
 
+
+
+# -- Entries -----------------------------------------------------------------------------
+
+
+def entries(client: TestClient) -> list[dict]:
+    with client.app.state.db.transaction() as conn:
+        return [dict(row) for row in conn.execute("SELECT * FROM entries ORDER BY id")]
+
+
+def qr_seed_id(client: TestClient, seed_id: str) -> int:
+    with client.app.state.db.transaction() as conn:
+        return conn.execute("SELECT qr_seed_id FROM seeds WHERE id = ?", (seed_id,)).fetchone()[0]
+
+
+def test_a_signed_out_download_records_no_entry(fake_builder):
+    with dev_client(fake_builder) as test_client:
+        seed_id = generate_seed(test_client)
+        assert post_download(test_client, seed_id).status_code == 200
+        assert fake_builder.credentials is None
+        assert entries(test_client) == []
+
+
+def test_a_signed_in_download_enters_the_seed_and_finishes_with_credentials(fake_builder):
+    with dev_client(fake_builder) as test_client:
+        seed_id = generate_seed(test_client)
+        test_client.get("/auth/login", params={"as": "alice"})
+        response = post_download(test_client, seed_id, name="luigi", clubs=("1W", "PW"))
+        assert response.status_code == 200
+        assert response.content == FINISHED
+        [alice] = users(test_client)
+        [entry] = entries(test_client)
+        expected_seed_id = qr_seed_id(test_client, seed_id)
+    assert entry["seed_id"] == seed_id
+    assert entry["user_id"] == alice["id"]
+    assert entry["player_name"] == "LUIGI"
+    assert entry["clubs"] == "1W PW PT"
+    credentials = fake_builder.credentials
+    assert credentials.seed_id == expected_seed_id.to_bytes(8, "big")
+    assert credentials.player_ids == (alice["player_id"].to_bytes(4, "big"),) * 2
+    assert credentials.keys == (entry["key_slot0"], entry["key_slot1"])
+    assert entry["key_slot0"] != entry["key_slot1"]
+
+
+def test_downloading_again_updates_the_entry_and_keeps_its_keys(fake_builder):
+    with dev_client(fake_builder) as test_client:
+        seed_id = generate_seed(test_client)
+        test_client.get("/auth/login", params={"as": "alice"})
+        post_download(test_client, seed_id, name="luigi", clubs=("1W", "PW"))
+        first_keys = fake_builder.credentials.keys
+        post_download(test_client, seed_id, name="toad", clubs=("3W", "SW"))
+        [entry] = entries(test_client)
+    assert fake_builder.credentials.keys == first_keys
+    assert (entry["player_name"], entry["clubs"]) == ("TOAD", "3W SW PT")
+
+
+def test_players_entering_the_same_seed_get_their_own_entries_and_keys(fake_builder):
+    with dev_client(fake_builder) as test_client:
+        seed_id = generate_seed(test_client)
+        test_client.get("/auth/login", params={"as": "alice"})
+        post_download(test_client, seed_id)
+        alice_credentials = fake_builder.credentials
+        test_client.get("/auth/login", params={"as": "bob"})
+        post_download(test_client, seed_id)
+        bob_credentials = fake_builder.credentials
+        assert len(entries(test_client)) == 2
+    assert alice_credentials.seed_id == bob_credentials.seed_id
+    assert alice_credentials.player_ids != bob_credentials.player_ids
+    assert set(alice_credentials.keys).isdisjoint(bob_credentials.keys)
+
+
+@pytest.mark.parametrize("change", [{"name": "LU1GI"}, {"hashes": {}}])
+def test_a_refused_download_records_no_entry(fake_builder, change):
+    with dev_client(fake_builder) as test_client:
+        seed_id = generate_seed(test_client)
+        test_client.get("/auth/login", params={"as": "alice"})
+        assert post_download(test_client, seed_id, **change).status_code in (400, 403)
+        assert entries(test_client) == []
+
+
+def test_the_seed_page_tells_only_signed_out_players_the_rom_is_a_guest_rom(fake_builder):
+    with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
+        seed_id = generate_seed(test_client)
+        signed_out = test_client.get(f"/h/{seed_id}").text
+        test_client.get("/auth/login", params={"as": "alice"})
+        signed_in = test_client.get(f"/h/{seed_id}").text
+    assert "seed.download.guest_notice" in signed_out
+    assert f'href="/auth/login?next=/h/{seed_id}"' in signed_out
+    assert "seed.download.guest_notice" not in signed_in
+
+
+def test_the_seed_page_has_no_guest_notice_without_sign_in(unwritten_client):
+    seed_id = generate_seed(unwritten_client)
+    assert "seed.download.guest_notice" not in unwritten_client.get(f"/h/{seed_id}").text
+
+
+def test_my_page_needs_sign_in(fake_builder, client):
+    with dev_client(fake_builder) as test_client:
+        response = test_client.get("/me", follow_redirects=False)
+        assert response.status_code == 303
+        assert response.headers["location"] == "/auth/login?next=/me"
+    assert client.get("/me").status_code == 404
+
+
+def test_my_page_lists_only_my_entries_newest_first(fake_builder):
+    with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
+        test_client.get("/auth/login", params={"as": "alice"})
+        assert "me.entries.none" in test_client.get("/me").text
+        first = generate_seed(test_client)
+        second = generate_seed(test_client)
+        post_download(test_client, first, name="luigi", clubs=("1W", "PW"))
+        test_client.get("/auth/login", params={"as": "bob"})
+        post_download(test_client, second, name="toad")
+        bob_page = test_client.get("/me").text
+        test_client.get("/auth/login", params={"as": "alice"})
+        post_download(test_client, second, name="peach")
+        with test_client.app.state.db.transaction() as conn:
+            conn.execute("UPDATE entries SET created_at = '2026-01-01T00:00:00Z' WHERE seed_id = ?", (first,))
+        alice_page = test_client.get("/me").text
+    assert 'aria-current="page"' in alice_page[: alice_page.index("</nav>")]
+    assert "me.entries.none" not in alice_page
+    assert alice_page.index(f'href="/h/{second}"') < alice_page.index(f'href="/h/{first}"')
+    assert "<td>LUIGI</td>" in alice_page
+    assert "<td>1W PW PT</td>" in alice_page
+    assert "<td>PEACH</td>" in alice_page
+    assert "TOAD" not in alice_page
+    assert f'href="/h/{first}"' not in bob_page

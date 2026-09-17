@@ -27,6 +27,14 @@ text = """
 ROM patching happens completely in your browser, so this process requires JavaScript.
 """
 
+[seed.download.guest_notice]
+note = "signed out only, under the download lead; this download is a guest ROM whose scorecard can't be submitted; signing in makes a ROM that records rounds to the player's account; seed.download.guest_sign_in link follows"
+text = "You're currently <mark>not signed in</mark>, so this download would be a \"Guest ROM\".  If you sign in before downloading we'll track your stats for you and tie them to your account."
+
+[seed.download.guest_sign_in]
+note = "plain: link after seed.download.guest_notice; signs in with Discord and comes back to this seed page"
+text = "Log in here"
+
 [seed.download.name_label]
 note = "label for the player name input; A-Z, '.' and space, at most 10; what a new save starts with"
 text = "Default Player Name"

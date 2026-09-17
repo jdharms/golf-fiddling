@@ -10,6 +10,7 @@ import hashlib
 import threading
 from pathlib import Path
 
+from golf.core.patches import QrCredentials
 from golf.randomizer.build import PlayerOptions, build_unfinished, finish
 from golf.randomizer.catalog import DEFAULT_INDEX, US_ROM, Catalog, HoleStore
 from golf.randomizer.curation import DEFAULT_CURATION, CurationSnapshot
@@ -73,6 +74,15 @@ class SeedBuilder:
         with self._builds:
             return build_unfinished(manifest, self.catalog, self.store, vanilla).ips
 
-    def finish(self, manifest: Manifest, unfinished_ips: bytes, options: PlayerOptions) -> bytes:
-        """A guest player's finished IPS for a stored seed. Finishing takes milliseconds, so it skips the semaphore."""
-        return finish(manifest, self.vanilla(), unfinished_ips, options).ips
+    def finish(
+        self,
+        manifest: Manifest,
+        unfinished_ips: bytes,
+        options: PlayerOptions,
+        credentials: QrCredentials | None = None,
+    ) -> bytes:
+        """A player's finished IPS for a stored seed: signed in with credentials, a guest without.
+
+        Finishing takes milliseconds, so it skips the semaphore.
+        """
+        return finish(manifest, self.vanilla(), unfinished_ips, options, credentials).ips

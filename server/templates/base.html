@@ -22,7 +22,7 @@
       </ul>
       {% if user %}
       <ul class="account">
-        <li>{{ t("nav.signed_in_as", name=user.display_name) }}</li>
+        <li><a href="/me" {% if page=="me" %} aria-current="page" {% endif %}>{{ t("nav.signed_in_as", name=user.display_name) }}</a></li>
         <li>
           <form method="post" action="/auth/logout">
             <input type="hidden" name="next" value="{{ return_path }}">

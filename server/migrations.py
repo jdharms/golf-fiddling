@@ -46,4 +46,22 @@ MIGRATIONS: list[str] = [
         last_login TEXT NOT NULL
     );
     """,
+    # 3: entries (docs/randomizer_devplan.md, "Data model"). clubs is the bag's labels in
+    # ascending club order, putter included, space-separated.
+    """
+    CREATE TABLE entries (
+        id INTEGER PRIMARY KEY,
+        seed_id TEXT NOT NULL REFERENCES seeds (id),
+        user_id INTEGER NOT NULL REFERENCES users (id),
+        player_name TEXT NOT NULL,
+        clubs TEXT NOT NULL,
+        key_slot0 BLOB NOT NULL CHECK (length(key_slot0) = 8),
+        key_slot1 BLOB NOT NULL CHECK (length(key_slot1) = 8),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        UNIQUE (seed_id, user_id)
+    );
+
+    CREATE INDEX entries_by_user ON entries (user_id, created_at);
+    """,
 ]
