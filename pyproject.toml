@@ -47,6 +47,7 @@ golf-randomize = "tools.randomize:main"
 # Randomizer site
 golf-site = "tools.site:main"
 golf-site-screenshot = "tools.site_screenshot:main"
+golf-site-strings = "tools.site_strings:main"
 
 # Reverse-engineering research
 golf-rom-peek = "tools.research.rom_peek:main"

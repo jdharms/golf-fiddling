@@ -108,6 +108,7 @@ Build a standalone editor executable with `uv run pyinstaller run_editor.spec`.
 |---------|-------------|
 | `golf-site [--host H] [--port P] [--reload]` | Run the randomizer website under uvicorn; see "Running the site" below |
 | `golf-site-screenshot [pages] [-o dir] [--viewports ...] [--schemes ...] [--rom ID=PATH] [--generate] [--login NAME]` | Render site pages to PNG in headless Chromium at desktop and phone widths, light and dark, and with `--generate` the seed page the generate form lands on, with `--rom` loading the ROMs first so its download form is ready, and with `--login` signed in as a development user; needs `uv run playwright install chromium` |
+| `golf-site-strings [--notes] [--dir DIR]` | List the site's unwritten strings (entries in `server/strings/` with empty text), grouped by file, with `--notes` printing what each one has to say |
 
 ### Reverse-engineering research
 

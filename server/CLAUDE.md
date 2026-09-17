@@ -117,6 +117,8 @@ writes none of it, not even as a draft to be rewritten.
   returns HTML, which the script sets with `innerHTML`.
 - `tests/unit/test_server_strings.py` checks that every key a template or script uses is
   in the catalog, and that every entry is used.
+- `golf-site-strings` (`tools/site_strings.py`) lists the entries whose text is still empty,
+  by file; `--notes` adds what each has to say.
 - `golf-site --reload` restarts on changes to the catalog, since the app loads it once.
 
 ## Seeing pages

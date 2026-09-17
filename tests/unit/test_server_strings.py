@@ -104,6 +104,17 @@ def test_files_in_subdirectories_are_merged_too(tmp_path):
     assert Strings.load(tmp_path).keys() == ["a.one", "b.two"]
 
 
+def test_each_file_loads_as_a_catalog_of_its_own(tmp_path):
+    (tmp_path / "pages").mkdir()
+    write(tmp_path, "b.toml", '[b.two]\nnote = "n"\n[b.three]\nnote = "n"\ntext = "t"\n')
+    write(tmp_path / "pages", "a.toml", '[a.one]\nnote = "n"\n')
+    catalogs = Strings.load_files(tmp_path)
+    assert list(catalogs) == [tmp_path / "b.toml", tmp_path / "pages" / "a.toml"]
+    assert catalogs[tmp_path / "b.toml"].keys() == ["b.three", "b.two"]
+    assert catalogs[tmp_path / "b.toml"].unwritten() == ["b.two"]
+    assert catalogs[tmp_path / "pages" / "a.toml"].keys() == ["a.one"]
+
+
 def test_a_key_in_two_files_is_an_error(tmp_path):
     write(tmp_path, "a.toml", '[dup.key]\nnote = "n"\n')
     write(tmp_path, "b.toml", '[dup.key]\nnote = "n"\n')

@@ -62,10 +62,9 @@ class Strings:
         self._entries = dict(entries)
 
     @classmethod
-    def load(cls, directory: Path = CATALOG_DIR) -> "Strings":
-        """Every `*.toml` under `directory`, merged into one catalog."""
-        entries: dict[str, Entry] = {}
-        source: dict[str, Path] = {}
+    def load_files(cls, directory: Path = CATALOG_DIR) -> dict[Path, "Strings"]:
+        """Every `*.toml` under `directory` as a catalog of its own, keyed by path, in path order."""
+        catalogs: dict[Path, Strings] = {}
         for file in sorted(directory.rglob("*.toml")):
             try:
                 with file.open("rb") as handle:
@@ -77,10 +76,19 @@ class Strings:
                 _flatten(data, "", found)
             except StringsError as problem:
                 raise StringsError(f"{file.name}: {problem}") from None
-            for key, entry in found.items():
+            catalogs[file] = cls(found)
+        return catalogs
+
+    @classmethod
+    def load(cls, directory: Path = CATALOG_DIR) -> "Strings":
+        """Every `*.toml` under `directory`, merged into one catalog."""
+        entries: dict[str, Entry] = {}
+        source: dict[str, Path] = {}
+        for file, strings in cls.load_files(directory).items():
+            for key in strings.keys():  # noqa: SIM118 (Strings, not a dict)
                 if key in source:
                     raise StringsError(f"{key}: defined in both {source[key].name} and {file.name}")
-                source[key], entries[key] = file, entry
+                source[key], entries[key] = file, strings.entry(key)
         if not entries:
             raise StringsError(f"no strings in {directory}")
         return cls(entries)
