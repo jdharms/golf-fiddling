@@ -50,8 +50,16 @@ from .ratelimit import (
 )
 from .seeds import insert_seed, load_seed, load_unfinished_ips
 from .strings import Strings
-from .users import sign_in
-from .views import download_stem, generate_options, seed_view
+from .submissions import (
+    MALFORMED,
+    UNFINISHED,
+    ScanError,
+    rounds_for_seed,
+    rounds_for_user,
+    submit_scan,
+)
+from .users import load_user, sign_in
+from .views import download_stem, generate_options, seed_view, submission_view
 
 HERE = Path(__file__).resolve().parent
 STATIC_DIR = HERE / "static"
@@ -247,7 +255,12 @@ def create_app(
         return templates.TemplateResponse(
             request,
             "seed.html",
-            {"page": "seed", "seed": view, "download_strings": strings.for_script(DOWNLOAD_SCRIPT_STRINGS)},
+            {
+                "page": "seed",
+                "seed": view,
+                "rounds": rounds_for_seed(request.app.state.db, seed_id),
+                "download_strings": strings.for_script(DOWNLOAD_SCRIPT_STRINGS),
+            },
         )
 
     @app.post("/h/{seed_id}/patch.ips")
@@ -288,6 +301,35 @@ def create_app(
             headers={"Content-Disposition": f'attachment; filename="{download_stem(row)}.ips"'},
         )
 
+    @app.get("/s/{scan}", response_class=HTMLResponse)
+    def scan(request: Request, scan: str):
+        # A scan is a GET that records, so a repeat of it (the phone reopening the link, a
+        # chat unfurling it) must land on the same page, and nothing may cache the answer.
+        db: Database = request.app.state.db
+        headers = {"Cache-Control": "no-store"}
+        try:
+            result = submit_scan(db, scan)
+        except ScanError as rejection:
+            status_code = 400 if rejection.reason in (MALFORMED, UNFINISHED) else 404
+            return templates.TemplateResponse(
+                request,
+                "submission.html",
+                {"page": None, "rejection": rejection.reason, "submission": None},
+                status_code=status_code,
+                headers=headers,
+            )
+        row = load_seed(db, result.round.seed_id)
+        player = load_user(db, result.round.user_id)
+        if row is None or player is None:  # pragma: no cover - seeds and users are never deleted
+            raise not_found()
+        view = submission_view(row, result, player.display_name)
+        return templates.TemplateResponse(
+            request,
+            "submission.html",
+            {"page": None, "rejection": None, "submission": view},
+            headers=headers,
+        )
+
     @app.get("/me", response_class=HTMLResponse)
     def me(request: Request):
         user = current_user(request)
@@ -295,8 +337,12 @@ def create_app(
             if not config.sign_in_enabled:
                 raise not_found()
             return RedirectResponse("/auth/login?next=/me", status_code=303)
-        entries = entries_for_user(request.app.state.db, user.id)
-        return templates.TemplateResponse(request, "me.html", {"page": "me", "entries": entries})
+        db: Database = request.app.state.db
+        return templates.TemplateResponse(
+            request,
+            "me.html",
+            {"page": "me", "entries": entries_for_user(db, user.id), "rounds": rounds_for_user(db, user.id)},
+        )
 
     def sign_in_failed(request: Request, reason: str, status_code: int):
         return templates.TemplateResponse(

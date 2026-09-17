@@ -104,6 +104,36 @@
 </section>
 
 <section>
+  <h2>{{ t("seed.rounds.heading") }}</h2>
+  {% if rounds %}
+  <div class="overflow-auto">
+    <table class="rounds striped">
+      <thead>
+        <tr>
+          <th scope="col">{{ t("seed.rounds.player") }}</th>
+          <th scope="col" class="num">{{ t("seed.rounds.strokes") }}</th>
+          <th scope="col" class="num">{{ t("seed.rounds.putts") }}</th>
+          <th scope="col">{{ t("seed.rounds.received") }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for round in rounds %}
+        <tr>
+          <td>{% if round.slot == 1 %}{{ t("seed.rounds.player_two", name=round.player_name) }}{% else %}{{ round.player_name }}{% endif %}</td>
+          <td class="num">{{ round.total_strokes }}</td>
+          <td class="num">{{ round.total_putts }}</td>
+          <td>{{ round.received_at }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p>{{ t("seed.rounds.none") }}</p>
+  {% endif %}
+</section>
+
+<section>
   <h2>{{ t("seed.details.heading") }}</h2>
   <div class="overflow-auto">
     <table class="seed-details">

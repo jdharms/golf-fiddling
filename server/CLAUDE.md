@@ -55,6 +55,9 @@ in this package.
   are drawn. `seeds.creator_id` holds a `users.id`.
 - `server/entries.py` is the only code that writes `entries`, and the only place MAC keys
   are drawn. `Entry.keys` stays out of `repr`; keys never go in a page, a log or a manifest.
+- `server/submissions.py` is the only code that writes `submissions` and
+  `submission_holes`, and the only place a scan is decoded and verified. Its rejection
+  reasons deliberately do not say which lookup or check failed.
 
 ## Pages
 
@@ -91,7 +94,8 @@ writes none of it, not even as a draft to be rewritten.
   words.
 - The catalog is the TOML files under `server/strings/`: `common.toml` for the elements on
   every page (`base.html`), and one file per template named for it - `home.toml`,
-  `rom.toml`, `generate.toml`, `seed.toml`, `me.toml`, `not_found.toml`, `sign_in_failed.toml`. Every file under the
+  `rom.toml`, `generate.toml`, `seed.toml`, `me.toml`, `not_found.toml`, `sign_in_failed.toml`,
+  `submission.toml`. Every file under the
   directory is loaded and merged, subdirectories included. Entries carry their full dotted
   key (`[home.about]`), so a file name is organization only and a key still greps to its
   entry. A top-level namespace lives in exactly one file, and a new page arrives as a new
@@ -149,6 +153,10 @@ refusals (`tests/unit/test_server_app.py`). `tests/integration/test_server_gener
 runs the real builder. Posting to `/h/<id>/patch.ips` finishes a ROM, so the same
 subclass overrides `finish`, recording the credentials it was given; `tests/integration/test_server_download_rom.py` and
 `tests/integration/test_site_download.py` run the real one, the second in a browser.
+
+A scan's path is built from `RoundPayload` and the entry's stored keys (`scan_path` in
+`tests/unit/test_server_app.py`); `tests/integration/test_server_submission_rom.py` builds
+it instead by running a downloaded ROM's QR routine in the simulator.
 
 Sign-in tests build the app with `Config(dev_login=True)` and sign in with
 `/auth/login?as=<name>`, or with Discord credentials and `discord=` a `DiscordClient`

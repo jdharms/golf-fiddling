@@ -188,6 +188,36 @@ text = "Community Hole, by {author}"
 note = "hole table footer row label; total par and yards follow"
 text = "Totals"
 
+# Recorded rounds: every round scanned from this seed's ROMs, fewest strokes first.
+
+[seed.rounds.heading]
+note = "h2 over the table of rounds players have submitted for this seed by scanning the end-of-round QR code"
+text = ""
+
+[seed.rounds.player]
+note = "rounds table column header; the player's Discord display name"
+text = ""
+
+[seed.rounds.player_two]
+note = "rounds table player cell for a round played as player 2 on the player's ROM; {name} the ROM owner's Discord display name"
+text = ""
+
+[seed.rounds.strokes]
+note = "rounds table column header; total strokes for the round"
+text = ""
+
+[seed.rounds.putts]
+note = "rounds table column header; total putts for the round"
+text = ""
+
+[seed.rounds.received]
+note = "rounds table column header; when the scan was recorded, UTC ISO 8601"
+text = ""
+
+[seed.rounds.none]
+note = "shown instead of the rounds table when no round has been submitted for this seed yet"
+text = ""
+
 [seed.details.heading]
 note = "h2 over the seed's settings table"
 text = "Details"

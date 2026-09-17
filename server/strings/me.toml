@@ -10,7 +10,7 @@ note = "h1 of the player's own page; {name} their Discord display name"
 text = "{name}"
 
 [me.entries.heading]
-note = "h2 over the table of seeds the player has entered (downloaded while signed in); rounds are not listed yet"
+note = "h2 over the table of seeds the player has entered (downloaded while signed in); the player's rounds are a table of their own below (me.rounds.heading)"
 text = "History"
 
 [me.entries.seed]
@@ -38,3 +38,43 @@ note = "shown instead of the entries table when the player has entered no seeds;
 text = """
 You haven't downloaded any seeds yet! Once you do, this page will show
 a list of the seeds you've downloaded and played."""
+
+[me.rounds.heading]
+note = "h2 over the table of rounds the player has submitted by scanning the end-of-round QR code, newest first"
+text = ""
+
+[me.rounds.seed]
+note = "rounds table column header; the seed's magic words, linking to its seed page"
+text = ""
+
+[me.rounds.player]
+note = "rounds table column header; which player on the ROM played the round, 1 or 2"
+text = ""
+
+[me.rounds.player_one]
+note = "rounds table player cell; the round was played as player 1"
+text = ""
+
+[me.rounds.player_two]
+note = "rounds table player cell; the round was played as player 2, counted toward this player's entry"
+text = ""
+
+[me.rounds.par]
+note = "rounds table column header; the seed's total par"
+text = ""
+
+[me.rounds.strokes]
+note = "rounds table column header; total strokes for the round"
+text = ""
+
+[me.rounds.putts]
+note = "rounds table column header; total putts for the round"
+text = ""
+
+[me.rounds.received]
+note = "rounds table column header; when the scan was recorded, UTC ISO 8601"
+text = ""
+
+[me.rounds.none]
+note = "shown instead of the rounds table when the player has submitted no rounds; a round is submitted by scanning the QR code shown after the scorecard with a phone"
+text = ""

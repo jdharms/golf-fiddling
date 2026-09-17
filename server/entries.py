@@ -1,11 +1,12 @@
 """Entries: the only code that writes `entries`.
 
 An entry is the record that a signed-in player has entered a seed. A signed-in download
-creates it, or updates its choices when it exists. Its two MAC keys, one per ROM slot, are
-drawn when it is created and never change, so every ROM a player downloads for a seed
-submits under the same keys. The name and clubs are the new-save defaults of the latest
-download, not a record of the bag a round was played with. See docs/randomizer_devplan.md,
-"Data model".
+creates it, or updates its choices when it exists and has no recorded round; once a round is
+recorded, downloads leave the entry as it is. Its two MAC keys, one per ROM slot, are drawn
+when it is created and never change, so every ROM a player downloads for a seed submits
+under the same keys. The name and clubs are the new-save defaults of the latest download
+before the first round, not a record of the bag a round was played with. See
+docs/randomizer_devplan.md, "Data model".
 """
 
 import json
@@ -72,7 +73,8 @@ def upsert_entry(
     """Create the player's entry for a seed, or update its choices, and return it.
 
     One statement, so two first downloads at once still make one entry. The keys drawn here
-    are only stored when the entry is new.
+    are only stored when the entry is new. An entry with a recorded round is not updated, and
+    comes back as it is.
     """
     at = now if now is not None else utc_now()
     with db.transaction() as conn:
@@ -83,11 +85,16 @@ def upsert_entry(
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (seed_id, user_id) DO UPDATE
                 SET player_name = excluded.player_name, clubs = excluded.clubs, updated_at = excluded.updated_at
+                WHERE NOT EXISTS (SELECT 1 FROM submissions WHERE submissions.entry_id = entries.id)
             RETURNING {COLUMNS}
             """,
             (seed_id, user_id, options.player_name, clubs_text(options.clubs), draw_key(), draw_key(), at, at),
         ).fetchall()
-    # RETURNING rows are read in full inside the transaction, or COMMIT finds the statement open
+        # RETURNING rows are read in full inside the transaction, or COMMIT finds the statement open
+        if not rows:  # the entry has a round, so the update was skipped
+            rows = conn.execute(
+                f"SELECT {COLUMNS} FROM entries WHERE seed_id = ? AND user_id = ?", (seed_id, user_id)
+            ).fetchall()
     return _entry(rows[0])
 
 

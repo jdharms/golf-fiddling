@@ -64,4 +64,27 @@ MIGRATIONS: list[str] = [
 
     CREATE INDEX entries_by_user ON entries (user_id, created_at);
     """,
+    # 4: submissions and their holes (docs/randomizer_devplan.md, "Data model"). payload is
+    # the 36 bytes as scanned; UNIQUE (entry_id, slot) is the first-submission rule.
+    """
+    CREATE TABLE submissions (
+        id INTEGER PRIMARY KEY,
+        entry_id INTEGER NOT NULL REFERENCES entries (id),
+        slot INTEGER NOT NULL CHECK (slot IN (0, 1)),
+        payload BLOB NOT NULL CHECK (length(payload) = 36),
+        total_strokes INTEGER NOT NULL,
+        total_putts INTEGER NOT NULL,
+        received_at TEXT NOT NULL,
+        flagged INTEGER NOT NULL DEFAULT 0 CHECK (flagged IN (0, 1)),
+        UNIQUE (entry_id, slot)
+    );
+
+    CREATE TABLE submission_holes (
+        submission_id INTEGER NOT NULL REFERENCES submissions (id),
+        position INTEGER NOT NULL CHECK (position BETWEEN 1 AND 18),
+        strokes INTEGER NOT NULL,
+        putts INTEGER NOT NULL,
+        PRIMARY KEY (submission_id, position)
+    );
+    """,
 ]

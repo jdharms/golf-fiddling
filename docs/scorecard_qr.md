@@ -610,13 +610,15 @@ arrays at `$0158` (strokes) and `$018E` (putts), with `PlayerCount` `$9A` = 1.
 ## Server contract
 
 - `GET /s/<48 chars>` decodes the payload, recomputes the MAC with the key stored for
-  that (seed, player), and records the round.
+  the entry that (seed, player) resolves to and the payload's slot, and records the round
+  (`server/submissions.py`).
 - A seed ID or player ID of all zeros is the placeholder fill of an unfinished ROM and is
   rejected.
-- **First submission per (seed, player) is authoritative.** Anything after it is
-  rejected.
-- Two players on one cart are treated as teammates. Player slot 1 submissions are
-  attributed to the cart's player ID in the second slot of a team entry.
+- **First submission per (entry, slot) is authoritative.** A later scan that verifies
+  records nothing and shows the round already recorded.
+- Two players on one cart are treated as teammates. Both slots carry the downloader's
+  player ID, and a slot 1 submission is recorded against the same entry as slot 0, under
+  the slot 1 key.
 
 The MAC's purpose is to stop a player submitting a scorecard *as someone else*, which a
 per-(seed, player) key does. It is not a defence against a player forging their own
@@ -711,7 +713,8 @@ goes up.
    simulated video memory. See The display layer above.
 6. **Patch integration** — *done*, the `scorecard_qr` patch and its finishing patches
    `qr_credentials` and `qr_disable`. See Installing it above.
-7. **Server endpoint.**
+7. **Server endpoint** — *done*, `server/submissions.py` and `GET /s/<48 chars>`; see
+   Server contract above.
 
 Phases 1-5 touch no ROM: the port is assembled and tested entirely in the repo, and
 nothing is spliced into a cartridge until phase 6.
