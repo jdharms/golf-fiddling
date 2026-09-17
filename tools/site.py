@@ -19,8 +19,8 @@ def main() -> int:
 
     import uvicorn
 
-    # --reload also restarts on the strings catalog, which the app reads once at startup
-    extra = {"reload_includes": ["*.toml"]} if args.reload else {}
+    # --reload also restarts on content that the app reads once at startup.
+    extra = {"reload_includes": ["*.toml", "*.md"]} if args.reload else {}
     uvicorn.run("server.app:create_app", factory=True, host=args.host, port=args.port, reload=args.reload, **extra)
     return 0
 

@@ -43,6 +43,7 @@ from .forms import (
     player_options_from_state,
     settings_from_state,
 )
+from .pages import PageCatalog
 from .ratelimit import (
     GENERATE_CAPACITY,
     GENERATE_REFILL_SECONDS,
@@ -97,6 +98,7 @@ def json_refusal(status_code: int, reason: str, values: dict | None = None) -> J
 def create_app(
     config: Config | None = None,
     strings: Strings | None = None,
+    pages: PageCatalog | None = None,
     builder: SeedBuilder | None = None,
     rate_limiter: RateLimiter | None = None,
     discord: DiscordClient | None = None,
@@ -113,6 +115,7 @@ def create_app(
     if discord is None and config.discord_enabled:
         discord = DiscordClient(config.discord_client_id or "", config.discord_client_secret or "")
     strings = strings if strings is not None else Strings.load()
+    pages = pages if pages is not None else PageCatalog.load()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -128,6 +131,7 @@ def create_app(
     app = FastAPI(title="NES Open Randomizer", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     app.state.config = config
     app.state.strings = strings
+    app.state.pages = pages
     app.state.rate_limiter = (
         rate_limiter if rate_limiter is not None else RateLimiter(GENERATE_CAPACITY, GENERATE_REFILL_SECONDS)
     )
@@ -176,6 +180,17 @@ def create_app(
     @app.get("/", response_class=HTMLResponse)
     def home(request: Request):
         return templates.TemplateResponse(request, "home.html", {"page": "home"})
+
+    @app.get("/pages/{slug}", response_class=HTMLResponse)
+    def content_page(request: Request, slug: str):
+        content = pages.get(slug)
+        if content is None:
+            raise not_found()
+        return templates.TemplateResponse(
+            request,
+            "page.html",
+            {"page": "content", "content_page": content},
+        )
 
     @app.get("/rom", response_class=HTMLResponse)
     def rom_setup(request: Request):

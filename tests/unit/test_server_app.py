@@ -20,6 +20,7 @@ from server.builder import SeedBuilder
 from server.config import Config, ConfigError
 from server.forms import FormState
 from server.migrations import MIGRATIONS
+from server.pages import PageCatalog
 from server.ratelimit import RateLimiter
 from server.strings import Entry, Strings
 
@@ -130,6 +131,40 @@ def test_home_links_to_rom_setup_and_generate(client):
     assert response.headers["content-type"].startswith("text/html")
     assert 'href="/rom"' in response.text
     assert 'href="/generate"' in response.text
+
+
+def page_catalog(tmp_path, metadata: str, body: str = "Page body.") -> PageCatalog:
+    (tmp_path / "review-page.md").write_text(f"+++\n{metadata}\n+++\n\n{body}\n")
+    return PageCatalog.load(tmp_path)
+
+
+def test_markdown_page_is_served_with_its_title_and_body(fake_builder, tmp_path):
+    pages = page_catalog(tmp_path, 'title = "Review & Notes"', "A **rendered** paragraph.")
+    with app_client(builder=fake_builder, pages=pages) as test_client:
+        response = test_client.get("/pages/review-page")
+    assert response.status_code == 200
+    assert "<title>Review &amp; Notes — NES Open Randomizer</title>" in response.text
+    assert "<h1>Review &amp; Notes</h1>" in response.text
+    assert "<p>A <strong>rendered</strong> paragraph.</p>" in response.text
+    assert 'name="robots"' not in response.text
+
+
+def test_unlisted_markdown_page_is_served_with_noindex(fake_builder, tmp_path):
+    pages = page_catalog(tmp_path, 'title = "Review"\nlisted = false')
+    with app_client(builder=fake_builder, pages=pages) as test_client:
+        response = test_client.get("/pages/review-page")
+    assert response.status_code == 200
+    assert '<meta name="robots" content="noindex, nofollow">' in response.text
+
+
+def test_disabled_and_unknown_markdown_pages_are_not_found(fake_builder, tmp_path):
+    pages = page_catalog(tmp_path, 'title = "Disabled"\nenabled = false\nlisted = false')
+    with app_client(builder=fake_builder, pages=pages) as test_client:
+        disabled = test_client.get("/pages/review-page")
+        unknown = test_client.get("/pages/missing")
+    assert disabled.status_code == 404
+    assert unknown.status_code == 404
+    assert "Disabled" not in disabled.text
 
 
 def test_rom_setup_lists_every_vanilla_rom_with_its_hash(client):
