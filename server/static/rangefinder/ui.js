@@ -1,9 +1,10 @@
 export class UIController {
-  constructor(metadata, state, renderer, text) {
+  constructor(metadata, state, renderer, text, locationChanged = () => {}) {
     this.metadata = metadata;
     this.state = state;
     this.renderer = renderer;
     this.text = text;
+    this.locationChanged = locationChanged;
     this.courseSelect = document.getElementById("course-select");
     this.holeSelect = document.getElementById("hole-select");
     this.holeInfo = document.getElementById("hole-info");
@@ -54,18 +55,22 @@ export class UIController {
   }
 
   loadHole(courseId, holeNumber) {
+    const course = this.metadata.courses[courseId];
+    const hole = course?.holes.find((candidate) => candidate.number === holeNumber);
+    if (!hole) return false;
+
     this.state.clearPoints();
     this.state.clearPreviewPoint();
     this.state.setLocation(courseId, holeNumber);
     this.courseSelect.value = courseId;
     this.populateHoles(courseId);
     this.holeSelect.value = String(holeNumber);
-    const course = this.metadata.courses[courseId];
-    this.currentHole = course.holes.find((hole) => hole.number === holeNumber);
-    if (!this.currentHole) return;
+    this.currentHole = hole;
     this.holeImage.src = this.currentHole.image;
     this.holeInfo.textContent = this.text.holeInfo(this.currentHole.par, this.currentHole.distance);
     this.updateDisplay();
+    this.locationChanged(courseId, holeNumber);
+    return true;
   }
 
   populateHoles(courseId) {

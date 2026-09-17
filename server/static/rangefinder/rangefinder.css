@@ -17,6 +17,14 @@
   margin: 0;
 }
 
+.rangefinder-selectors button {
+  margin-bottom: 0;
+}
+
+#permalink-status {
+  color: var(--pico-primary);
+}
+
 .rangefinder-actions>button,
 .rangefinder-actions [role="group"],
 .rangefinder-actions [role="group"]>* {
