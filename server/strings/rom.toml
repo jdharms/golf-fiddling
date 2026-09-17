@@ -3,7 +3,7 @@
 
 [rom.page_title]
 note = "plain: browser tab title, ROM setup page"
-text = "ROM Management -- NES Open Randomizer"
+text = "ROM Management - NES Open Randomizer"
 
 [rom.heading]
 note = "ROM setup page h1"

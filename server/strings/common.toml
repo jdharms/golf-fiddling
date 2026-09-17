@@ -35,7 +35,7 @@ note = "nav link to sign in with Discord; right end of the nav bar when signed o
 text = "Sign In"
 
 [nav.signed_in_as]
-note = "right end of the nav bar when signed in; receives name (the player's Discord display name)"
+note = "right end of the nav bar when signed in, a link to the player's own page (/me); receives name (the player's Discord display name)"
 text = "{name}"
 
 [nav.sign_out]

@@ -19,7 +19,8 @@ in this package.
   builds its own app.
 - `server/builder.py`'s `SeedBuilder` is the only thing a route calls to generate, build or
   finish. It holds the catalog and curation the seed page also reads, and reads the
-  server's ROM on first build. Builds run in the threadpool (`run_in_threadpool`), never on the event
+  server's ROM on first build. `finish` takes credentials for a signed-in download and
+  none for a guest. Builds run in the threadpool (`run_in_threadpool`), never on the event
   loop.
 - Route helpers with no web types live beside the app: `server/forms.py` (the generate
   form to `Settings`, the download form to `PlayerOptions` and ROM hashes),
@@ -52,6 +53,8 @@ in this package.
   place seed ids are drawn or converted.
 - `server/users.py` is the only code that writes `users`, and the only place player ids
   are drawn. `seeds.creator_id` holds a `users.id`.
+- `server/entries.py` is the only code that writes `entries`, and the only place MAC keys
+  are drawn. `Entry.keys` stays out of `repr`; keys never go in a page, a log or a manifest.
 
 ## Pages
 
@@ -88,7 +91,7 @@ writes none of it, not even as a draft to be rewritten.
   words.
 - The catalog is the TOML files under `server/strings/`: `common.toml` for the elements on
   every page (`base.html`), and one file per template named for it - `home.toml`,
-  `rom.toml`, `generate.toml`, `seed.toml`, `not_found.toml`, `sign_in_failed.toml`. Every file under the
+  `rom.toml`, `generate.toml`, `seed.toml`, `me.toml`, `not_found.toml`, `sign_in_failed.toml`. Every file under the
   directory is loaded and merged, subdirectories included. Entries carry their full dotted
   key (`[home.about]`), so a file name is organization only and a key still greps to its
   entry. A top-level namespace lives in exactly one file, and a new page arrives as a new
@@ -144,7 +147,7 @@ Posting to `/generate` builds a ROM, so unit tests pass `builder=` a `SeedBuilde
 whose `build` returns a fixed blob, and `rate_limiter=` a small `RateLimiter` to test
 refusals (`tests/unit/test_server_app.py`). `tests/integration/test_server_generate_rom.py`
 runs the real builder. Posting to `/h/<id>/patch.ips` finishes a ROM, so the same
-subclass overrides `finish`; `tests/integration/test_server_download_rom.py` and
+subclass overrides `finish`, recording the credentials it was given; `tests/integration/test_server_download_rom.py` and
 `tests/integration/test_site_download.py` run the real one, the second in a browser.
 
 Sign-in tests build the app with `Config(dev_login=True)` and sign in with

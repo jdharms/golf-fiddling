@@ -201,3 +201,65 @@ def test_player_ids_are_unique(db):
     insert_user(db)
     with pytest.raises(sqlite3.IntegrityError):
         insert_user(db, discord_id="dev:other")
+
+
+# -- entries ------------------------------------------------------------------------------
+
+
+def entry_row(**overrides):
+    row = {
+        "seed_id": "0000000001",
+        "user_id": 1,
+        "player_name": "LUIGI",
+        "clubs": "1W PW PT",
+        "key_slot0": bytes(8),
+        "key_slot1": bytes([1] * 8),
+        "created_at": "2026-09-16T00:00:00Z",
+        "updated_at": "2026-09-16T00:00:00Z",
+    }
+    row.update(overrides)
+    return row
+
+
+def insert_entry(db: Database, **overrides) -> None:
+    row = entry_row(**overrides)
+    columns = ", ".join(row)
+    marks = ", ".join(f":{name}" for name in row)
+    with db.transaction() as conn:
+        conn.execute(f"INSERT INTO entries ({columns}) VALUES ({marks})", row)
+
+
+@pytest.fixture
+def entrant_db(db):
+    db.migrate()
+    insert_seed(db)
+    insert_user(db)
+    return db
+
+
+def test_a_valid_entry_inserts(entrant_db):
+    insert_entry(entrant_db)
+    assert "entries" in tables(entrant_db)
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"key_slot0": bytes(7)},
+        {"key_slot1": bytes(9)},
+        {"key_slot0": None},
+        {"player_name": None},
+        {"clubs": None},
+        {"seed_id": "0000000002"},
+        {"user_id": 2},
+    ],
+)
+def test_entry_constraints(entrant_db, overrides):
+    with pytest.raises(sqlite3.IntegrityError):
+        insert_entry(entrant_db, **overrides)
+
+
+def test_one_entry_per_seed_and_user(entrant_db):
+    insert_entry(entrant_db)
+    with pytest.raises(sqlite3.IntegrityError):
+        insert_entry(entrant_db, player_name="TOAD")

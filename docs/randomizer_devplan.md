@@ -116,13 +116,19 @@ cannot submit.
 | `users` | Internal id, Discord id (`dev:<name>` for bypass users), Discord `username` and `global_name` (pages show `global_name`, falling back to `username`), avatar hash, a random unique nonzero uint32 `player_id` drawn at first sign-in, created_at, last_login. Names and avatar are refreshed on every sign-in |
 | `seeds` | A 10-character base62 id for URLs and the same value as an integer, `qr_seed_id`, both unique; manifest JSON, generator and catalog versions, curation stamp, the unfinished IPS blob, nullable creator, created_at |
 | `seed_holes` | seed, position 1-18, catalog hole id, transforms, par, wind seed, pin index, wind direction anchor, wind speed anchor. Pure denormalization of the manifest for SQL stats; a migration can always backfill it |
-| `entries` | One per (seed, user), unique. The player's choices for this seed (name, clubs, optional player 2 name), one MAC key per slot, created_at |
+| `entries` | One per (seed, user), unique. The player's choices at their latest download (name, clubs), one MAC key per slot, created_at, updated_at |
 | `submissions` | entry, slot, raw payload, total strokes, total putts, received_at, flagged. Unique on (entry, slot), which is the first-submission rule |
 | `submission_holes` | submission, position, strokes, putts. Joins to `seed_holes` on (seed, position) |
 
 An entry is the record that a signed-in player has entered a seed, in the tournament
-sense. Downloading again reads the entry and finishes the same ROM with the same
-credentials; it creates nothing. Settings lock once the entry has a submission.
+sense. Downloading again updates the entry's choices and finishes with the same
+credentials: the keys are drawn when the entry is created and never change. Settings lock
+once the entry has a submission.
+
+An entry's name and clubs are the new-save defaults of the latest download, not a record of
+the bag a round was played with. A save made before a re-download keeps its old defaults
+under the seed's SRAM magic, an older ROM file still submits, and the club house's CHOOSE
+CLUBS changes the bag in-game, so the bag is on the honour system.
 
 The player ID is the user's, written to both ROM slots. The payload's slot flag tells the
 two apart, so a slot 1 submission is recorded against the same entry as the teammate's
@@ -183,7 +189,7 @@ qr_seed_id INTEGER NOT NULL UNIQUE CHECK (qr_seed_id BETWEEN 1 AND 8392993658683
 | `POST /h/<id>/patch.ips` | Name, clubs, ROM hashes in; the finished IPS out. Signed in, upserts the entry and finishes with credentials; signed out, finishes as a guest. The page's script intercepts the form submit, fetches this, patches the ROM from IndexedDB and triggers the download |
 | `GET /s/<48 chars>` | QR submission: decode, verify MAC, record, render the result or the rejection |
 | `GET /auth/login`, `GET /auth/callback`, `POST /auth/logout` | Discord sign-in |
-| `GET /me` | The player's entries and rounds |
+| `GET /me` | The player's entries and rounds. Signed out, redirects to sign-in |
 | `GET /admin/...` | Seeds, submissions, flag, rebuild. Token gated |
 | `GET /healthz` | For the reverse proxy |
 
@@ -283,13 +289,22 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
     rate-limits per user. `golf-site-screenshot --login` captures pages signed in.
     `tests/unit/test_server_users.py` and `test_server_auth.py` (the client against a mock
     transport), and the sign-in tests in `test_server_app.py`, run without Discord.
-11. **Entries.** Entries created and updated by the download form, signed-in finishing
-    with credentials, settings locked once a submission exists, `/me` listing entries.
-    `sram_defaults` has one default name shared by both players, so a player 2 name
-    needs a patch before the form can offer it.
+11. **Entries.** Done: migration 3 adds `entries`; `server/entries.py` is its only writer,
+    with `upsert_entry` creating a player's entry for a seed with two drawn keys or updating
+    its name and clubs, and `entries_for_user` listing them. A signed-in download upserts the
+    entry and finishes through `SeedBuilder.finish` with `credentials_for` the seed's
+    `qr_seed_id`, the user's `player_id` and the entry's keys; a signed-out one is still a
+    guest ROM and records nothing. The seed page tells a signed-out player the download is
+    a guest ROM and links to sign-in. `/me` lists the player's entries, and the signed-in
+    name in the header links to it. `tests/unit/test_server_entries.py` and the entry tests
+    in `test_server_app.py` and `test_server_db.py` run without a ROM;
+    `tests/integration/test_server_download_rom.py` checks a signed-in download against
+    `finish` with the entry's credentials.
 12. **Submissions.** The QR endpoint reusing `golf.qr.payload` for decoding and MAC
     verification, submissions and submission_holes rows, rounds on the seed page and
-    `/me`, the teammate slot rule. Playtest a round through to a recorded scan.
+    `/me`, the teammate slot rule. An entry locks once it has a submission: a download
+    then finishes with the stored choices rather than updating them. Playtest a round
+    through to a recorded scan.
 13. **Admin.** Token-gated views of seeds and submissions, flag, and rebuild a seed.
 14. **Vanilla data out of the repository.** The ROM rehydration script that regenerates
     the course directories from the server's vanilla ROMs, verified against the index's
@@ -304,3 +319,13 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
     file of their own.
 16. **Polish.** The guest menu marker once its wording is settled, difficulty filters,
     mirrored holes and the transforms column, hole thumbnails, multi-course generation.
+    - **Player 2's account.** Both ROM slots carry the downloader's `player_id`, so a
+      player 2 round counts toward the downloader's entry. Crediting it to a second
+      account is undecided; candidates are a share code shown on `/me` that the teammate
+      gives the downloader, and an invite link the teammate opens signed in to join the
+      entry.
+    - **Bag from ROM.** Repointing the bag reads at a table in PRG ROM (see
+      `golf/core/patches/sram_defaults.py`) so no save can change the bag, with CHOOSE
+      CLUBS out of the club house. With that in place, SRAM magic derived from the
+      player's choices, and keys that change when the choices do, would make an entry's
+      bag the bag played.

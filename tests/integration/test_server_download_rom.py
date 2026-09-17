@@ -9,12 +9,13 @@ from fastapi.testclient import TestClient
 
 from golf.core import ips
 from golf.core.patches.sram_defaults import Club
-from golf.randomizer.build import PlayerOptions, finish
+from golf.randomizer.build import PlayerOptions, credentials_for, finish
 from golf.randomizer.catalog import JP_ROM, US_ROM
 from golf.randomizer.manifest import Manifest
 from golf.randomizer.roms import VANILLA_ROMS, vanilla_rom
 from server.app import create_app
 from server.config import Config
+from server.entries import load_entry
 from server.forms import FormState
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -58,6 +59,32 @@ def test_a_download_is_the_finished_build_of_the_stored_seed(client):
     assert response.content == expected.ips
     assert ips.apply(vanilla, response.content) == expected.rom
     assert response.headers["content-disposition"] == f'attachment; filename="notgr_par{manifest.course.par}_{seed_id}.ips"'
+
+
+def test_a_signed_in_download_is_finished_with_the_players_credentials():
+    with TestClient(create_app(Config(database=":memory:", rom_dir=ROOT, dev_login=True))) as signed_in:
+        seed_id = generate(signed_in, music="nes_us", sources={US_ROM})
+        signed_in.get("/auth/login", params={"as": "alice"})
+        response = signed_in.post(
+            f"/h/{seed_id}/patch.ips",
+            data={"player_name": "toad", "clubs": ["1W", "PW"], f"rom_{US_ROM}": vanilla_rom(US_ROM).sha1},
+        )
+        assert response.status_code == 200, response.text
+
+        db = signed_in.app.state.db
+        with db.transaction() as conn:
+            row = conn.execute("SELECT manifest, qr_seed_id, unfinished_ips FROM seeds WHERE id = ?", (seed_id,)).fetchone()
+            player = conn.execute("SELECT id, player_id FROM users").fetchone()
+        entry = load_entry(db, seed_id, player["id"])
+
+    manifest = Manifest.from_json(json.loads(row["manifest"]))
+    vanilla = ROM_PATH.read_bytes()
+    options = PlayerOptions("TOAD", frozenset({Club.W1, Club.PW}))
+    credentials = credentials_for(row["qr_seed_id"], player["player_id"], entry.keys)
+    expected = finish(manifest, vanilla, row["unfinished_ips"], options, credentials)
+    assert response.content == expected.ips
+    guest = finish(manifest, vanilla, row["unfinished_ips"], options)
+    assert response.content != guest.ips
 
 
 def test_a_seed_playing_a_mario_open_theme_needs_the_jp_rom(client):
