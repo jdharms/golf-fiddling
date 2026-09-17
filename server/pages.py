@@ -13,6 +13,9 @@ PAGES_DIR = HERE / "content" / "pages"
 FRONTMATTER_DELIMITER = "+++"
 FIELDS = frozenset({"title", "nav_title", "order", "enabled", "listed"})
 SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
+DEFAULT_ORDER = 100
+DEFAULT_ENABLED = True
+DEFAULT_LISTED = True
 
 
 class PageError(ValueError):
@@ -104,9 +107,9 @@ def _load_page(path: Path) -> ContentPage:
 
     title = _string_field(path, metadata, "title")
     nav_title = _string_field(path, metadata, "nav_title", title)
-    order = metadata.get("order", 100)
-    enabled = metadata.get("enabled", True)
-    listed = metadata.get("listed", True)
+    order = metadata.get("order", DEFAULT_ORDER)
+    enabled = metadata.get("enabled", DEFAULT_ENABLED)
+    listed = metadata.get("listed", DEFAULT_LISTED)
     if type(order) is not int:
         raise PageError(f"{path.name}: order must be an integer")
     if type(enabled) is not bool:

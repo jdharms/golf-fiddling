@@ -105,10 +105,11 @@ def create_app(
 ) -> FastAPI:
     """Build the app.
 
-    With no config, reads it from the environment; with no strings, loads the catalog; with
-    no builder, makes one from the config when the app starts; with no rate limiter, uses
-    the generate limits in `server/ratelimit.py`; with no Discord client, makes one when
-    the config has credentials. Raises ConfigError for settings the site refuses.
+    With no config, reads it from the environment; with no strings or pages, loads those
+    catalogs; with no builder, makes one from the config when the app starts; with no rate
+    limiter, uses the generate limits in `server/ratelimit.py`; with no Discord client,
+    makes one when the config has credentials. Raises ConfigError for settings the site
+    refuses.
     """
     config = config if config is not None else Config.from_env()
     config.validate()
@@ -155,6 +156,7 @@ def create_app(
             "user": current_user(request),
             "sign_in_enabled": config.sign_in_enabled,
             "return_path": "/" if path.startswith("/auth/") else here,
+            "content_pages": pages.listed,
         }
 
     templates = Jinja2Templates(directory=TEMPLATES_DIR, context_processors=[sign_in_context])

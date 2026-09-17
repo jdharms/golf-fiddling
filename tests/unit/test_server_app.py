@@ -131,11 +131,41 @@ def test_home_links_to_rom_setup_and_generate(client):
     assert response.headers["content-type"].startswith("text/html")
     assert 'href="/rom"' in response.text
     assert 'href="/generate"' in response.text
+    assert "nav.pages" not in response.text
+
+
+def write_content_page(tmp_path, slug: str, metadata: str, body: str = "Page body.") -> None:
+    (tmp_path / f"{slug}.md").write_text(f"+++\n{metadata}\n+++\n\n{body}\n")
 
 
 def page_catalog(tmp_path, metadata: str, body: str = "Page body.") -> PageCatalog:
-    (tmp_path / "review-page.md").write_text(f"+++\n{metadata}\n+++\n\n{body}\n")
+    write_content_page(tmp_path, "review-page", metadata, body)
     return PageCatalog.load(tmp_path)
+
+
+def test_navigation_lists_only_enabled_listed_pages_in_display_order(fake_builder, tmp_path):
+    write_content_page(tmp_path, "later", 'title = "Later"\nnav_title = "Zed"\norder = 20')
+    write_content_page(tmp_path, "first", 'title = "First"\nnav_title = "A & B"\norder = 10')
+    write_content_page(tmp_path, "review", 'title = "Review"\nlisted = false')
+    write_content_page(tmp_path, "disabled", 'title = "Disabled"\nenabled = false\nlisted = false')
+    pages = PageCatalog.load(tmp_path)
+    with app_client(builder=fake_builder, pages=pages, strings=UNWRITTEN) as test_client:
+        response = test_client.get("/")
+    assert response.status_code == 200
+    assert "⟦nav.pages⟧" in response.text
+    assert response.text.index('href="/pages/first"') < response.text.index('href="/pages/later"')
+    assert ">A &amp; B</a>" in response.text
+    assert 'href="/pages/review"' not in response.text
+    assert 'href="/pages/disabled"' not in response.text
+
+
+def test_content_page_marks_its_dropdown_and_link_current(fake_builder, tmp_path):
+    pages = page_catalog(tmp_path, 'title = "Review"')
+    with app_client(builder=fake_builder, pages=pages) as test_client:
+        response = test_client.get("/pages/review-page")
+    assert response.status_code == 200
+    assert '<summary aria-current="page">' in response.text
+    assert '<a href="/pages/review-page" aria-current="page">Review</a>' in response.text
 
 
 def test_markdown_page_is_served_with_its_title_and_body(fake_builder, tmp_path):
@@ -155,6 +185,7 @@ def test_unlisted_markdown_page_is_served_with_noindex(fake_builder, tmp_path):
         response = test_client.get("/pages/review-page")
     assert response.status_code == 200
     assert '<meta name="robots" content="noindex, nofollow">' in response.text
+    assert 'href="/pages/review-page"' not in response.text
 
 
 def test_disabled_and_unknown_markdown_pages_are_not_found(fake_builder, tmp_path):
