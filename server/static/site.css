@@ -215,21 +215,39 @@ article.download:not([data-state="missing"]) .download-rom-setup {
   display: none;
 }
 
-/* Scan page: the round table is only as wide as its content, with the front and back nines
-   side by side and a rule between them. */
-table.round {
-  width: auto;
+/* Scan page: one table per nine, side by side while both fit and stacked when they don't.
+   Fixed layout and set column widths make the two tables line up either way. */
+.nines {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  column-gap: calc(var(--pico-spacing) * 2);
 }
 
-table.round .nine-start {
-  border-left: var(--pico-border-width) solid var(--pico-table-border-color);
+table.nine {
+  table-layout: fixed;
+  width: 26rem;
+  max-width: 100%;
+}
+
+table.nine col.hole,
+table.nine col.putts {
+  width: 24%;
+}
+
+table.nine col.par {
+  width: 18%;
+}
+
+table.nine col.strokes {
+  width: 34%;
 }
 
 /* Strokes against par: over par red, under par green, level par left as it is. */
-table.round .over-par {
+table.nine .over-par {
   color: var(--pico-del-color);
 }
 
-table.round .under-par {
+table.nine .under-par {
   color: var(--pico-ins-color);
 }

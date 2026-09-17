@@ -11,7 +11,7 @@ text = "{name}"
 
 [me.entries.heading]
 note = "h2 over the table of seeds the player has entered (downloaded while signed in); the player's rounds are a table of their own below (me.rounds.heading)"
-text = "History"
+text = "Downloaded Seeds"
 
 [me.entries.seed]
 note = "entries table column header; the seed's magic words, linking to its seed page"
@@ -41,11 +41,11 @@ a list of the seeds you've downloaded and played."""
 
 [me.rounds.heading]
 note = "h2 over the table of rounds the player has submitted by scanning the end-of-round QR code, newest first"
-text = ""
+text = "Completed Rounds"
 
 [me.rounds.seed]
 note = "rounds table column header; the seed's magic words, linking to its seed page"
-text = ""
+text = "Seed Link"
 
 [me.rounds.player]
 note = "rounds table column header; which player on the ROM played the round, 1 or 2"

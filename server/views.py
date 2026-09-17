@@ -206,7 +206,7 @@ class RoundHoleView:
 
 @dataclass(frozen=True)
 class NineView:
-    """One nine of a round, as a block of the scan page's table, with its totals."""
+    """One nine of a round, as a table of its own on the scan page, with its totals."""
 
     holes: tuple[RoundHoleView, ...]
 
@@ -234,7 +234,7 @@ class SubmissionView:
     #: whether this scan recorded the round, rather than finding it recorded
     new: bool
     received_at: str
-    #: holes 1-9 and 10-18, side by side in the table
+    #: holes 1-9 and 10-18, a table each
     front: NineView
     back: NineView
     total_par: int
