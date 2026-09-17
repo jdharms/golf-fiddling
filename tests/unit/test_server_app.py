@@ -8,6 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from golf.core.patches.sram_defaults import Club
+from golf.qr.payload import URL_PREFIX, HoleRecord, RoundPayload
 from golf.randomizer.catalog import JP_ROM, US_ROM, Catalog, HoleStore
 from golf.randomizer.curation import CurationSnapshot
 from golf.randomizer.generate import GenerationError
@@ -433,7 +434,8 @@ def test_written_strings_render_without_placeholders(fake_builder):
     written = _catalog_with_text(lambda key: f"TEXT:{key}")
     with app_client(strings=written, builder=fake_builder) as test_client:
         seed_id = generate_seed(test_client)
-        pages = {path: test_client.get(path).text for path in ("/", "/rom", "/generate", f"/h/{seed_id}", "/nope")}
+        scan = "/s/" + "A" * 48
+        pages = {path: test_client.get(path).text for path in ("/", "/rom", "/generate", f"/h/{seed_id}", "/nope", scan)}
     for page in pages.values():
         assert "⟦" not in page
         assert 'class="unwritten"' not in page
@@ -445,6 +447,7 @@ def test_written_strings_render_without_placeholders(fake_builder):
     assert "TEXT:seed.download.submit" in pages[f"/h/{seed_id}"]
     assert '"TEXT:seed.download.status.ready"' in pages[f"/h/{seed_id}"]
     assert "TEXT:not_found.heading" in pages["/nope"]
+    assert "TEXT:submission.rejected.malformed" in pages[scan]
 
 
 def test_unwritten_strings_render_as_placeholders_with_their_notes(fake_builder):
@@ -800,3 +803,162 @@ def test_my_page_lists_only_my_entries_newest_first(fake_builder):
     assert "<td>PEACH</td>" in alice_page
     assert "TOAD" not in alice_page
     assert f'href="/h/{first}"' not in bob_page
+
+
+# -- Submissions -------------------------------------------------------------------------
+
+
+def scan_path(client: TestClient, seed_id: str, username: str, slot: int = 0, strokes: int = 4, key=None) -> str:
+    """The path a ROM's QR code opens: username's entry in the seed, every hole `strokes` with 2 putts."""
+    with client.app.state.db.transaction() as conn:
+        row = conn.execute(
+            """
+            SELECT seeds.qr_seed_id, users.player_id, entries.key_slot0, entries.key_slot1
+            FROM entries JOIN seeds ON seeds.id = entries.seed_id JOIN users ON users.id = entries.user_id
+            WHERE entries.seed_id = ? AND users.username = ?
+            """,
+            (seed_id, username),
+        ).fetchone()
+    round_payload = RoundPayload(
+        seed_id=row["qr_seed_id"].to_bytes(8, "big"),
+        player_id=row["player_id"].to_bytes(4, "big"),
+        holes=(HoleRecord(strokes, 2),) * 18,
+        player_slot=slot,
+    )
+    signing_key = key if key is not None else bytes(row["key_slot1"] if slot else row["key_slot0"])
+    return "/s/" + round_payload.to_url(signing_key).removeprefix(URL_PREFIX)
+
+
+def entered_seed(test_client: TestClient, *names: str) -> str:
+    """A seed each named dev user has downloaded signed in; signed in as the last of them."""
+    seed_id = generate_seed(test_client)
+    for name in names:
+        test_client.get("/auth/login", params={"as": name})
+        assert post_download(test_client, seed_id).status_code == 200
+    return seed_id
+
+
+def submissions(client: TestClient) -> list[dict]:
+    with client.app.state.db.transaction() as conn:
+        return [dict(row) for row in conn.execute("SELECT * FROM submissions ORDER BY id")]
+
+
+def test_scanning_records_the_round_and_shows_it(fake_builder):
+    with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
+        seed_id = entered_seed(test_client, "alice")
+        test_client.post("/auth/logout", data={"next": "/"})
+        response = test_client.get(scan_path(test_client, seed_id, "alice", strokes=5))
+        recorded = submissions(test_client)
+    assert response.status_code == 200
+    assert response.headers["cache-control"] == "no-store"
+    assert "submission.recorded.heading_new" in response.text
+    assert "submission.recorded.player_one name=alice" in response.text
+    assert f'href="/h/{seed_id}"' in response.text
+    assert '<td class="num over-par">5</td>' in response.text
+    assert '<td class="num over-par">90</td>' in response.text
+    assert [(row["slot"], row["total_strokes"], row["total_putts"]) for row in recorded] == [(0, 90, 36)]
+
+
+def test_scanning_again_shows_the_first_round_and_records_nothing(fake_builder):
+    with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
+        seed_id = entered_seed(test_client, "alice")
+        path = scan_path(test_client, seed_id, "alice", strokes=5)
+        test_client.get(path)
+        again = test_client.get(path)
+        different = test_client.get(scan_path(test_client, seed_id, "alice", strokes=3))
+        recorded = submissions(test_client)
+    for response in (again, different):
+        assert response.status_code == 200
+        assert "submission.recorded.heading_earlier" in response.text
+        assert '<td class="num over-par">90</td>' in response.text
+    assert len(recorded) == 1
+
+
+def test_strokes_are_marked_against_par(fake_builder):
+    with dev_client(fake_builder) as test_client:
+        seed_id = entered_seed(test_client, "alice")
+        course = fake_builder.built.course
+        page = test_client.get(scan_path(test_client, seed_id, "alice", strokes=4)).text
+    pars = [hole.par for hole in course.holes]
+    assert course.par == 72
+    # a 4 on every hole: over a par 3, under a par 5, and level par over the round
+    assert page.count('<td class="num over-par">4</td>') == pars.count(3)
+    assert page.count('<td class="num under-par">4</td>') == pars.count(5)
+    assert page.count('<td class="num">72</td>') == 2
+
+
+def test_a_player_two_scan_is_marked_on_the_page(fake_builder):
+    with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
+        seed_id = entered_seed(test_client, "alice")
+        response = test_client.get(scan_path(test_client, seed_id, "alice", slot=1))
+    assert response.status_code == 200
+    assert "submission.recorded.player_two name=alice" in response.text
+
+
+@pytest.mark.parametrize(
+    "path, status, notice",
+    [
+        ("/s/" + "A" * 48, 400, "malformed"),
+        ("/s/" + "A" * 20, 400, "malformed"),
+        ("/s/" + "AQ" + "A" * 46, 400, "unfinished"),
+    ],
+)
+def test_scans_that_are_not_rounds_are_refused(fake_builder, path, status, notice):
+    with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
+        response = test_client.get(path)
+    assert response.status_code == status
+    assert response.headers["cache-control"] == "no-store"
+    assert "submission.rejected.heading" in response.text
+    assert f"submission.rejected.{notice}" in response.text
+
+
+def test_a_scan_signed_with_the_wrong_key_is_not_recognized(fake_builder):
+    with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
+        seed_id = entered_seed(test_client, "alice")
+        response = test_client.get(scan_path(test_client, seed_id, "alice", key=bytes(8)))
+        assert submissions(test_client) == []
+    assert response.status_code == 404
+    assert "submission.rejected.unrecognized" in response.text
+
+
+def test_the_seed_page_lists_recorded_rounds(fake_builder):
+    with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
+        seed_id = entered_seed(test_client, "alice", "bob")
+        assert "seed.rounds.none" in test_client.get(f"/h/{seed_id}").text
+        test_client.get(scan_path(test_client, seed_id, "alice", strokes=5))
+        test_client.get(scan_path(test_client, seed_id, "alice", slot=1, strokes=6))
+        test_client.get(scan_path(test_client, seed_id, "bob", strokes=4))
+        page = test_client.get(f"/h/{seed_id}").text
+    assert "seed.rounds.none" not in page
+    rounds = page[page.index('class="rounds') :]
+    assert rounds.index("<td>bob</td>") < rounds.index("<td>alice</td>") < rounds.index("seed.rounds.player_two name=alice")
+
+
+def test_my_page_lists_my_rounds(fake_builder):
+    with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
+        seed_id = entered_seed(test_client, "bob", "alice")
+        assert "me.rounds.none" in test_client.get("/me").text
+        test_client.get(scan_path(test_client, seed_id, "alice", slot=1, strokes=5))
+        test_client.get(scan_path(test_client, seed_id, "bob", strokes=3))
+        page = test_client.get("/me").text
+    assert "me.rounds.none" not in page
+    rounds = page[page.index('class="rounds') :]
+    assert "me.rounds.player_two" in rounds
+    assert '<td class="num">90</td>' in rounds
+    assert '<td class="num">54</td>' not in rounds
+
+
+def test_downloading_after_a_round_finishes_with_the_new_choices_and_leaves_the_entry(fake_builder):
+    with dev_client(fake_builder) as test_client:
+        seed_id = entered_seed(test_client, "alice")
+        first_keys = fake_builder.credentials.keys
+        test_client.get(scan_path(test_client, seed_id, "alice"))
+        before = entries(test_client)
+        response = post_download(test_client, seed_id, name="toad", clubs=("3W", "SW"))
+        after = entries(test_client)
+    assert response.status_code == 200
+    _, _, options = fake_builder.finished
+    assert options.player_name == "TOAD"
+    assert options.clubs == frozenset({Club.W3, Club.SW, Club.PT})
+    assert fake_builder.credentials.keys == first_keys
+    assert after == before

@@ -1,0 +1,74 @@
+# Scan page strings (submission.html): what a phone shows after scanning the end-of-round
+# QR code. Format: see common.toml, and server/CLAUDE.md "Player-facing text".
+
+[submission.page_title]
+note = "plain: browser tab title, a scanned round's page; {words} the seed's three magic words"
+text = "Recorded Round - NES Open Randomizer"
+
+[submission.recorded.heading_new]
+note = "h1, this scan recorded the round"
+text = "Round Recorded"
+
+[submission.recorded.heading_earlier]
+note = "h1, the round for this player and slot was already recorded by an earlier scan; this scan changed nothing, and the round shown is the one recorded first (a different round scanned now is not kept)"
+text = "Round Recorded"
+
+[submission.recorded.player_one]
+note = "line under the h1, round played as player 1; {name} the player's Discord display name, {received} when it was recorded, UTC ISO 8601"
+text = "{name} | {received}"
+
+[submission.recorded.player_two]
+note = "line under the h1, round played as player 2 on the player's ROM, counted toward their entry; {name} the ROM owner's Discord display name, {received} when it was recorded, UTC ISO 8601"
+text = "{name}, teammate submission | {received}"
+
+[submission.recorded.seed]
+note = "label before the link to the seed page, which shows the seed's magic words"
+text = "Seed permalink:"
+
+[submission.holes.number]
+note = "round table column header; hole number 1-18"
+text = "Hole"
+
+[submission.holes.par]
+note = "round table column header; the hole's par"
+text = "Par"
+
+[submission.holes.strokes]
+note = "round table column header; strokes on the hole, putts included"
+text = "Total Strokes"
+
+[submission.holes.putts]
+note = "round table column header; putts on the hole"
+text = "Putts"
+
+[submission.holes.front_total]
+note = "round table footer label under the front nine; its total par, strokes and putts follow"
+text = "Out"
+
+[submission.holes.back_total]
+note = "round table footer label under the back nine; its total par, strokes and putts follow"
+text = "In"
+
+[submission.holes.total]
+note = "round table last footer row label, under the back nine's totals; all 18 holes' total par, strokes and putts follow"
+text = "Total"
+
+[submission.rejected.page_title]
+note = "plain: browser tab title, a scan that could not be recorded"
+text = ""
+
+[submission.rejected.heading]
+note = "h1, the scan could not be recorded"
+text = ""
+
+[submission.rejected.malformed]
+note = "the link isn't a complete scorecard code: mistyped, cut off, or not from a randomizer ROM; try scanning again"
+text = ""
+
+[submission.rejected.unfinished]
+note = "the code came from a ROM that was never finished with a player's credentials (built outside the site's download); only ROMs downloaded while signed in can submit"
+text = ""
+
+[submission.rejected.unrecognized]
+note = "the code doesn't match any player's entry for a seed: not downloaded signed in from this site, or altered; deliberately doesn't say which"
+text = ""

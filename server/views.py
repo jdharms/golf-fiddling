@@ -16,6 +16,7 @@ from golf.randomizer.roms import VanillaRom, vanilla_rom
 
 from .forms import MUSIC_CHOICES, PARS, RULE_CLUBS, DownloadState
 from .seeds import SeedRow
+from .submissions import ScanResult
 
 #: (ROM id, course directory name) -> the course's display name
 COURSE_NAMES: dict[tuple[str, str], str] = {
@@ -192,4 +193,72 @@ def seed_view(row: SeedRow, catalog: Catalog, curation: CurationSnapshot) -> See
         required_bag=required_bag,
         required_roms=required,
         download=download,
+    )
+
+
+@dataclass(frozen=True)
+class RoundHoleView:
+    number: int
+    par: int
+    strokes: int
+    putts: int
+
+
+@dataclass(frozen=True)
+class NineView:
+    """One nine of a round, as a block of the scan page's table, with its totals."""
+
+    holes: tuple[RoundHoleView, ...]
+
+    @property
+    def par(self) -> int:
+        return sum(hole.par for hole in self.holes)
+
+    @property
+    def strokes(self) -> int:
+        return sum(hole.strokes for hole in self.holes)
+
+    @property
+    def putts(self) -> int:
+        return sum(hole.putts for hole in self.holes)
+
+
+@dataclass(frozen=True)
+class SubmissionView:
+    """What the scan page shows of a recorded round."""
+
+    seed_id: str
+    magic_words: tuple[str, ...]
+    player_name: str
+    slot: int
+    #: whether this scan recorded the round, rather than finding it recorded
+    new: bool
+    received_at: str
+    #: holes 1-9 and 10-18, side by side in the table
+    front: NineView
+    back: NineView
+    total_par: int
+    total_strokes: int
+    total_putts: int
+
+
+def submission_view(row: SeedRow, result: ScanResult, player_name: str) -> SubmissionView:
+    recorded = result.round
+    course = row.manifest.course
+    holes = tuple(
+        RoundHoleView(hole.position, slot.par, hole.strokes, hole.putts)
+        for hole, slot in zip(recorded.holes, course.holes, strict=True)
+    )
+    return SubmissionView(
+        seed_id=row.id,
+        magic_words=course.magic_words,
+        player_name=player_name,
+        slot=recorded.slot,
+        new=result.new,
+        received_at=recorded.received_at,
+        front=NineView(holes[:9]),
+        back=NineView(holes[9:]),
+        total_par=course.par,
+        total_strokes=recorded.total_strokes,
+        total_putts=recorded.total_putts,
     )

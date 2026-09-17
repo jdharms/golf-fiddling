@@ -263,3 +263,90 @@ def test_one_entry_per_seed_and_user(entrant_db):
     insert_entry(entrant_db)
     with pytest.raises(sqlite3.IntegrityError):
         insert_entry(entrant_db, player_name="TOAD")
+
+
+# -- submissions --------------------------------------------------------------------------
+
+
+def submission_row(**overrides):
+    row = {
+        "entry_id": 1,
+        "slot": 0,
+        "payload": bytes(36),
+        "total_strokes": 72,
+        "total_putts": 36,
+        "received_at": "2026-09-17T00:00:00Z",
+    }
+    row.update(overrides)
+    return row
+
+
+def insert_submission(db: Database, **overrides) -> None:
+    row = submission_row(**overrides)
+    columns = ", ".join(row)
+    marks = ", ".join(f":{name}" for name in row)
+    with db.transaction() as conn:
+        conn.execute(f"INSERT INTO submissions ({columns}) VALUES ({marks})", row)
+
+
+def insert_submission_hole(db: Database, **overrides) -> None:
+    row = {"submission_id": 1, "position": 1, "strokes": 4, "putts": 2, **overrides}
+    with db.transaction() as conn:
+        conn.execute(
+            "INSERT INTO submission_holes (submission_id, position, strokes, putts) "
+            "VALUES (:submission_id, :position, :strokes, :putts)",
+            row,
+        )
+
+
+@pytest.fixture
+def submitter_db(entrant_db):
+    insert_entry(entrant_db)
+    return entrant_db
+
+
+def test_a_valid_submission_and_its_holes_insert_unflagged(submitter_db):
+    insert_submission(submitter_db)
+    insert_submission_hole(submitter_db)
+    with submitter_db.transaction() as conn:
+        assert conn.execute("SELECT flagged FROM submissions").fetchone()[0] == 0
+    assert {"submissions", "submission_holes"} <= tables(submitter_db)
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"slot": 2},
+        {"slot": -1},
+        {"payload": bytes(35)},
+        {"payload": None},
+        {"total_strokes": None},
+        {"received_at": None},
+        {"entry_id": 2},
+        {"flagged": 2},
+    ],
+)
+def test_submission_constraints(submitter_db, overrides):
+    with pytest.raises(sqlite3.IntegrityError):
+        insert_submission(submitter_db, **overrides)
+
+
+def test_one_submission_per_entry_and_slot(submitter_db):
+    insert_submission(submitter_db)
+    insert_submission(submitter_db, slot=1)
+    with pytest.raises(sqlite3.IntegrityError):
+        insert_submission(submitter_db, total_strokes=70)
+
+
+@pytest.mark.parametrize("overrides", [{"position": 0}, {"position": 19}, {"submission_id": 2}, {"strokes": None}])
+def test_submission_hole_constraints(submitter_db, overrides):
+    insert_submission(submitter_db)
+    with pytest.raises(sqlite3.IntegrityError):
+        insert_submission_hole(submitter_db, **overrides)
+
+
+def test_one_row_per_submission_hole(submitter_db):
+    insert_submission(submitter_db)
+    insert_submission_hole(submitter_db)
+    with pytest.raises(sqlite3.IntegrityError):
+        insert_submission_hole(submitter_db, strokes=5)

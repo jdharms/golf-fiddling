@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}{% if submission %}{{ t_plain("submission.page_title", words=submission.magic_words|join(" ")) }}{% else %}{{ t_plain("submission.rejected.page_title") }}{% endif %}{% endblock %}
+{% block content %}
+{# a stroke count's class against its par: over-par and under-par color it, level par stays plain #}
+{% macro to_par(strokes, par) %}{% if strokes > par %} over-par{% elif strokes < par %} under-par{% endif %}{% endmacro %}
+{% if submission %}
+<hgroup>
+  <h1>{% if submission.new %}{{ t("submission.recorded.heading_new") }}{% else %}{{ t("submission.recorded.heading_earlier") }}{% endif %}</h1>
+  <p>
+    {% if submission.slot == 1 %}{{ t("submission.recorded.player_two", name=submission.player_name, received=submission.received_at) }}
+    {% else %}{{ t("submission.recorded.player_one", name=submission.player_name, received=submission.received_at) }}{% endif %}
+  </p>
+</hgroup>
+
+<p>{{ t("submission.recorded.seed") }} <a href="/h/{{ submission.seed_id }}" class="magic-words">{{ submission.magic_words|join(" ") }}</a></p>
+
+<div class="overflow-auto">
+  <table class="round striped">
+    <thead>
+      <tr>
+        <th scope="col" class="num">{{ t("submission.holes.number") }}</th>
+        <th scope="col" class="num">{{ t("submission.holes.par") }}</th>
+        <th scope="col" class="num">{{ t("submission.holes.strokes") }}</th>
+        <th scope="col" class="num">{{ t("submission.holes.putts") }}</th>
+        <th scope="col" class="num nine-start">{{ t("submission.holes.number") }}</th>
+        <th scope="col" class="num">{{ t("submission.holes.par") }}</th>
+        <th scope="col" class="num">{{ t("submission.holes.strokes") }}</th>
+        <th scope="col" class="num">{{ t("submission.holes.putts") }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for front in submission.front.holes %}
+      {% set back = submission.back.holes[loop.index0] %}
+      <tr>
+        <td class="num">{{ front.number }}</td>
+        <td class="num">{{ front.par }}</td>
+        <td class="num{{ to_par(front.strokes, front.par) }}">{{ front.strokes }}</td>
+        <td class="num">{{ front.putts }}</td>
+        <td class="num nine-start">{{ back.number }}</td>
+        <td class="num">{{ back.par }}</td>
+        <td class="num{{ to_par(back.strokes, back.par) }}">{{ back.strokes }}</td>
+        <td class="num">{{ back.putts }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <th scope="row" class="num">{{ t("submission.holes.front_total") }}</th>
+        <td class="num">{{ submission.front.par }}</td>
+        <td class="num{{ to_par(submission.front.strokes, submission.front.par) }}">{{ submission.front.strokes }}</td>
+        <td class="num">{{ submission.front.putts }}</td>
+        <th scope="row" class="num nine-start">{{ t("submission.holes.back_total") }}</th>
+        <td class="num">{{ submission.back.par }}</td>
+        <td class="num{{ to_par(submission.back.strokes, submission.back.par) }}">{{ submission.back.strokes }}</td>
+        <td class="num">{{ submission.back.putts }}</td>
+      </tr>
+      <tr>
+        <td colspan="4"></td>
+        <th scope="row" class="num nine-start">{{ t("submission.holes.total") }}</th>
+        <td class="num">{{ submission.total_par }}</td>
+        <td class="num{{ to_par(submission.total_strokes, submission.total_par) }}">{{ submission.total_strokes }}</td>
+        <td class="num">{{ submission.total_putts }}</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+{% else %}
+<hgroup>
+  <h1>{{ t("submission.rejected.heading") }}</h1>
+  <p>
+    {% if rejection == "malformed" %}{{ t("submission.rejected.malformed") }}
+    {% elif rejection == "unfinished" %}{{ t("submission.rejected.unfinished") }}
+    {% else %}{{ t("submission.rejected.unrecognized") }}{% endif %}
+  </p>
+</hgroup>
+{% endif %}
+{% endblock %}

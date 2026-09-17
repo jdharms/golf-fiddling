@@ -300,11 +300,22 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
     in `test_server_app.py` and `test_server_db.py` run without a ROM;
     `tests/integration/test_server_download_rom.py` checks a signed-in download against
     `finish` with the entry's credentials.
-12. **Submissions.** The QR endpoint reusing `golf.qr.payload` for decoding and MAC
-    verification, submissions and submission_holes rows, rounds on the seed page and
-    `/me`, the teammate slot rule. An entry locks once it has a submission: a download
-    then finishes with the stored choices rather than updating them. Playtest a round
-    through to a recorded scan.
+12. **Submissions.** Done: migration 4 adds `submissions` and `submission_holes`;
+    `server/submissions.py` is their only writer. `submit_scan` decodes a scan with
+    `golf.qr.payload`, rejects it as malformed (length, alphabet, protocol version, reserved
+    flags, a slot past 1), unfinished (an all-zero seed or player ID) or unrecognized (no
+    entry for the seed and player, or a MAC its slot's key does not verify, one reason for
+    all of them), and records it against (entry, slot). A later scan for a recorded entry and
+    slot that verifies, identical or not, records nothing and shows the first round.
+    `GET /s/<48 chars>` renders `submission.html` with the round or the rejection, uncached.
+    The seed page lists the seed's rounds under Discord display names, fewest strokes first,
+    and `/me` lists the player's rounds. Once an entry has a round, `upsert_entry` leaves it
+    alone: a later download still finishes with the choices it posts and the entry's keys.
+    `tests/unit/test_server_submissions.py` and the submission tests in
+    `test_server_app.py` and `test_server_db.py` run without a ROM;
+    `tests/integration/test_server_submission_rom.py` downloads a signed-in ROM, builds both
+    players' URLs by running its QR routine in the simulator, and records them. Playtest a
+    round through to a recorded scan.
 13. **Admin.** Token-gated views of seeds and submissions, flag, and rebuild a seed.
 14. **Vanilla data out of the repository.** The ROM rehydration script that regenerates
     the course directories from the server's vanilla ROMs, verified against the index's
@@ -329,3 +340,8 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
       CLUBS out of the club house. With that in place, SRAM magic derived from the
       player's choices, and keys that change when the choices do, would make an entry's
       bag the bag played.
+    - **Static file versioning.** `/static/` URLs carry no version and no `Cache-Control`,
+      so a browser can keep a stale `site.css` or page script after a change, and after a
+      deploy old JavaScript can run against new pages. A template helper adding
+      `?v=<mtime or content hash>` to every `/static/` link would fix that, and would let
+      the reverse proxy serve `/static/` with a long `immutable` cache lifetime.

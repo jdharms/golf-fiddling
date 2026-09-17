@@ -214,3 +214,22 @@ article.download[data-state="unavailable"] .download-status {
 article.download:not([data-state="missing"]) .download-rom-setup {
   display: none;
 }
+
+/* Scan page: the round table is only as wide as its content, with the front and back nines
+   side by side and a rule between them. */
+table.round {
+  width: auto;
+}
+
+table.round .nine-start {
+  border-left: var(--pico-border-width) solid var(--pico-table-border-color);
+}
+
+/* Strokes against par: over par red, under par green, level par left as it is. */
+table.round .over-par {
+  color: var(--pico-del-color);
+}
+
+table.round .under-par {
+  color: var(--pico-ins-color);
+}

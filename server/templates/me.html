@@ -36,4 +36,38 @@
   <p>{{ t("me.entries.none") }}</p>
   {% endif %}
 </section>
+
+<section>
+  <h2>{{ t("me.rounds.heading") }}</h2>
+  {% if rounds %}
+  <div class="overflow-auto">
+    <table class="rounds striped">
+      <thead>
+        <tr>
+          <th scope="col">{{ t("me.rounds.seed") }}</th>
+          <th scope="col">{{ t("me.rounds.player") }}</th>
+          <th scope="col" class="num">{{ t("me.rounds.par") }}</th>
+          <th scope="col" class="num">{{ t("me.rounds.strokes") }}</th>
+          <th scope="col" class="num">{{ t("me.rounds.putts") }}</th>
+          <th scope="col">{{ t("me.rounds.received") }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for round in rounds %}
+        <tr>
+          <td><a href="/h/{{ round.seed_id }}" class="magic-words">{{ round.magic_words|join(" ") }}</a></td>
+          <td>{% if round.slot == 1 %}{{ t("me.rounds.player_two") }}{% else %}{{ t("me.rounds.player_one") }}{% endif %}</td>
+          <td class="num">{{ round.par }}</td>
+          <td class="num">{{ round.total_strokes }}</td>
+          <td class="num">{{ round.total_putts }}</td>
+          <td>{{ round.received_at }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p>{{ t("me.rounds.none") }}</p>
+  {% endif %}
+</section>
 {% endblock %}
