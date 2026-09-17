@@ -3,6 +3,46 @@
 {% block content %}
 {# a stroke count's class against its par: over-par and under-par color it, level par stays plain #}
 {% macro to_par(strokes, par) %}{% if strokes > par %} over-par{% elif strokes < par %} under-par{% endif %}{% endmacro %}
+{# one nine as a table of its own; the back nine's also carries the round's totals #}
+{% macro nine_table(nine, total_label, totals=none) %}
+<table class="nine striped">
+  <colgroup><col class="hole"><col class="par"><col class="strokes"><col class="putts"></colgroup>
+  <thead>
+    <tr>
+      <th scope="col" class="num">{{ t("submission.holes.number") }}</th>
+      <th scope="col" class="num">{{ t("submission.holes.par") }}</th>
+      <th scope="col" class="num">{{ t("submission.holes.strokes") }}</th>
+      <th scope="col" class="num">{{ t("submission.holes.putts") }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for hole in nine.holes %}
+    <tr>
+      <td class="num">{{ hole.number }}</td>
+      <td class="num">{{ hole.par }}</td>
+      <td class="num{{ to_par(hole.strokes, hole.par) }}">{{ hole.strokes }}</td>
+      <td class="num">{{ hole.putts }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <th scope="row" class="num">{{ total_label }}</th>
+      <td class="num">{{ nine.par }}</td>
+      <td class="num{{ to_par(nine.strokes, nine.par) }}">{{ nine.strokes }}</td>
+      <td class="num">{{ nine.putts }}</td>
+    </tr>
+    {% if totals %}
+    <tr>
+      <th scope="row" class="num">{{ t("submission.holes.total") }}</th>
+      <td class="num">{{ totals.total_par }}</td>
+      <td class="num{{ to_par(totals.total_strokes, totals.total_par) }}">{{ totals.total_strokes }}</td>
+      <td class="num">{{ totals.total_putts }}</td>
+    </tr>
+    {% endif %}
+  </tfoot>
+</table>
+{% endmacro %}
 {% if submission %}
 <hgroup>
   <h1>{% if submission.new %}{{ t("submission.recorded.heading_new") }}{% else %}{{ t("submission.recorded.heading_earlier") }}{% endif %}</h1>
@@ -14,55 +54,9 @@
 
 <p>{{ t("submission.recorded.seed") }} <a href="/h/{{ submission.seed_id }}" class="magic-words">{{ submission.magic_words|join(" ") }}</a></p>
 
-<div class="overflow-auto">
-  <table class="round striped">
-    <thead>
-      <tr>
-        <th scope="col" class="num">{{ t("submission.holes.number") }}</th>
-        <th scope="col" class="num">{{ t("submission.holes.par") }}</th>
-        <th scope="col" class="num">{{ t("submission.holes.strokes") }}</th>
-        <th scope="col" class="num">{{ t("submission.holes.putts") }}</th>
-        <th scope="col" class="num nine-start">{{ t("submission.holes.number") }}</th>
-        <th scope="col" class="num">{{ t("submission.holes.par") }}</th>
-        <th scope="col" class="num">{{ t("submission.holes.strokes") }}</th>
-        <th scope="col" class="num">{{ t("submission.holes.putts") }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for front in submission.front.holes %}
-      {% set back = submission.back.holes[loop.index0] %}
-      <tr>
-        <td class="num">{{ front.number }}</td>
-        <td class="num">{{ front.par }}</td>
-        <td class="num{{ to_par(front.strokes, front.par) }}">{{ front.strokes }}</td>
-        <td class="num">{{ front.putts }}</td>
-        <td class="num nine-start">{{ back.number }}</td>
-        <td class="num">{{ back.par }}</td>
-        <td class="num{{ to_par(back.strokes, back.par) }}">{{ back.strokes }}</td>
-        <td class="num">{{ back.putts }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-    <tfoot>
-      <tr>
-        <th scope="row" class="num">{{ t("submission.holes.front_total") }}</th>
-        <td class="num">{{ submission.front.par }}</td>
-        <td class="num{{ to_par(submission.front.strokes, submission.front.par) }}">{{ submission.front.strokes }}</td>
-        <td class="num">{{ submission.front.putts }}</td>
-        <th scope="row" class="num nine-start">{{ t("submission.holes.back_total") }}</th>
-        <td class="num">{{ submission.back.par }}</td>
-        <td class="num{{ to_par(submission.back.strokes, submission.back.par) }}">{{ submission.back.strokes }}</td>
-        <td class="num">{{ submission.back.putts }}</td>
-      </tr>
-      <tr>
-        <td colspan="4"></td>
-        <th scope="row" class="num nine-start">{{ t("submission.holes.total") }}</th>
-        <td class="num">{{ submission.total_par }}</td>
-        <td class="num{{ to_par(submission.total_strokes, submission.total_par) }}">{{ submission.total_strokes }}</td>
-        <td class="num">{{ submission.total_putts }}</td>
-      </tr>
-    </tfoot>
-  </table>
+<div class="nines">
+  {{ nine_table(submission.front, t("submission.holes.front_total")) }}
+  {{ nine_table(submission.back, t("submission.holes.back_total"), submission) }}
 </div>
 {% else %}
 <hgroup>

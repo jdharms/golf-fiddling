@@ -345,3 +345,8 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
       deploy old JavaScript can run against new pages. A template helper adding
       `?v=<mtime or content hash>` to every `/static/` link would fix that, and would let
       the reverse proxy serve `/static/` with a long `immutable` cache lifetime.
+    - **Phone header.** The site has been laid out for desktop, where seeds are downloaded,
+      but the scan page (`/s/`) opens on the phone that scanned the QR code. At phone width
+      the header wraps into the site name, the nav links and the sign-in row, taking the
+      top 220px or so before the round shows. A compact header on narrow screens, or a
+      pared-down header on the scan page alone, would put the result on screen first.
