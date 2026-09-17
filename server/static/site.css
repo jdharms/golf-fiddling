@@ -22,7 +22,8 @@ header nav ul:first-of-type {
   margin-right: auto;
 }
 
-header nav a {
+header nav a,
+header nav summary {
   white-space: nowrap;
 }
 

@@ -98,6 +98,18 @@ in this package.
 - A page that shows one of several messages, such as the generate form's refusal notices,
   picks each in an `if` chain calling `t()` with its literal key, never a key built from
   a variable, so the strings test can find every key.
+- Document-like pages live as Markdown directly under `server/content/pages/`. Their file
+  name is the `/pages/<slug>` path and must contain only lowercase letters, digits and
+  hyphens. TOML frontmatter between `+++` lines holds a required `title`, and optional
+  `nav_title`, `order`, `enabled` and `listed` fields. Both flags default true. An enabled,
+  unlisted page remains available by its URL for review but is not access-controlled;
+  disabled pages answer 404. `server/pages.py` validates and renders the catalog once at
+  app creation, with raw HTML disabled. `new-page <title>` creates a valid stub with the
+  frontmatter defaults written explicitly; `--slug` overrides its derived file name, and
+  it refuses to overwrite a page. `golf-site --reload` watches the Markdown files.
+- `base.html` lists enabled, listed Markdown pages in its document-page dropdown. The
+  dropdown is absent when there are none. A Markdown page supplies its own `title` and
+  body; its template supplies the top-level heading, so its body starts below h1.
 - JavaScript only where the browser must act: hashing and storing ROMs
   (`server/static/rom.js`) and fetching and applying a seed's IPS
   (`server/static/download.js`). Both load `server/static/romstore.js` first, which holds
@@ -118,18 +130,24 @@ The admin pages are the one exception: only admins see them, so their English is
 `server/templates/admin/` directly, and they call no `t()`. A string an admin action puts on
 a public page, such as the flagged marker, is still a catalog key.
 
-- Every visible string, including tab titles, nav labels, button labels, accessible names
-  and script status messages, comes from `server/strings/` by key. No English goes in
-  a template or script. Proper nouns and data are not strings: ROM titles, hole ids, magic
-  words.
+The checked-in Markdown pages under `server/content/pages/` are the other exception: their
+frontmatter titles and bodies are human-authored editorial content, not interface strings.
+Claude may build the machinery around them but does not compose or edit that content. Shared
+interface text surrounding them, including the navigation dropdown label, remains in the
+strings catalog.
+
+- Apart from the Markdown editorial content described above, every visible string,
+  including tab titles, nav labels, button labels, accessible names and script status
+  messages, comes from `server/strings/` by key. No English goes in a template or script.
+  Proper nouns and data are not strings: ROM titles, hole ids, magic words.
 - The catalog is the TOML files under `server/strings/`: `common.toml` for the elements on
   every page (`base.html`), and one file per template named for it - `home.toml`,
   `rom.toml`, `generate.toml`, `seed.toml`, `me.toml`, `not_found.toml`, `sign_in_failed.toml`,
   `submission.toml`. Every file under the
   directory is loaded and merged, subdirectories included. Entries carry their full dotted
   key (`[home.about]`), so a file name is organization only and a key still greps to its
-  entry. A top-level namespace lives in exactly one file, and a new page arrives as a new
-  file.
+  entry. A top-level namespace lives in exactly one file, and a new template-backed page's
+  strings arrive as a new file.
 - An entry is a `note` and a `text`. Claude adds keys and notes and never writes or edits
   `text`. Claude always adds an empty `text` field to entries.
   A note is terse fragments of what the string has to get across and the values it
@@ -160,6 +178,9 @@ PNGs before reporting the change done:
 uv run golf-site-screenshot / /rom /generate --generate -o <scratchpad>/shots \
   --rom nes_open_us=nes_open_us.nes --rom mario_open_jp=mario_open_jp.nes
 ```
+
+Once a Markdown page exists, pass its route as another path (for example,
+`/pages/<slug>`) to capture its content and the document-page dropdown.
 
 It serves the app on an in-memory database, captures each page at desktop and phone
 widths in light and dark, and exits 1 on a browser console error or a failed request. With

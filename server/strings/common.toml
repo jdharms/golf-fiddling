@@ -30,6 +30,10 @@ text = "ROM Setup"
 note = "nav link to the seed settings form"
 text = "Generate Game"
 
+[nav.pages]
+note = "label for the dropdown of document-like pages"
+text = "Pages"
+
 [nav.sign_in]
 note = "nav link to sign in with Discord; right end of the nav bar when signed out"
 text = "Sign In"

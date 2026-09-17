@@ -20,6 +20,18 @@
         <li><a href="/" {% if page=="home" %} aria-current="page" {% endif %}>{{ t("nav.home") }}</a></li>
         <li><a href="/rom" {% if page=="rom" %} aria-current="page" {% endif %}>{{ t("nav.rom") }}</a></li>
         <li><a href="/generate" {% if page=="generate" %} aria-current="page" {% endif %}>{{ t("nav.generate") }}</a></li>
+        {% if content_pages %}
+        <li>
+          <details class="dropdown">
+            <summary{% if page=="content" %} aria-current="page"{% endif %}>{{ t("nav.pages") }}</summary>
+            <ul>
+              {% for item in content_pages %}
+              <li><a href="/pages/{{ item.slug }}"{% if page=="content" and content_page.slug==item.slug %} aria-current="page"{% endif %}>{{ item.nav_title }}</a></li>
+              {% endfor %}
+            </ul>
+          </details>
+        </li>
+        {% endif %}
       </ul>
       {% if user %}
       <ul class="account">
