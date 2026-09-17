@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t_plain("rangefinder.title") }}{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="/static/rangefinder/rangefinder.css">
+{% endblock %}
+
+{% block content %}
+<section id="rangefinder" class="rangefinder" data-state="loading"
+  data-metadata-url="/static/rangefinder/metadata.json">
+  <hgroup>
+    <h1>{{ t("rangefinder.heading") }}</h1>
+    <p>{{ t("rangefinder.intro") }}</p>
+  </hgroup>
+
+  <article class="rangefinder-controls">
+    <div class="rangefinder-selectors">
+      <label>
+        {{ t("rangefinder.course") }}
+        <select id="course-select"></select>
+      </label>
+      <label>
+        {{ t("rangefinder.hole") }}
+        <select id="hole-select"></select>
+      </label>
+      <span id="hole-info"></span>
+
+    </div>
+
+    <div class="rangefinder-actions">
+      <!-- <span id="hole-info"></span> -->
+      <span>{{ t("rangefinder.zoom") }}</span>
+      <div role="group" aria-label="{{ t_plain('rangefinder.zoom_controls') }}">
+        <button id="zoom-out" type="button" class="secondary"
+          aria-label="{{ t_plain('rangefinder.zoom_out') }}">−</button>
+        <output id="zoom-display"></output>
+        <button id="zoom-in" type="button" class="secondary"
+          aria-label="{{ t_plain('rangefinder.zoom_in') }}">+</button>
+      </div>
+      <button id="zoom-reset" type="button" class="secondary">{{ t("rangefinder.zoom_reset") }}</button>
+      <button id="green-view" type="button" class="secondary">{{ t("rangefinder.green_view") }}</button>
+      <button id="clear-waypoints" type="button" class="secondary">{{ t("rangefinder.clear") }}</button>
+      <strong id="distance-display"></strong>
+    </div>
+  </article>
+
+  <article class="rangefinder-error" role="alert">{{ t("rangefinder.load_error") }}</article>
+
+  <div class="rangefinder-viewer">
+    <div class="rangefinder-image-container">
+      <img id="hole-image" src="" alt="{{ t_plain('rangefinder.hole_image_alt') }}">
+      <canvas id="overlay-canvas"></canvas>
+    </div>
+  </div>
+
+  <p class="rangefinder-instructions">{{ t("rangefinder.instructions") }}</p>
+
+  <dialog id="green-modal">
+    <article>
+      <header>
+        <button type="button" class="close modal-close" aria-label="{{ t_plain('rangefinder.close_green') }}"></button>
+        <h2>{{ t("rangefinder.green_heading") }}</h2>
+        <strong id="flag-indicator"></strong>
+      </header>
+      <div class="green-viewer">
+        <div class="green-container">
+          <img id="green-image" src="" alt="{{ t_plain('rangefinder.green_image_alt') }}">
+          <img id="flag-overlay" src="" alt="{{ t_plain('rangefinder.flag_image_alt') }}">
+        </div>
+      </div>
+      <footer>{{ t("rangefinder.green_instructions") }}</footer>
+    </article>
+  </dialog>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script id="rangefinder-strings" type="application/json">{{ rangefinder_strings | tojson }}</script>
+<script type="module" src="/static/rangefinder/app.js"></script>
+{% endblock %}

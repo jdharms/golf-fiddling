@@ -71,6 +71,8 @@ TEMPLATES_DIR = HERE / "templates"
 ROM_SCRIPT_STRINGS = "rom.status"
 #: the catalog prefix whose strings the seed page embeds for download.js
 DOWNLOAD_SCRIPT_STRINGS = "seed.download.status"
+#: the catalog prefix whose strings the rangefinder page embeds for its modules
+RANGEFINDER_SCRIPT_STRINGS = "rangefinder.script"
 
 #: generate.html shows one notice per value: a FormError reason, or one of these
 RATE_LIMITED = "rate_limited"
@@ -200,6 +202,17 @@ def create_app(
             request,
             "rom.html",
             {"page": "rom", "roms": VANILLA_ROMS, "rom_strings": strings.for_script(ROM_SCRIPT_STRINGS)},
+        )
+
+    @app.get("/rangefinder", response_class=HTMLResponse)
+    def rangefinder(request: Request):
+        return templates.TemplateResponse(
+            request,
+            "rangefinder.html",
+            {
+                "page": "rangefinder",
+                "rangefinder_strings": strings.for_script(RANGEFINDER_SCRIPT_STRINGS),
+            },
         )
 
     def generate_page(

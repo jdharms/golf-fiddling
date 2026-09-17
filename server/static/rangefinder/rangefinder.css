@@ -1,0 +1,156 @@
+.rangefinder-controls {
+  display: grid;
+  gap: var(--pico-spacing);
+}
+
+.rangefinder-selectors,
+.rangefinder-actions,
+.rangefinder-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: calc(var(--pico-spacing) * 0.75);
+}
+
+.rangefinder-selectors label {
+  min-width: 12rem;
+  margin: 0;
+}
+
+.rangefinder-actions>button,
+.rangefinder-actions [role="group"],
+.rangefinder-actions [role="group"]>* {
+  margin-bottom: 0;
+}
+
+.rangefinder-actions [role="group"] {
+  width: auto;
+}
+
+#zoom-display {
+  display: inline-flex;
+  min-width: 4.5rem;
+  align-items: center;
+  justify-content: center;
+  padding-inline: var(--pico-form-element-spacing-horizontal);
+  border-block: var(--pico-border-width) solid var(--pico-form-element-border-color);
+  color: var(--pico-primary);
+  font-family: monospace;
+  font-weight: 700;
+}
+
+.rangefinder-info {
+  justify-content: space-between;
+  font-variant-numeric: tabular-nums;
+}
+
+#distance-display {
+  margin-inline-start: auto;
+  color: var(--pico-primary);
+  font-family: monospace;
+  font-size: 1.2rem;
+  text-align: right;
+}
+
+.rangefinder:not([data-state="error"]) .rangefinder-error,
+.rangefinder:not([data-state="ready"]) .rangefinder-viewer,
+.rangefinder:not([data-state="ready"]) .rangefinder-instructions {
+  display: none;
+}
+
+.rangefinder-error {
+  color: var(--pico-del-color);
+  box-shadow: var(--pico-card-box-shadow), 0 0 0 2px var(--pico-del-color);
+}
+
+.rangefinder-viewer {
+  width: 100%;
+  height: min(70vh, 44rem);
+  overflow: auto;
+  padding: var(--pico-spacing);
+  border: var(--pico-border-width) solid var(--pico-muted-border-color);
+  border-radius: var(--pico-border-radius);
+  background: var(--pico-card-background-color);
+}
+
+.rangefinder-image-container {
+  position: relative;
+  width: max-content;
+  margin-inline: auto;
+  overflow: hidden;
+  background: #000000;
+  box-shadow: var(--pico-card-box-shadow);
+  cursor: crosshair;
+}
+
+#hole-image,
+#green-image,
+#flag-overlay {
+  display: block;
+  max-width: none;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+#overlay-canvas,
+#flag-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.rangefinder-instructions {
+  text-align: center;
+  color: var(--pico-muted-color);
+}
+
+#green-modal article {
+  width: min-content;
+  min-width: min(30rem, 90vw);
+  max-width: 90vw;
+}
+
+#green-modal header {
+  display: flex;
+  align-items: center;
+  gap: var(--pico-spacing);
+}
+
+#green-modal header h2 {
+  margin: 0 auto 0 0;
+}
+
+.green-viewer {
+  max-width: calc(90vw - var(--pico-spacing) * 4);
+  max-height: 65vh;
+  overflow: auto;
+}
+
+.green-container {
+  position: relative;
+  width: max-content;
+  margin-inline: auto;
+  background: #000000;
+}
+
+@media (max-width: 576px) {
+
+  .rangefinder-selectors,
+  .rangefinder-info {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .rangefinder-selectors label {
+    width: 100%;
+  }
+
+  #distance-display {
+    width: 100%;
+    margin-inline-start: 0;
+  }
+
+  .rangefinder-viewer {
+    padding: calc(var(--pico-spacing) * 0.5);
+  }
+}

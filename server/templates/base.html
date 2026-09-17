@@ -8,6 +8,7 @@
   {% block metadata %}{% endblock %}
   <link rel="stylesheet" href="/static/pico.green.min.css">
   <link rel="stylesheet" href="/static/site.css">
+  {% block styles %}{% endblock %}
 </head>
 
 <body>
@@ -20,6 +21,7 @@
         <li><a href="/" {% if page=="home" %} aria-current="page" {% endif %}>{{ t("nav.home") }}</a></li>
         <li><a href="/rom" {% if page=="rom" %} aria-current="page" {% endif %}>{{ t("nav.rom") }}</a></li>
         <li><a href="/generate" {% if page=="generate" %} aria-current="page" {% endif %}>{{ t("nav.generate") }}</a></li>
+        <li><a href="/rangefinder" {% if page=="rangefinder" %} aria-current="page" {% endif %}>{{ t("nav.rangefinder") }}</a></li>
         {% if content_pages %}
         <li>
           <details class="dropdown">

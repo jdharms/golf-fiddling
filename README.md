@@ -164,6 +164,13 @@ uv run golf-site --reload
 # then open http://127.0.0.1:8000/
 ```
 
+The course rangefinder is available at `/rangefinder`. Its checked-in maps and metadata
+can be regenerated after course data changes with:
+
+```bash
+uv run golf-render-web data/chr-ram.bin data/green-ram.bin courses/ server/static/rangefinder/
+```
+
 The ROM setup page hashes ROMs in the browser, which needs HTTPS or localhost. The site
 reads its configuration from environment variables:
 

@@ -131,7 +131,27 @@ def test_home_links_to_rom_setup_and_generate(client):
     assert response.headers["content-type"].startswith("text/html")
     assert 'href="/rom"' in response.text
     assert 'href="/generate"' in response.text
+    assert 'href="/rangefinder"' in response.text
     assert "nav.pages" not in response.text
+
+
+def test_rangefinder_page_embeds_its_assets_and_script_strings(unwritten_client):
+    response = unwritten_client.get("/rangefinder")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+    assert 'href="/rangefinder"  aria-current="page"' in response.text
+    assert 'data-metadata-url="/static/rangefinder/metadata.json"' in response.text
+    assert 'src="/static/rangefinder/app.js"' in response.text
+    assert '"rangefinder.script.distance": null' in response.text
+
+
+def test_rangefinder_generated_assets_are_served(client):
+    metadata = client.get("/static/rangefinder/metadata.json")
+    image = client.get("/static/rangefinder/images/japan/hole_01.png")
+    assert metadata.status_code == 200
+    assert metadata.json()["courses"]["japan"]["holes"][0]["width"] == 176
+    assert image.status_code == 200
+    assert image.headers["content-type"] == "image/png"
 
 
 def write_content_page(tmp_path, slug: str, metadata: str, body: str = "Page body.") -> None:
