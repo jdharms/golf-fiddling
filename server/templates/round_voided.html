@@ -1,15 +1,16 @@
 {% extends "base.html" %}
 {% block title %}{{ t_plain("round_voided.page_title") }}{% endblock %}
 {% block content %}
-<hgroup>
-  <h1>{{ t("round_voided.heading") }}</h1>
-  <p>
-    {% if voided.slot == 1 %}{{ t("round_voided.player_two", name=voided.player_name, received=voided.received_at) }}
-    {% else %}{{ t("round_voided.player_one", name=voided.player_name, received=voided.received_at) }}{% endif %}
+  <hgroup>
+    <h1>{{ t("round_voided.heading") }}</h1>
+    <p>
+      {% if voided.slot == 1 %}{{ t("round_voided.player_two", name=voided.player_name, received=voided.received_at) }}
+{% else %}{{ t("round_voided.player_one", name=voided.player_name, received=voided.received_at) }}{% endif %}
   </p>
-</hgroup>
+  </hgroup>
 
-<p>{{ t("round_voided.explanation", voided=voided.voided_at) }}</p>
+  <p>{{ t("round_voided.explanation", voided=voided.voided_at) }}</p>
 
-<p>{{ t("round_voided.seed") }} <a href="/h/{{ voided.seed_id }}" class="magic-words">{{ voided.magic_words|join(" ") }}</a></p>
+  <p>{{ t("round_voided.seed") }} <a href="/h/{{ voided.seed_id }}"
+    class="magic-words">{{ voided.magic_words|join(" ") }}</a></p>
 {% endblock %}

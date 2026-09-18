@@ -10,7 +10,6 @@ from editor.tools.carpet_paint_tool import (
     CarpetPaintTool,
 )
 
-
 # =============================================================================
 # Tile Category Tests
 # =============================================================================
@@ -64,7 +63,9 @@ class TestTileCategories:
     def test_no_overlap_between_paintable_and_protected(self):
         """Paintable and protected sets should have no overlap."""
         overlap = PAINTABLE_TILES & PROTECTED_TILES
-        assert len(overlap) == 0, f"Found overlapping tiles: {[hex(t) for t in overlap]}"
+        assert len(overlap) == 0, (
+            f"Found overlapping tiles: {[hex(t) for t in overlap]}"
+        )
 
     def test_paintable_tile_count(self):
         """Verify expected number of paintable tiles."""
@@ -135,11 +136,11 @@ class TestTileCategoryLogic:
         """Paintable tiles should include all putting surface tiles."""
         putting_surface_tiles = [
             0x100,  # Placeholder
-            0xB0,   # Flat
-            0x30,   # First dark slope
-            0x47,   # Last dark slope
-            0x88,   # First light slope
-            0xA7,   # Last light slope
+            0xB0,  # Flat
+            0x30,  # First dark slope
+            0x47,  # Last dark slope
+            0x88,  # First light slope
+            0xA7,  # Last light slope
         ]
         for tile in putting_surface_tiles:
             assert tile in PAINTABLE_TILES, f"0x{tile:02X} should be paintable"
@@ -168,4 +169,6 @@ class TestTileCategoryLogic:
             0x67,  # FRINGE_RIGHT
         ]
         for tile in known_fringe:
-            assert tile in PROTECTED_TILES, f"Fringe tile 0x{tile:02X} should be protected"
+            assert tile in PROTECTED_TILES, (
+                f"Fringe tile 0x{tile:02X} should be protected"
+            )

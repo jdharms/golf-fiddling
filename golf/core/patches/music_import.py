@@ -123,22 +123,122 @@ FREE_STREAMS = (0x9379, 0x9CA4)  # 2347 bytes
 
 #: Rows $00-$60 of MusicVolumeEnvelopeTable. Copied into the relocated table so
 #: the tracks that are not being replaced keep their exact volume envelopes.
-US_ENVELOPE_ROWS = bytes([
-    0x94, 0x94, 0x94, 0x94, 0x95, 0x95, 0x95, 0x95,
-    0x96, 0x96, 0x96, 0x96, 0x97, 0x98, 0x99, 0x9A,  # $00
-    0x92, 0x92, 0x92, 0x92, 0x92, 0x92, 0x92, 0x92,
-    0x93, 0x93, 0x94, 0x94, 0x95, 0x95, 0x95, 0x96,  # $10
-    0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
-    0x90, 0x90, 0x90, 0x90, 0x90, 0x13, 0x96, 0x59,  # $20
-    0x94, 0x94, 0x94, 0x94, 0x95, 0x95, 0x95, 0x95,
-    0x96, 0x96, 0x96, 0x96, 0x97, 0x98, 0x99, 0x19,  # $30
-    0x98, 0x97, 0x97, 0x96, 0x96, 0x95, 0x95, 0x94,
-    0x93, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98,  # $40
-    0x14, 0x14, 0x14, 0x14, 0x15, 0x15, 0x15, 0x15,
-    0x16, 0x16, 0x16, 0x16, 0x17, 0x18, 0x99, 0x99,  # $50
-    0x94, 0x94, 0x94, 0x94, 0x95, 0x96, 0x97, 0x98,
-    0x99, 0x92, 0x94, 0x95, 0x96, 0x9A, 0x98, 0x9A,  # $60
-])
+US_ENVELOPE_ROWS = bytes(
+    [
+        0x94,
+        0x94,
+        0x94,
+        0x94,
+        0x95,
+        0x95,
+        0x95,
+        0x95,
+        0x96,
+        0x96,
+        0x96,
+        0x96,
+        0x97,
+        0x98,
+        0x99,
+        0x9A,  # $00
+        0x92,
+        0x92,
+        0x92,
+        0x92,
+        0x92,
+        0x92,
+        0x92,
+        0x92,
+        0x93,
+        0x93,
+        0x94,
+        0x94,
+        0x95,
+        0x95,
+        0x95,
+        0x96,  # $10
+        0x90,
+        0x90,
+        0x90,
+        0x90,
+        0x90,
+        0x90,
+        0x90,
+        0x90,
+        0x90,
+        0x90,
+        0x90,
+        0x90,
+        0x90,
+        0x13,
+        0x96,
+        0x59,  # $20
+        0x94,
+        0x94,
+        0x94,
+        0x94,
+        0x95,
+        0x95,
+        0x95,
+        0x95,
+        0x96,
+        0x96,
+        0x96,
+        0x96,
+        0x97,
+        0x98,
+        0x99,
+        0x19,  # $30
+        0x98,
+        0x97,
+        0x97,
+        0x96,
+        0x96,
+        0x95,
+        0x95,
+        0x94,
+        0x93,
+        0x92,
+        0x93,
+        0x94,
+        0x95,
+        0x96,
+        0x97,
+        0x98,  # $40
+        0x14,
+        0x14,
+        0x14,
+        0x14,
+        0x15,
+        0x15,
+        0x15,
+        0x15,
+        0x16,
+        0x16,
+        0x16,
+        0x16,
+        0x17,
+        0x18,
+        0x99,
+        0x99,  # $50
+        0x94,
+        0x94,
+        0x94,
+        0x94,
+        0x95,
+        0x96,
+        0x97,
+        0x98,
+        0x99,
+        0x92,
+        0x94,
+        0x95,
+        0x96,
+        0x9A,
+        0x98,
+        0x9A,  # $60
+    ]
+)
 
 #: The first free envelope row index once US rows $00-$60 are kept.
 FIRST_NEW_ENVELOPE = 0x70
@@ -190,7 +290,9 @@ def _place_headers(tracks: list[dict]) -> dict[tuple[int, int], int]:
     return out
 
 
-def _build_envelope_table(tracks: list[dict]) -> tuple[bytes, dict[int, dict[int, int]]]:
+def _build_envelope_table(
+    tracks: list[dict],
+) -> tuple[bytes, dict[int, dict[int, int]]]:
     """The relocated envelope table, plus a per-track base remap.
 
     US rows $00-$6F are kept as they are so the surviving tracks are untouched.
@@ -212,7 +314,7 @@ def _build_envelope_table(tracks: list[dict]) -> tuple[bytes, dict[int, dict[int
                     f"{len(row)} bytes, expected {ENVELOPE_ROW_LEN}"
                 )
             if base + ENVELOPE_ROW_LEN <= len(US_ENVELOPE_ROWS) and (
-                US_ENVELOPE_ROWS[base:base + ENVELOPE_ROW_LEN] == row
+                US_ENVELOPE_ROWS[base : base + ENVELOPE_ROW_LEN] == row
             ):
                 mapping[base] = base  # the target ROM already has this envelope
             elif row in appended:
@@ -271,7 +373,9 @@ class MusicImportPatch(ROMPatch):
                 f"${COURSE_TRACKS[2]:02X} with tracks from {source}"
             )
         else:
-            self.description = f"make music ${track:02X} from {source} the only course theme"
+            self.description = (
+                f"make music ${track:02X} from {source} the only course theme"
+            )
         self.source = dump.get("source", "")
         self.track = track
         self.transpose_adjust = transpose_adjust
@@ -281,10 +385,18 @@ class MusicImportPatch(ROMPatch):
         self.redirects: list[tuple[str, int, bytes, bytes]] = []
         if track is not None:
             self.redirects = [
-                ("CourseBgmTable", COURSE_BGM_TABLE_PRG, _VANILLA_COURSE_BGM,
-                 bytes([SINGLE_TRACK_ID] * 3)),
-                ("scene music request", SCENE_MUSIC_OPERAND_PRG, bytes([0x04]),
-                 bytes([SINGLE_TRACK_ID])),
+                (
+                    "CourseBgmTable",
+                    COURSE_BGM_TABLE_PRG,
+                    _VANILLA_COURSE_BGM,
+                    bytes([SINGLE_TRACK_ID] * 3),
+                ),
+                (
+                    "scene music request",
+                    SCENE_MUSIC_OPERAND_PRG,
+                    bytes([0x04]),
+                    bytes([SINGLE_TRACK_ID]),
+                ),
             ]
 
         self.envelope_table, remap = _build_envelope_table(tracks)
@@ -324,21 +436,27 @@ class MusicImportPatch(ROMPatch):
             mid = track["music_id"]
             for index, pattern in enumerate(track["patterns"]):
                 ptr = stream_addr[(mid, index)]
-                header = bytes([
-                    pattern["tempo"],
-                    ptr & 0xFF,
-                    ptr >> 8,
-                    pattern["triangle_start"],
-                    pattern["pulse1_start"],
-                    pattern["noise_start"],
-                    pattern["dmc_start"],
-                    remap[mid][pattern["pulse2_envelope"]],
-                    remap[mid][pattern["pulse1_envelope"]],
-                    pattern["pulse2_vibrato"],
-                    pattern["pulse1_vibrato"],
-                ])
+                header = bytes(
+                    [
+                        pattern["tempo"],
+                        ptr & 0xFF,
+                        ptr >> 8,
+                        pattern["triangle_start"],
+                        pattern["pulse1_start"],
+                        pattern["noise_start"],
+                        pattern["dmc_start"],
+                        remap[mid][pattern["pulse2_envelope"]],
+                        remap[mid][pattern["pulse1_envelope"]],
+                        pattern["pulse2_vibrato"],
+                        pattern["pulse1_vibrato"],
+                    ]
+                )
                 self.writes.append(
-                    (f"header ${mid:02X}/{index}", self.header_addr[(mid, index)], header)
+                    (
+                        f"header ${mid:02X}/{index}",
+                        self.header_addr[(mid, index)],
+                        header,
+                    )
                 )
 
         # Order lists, then the base table entry that points at each one.
@@ -350,7 +468,9 @@ class MusicImportPatch(ROMPatch):
                 if entry["type"] == "flag":
                     entries.append(entry["value"])
                 else:
-                    offset = self.header_addr[(mid, entry["index"])] - _HEADER_BASES[mid]
+                    offset = (
+                        self.header_addr[(mid, entry["index"])] - _HEADER_BASES[mid]
+                    )
                     entries.append(offset)
             data = bytes([track["loop_position"], *entries, 0x00])
             self.writes.append((f"order list ${mid:02X}", cursor, data))

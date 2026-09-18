@@ -14,9 +14,18 @@ from server.strings import CATALOG_DIR, Strings, StringsError
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="List the randomizer site's strings with empty text, by file.")
-    parser.add_argument("--dir", type=Path, default=CATALOG_DIR, help="catalog directory (default: server/strings)")
-    parser.add_argument("--notes", action="store_true", help="print each entry's note under its key")
+    parser = argparse.ArgumentParser(
+        description="List the randomizer site's strings with empty text, by file."
+    )
+    parser.add_argument(
+        "--dir",
+        type=Path,
+        default=CATALOG_DIR,
+        help="catalog directory (default: server/strings)",
+    )
+    parser.add_argument(
+        "--notes", action="store_true", help="print each entry's note under its key"
+    )
     args = parser.parse_args(argv)
 
     try:

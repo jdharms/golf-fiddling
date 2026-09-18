@@ -69,9 +69,16 @@ def _parse(text: str) -> tuple[bytes, payload.RoundPayload]:
         raise _rejected(MALFORMED, "alphabet", text=quoted) from None
     round_payload, _mac = payload.RoundPayload.from_bytes(data)
     if round_payload.protocol_version != payload.PROTOCOL_VERSION:
-        raise _rejected(MALFORMED, "protocol version", version=round_payload.protocol_version, text=quoted)
+        raise _rejected(
+            MALFORMED,
+            "protocol version",
+            version=round_payload.protocol_version,
+            text=quoted,
+        )
     if round_payload.reserved_flags != 0:
-        raise _rejected(MALFORMED, "reserved flags", flags=round_payload.reserved_flags, text=quoted)
+        raise _rejected(
+            MALFORMED, "reserved flags", flags=round_payload.reserved_flags, text=quoted
+        )
     if round_payload.player_slot not in SLOTS:
         raise _rejected(MALFORMED, "slot", slot=round_payload.player_slot, text=quoted)
     if not any(round_payload.seed_id):
@@ -83,9 +90,17 @@ def _parse(text: str) -> tuple[bytes, payload.RoundPayload]:
 
 def _missing_entry_cause(conn, qr_seed_id: int, player_id: int) -> str:
     """Which lookup found nothing, for the log."""
-    if conn.execute("SELECT 1 FROM seeds WHERE qr_seed_id = ?", (qr_seed_id,)).fetchone() is None:
+    if (
+        conn.execute(
+            "SELECT 1 FROM seeds WHERE qr_seed_id = ?", (qr_seed_id,)
+        ).fetchone()
+        is None
+    ):
         return "unknown seed"
-    if conn.execute("SELECT 1 FROM users WHERE player_id = ?", (player_id,)).fetchone() is None:
+    if (
+        conn.execute("SELECT 1 FROM users WHERE player_id = ?", (player_id,)).fetchone()
+        is None
+    ):
         return "unknown player"
     return "no entry for the seed and player"
 
@@ -102,7 +117,13 @@ def submit_scan(db: Database, text: str, now: str | None = None) -> ScanResult:
     player_id = int.from_bytes(round_payload.player_id, "big")
     slot = round_payload.player_slot
     if qr_seed_id > MAX_QR_SEED_ID:  # no seed has it, and SQLite could not bind it
-        raise _rejected(UNRECOGNIZED, "seed id past the range", qr_seed_id=qr_seed_id, player_id=player_id, slot=slot)
+        raise _rejected(
+            UNRECOGNIZED,
+            "seed id past the range",
+            qr_seed_id=qr_seed_id,
+            player_id=player_id,
+            slot=slot,
+        )
     ids = {"seed": encode_seed_id(qr_seed_id), "player_id": player_id, "slot": slot}
     received_at = now if now is not None else utc_now()
 
@@ -120,7 +141,9 @@ def submit_scan(db: Database, text: str, now: str | None = None) -> ScanResult:
             (qr_seed_id, player_id),
         ).fetchone()
         if entry is None:
-            raise _rejected(UNRECOGNIZED, _missing_entry_cause(conn, qr_seed_id, player_id), **ids)
+            raise _rejected(
+                UNRECOGNIZED, _missing_entry_cause(conn, qr_seed_id, player_id), **ids
+            )
         key = bytes(entry["key_slot0"] if slot == 0 else entry["key_slot1"])
         if not payload.verify(data, key):
             raise _rejected(UNRECOGNIZED, "MAC does not verify", **ids)
@@ -130,4 +153,6 @@ def submit_scan(db: Database, text: str, now: str | None = None) -> ScanResult:
         recorded = round_in_slot(conn, entry["id"], slot)
         if recorded is not None:
             return ScanResult(recorded, new=False)
-        return ScanResult(record_round(conn, entry["id"], slot, data, received_at), new=True)
+        return ScanResult(
+            record_round(conn, entry["id"], slot, data, received_at), new=True
+        )

@@ -26,7 +26,9 @@ class Family:
     pars: frozenset[int] = field(init=False)
 
     def __post_init__(self):
-        object.__setattr__(self, "pars", frozenset(member.par for member in self.members))
+        object.__setattr__(
+            self, "pars", frozenset(member.par for member in self.members)
+        )
 
     def with_par(self, par: int) -> tuple[CatalogEntry, ...]:
         return tuple(member for member in self.members if member.par == par)
@@ -47,7 +49,9 @@ def source_rom(entry: CatalogEntry) -> str | None:
     return entry.source.rom if isinstance(entry.source, RomSource) else None
 
 
-def build_pool(catalog: Catalog, curation: CurationSnapshot, settings: Settings) -> Pool:
+def build_pool(
+    catalog: Catalog, curation: CurationSnapshot, settings: Settings
+) -> Pool:
     groups: dict[str, list[CatalogEntry]] = {}
     for lineage, entry in sorted(catalog.newest().items()):
         record = curation.for_hole(entry.id)
@@ -55,6 +59,12 @@ def build_pool(catalog: Catalog, curation: CurationSnapshot, settings: Settings)
             continue
         if record.tags & settings.exclude_tags:
             continue
-        key = lineage if settings.allow_family_repeats or record.family is None else record.family
+        key = (
+            lineage
+            if settings.allow_family_repeats or record.family is None
+            else record.family
+        )
         groups.setdefault(key, []).append(entry)
-    return Pool(tuple(Family(key, tuple(members)) for key, members in sorted(groups.items())))
+    return Pool(
+        tuple(Family(key, tuple(members)) for key, members in sorted(groups.items()))
+    )

@@ -7,7 +7,6 @@ Opens a modal dialog when activated.
 import pygame
 
 from editor.rendering import font_cache
-
 from editor.ui.metadata_dialog import MetadataDialog
 
 from .base_tool import ToolContext, ToolResult
@@ -27,11 +26,12 @@ class MetadataEditorTool:
         self.undo_pushed: bool = False
 
     def handle_mouse_down(self, pos, button, modifiers, context):
-        if self.dialog:
-            # Delegate to dialog
-            if self.dialog.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=button, pos=pos)):
-                # Dialog wants to close
-                return self._close_dialog(context)
+        # Delegate to dialog
+        if self.dialog and self.dialog.handle_event(
+            pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=button, pos=pos)
+        ):
+            # Dialog wants to close
+            return self._close_dialog(context)
         return ToolResult.handled()
 
     def handle_mouse_up(self, pos, button, context):
@@ -43,10 +43,14 @@ class MetadataEditorTool:
     def handle_key_down(self, key, modifiers, context):
         if self.dialog:
             # Delegate to dialog
-            event = pygame.event.Event(pygame.KEYDOWN, key=key, mod=modifiers, unicode=pygame.key.name(key))
+            event = pygame.event.Event(
+                pygame.KEYDOWN, key=key, mod=modifiers, unicode=pygame.key.name(key)
+            )
             # Need to set unicode properly for printable keys
             if 32 <= key <= 126:  # Printable ASCII range
-                event = pygame.event.Event(pygame.KEYDOWN, key=key, mod=modifiers, unicode=chr(key))
+                event = pygame.event.Event(
+                    pygame.KEYDOWN, key=key, mod=modifiers, unicode=chr(key)
+                )
 
             if self.dialog.handle_event(event):
                 # Dialog wants to close
@@ -103,11 +107,13 @@ class MetadataEditorTool:
 
             if saved:
                 # Changes were saved
-                message = f"Metadata updated: Par={par_value}, Distance={distance_value}"
+                message = (
+                    f"Metadata updated: Par={par_value}, Distance={distance_value}"
+                )
                 return ToolResult.modified(message=message)
             else:
                 # Dialog was cancelled
-                return ToolResult(handled=True, message="Metadata edit cancelled")
+                return ToolResult(is_handled=True, message="Metadata edit cancelled")
 
         return ToolResult.handled()
 

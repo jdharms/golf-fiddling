@@ -10,8 +10,10 @@ from pathlib import Path
 
 try:
     from PIL import Image
-except ImportError:
-    raise ImportError("Pillow library required. Install with: pip install Pillow")
+except ImportError as err:
+    raise ImportError(
+        "Pillow library required. Install with: pip install Pillow"
+    ) from err
 
 from ..core.chr_tile import TILE_SIZE, decode_tile
 from ..core.palettes import SPRITE_OFFSET_Y

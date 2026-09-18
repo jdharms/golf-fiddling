@@ -25,9 +25,9 @@
   color: var(--pico-primary);
 }
 
-.rangefinder-actions>button,
+.rangefinder-actions > button,
 .rangefinder-actions [role="group"],
-.rangefinder-actions [role="group"]>* {
+.rangefinder-actions [role="group"] > * {
   margin-bottom: 0;
 }
 
@@ -68,7 +68,9 @@
 
 .rangefinder-error {
   color: var(--pico-del-color);
-  box-shadow: var(--pico-card-box-shadow), 0 0 0 2px var(--pico-del-color);
+  box-shadow:
+    var(--pico-card-box-shadow),
+    0 0 0 2px var(--pico-del-color);
 }
 
 .rangefinder-viewer {
@@ -97,6 +99,7 @@
   display: block;
   max-width: none;
   image-rendering: pixelated;
+  /* biome-ignore lint/suspicious/noDuplicateProperties: crisp-edges overrides pixelated where supported */
   image-rendering: crisp-edges;
 }
 
@@ -142,7 +145,6 @@
 }
 
 @media (max-width: 576px) {
-
   .rangefinder-selectors,
   .rangefinder-info {
     align-items: stretch;

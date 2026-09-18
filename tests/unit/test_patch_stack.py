@@ -5,13 +5,21 @@ import hashlib
 import pytest
 
 from golf.core import ips
-from golf.core.patches import BytePatch, CompositePatch, PatchStack, ROMPatch, StackError
+from golf.core.patches import (
+    BytePatch,
+    CompositePatch,
+    PatchStack,
+    ROMPatch,
+    StackError,
+)
 
 BLANK = b"NES\x1a" + bytes([16]) + bytes(11) + bytes(16 * 0x4000)
 BLANK_SHA1 = hashlib.sha1(BLANK).hexdigest()
 
 
-def byte_patch(name: str, prg_offset: int, patched: bytes, original: bytes | None = None):
+def byte_patch(
+    name: str, prg_offset: int, patched: bytes, original: bytes | None = None
+):
     return BytePatch(name, name, prg_offset, original or bytes(len(patched)), patched)
 
 
@@ -48,7 +56,10 @@ class TestBuild:
         result = stack(
             byte_patch("a", 0x100, b"\x01\x02\x03"),
             byte_patch("b", 0x3C000, b"\x04"),
-            RawWrite("c", lambda w: (w.write_prg(0x200, b"\x05"), w.write_prg(0x202, b"\x06"))),
+            RawWrite(
+                "c",
+                lambda w: (w.write_prg(0x200, b"\x05"), w.write_prg(0x202, b"\x06")),
+            ),
         ).build(BLANK)
         assert result.regions == {
             "a": [(0x100, 0x103)],
@@ -66,7 +77,9 @@ class TestBuild:
             stack(wrong).build(BLANK)
 
     def test_ips_turns_the_base_into_the_build(self):
-        s = stack(byte_patch("a", 0x100, b"\x01\x02"), byte_patch("b", 0x3FFF0, b"\x03"))
+        s = stack(
+            byte_patch("a", 0x100, b"\x01\x02"), byte_patch("b", 0x3FFF0, b"\x03")
+        )
         assert ips.apply(BLANK, s.ips(BLANK)) == s.build(BLANK).rom
 
 
@@ -86,7 +99,10 @@ class TestRequirements:
     def setup_method(self):
         self.needed = byte_patch("needed", 0x100, b"\x01")
         self.needy = CompositePatch(
-            "needy", "", [byte_patch("needy_byte", 0x200, b"\x02")], requires=[self.needed]
+            "needy",
+            "",
+            [byte_patch("needy_byte", 0x200, b"\x02")],
+            requires=[self.needed],
         )
 
     def test_satisfied_by_an_earlier_step(self):
@@ -98,11 +114,15 @@ class TestRequirements:
         stack(self.needy).build(bytes(base))
 
     def test_missing_from_the_stack(self):
-        with pytest.raises(StackError, match=r"'needy' requires needed \(not in the stack\)"):
+        with pytest.raises(
+            StackError, match=r"'needy' requires needed \(not in the stack\)"
+        ):
             stack(self.needy).build(BLANK)
 
     def test_listed_after_the_step_that_needs_it(self):
-        with pytest.raises(StackError, match=r"'needy' requires needed \(listed after it\)"):
+        with pytest.raises(
+            StackError, match=r"'needy' requires needed \(listed after it\)"
+        ):
             stack(self.needy, self.needed).build(BLANK)
 
 
@@ -125,12 +145,21 @@ class TestOverlaps:
             ).build(BLANK)
 
     def test_a_step_may_rewrite_its_own_bytes(self):
-        stack(RawWrite("twice", lambda w: (w.write_prg(0x100, b"\x01"), w.write_prg(0x100, b"\x02")))).build(BLANK)
+        stack(
+            RawWrite(
+                "twice",
+                lambda w: (w.write_prg(0x100, b"\x01"), w.write_prg(0x100, b"\x02")),
+            )
+        ).build(BLANK)
 
     def test_a_shared_sub_patch_is_not_an_overlap(self):
         shared = byte_patch("shared", 0x100, b"\x01")
-        one = CompositePatch("one", "", [shared, byte_patch("one_only", 0x200, b"\x02")])
-        two = CompositePatch("two", "", [shared, byte_patch("two_only", 0x300, b"\x03")])
+        one = CompositePatch(
+            "one", "", [shared, byte_patch("one_only", 0x200, b"\x02")]
+        )
+        two = CompositePatch(
+            "two", "", [shared, byte_patch("two_only", 0x300, b"\x03")]
+        )
         result = stack(one, two).build(BLANK)
         assert result.regions["two"] == [(0x300, 0x301)]
 

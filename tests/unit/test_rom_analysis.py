@@ -1,15 +1,11 @@
 """Unit tests for the ROM static-analysis helpers."""
 
-import pytest
-
 from golf.core.mlb_labels import Label, LabelIndex, LabelStore
 from golf.core.rom_analysis import (
     FIXED,
     PAIRS,
     TRIPLES,
     InlineArgSpec,
-    ReferenceReport,
-    Reference,
     data_range_at,
     disassemble,
     find_code_references,
@@ -21,6 +17,12 @@ from golf.core.rom_analysis import (
 
 BANK_SIZE = 0x4000
 BANKS = 16
+
+
+def known_spec(target: int, bank: int | None) -> InlineArgSpec:
+    spec = inline_spec_for(target, bank)
+    assert spec is not None
+    return spec
 
 
 class MockReader:
@@ -55,7 +57,9 @@ class TestInlineArgSpec:
 
     def test_triples_stop_at_terminator(self):
         spec = InlineArgSpec("X", TRIPLES)
-        assert spec.measure(bytes([0xFF, 0x3E, 0x91, 0xFE, 0x4B, 0x91, 0x00, 0x4C])) == 7
+        assert (
+            spec.measure(bytes([0xFF, 0x3E, 0x91, 0xFE, 0x4B, 0x91, 0x00, 0x4C])) == 7
+        )
 
     def test_empty_table_is_just_the_terminator(self):
         assert InlineArgSpec("X", TRIPLES).measure(bytes([0x00, 0xAA])) == 1
@@ -87,21 +91,21 @@ class TestInlineArgSpec:
 
 class TestInlineSpecLookup:
     def test_fixed_bank_routine_resolves_from_any_bank(self):
-        assert inline_spec_for(0xD372, 13).name == "ExecuteFarCall"
-        assert inline_spec_for(0xD372, None).name == "ExecuteFarCall"
+        assert known_spec(0xD372, 13).name == "ExecuteFarCall"
+        assert known_spec(0xD372, None).name == "ExecuteFarCall"
 
     def test_bank_specific_routine_needs_the_right_bank(self):
-        assert inline_spec_for(0x8A14, 12).name == "LookupInlineByteTable"
+        assert known_spec(0x8A14, 12).name == "LookupInlineByteTable"
         assert inline_spec_for(0x8A14, 13) is None
 
     def test_unknown_target(self):
         assert inline_spec_for(0x8000, 13) is None
 
     def test_dispatch_table_does_not_return(self):
-        assert inline_spec_for(0xD227, None).returns is False
+        assert known_spec(0xD227, None).returns is False
 
     def test_ff_terminated_dispatcher_is_registered(self):
-        spec = inline_spec_for(0xD267, None)
+        spec = known_spec(0xD267, None)
         assert spec.terminator == 0xFF
         assert spec.returns is True
 
@@ -128,12 +132,22 @@ class TestDisassembleInlineArgs:
     def build(self):
         rom = MockReader()
         # bank 13 $8000: JSR ExecuteFarCall + inline bank/addr, then LDA #$01, RTS
-        rom.write(13 * BANK_SIZE, bytes([
-            0x20, 0x72, 0xD3,        # JSR $D372
-            0x0B, 0x33, 0x90,        # inline: bank $0B, $9033
-            0xA9, 0x01,              # LDA #$01
-            0x60,                    # RTS
-        ]))
+        rom.write(
+            13 * BANK_SIZE,
+            bytes(
+                [
+                    0x20,
+                    0x72,
+                    0xD3,  # JSR $D372
+                    0x0B,
+                    0x33,
+                    0x90,  # inline: bank $0B, $9033
+                    0xA9,
+                    0x01,  # LDA #$01
+                    0x60,  # RTS
+                ]
+            ),
+        )
         return rom
 
     def test_inline_args_keep_the_listing_aligned(self):
@@ -159,7 +173,9 @@ class TestDisassembleDataRanges:
     def test_labelled_range_becomes_db_rows(self):
         rom = MockReader()
         rom.write(13 * BANK_SIZE, bytes(range(0x10)))
-        labels = store(Label("NesPrgRom", 13 * BANK_SIZE, 13 * BANK_SIZE + 7, "MyTable"))
+        labels = store(
+            Label("NesPrgRom", 13 * BANK_SIZE, 13 * BANK_SIZE + 7, "MyTable")
+        )
         listing = disassemble(rom, 13 * BANK_SIZE, count=3, labels=labels)
         assert listing.rows[0].kind == "data"
         assert listing.rows[0].text.startswith(".db $00, $01")
@@ -168,8 +184,12 @@ class TestDisassembleDataRanges:
     def test_opt_out_decodes_the_table(self):
         rom = MockReader()
         rom.write(13 * BANK_SIZE, bytes(range(0x10)))
-        labels = store(Label("NesPrgRom", 13 * BANK_SIZE, 13 * BANK_SIZE + 7, "MyTable"))
-        listing = disassemble(rom, 13 * BANK_SIZE, count=3, labels=labels, expand_data=False)
+        labels = store(
+            Label("NesPrgRom", 13 * BANK_SIZE, 13 * BANK_SIZE + 7, "MyTable")
+        )
+        listing = disassemble(
+            rom, 13 * BANK_SIZE, count=3, labels=labels, expand_data=False
+        )
         assert all(r.kind != "data" for r in listing.rows)
 
 
@@ -183,12 +203,19 @@ class TestRoutineMode:
 
     def test_early_rts_does_not_end_a_routine_with_a_pending_forward_branch(self):
         rom = MockReader()
-        rom.write(13 * BANK_SIZE, bytes([
-            0xF0, 0x01,  # BEQ +1  -> $8003
-            0x60,        # RTS      (early return, but $8003 is still pending)
-            0xA9, 0x02,  # LDA #$02
-            0x60,        # RTS
-        ]))
+        rom.write(
+            13 * BANK_SIZE,
+            bytes(
+                [
+                    0xF0,
+                    0x01,  # BEQ +1  -> $8003
+                    0x60,  # RTS      (early return, but $8003 is still pending)
+                    0xA9,
+                    0x02,  # LDA #$02
+                    0x60,  # RTS
+                ]
+            ),
+        )
         listing = disassemble(rom, 13 * BANK_SIZE, routine=True)
         assert len(listing.rows) == 4
         assert listing.rows[-1].text.startswith("RTS")
@@ -203,7 +230,9 @@ class TestRoutineMode:
     def test_stops_at_a_data_range(self):
         rom = MockReader()
         rom.write(13 * BANK_SIZE, bytes([0xA9, 0x01, 0xA9, 0x02, 0xFF, 0xFF]))
-        labels = store(Label("NesPrgRom", 13 * BANK_SIZE + 4, 13 * BANK_SIZE + 5, "Tbl"))
+        labels = store(
+            Label("NesPrgRom", 13 * BANK_SIZE + 4, 13 * BANK_SIZE + 5, "Tbl")
+        )
         listing = disassemble(rom, 13 * BANK_SIZE, routine=True, labels=labels)
         assert len(listing.rows) == 2
         assert "Tbl" in listing.stop_reason
@@ -219,12 +248,22 @@ class TestRoutineMode:
     def test_non_returning_call_terminates(self):
         """JSR DispatchInlineJumpTable JMPs away instead of returning."""
         rom = MockReader()
-        rom.write(13 * BANK_SIZE, bytes([
-            0x20, 0x27, 0xD2,  # JSR DispatchInlineJumpTable
-            0x80, 0x00, 0x90,  # inline triple
-            0x00,              # terminator
-            0xEA, 0xEA,
-        ]))
+        rom.write(
+            13 * BANK_SIZE,
+            bytes(
+                [
+                    0x20,
+                    0x27,
+                    0xD2,  # JSR DispatchInlineJumpTable
+                    0x80,
+                    0x00,
+                    0x90,  # inline triple
+                    0x00,  # terminator
+                    0xEA,
+                    0xEA,
+                ]
+            ),
+        )
         listing = disassemble(rom, 13 * BANK_SIZE, routine=True)
         assert [r.kind for r in listing.rows] == ["code", "inline"]
         assert listing.complete
@@ -279,12 +318,23 @@ class TestFindCodeReferences:
 
     def test_finds_an_entry_in_an_inline_dispatch_table(self):
         rom = MockReader()
-        rom.write(13 * BANK_SIZE + 0x100, bytes([
-            0x20, 0x27, 0xD2,  # JSR DispatchInlineJumpTable
-            0x80, 0x11, 0x91,  # $80 -> $9111
-            0x40, 0x22, 0x92,  # $40 -> $9222
-            0x00,
-        ]))
+        rom.write(
+            13 * BANK_SIZE + 0x100,
+            bytes(
+                [
+                    0x20,
+                    0x27,
+                    0xD2,  # JSR DispatchInlineJumpTable
+                    0x80,
+                    0x11,
+                    0x91,  # $80 -> $9111
+                    0x40,
+                    0x22,
+                    0x92,  # $40 -> $9222
+                    0x00,
+                ]
+            ),
+        )
         report = find_code_references(rom, 0x9222, 13)
         assert [r.kind for r in report.confirmed] == ["dispatch table"]
         assert report.dispatch_sites_checked == 1
@@ -292,7 +342,9 @@ class TestFindCodeReferences:
     def test_hit_inside_a_data_range_is_marked_suspect(self):
         rom = MockReader()
         rom.write(13 * BANK_SIZE + 0x100, bytes([0x20, 0x00, 0xA0]))
-        labels = store(Label("NesPrgRom", 13 * BANK_SIZE + 0x0FF, 13 * BANK_SIZE + 0x110, "Tbl"))
+        labels = store(
+            Label("NesPrgRom", 13 * BANK_SIZE + 0x0FF, 13 * BANK_SIZE + 0x110, "Tbl")
+        )
         report = find_code_references(rom, 0xA000, 13, labels)
         assert len(report.refs) == 1
         assert report.refs[0].suspect

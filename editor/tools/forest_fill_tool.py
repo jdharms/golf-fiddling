@@ -25,12 +25,12 @@ class ForestFillTool:
         # Only in terrain mode
         if context.state.mode != "terrain":
             return ToolResult(
-                handled=True, message="Forest Fill: Only available in terrain mode"
+                is_handled=True, message="Forest Fill: Only available in terrain mode"
             )
 
         if not context.forest_filler:
             return ToolResult(
-                handled=True,
+                is_handled=True,
                 message="Forest fill not available (neighbor data missing)",
             )
 
@@ -60,7 +60,7 @@ class ForestFillTool:
 
         if not regions:
             return ToolResult(
-                handled=True, message="Forest Fill: No placeholder regions detected"
+                is_handled=True, message="Forest Fill: No placeholder regions detected"
             )
 
         # Find which region contains the clicked tile
@@ -72,8 +72,8 @@ class ForestFillTool:
 
         if not clicked_region:
             return ToolResult(
-                handled=True,
-                message="Forest Fill: Click inside a forest placeholder region"
+                is_handled=True,
+                message="Forest Fill: Click inside a forest placeholder region",
             )
 
         # Fill only this region
@@ -83,7 +83,8 @@ class ForestFillTool:
 
         if not changes:
             return ToolResult(
-                handled=True, message="Forest Fill: No fillable cells found in this region"
+                is_handled=True,
+                message="Forest Fill: No fillable cells found in this region",
             )
 
         # Push undo state before applying

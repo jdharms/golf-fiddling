@@ -4,7 +4,6 @@ NES Open Tournament Golf - Highlight Utilities
 Shared utilities for drawing tile highlighting borders in terrain and greens renderers.
 """
 
-
 import pygame
 
 # Highlighting constants

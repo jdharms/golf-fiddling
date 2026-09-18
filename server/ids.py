@@ -19,7 +19,11 @@ _DIGITS = {char: value for value, char in enumerate(ALPHABET)}
 
 def is_id(text: object) -> bool:
     """Whether this is ID_LENGTH characters of the alphabet, and so could name something."""
-    return isinstance(text, str) and len(text) == ID_LENGTH and all(char in _DIGITS for char in text)
+    return (
+        isinstance(text, str)
+        and len(text) == ID_LENGTH
+        and all(char in _DIGITS for char in text)
+    )
 
 
 def encode_base62(value: int) -> str:

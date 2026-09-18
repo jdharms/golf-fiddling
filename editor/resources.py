@@ -17,9 +17,9 @@ def get_resource_path(relative_path: str) -> Path:
     Returns:
         Absolute Path to the resource
     """
-    if hasattr(sys, '_MEIPASS'):
+    if hasattr(sys, "_MEIPASS"):
         # Running as bundled exe - resources in temp dir
-        base_path = Path(sys._MEIPASS) # pyright: ignore[reportAttributeAccessIssue]
+        base_path = Path(sys._MEIPASS)  # pyright: ignore[reportAttributeAccessIssue]
     else:
         # Running as script - project root is parent of editor/
         base_path = Path(__file__).parent.parent

@@ -130,24 +130,38 @@ def _rel(from_addr: int, to_addr: int) -> int:
 # --- 1. Golfer X offset (bank 8) ---------------------------------------
 
 _GOLFER_X_SPLICE_PRG = 0x2004F  # bank 8 $804F
-_GOLFER_X_SPLICE_ORIGINAL = bytes([
-    0xA4, 0xCD,  # LDY ClubSelection
-    0xB9, _lo(_GOLFER_X_TABLE), _hi(_GOLFER_X_TABLE),  # LDA GolferScreenXTable,Y
-    0x85, 0x26,  # STA $26
-])
+_GOLFER_X_SPLICE_ORIGINAL = bytes(
+    [
+        0xA4,
+        0xCD,  # LDY ClubSelection
+        0xB9,
+        _lo(_GOLFER_X_TABLE),
+        _hi(_GOLFER_X_TABLE),  # LDA GolferScreenXTable,Y
+        0x85,
+        0x26,  # STA $26
+    ]
+)
 _GOLFER_X_SPLICE_PATCHED = bytes(
     [0x20, _lo(APPLY_GOLFER_OFFSET_ADDR), _hi(APPLY_GOLFER_OFFSET_ADDR)]
     + [0xEA] * (len(_GOLFER_X_SPLICE_ORIGINAL) - 3)
 )
 
-_APPLY_GOLFER_OFFSET = bytes([
-    0xA4, 0xCD,  # LDY ClubSelection
-    0xB9, _lo(_GOLFER_X_TABLE), _hi(_GOLFER_X_TABLE),  # LDA GolferScreenXTable,Y
-    0x38,  # SEC
-    0xED, _lo(PRACTICE_SWING_OFFSET), _hi(PRACTICE_SWING_OFFSET),  # SBC PracticeSwingOffset
-    0x85, 0x26,  # STA $26
-    0x60,  # RTS
-])
+_APPLY_GOLFER_OFFSET = bytes(
+    [
+        0xA4,
+        0xCD,  # LDY ClubSelection
+        0xB9,
+        _lo(_GOLFER_X_TABLE),
+        _hi(_GOLFER_X_TABLE),  # LDA GolferScreenXTable,Y
+        0x38,  # SEC
+        0xED,
+        _lo(PRACTICE_SWING_OFFSET),
+        _hi(PRACTICE_SWING_OFFSET),  # SBC PracticeSwingOffset
+        0x85,
+        0x26,  # STA $26
+        0x60,  # RTS
+    ]
+)
 
 # --- 2. Toggle and exit (fixed bank) -----------------------------------
 
@@ -157,13 +171,18 @@ _APPLY_GOLFER_OFFSET = bytes([
 # CPU and demo players onto the timeout path at $AAF5 - so no $D5 guard is
 # needed here.
 _TOGGLE_SPLICE_PRG = 0x36B0B  # bank 13 $AB0B, the ready state's B-button test
-_TOGGLE_SPLICE_ORIGINAL = bytes([
-    0xB5, 0x18,  # LDA Controller_NewPress_Tmp,X
-    0x29, 0x40,  # AND #$40
-    0xF0, 0x02,  # BEQ LD_AB13
-    0x38,  # SEC
-    0x60,  # RTS
-])
+_TOGGLE_SPLICE_ORIGINAL = bytes(
+    [
+        0xB5,
+        0x18,  # LDA Controller_NewPress_Tmp,X
+        0x29,
+        0x40,  # AND #$40
+        0xF0,
+        0x02,  # BEQ LD_AB13
+        0x38,  # SEC
+        0x60,  # RTS
+    ]
+)
 _TOGGLE_SPLICE_PATCHED = bytes(
     [0x4C, _lo(TOGGLE_PRACTICE_ADDR), _hi(TOGGLE_PRACTICE_ADDR)]
     + [0xEA] * (len(_TOGGLE_SPLICE_ORIGINAL) - 3)
@@ -171,23 +190,40 @@ _TOGGLE_SPLICE_PATCHED = bytes(
 
 _TOGGLE_SELECT = TOGGLE_PRACTICE_ADDR + 0x11
 _TOGGLE_EXIT = TOGGLE_PRACTICE_ADDR + 0x19
-_TOGGLE_PRACTICE_SWING = bytes([
-    0xB5, 0x18,  # LDA Controller_NewPress_Tmp,X ; X = CurrentPlayerIndex, set at $AB03
-    0x29, 0x60,  # AND #$60                      ; B or Select
-    0xF0, _rel(TOGGLE_PRACTICE_ADDR + 0x04, _TOGGLE_EXIT),  # BEQ Exit
-    0x29, 0x40,  # AND #$40                      ; B wins if both are held
-    0xF0, _rel(TOGGLE_PRACTICE_ADDR + 0x08, _TOGGLE_SELECT),  # BEQ ToggleSelect
-    0xA9, 0x00,  # LDA #$00                      ; B: backing out of the shot
-    0x8D, _lo(PRACTICE_SWING_OFFSET), _hi(PRACTICE_SWING_OFFSET),  # STA PracticeSwingOffset
-    0x38,  # SEC                                 ; vanilla's "cancelled" return
-    0x60,  # RTS                                 ; returns from SwingSequenceEntry
-    # ToggleSelect:
-    0xAD, _lo(PRACTICE_SWING_OFFSET), _hi(PRACTICE_SWING_OFFSET),  # LDA PracticeSwingOffset
-    0x49, GOLFER_PRACTICE_SHIFT,  # EOR #$08
-    0x8D, _lo(PRACTICE_SWING_OFFSET), _hi(PRACTICE_SWING_OFFSET),  # STA PracticeSwingOffset
-    # Exit:
-    0x4C, _lo(_SHOT_LOOP_TOP), _hi(_SHOT_LOOP_TOP),  # JMP LD_AA2A
-])
+_TOGGLE_PRACTICE_SWING = bytes(
+    [
+        0xB5,
+        0x18,  # LDA Controller_NewPress_Tmp,X ; X = CurrentPlayerIndex, set at $AB03
+        0x29,
+        0x60,  # AND #$60                      ; B or Select
+        0xF0,
+        _rel(TOGGLE_PRACTICE_ADDR + 0x04, _TOGGLE_EXIT),  # BEQ Exit
+        0x29,
+        0x40,  # AND #$40                      ; B wins if both are held
+        0xF0,
+        _rel(TOGGLE_PRACTICE_ADDR + 0x08, _TOGGLE_SELECT),  # BEQ ToggleSelect
+        0xA9,
+        0x00,  # LDA #$00                      ; B: backing out of the shot
+        0x8D,
+        _lo(PRACTICE_SWING_OFFSET),
+        _hi(PRACTICE_SWING_OFFSET),  # STA PracticeSwingOffset
+        0x38,  # SEC                                 ; vanilla's "cancelled" return
+        0x60,  # RTS                                 ; returns from SwingSequenceEntry
+        # ToggleSelect:
+        0xAD,
+        _lo(PRACTICE_SWING_OFFSET),
+        _hi(PRACTICE_SWING_OFFSET),  # LDA PracticeSwingOffset
+        0x49,
+        GOLFER_PRACTICE_SHIFT,  # EOR #$08
+        0x8D,
+        _lo(PRACTICE_SWING_OFFSET),
+        _hi(PRACTICE_SWING_OFFSET),  # STA PracticeSwingOffset
+        # Exit:
+        0x4C,
+        _lo(_SHOT_LOOP_TOP),
+        _hi(_SHOT_LOOP_TOP),  # JMP LD_AA2A
+    ]
+)
 
 # --- 3. Commit bookkeeping (bank 13) -----------------------------------
 
@@ -198,56 +234,92 @@ _COMMIT_SITE_PRGS = {
     "overrun": 0x36C4B,  # bank 13 $AC4B - accuracy marker ran off the end (the whiff)
     "release": 0x36C77,  # bank 13 $AC77 - A pressed during the downswing
 }
-_COMMIT_SITE_ORIGINAL = bytes([
-    0x20, _lo(_INCREMENT_STROKE_COUNT), _hi(_INCREMENT_STROKE_COUNT),
-    0x20, _lo(_SHOT_BOOKKEEPING), _hi(_SHOT_BOOKKEEPING),
-])
+_COMMIT_SITE_ORIGINAL = bytes(
+    [
+        0x20,
+        _lo(_INCREMENT_STROKE_COUNT),
+        _hi(_INCREMENT_STROKE_COUNT),
+        0x20,
+        _lo(_SHOT_BOOKKEEPING),
+        _hi(_SHOT_BOOKKEEPING),
+    ]
+)
 _COMMIT_SITE_PATCHED = bytes(
     [0x20, _lo(COMMIT_SHOT_ADDR), _hi(COMMIT_SHOT_ADDR)]
     + [0xEA] * (len(_COMMIT_SITE_ORIGINAL) - 3)
 )
 
 _COMMIT_PRACTICE = COMMIT_SHOT_ADDR + 0x0C
-_COMMIT_SHOT_OR_PRACTICE = bytes([
-    0xAD, _lo(PRACTICE_SWING_OFFSET), _hi(PRACTICE_SWING_OFFSET),  # LDA PracticeSwingOffset
-    0xD0, _rel(COMMIT_SHOT_ADDR + 0x03, _COMMIT_PRACTICE),  # BNE Practice
-    0x20, _lo(_INCREMENT_STROKE_COUNT), _hi(_INCREMENT_STROKE_COUNT),  # JSR IncrementStrokeCount
-    0x20, _lo(_SHOT_BOOKKEEPING), _hi(_SHOT_BOOKKEEPING),  # JSR $8D96
-    0x60,  # RTS
-    # Practice:
-    0xA9, 0xFE,  # LDA #$FE                     ; the site's INC $D2 makes this $FF
-    0x85, 0xD2,  # STA ShotPhaseState
-    0x60,  # RTS
-])
+_COMMIT_SHOT_OR_PRACTICE = bytes(
+    [
+        0xAD,
+        _lo(PRACTICE_SWING_OFFSET),
+        _hi(PRACTICE_SWING_OFFSET),  # LDA PracticeSwingOffset
+        0xD0,
+        _rel(COMMIT_SHOT_ADDR + 0x03, _COMMIT_PRACTICE),  # BNE Practice
+        0x20,
+        _lo(_INCREMENT_STROKE_COUNT),
+        _hi(_INCREMENT_STROKE_COUNT),  # JSR IncrementStrokeCount
+        0x20,
+        _lo(_SHOT_BOOKKEEPING),
+        _hi(_SHOT_BOOKKEEPING),  # JSR $8D96
+        0x60,  # RTS
+        # Practice:
+        0xA9,
+        0xFE,  # LDA #$FE                     ; the site's INC $D2 makes this $FF
+        0x85,
+        0xD2,  # STA ShotPhaseState
+        0x60,  # RTS
+    ]
+)
 
 # --- 4. Hold and reset (bank 13) ---------------------------------------
 
 _HOLD_SPLICE_PRG = 0x36C92  # bank 13 $AC92
 _HOLD_SPLICE_ORIGINAL = bytes([0xAD, 0xAC, 0x05])  # LDA WaterLandingCount
-_HOLD_SPLICE_PATCHED = bytes(
-    [0x4C, _lo(HOLD_PRACTICE_ADDR), _hi(HOLD_PRACTICE_ADDR)]
-)
+_HOLD_SPLICE_PATCHED = bytes([0x4C, _lo(HOLD_PRACTICE_ADDR), _hi(HOLD_PRACTICE_ADDR)])
 
 
 def _hold_practice_swing(hold_frames: int) -> bytes:
     loop = HOLD_PRACTICE_ADDR + 0x16
     normal = HOLD_PRACTICE_ADDR + 0x19
-    return bytes([
-        0xAD, _lo(PRACTICE_SWING_OFFSET), _hi(PRACTICE_SWING_OFFSET),  # LDA PracticeSwingOffset
-        0xF0, _rel(HOLD_PRACTICE_ADDR + 0x03, normal),  # BEQ Normal
-        0xA9, 0xFF,  # LDA #$FF
-        0x85, 0xD2,  # STA ShotPhaseState
-        0xEE, 0x86, 0x05,  # INC $0586                ; reused as the hold timer
-        0xAD, 0x86, 0x05,  # LDA $0586
-        0xC9, hold_frames,  # CMP #hold_frames
-        0x90, _rel(HOLD_PRACTICE_ADDR + 0x11, loop),  # BCC Loop
-        0x20, _lo(_SHOT_INITIALIZATION), _hi(_SHOT_INITIALIZATION),  # JSR ShotInitialization
-        # Loop:
-        0x4C, _lo(_SHOT_LOOP_TOP), _hi(_SHOT_LOOP_TOP),  # JMP LD_AA2A
-        # Normal:
-        0xAD, 0xAC, 0x05,  # LDA WaterLandingCount
-        0x4C, _lo(_CHECK_SHOT_COMPLETE_RESUME), _hi(_CHECK_SHOT_COMPLETE_RESUME),  # JMP $AC95
-    ])
+    return bytes(
+        [
+            0xAD,
+            _lo(PRACTICE_SWING_OFFSET),
+            _hi(PRACTICE_SWING_OFFSET),  # LDA PracticeSwingOffset
+            0xF0,
+            _rel(HOLD_PRACTICE_ADDR + 0x03, normal),  # BEQ Normal
+            0xA9,
+            0xFF,  # LDA #$FF
+            0x85,
+            0xD2,  # STA ShotPhaseState
+            0xEE,
+            0x86,
+            0x05,  # INC $0586                ; reused as the hold timer
+            0xAD,
+            0x86,
+            0x05,  # LDA $0586
+            0xC9,
+            hold_frames,  # CMP #hold_frames
+            0x90,
+            _rel(HOLD_PRACTICE_ADDR + 0x11, loop),  # BCC Loop
+            0x20,
+            _lo(_SHOT_INITIALIZATION),
+            _hi(_SHOT_INITIALIZATION),  # JSR ShotInitialization
+            # Loop:
+            0x4C,
+            _lo(_SHOT_LOOP_TOP),
+            _hi(_SHOT_LOOP_TOP),  # JMP LD_AA2A
+            # Normal:
+            0xAD,
+            0xAC,
+            0x05,  # LDA WaterLandingCount
+            0x4C,
+            _lo(_CHECK_SHOT_COMPLETE_RESUME),
+            _hi(_CHECK_SHOT_COMPLETE_RESUME),  # JMP $AC95
+        ]
+    )
 
 
 # --- Public builder ----------------------------------------------------
@@ -357,7 +429,9 @@ def practice_swing_patches(hold_frames: int = DEFAULT_HOLD_FRAMES) -> list[ByteP
     return patches
 
 
-def practice_swing_patch(hold_frames: int = DEFAULT_HOLD_FRAMES) -> CompositePatch:
+def practice_swing_patch(
+    hold_frames: int = DEFAULT_HOLD_FRAMES,
+) -> CompositePatch[BytePatch]:
     """The practice swing patch set as a single named CompositePatch."""
     return CompositePatch(
         name="practice_swing",

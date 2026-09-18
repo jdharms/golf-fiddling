@@ -20,8 +20,13 @@ from .seeds import SeedRow
 
 #: (ROM id, course directory name) -> the course's display name
 COURSE_NAMES: dict[tuple[str, str], str] = {
-    **{(US_ROM, course["name"]): course["display_name"] for course in rom_utils.COURSES},
-    **{(JP_ROM, course["name"]): course["display_name"] for course in jp_rom_utils.COURSES},
+    **{
+        (US_ROM, course["name"]): course["display_name"] for course in rom_utils.COURSES
+    },
+    **{
+        (JP_ROM, course["name"]): course["display_name"]
+        for course in jp_rom_utils.COURSES
+    },
 }
 
 
@@ -54,7 +59,9 @@ def generate_options() -> GenerateOptions:
         pars=PARS,
         sources=tuple(vanilla_rom(source) for source in SOURCES),
         music=tuple(
-            MusicOption(slug, vanilla_rom(TRACKS[slug].rom).title, track_course(TRACKS[slug]))
+            MusicOption(
+                slug, vanilla_rom(TRACKS[slug].rom).title, track_course(TRACKS[slug])
+            )
             for slug in MUSIC_CHOICES
             if slug in TRACKS
         ),
@@ -112,7 +119,9 @@ class DownloadView:
     @property
     def rom_details(self) -> dict[str, dict[str, str]]:
         """What download.js needs to know of each required ROM: id -> title and SHA-1."""
-        return {rom.id: {"title": rom.title, "sha1": rom.sha1} for rom in self.required_roms}
+        return {
+            rom.id: {"title": rom.title, "sha1": rom.sha1} for rom in self.required_roms
+        }
 
 
 @dataclass(frozen=True)
@@ -138,7 +147,9 @@ class SeedView:
     download: DownloadView
 
 
-def _hole_view(number: int, slot, catalog: Catalog, curation: CurationSnapshot) -> HoleView:
+def _hole_view(
+    number: int, slot, catalog: Catalog, curation: CurationSnapshot
+) -> HoleView:
     entry = catalog[slot.id]
     source = entry.source
     vanilla = isinstance(source, RomSource)
@@ -150,7 +161,9 @@ def _hole_view(number: int, slot, catalog: Catalog, curation: CurationSnapshot) 
         distance=entry.distance,
         author=entry.author,
         rom_title=vanilla_rom(source.rom).title if vanilla else None,
-        course=COURSE_NAMES.get((source.rom, source.course), source.course) if vanilla else None,
+        course=COURSE_NAMES.get((source.rom, source.course), source.course)
+        if vanilla
+        else None,
         source_hole=source.hole if vanilla else None,
     )
 
@@ -160,12 +173,17 @@ def seed_view(row: SeedRow, catalog: Catalog, curation: CurationSnapshot) -> See
     course = manifest.course
     settings = manifest.settings
     holes = tuple(
-        _hole_view(number, slot, catalog, curation) for number, slot in enumerate(course.holes, start=1)
+        _hole_view(number, slot, catalog, curation)
+        for number, slot in enumerate(course.holes, start=1)
     )
     theme = TRACKS[course.music]
     rules = course.clubs
     required = tuple(vanilla_rom(rom) for rom in required_roms(manifest, catalog))
-    required_bag = None if rules.required_bag is None else tuple(club.label for club in sorted(rules.required_bag))
+    required_bag = (
+        None
+        if rules.required_bag is None
+        else tuple(club.label for club in sorted(rules.required_bag))
+    )
     download = DownloadView(
         ips_url=f"/h/{row.id}/patch.ips",
         filename=download_stem(row) + ".nes",
@@ -186,9 +204,13 @@ def seed_view(row: SeedRow, catalog: Catalog, curation: CurationSnapshot) -> See
         holes=holes,
         total_par=course.par,
         total_distance=sum(hole.distance for hole in holes),
-        music=MusicOption(theme.slug, vanilla_rom(theme.rom).title, track_course(theme)),
+        music=MusicOption(
+            theme.slug, vanilla_rom(theme.rom).title, track_course(theme)
+        ),
         par_target=settings.par,
-        sources=tuple(vanilla_rom(source) for source in SOURCES if source in settings.sources),
+        sources=tuple(
+            vanilla_rom(source) for source in SOURCES if source in settings.sources
+        ),
         allow_family_repeats=settings.allow_family_repeats,
         mercy_point=course.mercy_point,
         clubs_max=course.clubs.max,
@@ -247,7 +269,9 @@ class RoundView:
     total_putts: int
 
 
-def round_view(row: SeedRow, scorecard: Round, player_name: str, recorded: bool = False) -> RoundView:
+def round_view(
+    row: SeedRow, scorecard: Round, player_name: str, recorded: bool = False
+) -> RoundView:
     """A recorded round as its permalink shows it; `recorded` marks the redirect from its scan."""
     course = row.manifest.course
     holes = tuple(
@@ -283,7 +307,9 @@ class VoidedRoundView:
     voided_at: str
 
 
-def voided_round_view(row: SeedRow, voided: VoidedRound, player_name: str) -> VoidedRoundView:
+def voided_round_view(
+    row: SeedRow, voided: VoidedRound, player_name: str
+) -> VoidedRoundView:
     return VoidedRoundView(
         public_id=voided.public_id,
         seed_id=row.id,

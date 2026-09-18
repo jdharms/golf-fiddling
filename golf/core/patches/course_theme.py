@@ -24,7 +24,9 @@ def course_theme_patch(music_id: int) -> BytePatch:
     """Point every `CourseBgmTable` entry at `music_id`, one of the US ROM's course themes."""
     if music_id not in COURSE_TRACKS:
         themes = ", ".join(f"${track:02X}" for track in COURSE_TRACKS)
-        raise ValueError(f"music ${music_id:02X} is not a US ROM course theme; expected one of {themes}")
+        raise ValueError(
+            f"music ${music_id:02X} is not a US ROM course theme; expected one of {themes}"
+        )
     return BytePatch(
         name="course_theme",
         description=f"Play music ${music_id:02X} on every course (CourseBgmTable)",

@@ -66,7 +66,6 @@ be checked against the expected pin index, anchors and per-swing wind.
 
 import hashlib
 from dataclasses import dataclass
-from typing import Sequence
 
 from .byte_patch import BytePatch
 from .composite import CompositePatch
@@ -79,39 +78,98 @@ SEED_TABLE_PRG_OFFSET = 0x3DFE7
 SEED_TABLE_HOLES = 18  # one course: 36 bytes at the start of the course-3 flag X block
 
 # Vanilla UK flag X offsets that the seed table overwrites (holes 36-44).
-_SEED_TABLE_VANILLA = bytes([
-    0x4C, 0x7F, 0x35, 0x6F, 0x4D, 0x30, 0x48, 0x70, 0x3B, 0x90, 0x58, 0x62,
-    0x3E, 0x76, 0x83, 0x46, 0x36, 0x31, 0x84, 0x7D, 0x90, 0x3C, 0x48, 0x71,
-    0x44, 0x88, 0x40, 0x73, 0x4E, 0x34, 0x5E, 0x89, 0x36, 0x5D, 0x8C, 0x3D,
-])
+_SEED_TABLE_VANILLA = bytes(
+    [
+        0x4C,
+        0x7F,
+        0x35,
+        0x6F,
+        0x4D,
+        0x30,
+        0x48,
+        0x70,
+        0x3B,
+        0x90,
+        0x58,
+        0x62,
+        0x3E,
+        0x76,
+        0x83,
+        0x46,
+        0x36,
+        0x31,
+        0x84,
+        0x7D,
+        0x90,
+        0x3C,
+        0x48,
+        0x71,
+        0x44,
+        0x88,
+        0x40,
+        0x73,
+        0x4E,
+        0x34,
+        0x5E,
+        0x89,
+        0x36,
+        0x5D,
+        0x8C,
+        0x3D,
+    ]
+)
 assert len(_SEED_TABLE_VANILLA) == SEED_TABLE_HOLES * 2
 
 # --- 1. InitHole seeding (fixed bank $DB0B) ---------------------------------
 
 _INIT_HOLE_SEED_PRG_OFFSET = 0x3DB0B
-_INIT_HOLE_SEED_ORIGINAL = bytes([
-    0xA5, 0x42,  # LDA RngState
-    0x8D, 0xF9, 0x04,  # STA $04F9
-    0xA5, 0x43,  # LDA RngState+1
-    0x8D, 0xFA, 0x04,  # STA $04FA
-])
-_INIT_HOLE_SEED_PATCHED = bytes([
-    0xBD, SEED_TABLE_CPU_ADDR & 0xFF, SEED_TABLE_CPU_ADDR >> 8,  # LDA SeedTable,X
-    0x85, 0x42,  # STA RngState
-    0xBD, (SEED_TABLE_CPU_ADDR + 1) & 0xFF, (SEED_TABLE_CPU_ADDR + 1) >> 8,  # LDA SeedTable+1,X
-    0x85, 0x43,  # STA RngState+1
-])
+_INIT_HOLE_SEED_ORIGINAL = bytes(
+    [
+        0xA5,
+        0x42,  # LDA RngState
+        0x8D,
+        0xF9,
+        0x04,  # STA $04F9
+        0xA5,
+        0x43,  # LDA RngState+1
+        0x8D,
+        0xFA,
+        0x04,  # STA $04FA
+    ]
+)
+_INIT_HOLE_SEED_PATCHED = bytes(
+    [
+        0xBD,
+        SEED_TABLE_CPU_ADDR & 0xFF,
+        SEED_TABLE_CPU_ADDR >> 8,  # LDA SeedTable,X
+        0x85,
+        0x42,  # STA RngState
+        0xBD,
+        (SEED_TABLE_CPU_ADDR + 1) & 0xFF,
+        (SEED_TABLE_CPU_ADDR + 1) >> 8,  # LDA SeedTable+1,X
+        0x85,
+        0x43,  # STA RngState+1
+    ]
+)
 assert len(_INIT_HOLE_SEED_ORIGINAL) == len(_INIT_HOLE_SEED_PATCHED) == 10
 
 # --- 2a. Remove shot-end slot write-back (bank 13 $82C0) --------------------
 
 _WRITEBACK_PRG_OFFSET = 0x342C0  # bank 13 $82C0, right after LDX CurrentPlayerIndex
-_WRITEBACK_ORIGINAL = bytes([
-    0xA5, 0x42,  # LDA RngState
-    0x9D, 0x25, 0x05,  # STA $0525,X
-    0xA5, 0x43,  # LDA RngState+1
-    0x9D, 0x27, 0x05,  # STA $0527,X
-])
+_WRITEBACK_ORIGINAL = bytes(
+    [
+        0xA5,
+        0x42,  # LDA RngState
+        0x9D,
+        0x25,
+        0x05,  # STA $0525,X
+        0xA5,
+        0x43,  # LDA RngState+1
+        0x9D,
+        0x27,
+        0x05,  # STA $0527,X
+    ]
+)
 _WRITEBACK_PATCHED = bytes([0xEA] * len(_WRITEBACK_ORIGINAL))
 
 # --- 2b. Trampoline in bank 13 tail padding ($BFAF) -------------------------
@@ -119,21 +177,34 @@ _WRITEBACK_PATCHED = bytes([0xEA] * len(_WRITEBACK_ORIGINAL))
 TRAMPOLINE_CPU_ADDR = 0xBFAF  # first free byte after the mercy tap-in routines
 _TRAMPOLINE_PRG_OFFSET = 0x37FAF
 _WIND_ADJUSTMENT_ROUTINE = 0xDA25
-_TRAMPOLINE = bytes([
-    0xA6, 0x99,  # LDX CurrentPlayerIndex
-    0x20, _WIND_ADJUSTMENT_ROUTINE & 0xFF, _WIND_ADJUSTMENT_ROUTINE >> 8,  # JSR WindAdjustmentRoutine
-    0xA5, 0x42,  # LDA RngState
-    0x9D, 0x25, 0x05,  # STA $0525,X
-    0xA5, 0x43,  # LDA RngState+1
-    0x9D, 0x27, 0x05,  # STA $0527,X
-    0x60,  # RTS
-])
+_TRAMPOLINE = bytes(
+    [
+        0xA6,
+        0x99,  # LDX CurrentPlayerIndex
+        0x20,
+        _WIND_ADJUSTMENT_ROUTINE & 0xFF,
+        _WIND_ADJUSTMENT_ROUTINE >> 8,  # JSR WindAdjustmentRoutine
+        0xA5,
+        0x42,  # LDA RngState
+        0x9D,
+        0x25,
+        0x05,  # STA $0525,X
+        0xA5,
+        0x43,  # LDA RngState+1
+        0x9D,
+        0x27,
+        0x05,  # STA $0527,X
+        0x60,  # RTS
+    ]
+)
 assert len(_TRAMPOLINE) == 16
 
 # --- 2c. Redirect the shot-setup wind call (bank 13 $824F) ------------------
 
 _WIND_CALL_PRG_OFFSET = 0x3424F
-_WIND_CALL_ORIGINAL = bytes([0x20, _WIND_ADJUSTMENT_ROUTINE & 0xFF, _WIND_ADJUSTMENT_ROUTINE >> 8])
+_WIND_CALL_ORIGINAL = bytes(
+    [0x20, _WIND_ADJUSTMENT_ROUTINE & 0xFF, _WIND_ADJUSTMENT_ROUTINE >> 8]
+)
 _WIND_CALL_PATCHED = bytes([0x20, TRAMPOLINE_CPU_ADDR & 0xFF, TRAMPOLINE_CPU_ADDR >> 8])
 
 
@@ -149,7 +220,9 @@ def derive_hole_seeds(meta_seed: str) -> list[int]:
     """
     seeds = []
     for hole in range(SEED_TABLE_HOLES):
-        digest = hashlib.sha256(f"nes-open-seeded-wind\0{meta_seed}\0{hole}".encode()).digest()
+        digest = hashlib.sha256(
+            f"nes-open-seeded-wind\0{meta_seed}\0{hole}".encode()
+        ).digest()
         seeds.append(digest[0] | (digest[1] << 8))
     return seeds
 
@@ -225,14 +298,20 @@ def seeded_wind_patches(
         original=_WIND_CALL_ORIGINAL,
         patched=_WIND_CALL_PATCHED,
     )
-    return [seed_table_patch, init_hole_patch, writeback_patch, trampoline_patch, call_patch]
+    return [
+        seed_table_patch,
+        init_hole_patch,
+        writeback_patch,
+        trampoline_patch,
+        call_patch,
+    ]
 
 
 def seeded_wind_patch(
     meta_seed: str | None = None,
     *,
     seeds: list[int] | None = None,
-) -> CompositePatch:
+) -> CompositePatch[BytePatch]:
     """
     The seeded wind patch set as one CompositePatch.
 
@@ -283,7 +362,9 @@ def wind_jitter(a: int) -> int:
     return r - 1 if (a & 1) else r - 2
 
 
-def wind_adjust(state: int, direction_anchor: int, speed_anchor: int) -> tuple[int, int, int]:
+def wind_adjust(
+    state: int, direction_anchor: int, speed_anchor: int
+) -> tuple[int, int, int]:
     """One WindAdjustmentRoutine call. Returns (new_state, direction, speed)."""
     state, a = lfsr_step(state)
     direction = direction_anchor

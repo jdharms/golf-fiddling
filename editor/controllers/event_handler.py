@@ -131,7 +131,7 @@ class EventHandler:
                         event.key, modifiers, self.tool_context
                     )
                     self._process_tool_result(result)
-                    tool_handled = result.handled
+                    tool_handled = result.is_handled
 
                 # Only process global keys if tool didn't handle it
                 if not tool_handled:
@@ -210,7 +210,7 @@ class EventHandler:
 
             elif event.type == pygame.DROPFILE:
                 # Handle drag-and-drop file loading
-                if event.file.lower().endswith('.json'):
+                if event.file.lower().endswith(".json"):
                     self.on_load_file(event.file)
 
         return True
@@ -271,21 +271,21 @@ class EventHandler:
         elif event.key == pygame.K_c and pygame.key.get_mods() & pygame.KMOD_CTRL:
             # Ctrl+C = Copy (if Selection tool is active)
             active_tool = self.tool_manager.get_active_tool()
-            if active_tool and hasattr(active_tool, '_copy_selection'):
+            if active_tool and hasattr(active_tool, "_copy_selection"):
                 # Selection tool handles this
                 return False  # Let tool handle it
             return False  # Not handled
         elif event.key == pygame.K_x and pygame.key.get_mods() & pygame.KMOD_CTRL:
             # Ctrl+X = Cut (if Selection tool is active)
             active_tool = self.tool_manager.get_active_tool()
-            if active_tool and hasattr(active_tool, '_cut_selection'):
+            if active_tool and hasattr(active_tool, "_cut_selection"):
                 # Selection tool handles this
                 return False  # Let tool handle it
             return False  # Not handled
         elif event.key == pygame.K_v and pygame.key.get_mods() & pygame.KMOD_CTRL:
             # Ctrl+V = Paste (if Selection tool is active)
             active_tool = self.tool_manager.get_active_tool()
-            if active_tool and hasattr(active_tool, '_start_paste'):
+            if active_tool and hasattr(active_tool, "_start_paste"):
                 # Selection tool handles this
                 return False  # Let tool handle it
             return False  # Not handled

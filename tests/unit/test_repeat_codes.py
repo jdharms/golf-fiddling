@@ -1,7 +1,6 @@
 """Unit tests for repeat code generation in compression."""
 
 
-
 def test_simple_repeat_sequence(mock_minimal_terrain_tables):
     """Stream follows horizontal transitions from prev_byte."""
     from golf.core.compressor import generate_repeat_code

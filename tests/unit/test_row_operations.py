@@ -1,11 +1,9 @@
 """Unit tests for row operations (add/remove rows with constraints)."""
 
-import tempfile
 from unittest.mock import Mock
 
 import pytest
 
-from editor.controllers.editor_state import EditorState
 from editor.tools.add_row_tool import AddRowTool
 from editor.tools.base_tool import ToolContext
 from editor.tools.remove_row_tool import RemoveRowTool
@@ -81,36 +79,16 @@ class TestHoleDataTerrainHeight:
         """Loading JSON should set terrain_height from terrain.height field."""
         # Create JSON file with explicit height
         json_file = tmp_path / "test_hole.json"
-        json_content = """{
-  "hole": 1,
-  "par": 4,
-  "distance": 400,
-  "handicap": 1,
-  "scroll_limit": 3,
-  "green": {"x": 100, "y": 200},
-  "tee": {"x": 0, "y": 0},
-  "flag_positions": [],
-  "terrain": {
-    "width": 22,
-    "height": 32,
-    "rows": ["10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10"]
-  },
-  "attributes": {
-    "width": 11,
-    "height": 1,
-    "rows": [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
-  },
-  "greens": {
-    "width": 24,
-    "height": 24,
-    "rows": ["00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"]
-  }
-}"""
         # Need to expand terrain rows to match height
-        terrain_rows = ['10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10'] * 32
-        greens_rows = ['00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'] * 24
+        terrain_rows = [
+            "10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10"
+        ] * 32
+        greens_rows = [
+            "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
+        ] * 24
 
         import json
+
         data = {
             "hole": 1,
             "par": 4,
@@ -120,21 +98,13 @@ class TestHoleDataTerrainHeight:
             "green": {"x": 100, "y": 200},
             "tee": {"x": 0, "y": 0},
             "flag_positions": [],
-            "terrain": {
-                "width": 22,
-                "height": 32,
-                "rows": terrain_rows
-            },
+            "terrain": {"width": 22, "height": 32, "rows": terrain_rows},
             "attributes": {
                 "width": 11,
                 "height": 16,
-                "rows": [[1] * 11 for _ in range(16)]
+                "rows": [[1] * 11 for _ in range(16)],
             },
-            "greens": {
-                "width": 24,
-                "height": 24,
-                "rows": greens_rows
-            }
+            "greens": {"width": 24, "height": 24, "rows": greens_rows},
         }
 
         with open(json_file, "w") as f:
@@ -162,7 +132,8 @@ class TestHoleDataTerrainHeight:
         hole_with_30_rows.save()
 
         import json
-        with open(json_file, "r") as f:
+
+        with open(json_file) as f:
             data = json.load(f)
 
         assert data["terrain"]["height"] == 30
@@ -189,7 +160,9 @@ class TestRowOperationsPairConstraint:
 
         assert mock_tool_context.hole_data.terrain_height == initial_height - 2
 
-    def test_multiple_adds_maintain_even_count(self, row_operations_tool, mock_tool_context):
+    def test_multiple_adds_maintain_even_count(
+        self, row_operations_tool, mock_tool_context
+    ):
         """Multiple add operations should maintain even row count."""
         # Start with 30 (even)
         assert mock_tool_context.hole_data.terrain_height == 30
@@ -202,7 +175,9 @@ class TestRowOperationsPairConstraint:
         assert mock_tool_context.hole_data.terrain_height == 36
         assert mock_tool_context.hole_data.terrain_height % 2 == 0  # Still even
 
-    def test_multiple_removes_maintain_even_count(self, row_operations_tool, mock_tool_context):
+    def test_multiple_removes_maintain_even_count(
+        self, row_operations_tool, mock_tool_context
+    ):
         """Multiple remove operations should maintain even row count."""
         # Start with 30 (even)
         assert mock_tool_context.hole_data.terrain_height == 30
@@ -228,17 +203,19 @@ class TestRowOperationsMaximumConstraint:
 
         result = row_operations_tool.add_row(mock_tool_context)
 
-        assert result.handled is True
+        assert result.is_handled is True
         assert "48" in result.message
         assert mock_tool_context.hole_data.terrain_height == 48  # Unchanged
 
-    def test_cannot_add_rows_that_would_exceed_48(self, row_operations_tool, mock_tool_context):
+    def test_cannot_add_rows_that_would_exceed_48(
+        self, row_operations_tool, mock_tool_context
+    ):
         """Cannot add 2 rows if it would exceed 48."""
         mock_tool_context.hole_data.terrain_height = 47  # Odd, but test edge case
 
         result = row_operations_tool.add_row(mock_tool_context)
 
-        assert result.handled is True
+        assert result.is_handled is True
         assert "48" in result.message
         assert mock_tool_context.hole_data.terrain_height == 47  # Unchanged
 
@@ -247,7 +224,7 @@ class TestRowOperationsMaximumConstraint:
         mock_tool_context.hole_data.terrain_height = 46
         mock_tool_context.hole_data.terrain = [[0] * 22 for _ in range(46)]
 
-        result = row_operations_tool.add_row(mock_tool_context)
+        row_operations_tool.add_row(mock_tool_context)
 
         assert mock_tool_context.hole_data.terrain_height == 48  # Allowed
 
@@ -255,21 +232,25 @@ class TestRowOperationsMaximumConstraint:
 class TestRowOperationsMinimumConstraint:
     """Tests for 30-row minimum constraint."""
 
-    def test_cannot_remove_rows_below_minimum(self, row_operations_tool, mock_tool_context):
+    def test_cannot_remove_rows_below_minimum(
+        self, row_operations_tool, mock_tool_context
+    ):
         """Cannot remove rows when already at 30."""
         mock_tool_context.hole_data.terrain_height = 30
 
         result = row_operations_tool.remove_row(mock_tool_context)
 
-        assert result.handled is True
+        assert result.is_handled is True
         assert "30" in result.message or "minimum" in result.message.lower()
         assert mock_tool_context.hole_data.terrain_height == 30  # Unchanged
 
-    def test_remove_row_allows_down_to_30_rows(self, row_operations_tool, mock_tool_context):
+    def test_remove_row_allows_down_to_30_rows(
+        self, row_operations_tool, mock_tool_context
+    ):
         """Can remove rows down to exactly 30."""
         mock_tool_context.hole_data.terrain_height = 32
 
-        result = row_operations_tool.remove_row(mock_tool_context)
+        row_operations_tool.remove_row(mock_tool_context)
 
         assert mock_tool_context.hole_data.terrain_height == 30  # Allowed
 
@@ -450,7 +431,9 @@ class TestRowOperationsScrollLimit:
         # scroll_limit should be (32 - 28) // 2 = 2
         assert mock_tool_context.hole_data.metadata["scroll_limit"] == 2
 
-    def test_remove_row_updates_scroll_limit(self, row_operations_tool, mock_tool_context):
+    def test_remove_row_updates_scroll_limit(
+        self, row_operations_tool, mock_tool_context
+    ):
         """Removing rows should update scroll_limit."""
         # Start with 34 rows: scroll_limit = (34 - 28) // 2 = 3
         mock_tool_context.hole_data.terrain_height = 34
@@ -465,8 +448,8 @@ class TestRowOperationsScrollLimit:
     def test_scroll_limit_formula(self, mock_tool_context):
         """Verify scroll_limit formula: (height - 28) // 2."""
         test_cases = [
-            (30, 1),   # (30 - 28) // 2 = 1
-            (32, 2),   # (32 - 28) // 2 = 2
+            (30, 1),  # (30 - 28) // 2 = 1
+            (32, 2),  # (32 - 28) // 2 = 2
             (48, 10),  # (48 - 28) // 2 = 10
         ]
 
@@ -527,6 +510,7 @@ class TestRowOperationsUndo:
 
         # Undo
         restored = real_undo_manager.undo(mock_tool_context.hole_data)
+        assert restored is not None
         assert restored.terrain_height == initial_height
 
     def test_undo_remove_row_restores_height_and_visibility(self, mock_tool_context):
@@ -551,6 +535,7 @@ class TestRowOperationsUndo:
 
         # Undo
         restored = real_undo_manager.undo(mock_tool_context.hole_data)
+        assert restored is not None
         assert restored.terrain_height == 32
 
     def test_redo_add_row_reapplies_height_change(self, mock_tool_context):
@@ -572,10 +557,12 @@ class TestRowOperationsUndo:
 
         # Undo
         restored = real_undo_manager.undo(mock_tool_context.hole_data)
+        assert restored is not None
         assert restored.terrain_height == 30
 
         # Redo
         redone = real_undo_manager.redo(restored)
+        assert redone is not None
         assert redone.terrain_height == 32
 
 
@@ -644,8 +631,12 @@ class TestRowOperationsIntegration:
 
         # Create initial JSON file
         json_file = tmp_path / "test_hole.json"
-        terrain_rows = ['10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10'] * 30
-        greens_rows = ['00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'] * 24
+        terrain_rows = [
+            "10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10"
+        ] * 30
+        greens_rows = [
+            "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
+        ] * 24
 
         data = {
             "hole": 1,
@@ -656,21 +647,13 @@ class TestRowOperationsIntegration:
             "green": {"x": 100, "y": 200},
             "tee": {"x": 0, "y": 0},
             "flag_positions": [],
-            "terrain": {
-                "width": 22,
-                "height": 30,
-                "rows": terrain_rows
-            },
+            "terrain": {"width": 22, "height": 30, "rows": terrain_rows},
             "attributes": {
                 "width": 11,
                 "height": 15,
-                "rows": [[1] * 11 for _ in range(15)]
+                "rows": [[1] * 11 for _ in range(15)],
             },
-            "greens": {
-                "width": 24,
-                "height": 24,
-                "rows": greens_rows
-            }
+            "greens": {"width": 24, "height": 24, "rows": greens_rows},
         }
 
         with open(json_file, "w") as f:

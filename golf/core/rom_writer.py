@@ -6,14 +6,12 @@ This class mirrors RomReader's interface for writes.
 """
 
 from pathlib import Path
+from typing import Self
 
 from .rom_utils import (
-    FIXED_BANK_PRG_START,
     INES_HEADER_SIZE,
-    PRG_BANK_SIZE,
     cpu_to_prg_fixed,
     cpu_to_prg_switched,
-    prg_to_cpu_switched,
 )
 
 
@@ -47,7 +45,7 @@ class RomWriter:
             self._load(f.read(), output_path)
 
     @classmethod
-    def from_bytes(cls, data: bytes, output_path: str | None = None) -> "RomWriter":
+    def from_bytes(cls, data: bytes, output_path: str | None = None) -> Self:
         """
         Wrap a ROM image already in memory. The data is copied.
 
@@ -107,7 +105,9 @@ class RomWriter:
 
     def write_fixed_word(self, cpu_addr: int, value: int):
         """Write 16-bit little-endian word to fixed bank."""
-        self.write_prg(cpu_to_prg_fixed(cpu_addr), bytes([value & 0xFF, (value >> 8) & 0xFF]))
+        self.write_prg(
+            cpu_to_prg_fixed(cpu_addr), bytes([value & 0xFF, (value >> 8) & 0xFF])
+        )
 
     def write_switched(self, cpu_addr: int, bank: int, data: bytes):
         """
@@ -191,7 +191,7 @@ class RomWriter:
         print(f"Wrote modified ROM to: {self.output_path}")
 
     @classmethod
-    def from_file(cls, rom_path: str, output_path: str | None = None) -> "RomWriter":
+    def from_file(cls, rom_path: str, output_path: str | None = None) -> Self:
         """
         Create RomWriter from file path.
 

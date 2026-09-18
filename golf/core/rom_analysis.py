@@ -24,8 +24,6 @@ from dataclasses import dataclass, field
 from golf.core.rom_utils import (
     FIXED_BANK_PRG_START,
     PRG_BANK_SIZE,
-    cpu_to_prg_fixed,
-    cpu_to_prg_switched,
     prg_to_bank_and_cpu,
 )
 
@@ -140,8 +138,14 @@ def inline_spec_for(target_cpu: int, bank: int | None) -> InlineArgSpec | None:
 # --- Opcode groups ------------------------------------------------------
 
 BRANCH_OPCODES = {
-    0x10: "BPL", 0x30: "BMI", 0x50: "BVC", 0x70: "BVS",
-    0x90: "BCC", 0xB0: "BCS", 0xD0: "BNE", 0xF0: "BEQ",
+    0x10: "BPL",
+    0x30: "BMI",
+    0x50: "BVC",
+    0x70: "BVS",
+    0x90: "BCC",
+    0xB0: "BCS",
+    0xD0: "BNE",
+    0xF0: "BEQ",
 }
 
 JSR = 0x20
@@ -152,39 +156,101 @@ RTI = 0x40
 
 # Absolute addressing, no index - "this instruction names this address".
 ABS_OPCODES = {
-    0x0D: "ORA", 0x0E: "ASL", 0x2C: "BIT", 0x2D: "AND", 0x2E: "ROL",
-    0x4D: "EOR", 0x4E: "LSR", 0x6D: "ADC", 0x6E: "ROR", 0x8C: "STY",
-    0x8D: "STA", 0x8E: "STX", 0xAC: "LDY", 0xAD: "LDA", 0xAE: "LDX",
-    0xCC: "CPY", 0xCD: "CMP", 0xCE: "DEC", 0xEC: "CPX", 0xED: "SBC",
+    0x0D: "ORA",
+    0x0E: "ASL",
+    0x2C: "BIT",
+    0x2D: "AND",
+    0x2E: "ROL",
+    0x4D: "EOR",
+    0x4E: "LSR",
+    0x6D: "ADC",
+    0x6E: "ROR",
+    0x8C: "STY",
+    0x8D: "STA",
+    0x8E: "STX",
+    0xAC: "LDY",
+    0xAD: "LDA",
+    0xAE: "LDX",
+    0xCC: "CPY",
+    0xCD: "CMP",
+    0xCE: "DEC",
+    0xEC: "CPX",
+    0xED: "SBC",
     0xEE: "INC",
 }
 
 # Absolute indexed - the named address is a *base*, so a store or load can
 # reach past it by however far the index register ranges.
 ABS_INDEXED_OPCODES = {
-    0x1D: "ORA abs,X", 0x1E: "ASL abs,X", 0x3D: "AND abs,X", 0x3E: "ROL abs,X",
-    0x5D: "EOR abs,X", 0x5E: "LSR abs,X", 0x7D: "ADC abs,X", 0x7E: "ROR abs,X",
-    0x9D: "STA abs,X", 0xBC: "LDY abs,X", 0xBD: "LDA abs,X", 0xDD: "CMP abs,X",
-    0xDE: "DEC abs,X", 0xFD: "SBC abs,X", 0xFE: "INC abs,X",
-    0x19: "ORA abs,Y", 0x39: "AND abs,Y", 0x59: "EOR abs,Y", 0x79: "ADC abs,Y",
-    0x99: "STA abs,Y", 0xB9: "LDA abs,Y", 0xBE: "LDX abs,Y", 0xD9: "CMP abs,Y",
+    0x1D: "ORA abs,X",
+    0x1E: "ASL abs,X",
+    0x3D: "AND abs,X",
+    0x3E: "ROL abs,X",
+    0x5D: "EOR abs,X",
+    0x5E: "LSR abs,X",
+    0x7D: "ADC abs,X",
+    0x7E: "ROR abs,X",
+    0x9D: "STA abs,X",
+    0xBC: "LDY abs,X",
+    0xBD: "LDA abs,X",
+    0xDD: "CMP abs,X",
+    0xDE: "DEC abs,X",
+    0xFD: "SBC abs,X",
+    0xFE: "INC abs,X",
+    0x19: "ORA abs,Y",
+    0x39: "AND abs,Y",
+    0x59: "EOR abs,Y",
+    0x79: "ADC abs,Y",
+    0x99: "STA abs,Y",
+    0xB9: "LDA abs,Y",
+    0xBE: "LDX abs,Y",
+    0xD9: "CMP abs,Y",
     0xF9: "SBC abs,Y",
 }
 
 ZP_OPCODES = {
-    0x05: "ORA", 0x06: "ASL", 0x24: "BIT", 0x25: "AND", 0x26: "ROL",
-    0x45: "EOR", 0x46: "LSR", 0x65: "ADC", 0x66: "ROR", 0x84: "STY",
-    0x85: "STA", 0x86: "STX", 0xA4: "LDY", 0xA5: "LDA", 0xA6: "LDX",
-    0xC4: "CPY", 0xC5: "CMP", 0xC6: "DEC", 0xE4: "CPX", 0xE5: "SBC",
+    0x05: "ORA",
+    0x06: "ASL",
+    0x24: "BIT",
+    0x25: "AND",
+    0x26: "ROL",
+    0x45: "EOR",
+    0x46: "LSR",
+    0x65: "ADC",
+    0x66: "ROR",
+    0x84: "STY",
+    0x85: "STA",
+    0x86: "STX",
+    0xA4: "LDY",
+    0xA5: "LDA",
+    0xA6: "LDX",
+    0xC4: "CPY",
+    0xC5: "CMP",
+    0xC6: "DEC",
+    0xE4: "CPX",
+    0xE5: "SBC",
     0xE6: "INC",
 }
 
 ZP_INDEXED_OPCODES = {
-    0x15: "ORA zp,X", 0x16: "ASL zp,X", 0x35: "AND zp,X", 0x36: "ROL zp,X",
-    0x55: "EOR zp,X", 0x56: "LSR zp,X", 0x75: "ADC zp,X", 0x76: "ROR zp,X",
-    0x94: "STY zp,X", 0x95: "STA zp,X", 0xB4: "LDY zp,X", 0xB5: "LDA zp,X",
-    0xD5: "CMP zp,X", 0xD6: "DEC zp,X", 0xF5: "SBC zp,X", 0xF6: "INC zp,X",
-    0x96: "STX zp,Y", 0xB6: "LDX zp,Y",
+    0x15: "ORA zp,X",
+    0x16: "ASL zp,X",
+    0x35: "AND zp,X",
+    0x36: "ROL zp,X",
+    0x55: "EOR zp,X",
+    0x56: "LSR zp,X",
+    0x75: "ADC zp,X",
+    0x76: "ROR zp,X",
+    0x94: "STY zp,X",
+    0x95: "STA zp,X",
+    0xB4: "LDY zp,X",
+    0xB5: "LDA zp,X",
+    0xD5: "CMP zp,X",
+    0xD6: "DEC zp,X",
+    0xF5: "SBC zp,X",
+    0xF6: "INC zp,X",
+    0x96: "STX zp,Y",
+    0xB6: "LDX zp,Y",
 }
 
 
@@ -294,7 +360,9 @@ def disassemble(
                 listing.stop_reason = f"start of data range {data_label.name}"
                 break
             end_prg = min(data_label.end, window_end - 1)
-            emitted += _emit_data(listing, reader, cur_prg, pc, end_prg, data_label, limit - emitted)
+            emitted += _emit_data(
+                listing, reader, cur_prg, pc, end_prg, data_label, limit - emitted
+            )
             pc += (end_prg - cur_prg) + 1
             if emitted >= limit:
                 listing.stop_reason = f"reached the {limit}-row cap"
@@ -305,7 +373,13 @@ def disassemble(
         opcode = span[cur_prg - window_start]
         if length <= 0:
             listing.rows.append(
-                Row("undecoded", pc, cur_prg, bytes([opcode]), f".db ${opcode:02X}   ; undecoded")
+                Row(
+                    "undecoded",
+                    pc,
+                    cur_prg,
+                    bytes([opcode]),
+                    f".db ${opcode:02X}   ; undecoded",
+                )
             )
             pc += 1
             emitted += 1
@@ -313,7 +387,14 @@ def disassemble(
 
         raw = span[cur_prg - window_start : cur_prg - window_start + length]
         listing.rows.append(
-            Row("code", pc, cur_prg, bytes(raw), text.upper(), _label_name(labels, cur_prg))
+            Row(
+                "code",
+                pc,
+                cur_prg,
+                bytes(raw),
+                text.upper(),
+                _label_name(labels, cur_prg),
+            )
         )
         emitted += 1
         pc += length
@@ -383,8 +464,15 @@ def _emit_data(listing, reader, start_prg, start_cpu, end_prg, label, budget) ->
         chunk = reader.read_prg(prg, chunk_len)
         text = ".db " + ", ".join(f"${b:02X}" for b in chunk)
         listing.rows.append(
-            Row("data", cpu, prg, chunk, text, label.name if first else None,
-                note=f"data range {label.name}" if first else None)
+            Row(
+                "data",
+                cpu,
+                prg,
+                chunk,
+                text,
+                label.name if first else None,
+                note=f"data range {label.name}" if first else None,
+            )
         )
         first = False
         prg += chunk_len
@@ -462,7 +550,9 @@ def _nearest_code_label_before(labels, prg: int, max_scan: int) -> int | None:
     for label, _ in labels.iter_merged():
         if label.type != "NesPrgRom" or is_data_range(label):
             continue
-        if prg - max_scan <= label.start <= prg and (best is None or label.start > best):
+        if prg - max_scan <= label.start <= prg and (
+            best is None or label.start > best
+        ):
             best = label.start
     return best
 
@@ -497,7 +587,9 @@ def check_alignment(reader, prg: int, labels, max_scan: int = 192) -> bool | Non
     return pc == target_cpu
 
 
-def find_code_references(reader, target_cpu: int, target_bank: int, labels=None) -> ReferenceReport:
+def find_code_references(
+    reader, target_cpu: int, target_bank: int, labels=None
+) -> ReferenceReport:
     """Every static control-flow reference to a code address we can find."""
     lo, hi = target_cpu & 0xFF, target_cpu >> 8
     fixed_target = target_cpu >= 0xC000
@@ -514,28 +606,41 @@ def find_code_references(reader, target_cpu: int, target_bank: int, labels=None)
 
         for i in range(len(data) - 2):
             op = data[i]
-            if same_context and op in (JSR, JMP_ABS, JMP_IND):
-                if data[i + 1] == lo and data[i + 2] == hi:
+            if (
+                same_context
+                and op in (JSR, JMP_ABS, JMP_IND)
+                and data[i + 1] == lo
+                and data[i + 2] == hi
+            ):
+                prg = base + i
+                _, cpu = prg_to_bank_and_cpu(prg)
+                kind = {JSR: "JSR", JMP_ABS: "JMP", JMP_IND: "JMP (ind)"}[op]
+                report.refs.append(
+                    Reference(
+                        kind, bank, cpu, prg, in_data_range=_annotate(labels, prg)
+                    )
+                )
+            # ExecuteFarCall: bank, lo, hi follow
+            if (
+                op == JSR
+                and data[i + 1] == 0x72
+                and data[i + 2] == 0xD3
+                and i + 5 < len(data)
+            ):
+                fb, flo, fhi = data[i + 3], data[i + 4], data[i + 5]
+                if flo == lo and fhi == hi and (fb == target_bank or fixed_target):
                     prg = base + i
                     _, cpu = prg_to_bank_and_cpu(prg)
-                    kind = {JSR: "JSR", JMP_ABS: "JMP", JMP_IND: "JMP (ind)"}[op]
                     report.refs.append(
-                        Reference(kind, bank, cpu, prg, in_data_range=_annotate(labels, prg))
-                    )
-            if op == JSR and data[i + 1] == 0x72 and data[i + 2] == 0xD3:
-                # ExecuteFarCall: bank, lo, hi follow
-                if i + 5 < len(data):
-                    fb, flo, fhi = data[i + 3], data[i + 4], data[i + 5]
-                    if flo == lo and fhi == hi and (fb == target_bank or fixed_target):
-                        prg = base + i
-                        _, cpu = prg_to_bank_and_cpu(prg)
-                        report.refs.append(
-                            Reference(
-                                "far call", bank, cpu, prg,
-                                detail=f"bank ${fb:02X}",
-                                in_data_range=_annotate(labels, prg),
-                            )
+                        Reference(
+                            "far call",
+                            bank,
+                            cpu,
+                            prg,
+                            detail=f"bank ${fb:02X}",
+                            in_data_range=_annotate(labels, prg),
                         )
+                    )
 
         if same_context:
             for i in range(len(data) - 1):
@@ -546,7 +651,10 @@ def find_code_references(reader, target_cpu: int, target_bank: int, labels=None)
                     if target == target_cpu:
                         report.refs.append(
                             Reference(
-                                BRANCH_OPCODES[data[i]], bank, cpu, prg,
+                                BRANCH_OPCODES[data[i]],
+                                bank,
+                                cpu,
+                                prg,
                                 detail="relative branch",
                                 in_data_range=_annotate(labels, prg),
                             )
@@ -562,7 +670,9 @@ def find_code_references(reader, target_cpu: int, target_bank: int, labels=None)
         "ExecuteFarCall inline bank+address",
     ]
 
-    sites, dispatch_refs = _search_dispatch_tables(reader, target_cpu, target_bank, fixed_target, labels)
+    sites, dispatch_refs = _search_dispatch_tables(
+        reader, target_cpu, target_bank, fixed_target, labels
+    )
     report.dispatch_sites_checked = sites
     report.refs.extend(dispatch_refs)
     report.searched.append(
@@ -607,7 +717,10 @@ def _search_dispatch_tables(reader, target_cpu, target_bank, fixed_target, label
                     _, cpu = prg_to_bank_and_cpu(prg)
                     refs.append(
                         Reference(
-                            "dispatch table", bank, cpu, prg,
+                            "dispatch table",
+                            bank,
+                            cpu,
+                            prg,
                             detail=f"key ${data[j]:02X}, table after JSR at ${prg_to_bank_and_cpu(base + i)[1]:04X}",
                             in_data_range=_annotate(labels, prg),
                         )
@@ -616,7 +729,9 @@ def _search_dispatch_tables(reader, target_cpu, target_bank, fixed_target, label
     return sites, refs
 
 
-def find_pointer_references(reader, target_cpu: int, labels=None, bank: int | None = None):
+def find_pointer_references(
+    reader, target_cpu: int, labels=None, bank: int | None = None
+):
     """Raw little-endian byte pairs matching the address. Noisy by nature."""
     lo, hi = target_cpu & 0xFF, target_cpu >> 8
     hits = []
@@ -628,7 +743,9 @@ def find_pointer_references(reader, target_cpu: int, labels=None, bank: int | No
                 prg = base + i
                 _, cpu = prg_to_bank_and_cpu(prg)
                 hits.append(
-                    Reference("pointer", b, cpu, prg, in_data_range=_annotate(labels, prg))
+                    Reference(
+                        "pointer", b, cpu, prg, in_data_range=_annotate(labels, prg)
+                    )
                 )
     return hits
 
@@ -655,7 +772,13 @@ def find_data_references(reader, target_addr: int, labels=None, reach: int = 0):
                     prg = base + i
                     _, cpu = prg_to_bank_and_cpu(prg)
                     direct.append(
-                        Reference(table[op], bank, cpu, prg, in_data_range=_annotate(labels, prg))
+                        Reference(
+                            table[op],
+                            bank,
+                            cpu,
+                            prg,
+                            in_data_range=_annotate(labels, prg),
+                        )
                     )
                 elif (
                     reach
@@ -667,12 +790,19 @@ def find_data_references(reader, target_addr: int, labels=None, reach: int = 0):
                     reaching.setdefault(addr, []).append(
                         Reference(ABS_INDEXED_OPCODES[op], bank, cpu, prg)
                     )
-            if zero_page and (op in ZP_OPCODES or op in ZP_INDEXED_OPCODES):
-                if data[i + 1] == target_addr:
-                    table = ZP_OPCODES if op in ZP_OPCODES else ZP_INDEXED_OPCODES
-                    prg = base + i
-                    _, cpu = prg_to_bank_and_cpu(prg)
-                    direct.append(
-                        Reference(table[op], bank, cpu, prg, in_data_range=_annotate(labels, prg))
+            if (zero_page and (op in ZP_OPCODES or op in ZP_INDEXED_OPCODES)) and data[
+                i + 1
+            ] == target_addr:
+                table = ZP_OPCODES if op in ZP_OPCODES else ZP_INDEXED_OPCODES
+                prg = base + i
+                _, cpu = prg_to_bank_and_cpu(prg)
+                direct.append(
+                    Reference(
+                        table[op],
+                        bank,
+                        cpu,
+                        prg,
+                        in_data_range=_annotate(labels, prg),
                     )
+                )
     return direct, reaching

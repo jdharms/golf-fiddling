@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from golf.core.rom_writer import RomWriter
 
 
-class CompositePatch(ROMPatch):
+class CompositePatch[P: ROMPatch](ROMPatch):
     """
     A patch that groups multiple sub-patches and treats them as one named
     ROMPatch.
@@ -30,18 +30,17 @@ class CompositePatch(ROMPatch):
         self,
         name: str,
         description: str,
-        patches: list[ROMPatch],
+        patches: Sequence[P],
         requires: Sequence[ROMPatch] = (),
     ):
         self.name = name
         self.description = description
-        self.patches = patches
+        self.patches: list[P] = list(patches)
         self.requires = list(requires)
 
     def can_apply(self, rom_writer: "RomWriter") -> bool:
         return all(
-            p.can_apply(rom_writer) or p.is_applied(rom_writer)
-            for p in self.patches
+            p.can_apply(rom_writer) or p.is_applied(rom_writer) for p in self.patches
         )
 
     def is_applied(self, rom_writer: "RomWriter") -> bool:

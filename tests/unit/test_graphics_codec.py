@@ -5,8 +5,6 @@ hand-built stream, so a regression shows up as a specific mode rather than a
 corrupted image somewhere downstream.
 """
 
-import pytest
-
 from golf.core.graphics_codec import (
     VideoMemory,
     decompress_stream,

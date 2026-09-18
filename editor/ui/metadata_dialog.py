@@ -10,7 +10,6 @@ Allows user to:
 """
 
 import json
-from pathlib import Path
 
 import pygame
 from pygame import Rect, Surface
@@ -45,7 +44,7 @@ class MetadataDialog:
     COLOR_ERROR = (255, 50, 50)
     # Chart colors
     COLOR_VANILLA_DOT = (128, 128, 128)  # Gray for vanilla holes
-    COLOR_CURRENT_DOT = (255, 230, 50)   # Yellow for current hole
+    COLOR_CURRENT_DOT = (255, 230, 50)  # Yellow for current hole
 
     def __init__(
         self,
@@ -253,7 +252,9 @@ class MetadataDialog:
                     # Only allow digits
                     if event.unicode.isdigit() and len(self.distance_value) < 3:
                         self.distance_value += event.unicode
-                        self.distance_valid = self._validate_distance(self.distance_value)
+                        self.distance_valid = self._validate_distance(
+                            self.distance_value
+                        )
 
             # Global keys (no field active)
             else:
@@ -472,7 +473,9 @@ class MetadataDialog:
             )
 
         # Calculate current hole position
-        current_x = chart_left + (self.current_size - min_size) / range_size * chart_width
+        current_x = (
+            chart_left + (self.current_size - min_size) / range_size * chart_width
+        )
         # Clamp to chart bounds
         current_x = max(chart_left, min(chart_right, current_x))
 
@@ -547,7 +550,10 @@ class MetadataDialog:
             group_start = i
             base_x = x_positions[sorted_indices[i]]
 
-            while i < len(sorted_indices) and x_positions[sorted_indices[i]] - base_x < tolerance:
+            while (
+                i < len(sorted_indices)
+                and x_positions[sorted_indices[i]] - base_x < tolerance
+            ):
                 i += 1
 
             group_size = i - group_start

@@ -11,7 +11,9 @@ import sys
 
 from PIL import Image
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 from golf.core.graphics_codec import VideoMemory, load_graphics_table
 from golf.core.palettes import NES_SYSTEM_PALETTE
@@ -21,20 +23,20 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 BANK = 2
-CHR_TABLE = 0xB469              # -> PPU $1000
-NAMETABLE_TABLE = 0xB90B        # -> PPU $2000
+CHR_TABLE = 0xB469  # -> PPU $1000
+NAMETABLE_TABLE = 0xB90B  # -> PPU $2000
 PALETTE = 0xB0EB
 
 COURSE_NAME = {0: 0xAFC8, 1: 0xAFDE, 2: 0xAFF1}
 TITLE = {0: 0xB00D, 1: 0xB02C, 2: 0xB05B, 4: 0xB085, 5: 0xB0A3, 7: 0xB0DA}
 
-COURSE_HOLE_OFFSET = 0xDBBB     # per course, into the 54-hole metadata tables
+COURSE_HOLE_OFFSET = 0xDBBB  # per course, into the 54-hole metadata tables
 PAR = 0xDD05
-DISTANCE = (0xDD3B, 0xDD71, 0xDDA7)     # hundreds, tens, ones
+DISTANCE = (0xDD3B, 0xDD71, 0xDDA7)  # hundreds, tens, ones
 HANDICAP = 0xDDDD
 
-BLANK = 0x52                    # the tile leading-zero suppression uses
-RULE = 0x51                     # thin vertical column rule
+BLANK = 0x52  # the tile leading-zero suppression uses
+RULE = 0x51  # thin vertical column rule
 
 
 def two_digit_tiles(value):
@@ -78,10 +80,23 @@ def build(rom, course, mode, holes_played):
     hole = base + 0x11
     for _ in range(18):
         hcp_tens, hcp_ones = two_digit_tiles(handicap[hole])
-        write_rect(vram, ppu, 9, 1, [
-            hundreds[hole] | 0x40, tens[hole] | 0x40, ones[hole] | 0x40,
-            BLANK, RULE, hcp_tens, hcp_ones, RULE, par[hole] | 0x40,
-        ])
+        write_rect(
+            vram,
+            ppu,
+            9,
+            1,
+            [
+                hundreds[hole] | 0x40,
+                tens[hole] | 0x40,
+                ones[hole] | 0x40,
+                BLANK,
+                RULE,
+                hcp_tens,
+                hcp_ones,
+                RULE,
+                par[hole] | 0x40,
+            ],
+        )
         ppu -= 0x20
         hole -= 1
 
@@ -100,6 +115,7 @@ def render(rom, vram, out_path):
     pal = rom.read_switched(PALETTE, BANK, 32)
     img = Image.new("RGB", (256, 240))
     px = img.load()
+    assert px is not None
     for ty in range(30):
         for tx in range(32):
             tile = vram.data[0x2000 + ty * 32 + tx]
@@ -112,7 +128,7 @@ def render(rom, vram, out_path):
                     value = rows[y][x]
                     nes = pal[0] if value == 0 else pal[palette_index * 4 + value]
                     px[tx * 8 + x, ty * 8 + y] = NES_SYSTEM_PALETTE[nes & 0x3F]
-    img.resize((512, 480), Image.NEAREST).save(out_path)
+    img.resize((512, 480), Image.Resampling.NEAREST).save(out_path)
     print("wrote", out_path)
 
 

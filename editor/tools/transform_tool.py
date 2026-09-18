@@ -2,7 +2,6 @@
 Transform tool for applying compression table transformations via shift+drag.
 """
 
-
 import pygame
 from pygame import Rect
 
@@ -103,10 +102,9 @@ class TransformTool:
 
     def handle_key_up(self, key, context):
         # Cancel on Shift release
-        if key in (pygame.K_LSHIFT, pygame.K_RSHIFT):
-            if self.state.is_active:
-                self.state.reset()
-                return ToolResult.handled()
+        if key in (pygame.K_LSHIFT, pygame.K_RSHIFT) and self.state.is_active:
+            self.state.reset()
+            return ToolResult.handled()
         return ToolResult.not_handled()
 
     def on_activated(self, context):
@@ -124,6 +122,8 @@ class TransformTool:
 
     def _update_transform_preview(self, pos, context):
         """Update transform preview based on drag movement."""
+        if self.state.drag_start_pos is None or self.state.origin_tile is None:
+            return
         dx = pos[0] - self.state.drag_start_pos[0]
         dy = pos[1] - self.state.drag_start_pos[1]
 

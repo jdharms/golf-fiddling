@@ -17,7 +17,12 @@ def db():
 
 def tables(db: Database) -> set[str]:
     with db.transaction() as conn:
-        return {row["name"] for row in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+        return {
+            row["name"]
+            for row in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            )
+        }
 
 
 def seed_row(**overrides):
@@ -78,7 +83,9 @@ def test_a_database_newer_than_the_code_is_refused(db):
 def test_a_transaction_rolls_back_on_error(db):
     db.migrate()
     with pytest.raises(RuntimeError), db.transaction() as conn:
-        conn.execute("INSERT INTO seeds (id, qr_seed_id, manifest, generator_version, catalog_version, curation_stamp, unfinished_ips, created_at) VALUES ('0000000001', 1, '{}', 1, 1, 's', x'00', 'now')")
+        conn.execute(
+            "INSERT INTO seeds (id, qr_seed_id, manifest, generator_version, catalog_version, curation_stamp, unfinished_ips, created_at) VALUES ('0000000001', 1, '{}', 1, 1, 's', x'00', 'now')"
+        )
         raise RuntimeError("abandon")
     with db.transaction() as conn:
         assert conn.execute("SELECT count(*) FROM seeds").fetchone()[0] == 0
@@ -124,9 +131,13 @@ def test_seed_hole_positions_run_1_to_18(db):
     db.migrate()
     insert_seed(db)
     with db.transaction() as conn:
-        conn.execute("INSERT INTO seed_holes VALUES ('0000000001', 18, 'nes_us/18', '[]', 4, 1, 0, 0, 0)")
+        conn.execute(
+            "INSERT INTO seed_holes VALUES ('0000000001', 18, 'nes_us/18', '[]', 4, 1, 0, 0, 0)"
+        )
     with pytest.raises(sqlite3.IntegrityError), db.transaction() as conn:
-        conn.execute("INSERT INTO seed_holes VALUES ('0000000001', 19, 'nes_us/01', '[]', 4, 1, 0, 0, 0)")
+        conn.execute(
+            "INSERT INTO seed_holes VALUES ('0000000001', 19, 'nes_us/01', '[]', 4, 1, 0, 0, 0)"
+        )
 
 
 def test_a_file_database_uses_wal(tmp_path):
@@ -294,7 +305,11 @@ def insert_round(db: Database, **overrides) -> None:
 
 
 def insert_round_hole(db: Database, **overrides) -> None:
-    insert_row(db, "round_holes", {"round_id": 1, "position": 1, "strokes": 4, "putts": 2, **overrides})
+    insert_row(
+        db,
+        "round_holes",
+        {"round_id": 1, "position": 1, "strokes": 4, "putts": 2, **overrides},
+    )
 
 
 @pytest.fixture
@@ -307,7 +322,9 @@ def test_a_valid_round_and_its_holes_insert_unflagged(submitter_db):
     insert_round(submitter_db)
     insert_round_hole(submitter_db)
     with submitter_db.transaction() as conn:
-        assert tuple(conn.execute("SELECT flagged, flag_note FROM rounds").fetchone()) == (0, None)
+        assert tuple(
+            conn.execute("SELECT flagged, flag_note FROM rounds").fetchone()
+        ) == (0, None)
     assert {"rounds", "round_holes"} <= tables(submitter_db)
 
 
@@ -338,7 +355,9 @@ def test_one_round_per_entry_and_slot(submitter_db):
         insert_round(submitter_db, total_strokes=70, public_id="0000000003")
 
 
-@pytest.mark.parametrize("overrides", [{"position": 0}, {"position": 19}, {"round_id": 2}, {"strokes": None}])
+@pytest.mark.parametrize(
+    "overrides", [{"position": 0}, {"position": 19}, {"round_id": 2}, {"strokes": None}]
+)
 def test_round_hole_constraints(submitter_db, overrides):
     insert_round(submitter_db)
     with pytest.raises(sqlite3.IntegrityError):
@@ -431,21 +450,43 @@ def migrated_to(db: Database, version: int) -> Database:
 
 def test_migration_6_gives_rounds_recorded_before_it_a_public_id(db):
     migrated_to(db, 5)
-    old_round = {key: value for key, value in round_row(payload=bytes(35) + b"\x2a").items() if key != "public_id"}
+    old_round = {
+        key: value
+        for key, value in round_row(payload=bytes(35) + b"\x2a").items()
+        if key != "public_id"
+    }
     insert_row(db, "submissions", old_round)
-    old_voided = {key: value for key, value in voided_row(payload=bytes(35) + b"\x2b").items() if key != "public_id"}
+    old_voided = {
+        key: value
+        for key, value in voided_row(payload=bytes(35) + b"\x2b").items()
+        if key != "public_id"
+    }
     insert_row(db, "voided_submissions", old_voided)
     assert db.migrate(MIGRATIONS[:6]) == 6
     with db.transaction() as conn:
-        assert conn.execute("SELECT public_id FROM submissions").fetchone()[0] == "000000002A"
-        assert conn.execute("SELECT public_id FROM voided_submissions").fetchone()[0] == "000000002B"
+        assert (
+            conn.execute("SELECT public_id FROM submissions").fetchone()[0]
+            == "000000002A"
+        )
+        assert (
+            conn.execute("SELECT public_id FROM voided_submissions").fetchone()[0]
+            == "000000002B"
+        )
 
 
 def test_migration_7_moves_every_round_into_the_round_tables(db):
     migrated_to(db, 6)
     insert_row(db, "submissions", round_row(id=5, flagged=1, flag_note="six on 18?"))
-    insert_row(db, "submission_holes", {"submission_id": 5, "position": 1, "strokes": 4, "putts": 2})
-    insert_row(db, "voided_submissions", voided_row(id=3, slot=1, payload=b"\x01" * 36, public_id="0000000002"))
+    insert_row(
+        db,
+        "submission_holes",
+        {"submission_id": 5, "position": 1, "strokes": 4, "putts": 2},
+    )
+    insert_row(
+        db,
+        "voided_submissions",
+        voided_row(id=3, slot=1, payload=b"\x01" * 36, public_id="0000000002"),
+    )
     assert db.migrate() == len(MIGRATIONS)
     assert not {"submissions", "submission_holes", "voided_submissions"} & tables(db)
     with db.transaction() as conn:
@@ -458,8 +499,15 @@ def test_migration_7_moves_every_round_into_the_round_tables(db):
             "strokes": 4,
             "putts": 2,
         }
-        assert dict(conn.execute("SELECT * FROM voided_rounds").fetchone()) == voided_row(
-            id=3, slot=1, payload=b"\x01" * 36, public_id="0000000002", flag_note=None, void_note=None
+        assert dict(
+            conn.execute("SELECT * FROM voided_rounds").fetchone()
+        ) == voided_row(
+            id=3,
+            slot=1,
+            payload=b"\x01" * 36,
+            public_id="0000000002",
+            flag_note=None,
+            void_note=None,
         )
         assert conn.execute("PRAGMA foreign_key_check").fetchall() == []
 
@@ -487,7 +535,9 @@ def insert_action(db: Database, **overrides) -> None:
 def test_an_action_inserts_with_an_empty_detail(submitter_db):
     insert_action(submitter_db, note="why 6?")
     with submitter_db.transaction() as conn:
-        assert tuple(conn.execute("SELECT note, detail FROM admin_actions").fetchone()) == ("why 6?", "{}")
+        assert tuple(
+            conn.execute("SELECT note, detail FROM admin_actions").fetchone()
+        ) == ("why 6?", "{}")
 
 
 @pytest.mark.parametrize(

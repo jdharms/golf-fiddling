@@ -53,7 +53,7 @@ class StampTool:
                 self.state.clear()
                 context.highlight_state.stamp_preview_pos = None
                 context.highlight_state.current_stamp = None
-                return ToolResult(handled=True, message="Stamp: Deselected")
+                return ToolResult(is_handled=True, message="Stamp: Deselected")
             return ToolResult.handled()
 
         if button != 1:  # Only left click
@@ -61,12 +61,14 @@ class StampTool:
 
         # If no stamp selected, do nothing
         if self.state.current_stamp is None:
-            return ToolResult(handled=True, message="Stamp: Select a stamp from the browser")
+            return ToolResult(
+                is_handled=True, message="Stamp: Select a stamp from the browser"
+            )
 
         # Check mode compatibility
         if self.state.current_stamp.mode != context.state.mode:
             return ToolResult(
-                handled=True,
+                is_handled=True,
                 message=f"Stamp: Cannot place {self.state.current_stamp.mode} stamp in {context.state.mode} mode",
             )
 
@@ -127,7 +129,7 @@ class StampTool:
             self.state.clear()
             context.highlight_state.stamp_preview_pos = None
             context.highlight_state.current_stamp = None
-            return ToolResult(handled=True, message="Stamp: Cleared selection")
+            return ToolResult(is_handled=True, message="Stamp: Cleared selection")
 
         return ToolResult.not_handled()
 
@@ -164,7 +166,9 @@ class StampTool:
         """
         self.state.set_stamp(stamp)
 
-    def _place_stamp(self, tile_pos: tuple[int, int], context: ToolContext) -> ToolResult:
+    def _place_stamp(
+        self, tile_pos: tuple[int, int], context: ToolContext
+    ) -> ToolResult:
         """
         Place stamp at tile position.
 
@@ -176,7 +180,7 @@ class StampTool:
             ToolResult indicating success
         """
         if self.state.current_stamp is None:
-            return ToolResult(handled=True, message="Stamp: No stamp selected")
+            return ToolResult(is_handled=True, message="Stamp: No stamp selected")
 
         stamp = self.state.current_stamp
         place_row, place_col = tile_pos
@@ -199,13 +203,19 @@ class StampTool:
 
                 # Place based on mode
                 if context.state.mode == "terrain":
-                    if 0 <= target_row < len(context.hole_data.terrain) and 0 <= target_col < TERRAIN_WIDTH:
+                    if (
+                        0 <= target_row < len(context.hole_data.terrain)
+                        and 0 <= target_col < TERRAIN_WIDTH
+                    ):
                         context.hole_data.set_terrain_tile(
                             target_row, target_col, tile_value
                         )
                         tiles_placed += 1
                 else:  # greens
-                    if 0 <= target_row < GREENS_HEIGHT and 0 <= target_col < GREENS_WIDTH:
+                    if (
+                        0 <= target_row < GREENS_HEIGHT
+                        and 0 <= target_col < GREENS_WIDTH
+                    ):
                         context.hole_data.set_greens_tile(
                             target_row, target_col, tile_value
                         )

@@ -1,9 +1,14 @@
 """Unit tests for the practice swing patch."""
 
+from itertools import pairwise
+
 import pytest
 
 from golf.core.patches import practice_swing_patch, practice_swing_patches
 from golf.core.patches.practice_swing import (
+    _APPLY_GOLFER_OFFSET,
+    _COMMIT_SHOT_OR_PRACTICE,
+    _TOGGLE_PRACTICE_SWING,
     APPLY_GOLFER_OFFSET_ADDR,
     COMMIT_SHOT_ADDR,
     DEFAULT_HOLD_FRAMES,
@@ -11,11 +16,9 @@ from golf.core.patches.practice_swing import (
     HOLD_PRACTICE_ADDR,
     PRACTICE_SWING_OFFSET,
     TOGGLE_PRACTICE_ADDR,
-    _APPLY_GOLFER_OFFSET,
-    _COMMIT_SHOT_OR_PRACTICE,
-    _TOGGLE_PRACTICE_SWING,
     _hold_practice_swing,
 )
+from tests.prg_writer import PrgImageWriter
 
 # Free-space budgets, from docs/practice_swing.md
 BANK8_FREE = (0xBFE5, 14)
@@ -23,15 +26,8 @@ BANK13_FREE = (0xBFBF, 52)
 FIXED_FREE = (0xCAE4, 28)
 
 
-class MockRomWriter:
-    def __init__(self, data: bytes):
-        self.data = bytearray(data)
-
-    def read_prg(self, prg_offset: int, length: int) -> bytes:
-        return bytes(self.data[prg_offset : prg_offset + length])
-
-    def write_prg(self, prg_offset: int, data: bytes):
-        self.data[prg_offset : prg_offset + len(data)] = data
+class MockRomWriter(PrgImageWriter):
+    pass
 
 
 def make_vanilla_like_rom() -> MockRomWriter:
@@ -45,12 +41,12 @@ def make_vanilla_like_rom() -> MockRomWriter:
 class TestRoutineLayout:
     def test_golfer_offset_fits_bank8_free_space(self):
         base, size = BANK8_FREE
-        assert APPLY_GOLFER_OFFSET_ADDR == base
+        assert base == APPLY_GOLFER_OFFSET_ADDR
         assert len(_APPLY_GOLFER_OFFSET) <= size
 
     def test_bank13_routines_abut_and_fit(self):
         base, size = BANK13_FREE
-        assert COMMIT_SHOT_ADDR == base
+        assert base == COMMIT_SHOT_ADDR
         commit_end = COMMIT_SHOT_ADDR + len(_COMMIT_SHOT_OR_PRACTICE)
         assert commit_end == HOLD_PRACTICE_ADDR, "routines must abut, no gap"
         hold = _hold_practice_swing(DEFAULT_HOLD_FRAMES)
@@ -58,7 +54,7 @@ class TestRoutineLayout:
 
     def test_toggle_fits_fixed_bank_free_space(self):
         base, size = FIXED_FREE
-        assert TOGGLE_PRACTICE_ADDR == base
+        assert base == TOGGLE_PRACTICE_ADDR
         assert len(_TOGGLE_PRACTICE_SWING) <= size
 
     def test_bank13_routines_clear_the_mmc1_reset_stub(self):
@@ -75,8 +71,11 @@ class TestRoutineLayout:
 class TestRoutineEncoding:
     def test_golfer_offset_subtracts_the_flag(self):
         # LDY $CD / LDA $80FA,Y / SEC / SBC $05BB / STA $26 / RTS
-        assert _APPLY_GOLFER_OFFSET == bytes(
-            [0xA4, 0xCD, 0xB9, 0xFA, 0x80, 0x38, 0xED, 0xBB, 0x05, 0x85, 0x26, 0x60]
+        assert (
+            bytes(
+                [0xA4, 0xCD, 0xB9, 0xFA, 0x80, 0x38, 0xED, 0xBB, 0x05, 0x85, 0x26, 0x60]
+            )
+            == _APPLY_GOLFER_OFFSET
         )
 
     def test_commit_presets_phase_to_fe_so_the_sites_inc_to_ff(self):
@@ -93,7 +92,9 @@ class TestRoutineEncoding:
         exit_addr = TOGGLE_PRACTICE_ADDR + 0x19
         select_addr = TOGGLE_PRACTICE_ADDR + 0x11
         assert TOGGLE_PRACTICE_ADDR + 0x04 + 2 + _TOGGLE_PRACTICE_SWING[5] == exit_addr
-        assert TOGGLE_PRACTICE_ADDR + 0x08 + 2 + _TOGGLE_PRACTICE_SWING[9] == select_addr
+        assert (
+            TOGGLE_PRACTICE_ADDR + 0x08 + 2 + _TOGGLE_PRACTICE_SWING[9] == select_addr
+        )
         assert _TOGGLE_PRACTICE_SWING[0x19] == 0x4C  # JMP LD_AA2A
 
     def test_toggle_flips_by_the_pixel_shift(self):
@@ -128,7 +129,12 @@ class TestRoutineEncoding:
     def test_all_routines_reference_the_same_flag(self):
         flag = bytes([PRACTICE_SWING_OFFSET & 0xFF, PRACTICE_SWING_OFFSET >> 8])
         hold = _hold_practice_swing(DEFAULT_HOLD_FRAMES)
-        for routine in (_APPLY_GOLFER_OFFSET, _COMMIT_SHOT_OR_PRACTICE, hold, _TOGGLE_PRACTICE_SWING):
+        for routine in (
+            _APPLY_GOLFER_OFFSET,
+            _COMMIT_SHOT_OR_PRACTICE,
+            hold,
+            _TOGGLE_PRACTICE_SWING,
+        ):
             assert flag in routine
 
 
@@ -155,8 +161,11 @@ class TestSplices:
                 assert set(p.original) == {0xFF}, p.name
 
     def test_no_two_patches_overlap(self):
-        spans = sorted((p.prg_offset, p.prg_offset + len(p.patched)) for p in practice_swing_patches())
-        for (_, end), (start, _) in zip(spans, spans[1:]):
+        spans = sorted(
+            (p.prg_offset, p.prg_offset + len(p.patched))
+            for p in practice_swing_patches()
+        )
+        for (_, end), (start, _) in pairwise(spans):
             assert end <= start
 
 

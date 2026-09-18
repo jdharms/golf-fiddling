@@ -9,12 +9,13 @@ between the two ROMs (both have a $03), so a theme is always a ROM and an id tog
 import random
 from collections.abc import Mapping
 from dataclasses import dataclass
+from pathlib import Path
 
 from .catalog import JP_ROM, REPO_ROOT, US_ROM
 
 RANDOM = "random"
 
-MUSIC_DUMPS: Mapping[str, object] = {
+MUSIC_DUMPS: Mapping[str, Path] = {
     US_ROM: REPO_ROOT / "data" / "music" / "music_us_courses.json",
     JP_ROM: REPO_ROOT / "data" / "music" / "music_jp_courses.json",
 }
@@ -51,10 +52,16 @@ def track(slug: str) -> Track:
     try:
         return TRACKS[slug]
     except KeyError:
-        raise MusicError(f"unknown music {slug!r}: expected one of {', '.join(TRACKS)}") from None
+        raise MusicError(
+            f"unknown music {slug!r}: expected one of {', '.join(TRACKS)}"
+        ) from None
 
 
 def choose_music(rng: random.Random, include_mario_open: bool) -> str:
     """A uniform draw of a slug, from the NES Open themes alone unless told otherwise."""
-    candidates = sorted(slug for slug, theme in TRACKS.items() if include_mario_open or theme.rom == US_ROM)
+    candidates = sorted(
+        slug
+        for slug, theme in TRACKS.items()
+        if include_mario_open or theme.rom == US_ROM
+    )
     return rng.choice(candidates)

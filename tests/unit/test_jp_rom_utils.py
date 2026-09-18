@@ -1,9 +1,10 @@
 """Unit tests for golf.core.jp_rom_utils constants and metadata helpers."""
 
 from golf.core import jp_rom_utils
+from golf.core.rom_reader import RomReader
 
 
-class FakeRom:
+class FakeRom(RomReader):
     """Records read_switched calls and returns canned bytes."""
 
     def __init__(self, data: bytes):

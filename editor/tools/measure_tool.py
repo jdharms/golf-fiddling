@@ -3,6 +3,7 @@ Measure tool - measure distances between points in yards.
 """
 
 import math
+
 import pygame
 from pygame import Rect
 
@@ -22,7 +23,9 @@ class MeasureTool:
     def __init__(self):
         """Initialize measure tool with empty points list."""
         self.points: list[tuple[int, int]] = []  # Game pixel coordinates
-        self.preview_point: tuple[int, int] | None = None  # Preview endpoint in game pixels
+        self.preview_point: tuple[int, int] | None = (
+            None  # Preview endpoint in game pixels
+        )
 
     def _calculate_cumulative_distance(self) -> float:
         """Calculate cumulative distance in yards between all consecutive points."""
@@ -61,7 +64,7 @@ class MeasureTool:
             self.points.clear()
             self.preview_point = None
             message = self._get_status_message()
-            return ToolResult(handled=True, message=message)
+            return ToolResult(is_handled=True, message=message)
 
         # Only handle left click
         if button != 1:
@@ -91,7 +94,7 @@ class MeasureTool:
 
         # Return status message with cumulative distance
         message = self._get_status_message()
-        return ToolResult(handled=True, message=message)
+        return ToolResult(is_handled=True, message=message)
 
     def handle_mouse_up(self, pos, button, context):
         """Handle mouse release - not used by measure tool."""

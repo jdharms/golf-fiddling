@@ -57,11 +57,14 @@ def grid_report(ase, ragged, path, margin=1, zoom=12):
     colours = [(entry[0], entry[1], entry[2]) for entry in ase.palette]
     image = Image.new("RGB", ((x1 - x0) * scale, (y1 - y0) * scale))
     pixels = image.load()
+    assert pixels is not None
     for j in range((y1 - y0) * scale):
         for i in range((x1 - x0) * scale):
             pixels[i, j] = colours[flat[(y0 * scale + j) * ase.width + x0 * scale + i]]
 
-    big = image.resize((image.width * zoom, image.height * zoom), Image.NEAREST)
+    big = image.resize(
+        (image.width * zoom, image.height * zoom), Image.Resampling.NEAREST
+    )
     draw = ImageDraw.Draw(big)
     step = scale * zoom
     for i in range(0, big.width + 1, step):
@@ -70,7 +73,9 @@ def grid_report(ase, ragged, path, margin=1, zoom=12):
         draw.line([(0, j), (big.width, j)], fill=(0, 255, 0))
     for x, y in ragged:
         left, top = (x - x0) * step, (y - y0) * step
-        draw.rectangle([left, top, left + step, top + step], outline=(255, 0, 0), width=3)
+        draw.rectangle(
+            [left, top, left + step, top + step], outline=(255, 0, 0), width=3
+        )
 
     big.save(path)
     print(
@@ -94,6 +99,7 @@ def preview(result, reference, palette, path, scale=2):
     rendered = render_screen(reference, palette)
     image = Image.new("RGB", (SCREEN_COLS * 8, SCREEN_ROWS * 8))
     pixels = image.load()
+    assert pixels is not None
     for y, line in enumerate(rendered):
         for x, value in enumerate(line):
             pixels[x, y] = NES_SYSTEM_PALETTE[value & 0x3F]
@@ -108,7 +114,9 @@ def preview(result, reference, palette, path, scale=2):
                     colour & 0x3F
                 ]
 
-    image.resize((image.width * scale, image.height * scale), Image.NEAREST).save(path)
+    image.resize(
+        (image.width * scale, image.height * scale), Image.Resampling.NEAREST
+    ).save(path)
     print(f"\nwrote {path}")
 
 
@@ -166,9 +174,11 @@ def describe(result, reference, scale, ragged, free, args):
 
     if not new and not result.errors:
         body = result.nametable()
-        print(f"\nnametable body ({len(body)} bytes) - writes over ${descriptor.pointer:04X}:")
+        print(
+            f"\nnametable body ({len(body)} bytes) - writes over ${descriptor.pointer:04X}:"
+        )
         for row in range(descriptor.rows):
-            line = body[row * descriptor.width: (row + 1) * descriptor.width]
+            line = body[row * descriptor.width : (row + 1) * descriptor.width]
             print("  " + " ".join(f"{b:02X}" for b in line))
     elif new:
         print(
@@ -179,7 +189,9 @@ def describe(result, reference, scale, ragged, free, args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
+    parser = argparse.ArgumentParser(
+        description=(__doc__ or "").strip().splitlines()[0]
+    )
     parser.add_argument("aseprite", help="the edited screen")
     parser.add_argument("--rom", default="nes_open_us.nes")
     parser.add_argument(
@@ -190,7 +202,8 @@ def main():
     parser.add_argument("--json", help="write the extracted tiles and bytes here")
     parser.add_argument("--preview", help="render the card as the PPU would draw it")
     parser.add_argument(
-        "--grid", help="render the off-grid pixels for the artist, with a NES pixel grid"
+        "--grid",
+        help="render the off-grid pixels for the artist, with a NES pixel grid",
     )
     args = parser.parse_args()
 
@@ -204,8 +217,13 @@ def main():
     try:
         edited = screen_from_aseprite(args.aseprite)
     except ValueError as problem:
-        raise SystemExit(f"{os.path.basename(args.aseprite)}: {problem}")
-    screen, scale, ragged, ase = edited.pixels, edited.scale, edited.ragged, edited.source
+        raise SystemExit(f"{os.path.basename(args.aseprite)}: {problem}") from None
+    screen, scale, ragged, ase = (
+        edited.pixels,
+        edited.scale,
+        edited.ragged,
+        edited.source,
+    )
     result = convert_banner(screen, reference, palette, descriptor)
 
     inside = {
@@ -213,7 +231,9 @@ def main():
         for r in range(descriptor.rows)
         for c in range(descriptor.width)
     }
-    result.outside = [t for t in changed_tiles(screen, reference, palette) if t not in inside]
+    result.outside = [
+        t for t in changed_tiles(screen, reference, palette) if t not in inside
+    ]
 
     free = freeable_patterns(rom, reference, descriptor)
     describe(result, reference, scale, ragged, free, args)

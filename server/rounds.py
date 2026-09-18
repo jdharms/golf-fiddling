@@ -86,7 +86,8 @@ def _load_round(conn: sqlite3.Connection, where: str, params: tuple) -> Round | 
     if row is None:
         return None
     holes = conn.execute(
-        "SELECT position, strokes, putts FROM round_holes WHERE round_id = ? ORDER BY position", (row["id"],)
+        "SELECT position, strokes, putts FROM round_holes WHERE round_id = ? ORDER BY position",
+        (row["id"],),
     ).fetchall()
     return Round(
         public_id=row["public_id"],
@@ -99,7 +100,10 @@ def _load_round(conn: sqlite3.Connection, where: str, params: tuple) -> Round | 
         received_at=row["received_at"],
         flagged=bool(row["flagged"]),
         flag_note=row["flag_note"],
-        holes=tuple(RoundHole(hole["position"], hole["strokes"], hole["putts"]) for hole in holes),
+        holes=tuple(
+            RoundHole(hole["position"], hole["strokes"], hole["putts"])
+            for hole in holes
+        ),
     )
 
 
@@ -157,7 +161,10 @@ def _insert_round(
     assert round_id is not None
     conn.executemany(
         "INSERT INTO round_holes (round_id, position, strokes, putts) VALUES (?, ?, ?, ?)",
-        [(round_id, position, hole.strokes, hole.putts) for position, hole in enumerate(round_payload.holes, start=1)],
+        [
+            (round_id, position, hole.strokes, hole.putts)
+            for position, hole in enumerate(round_payload.holes, start=1)
+        ],
     )
     return round_id
 
@@ -167,21 +174,32 @@ def _insert_round(
 
 def round_in_slot(conn: sqlite3.Connection, entry_id: int, slot: int) -> Round | None:
     """The round recorded for an entry's slot, if any."""
-    return _load_round(conn, "rounds.entry_id = ? AND rounds.slot = ?", (entry_id, slot))
+    return _load_round(
+        conn, "rounds.entry_id = ? AND rounds.slot = ?", (entry_id, slot)
+    )
 
 
 def is_voided(conn: sqlite3.Connection, data: bytes) -> bool:
     """Whether this payload is a voided round's, which a scan may not record again."""
-    return conn.execute("SELECT 1 FROM voided_rounds WHERE payload = ?", (data,)).fetchone() is not None
+    return (
+        conn.execute(
+            "SELECT 1 FROM voided_rounds WHERE payload = ?", (data,)
+        ).fetchone()
+        is not None
+    )
 
 
-def record_round(conn: sqlite3.Connection, entry_id: int, slot: int, data: bytes, received_at: str) -> Round:
+def record_round(
+    conn: sqlite3.Connection, entry_id: int, slot: int, data: bytes, received_at: str
+) -> Round:
     """Record a verified payload as the entry's round for its slot, drawing its public id.
 
     The caller holds the transaction and has checked that the slot is free and the payload
     not voided.
     """
-    round_id = _insert_round(conn, _draw_public_id(conn), entry_id, slot, data, received_at)
+    round_id = _insert_round(
+        conn, _draw_public_id(conn), entry_id, slot, data, received_at
+    )
     recorded = _load_round(conn, "rounds.id = ?", (round_id,))
     assert recorded is not None
     return recorded
@@ -324,28 +342,63 @@ def _note(text: str | None) -> str | None:
 
 def _require_round(conn: sqlite3.Connection, public_id: str) -> None:
     """Raise KeyError unless a recorded round has this public id."""
-    if conn.execute("SELECT 1 FROM rounds WHERE public_id = ?", (public_id,)).fetchone() is None:
+    if (
+        conn.execute(
+            "SELECT 1 FROM rounds WHERE public_id = ?", (public_id,)
+        ).fetchone()
+        is None
+    ):
         raise KeyError(public_id)
 
 
-def flag_round(db: Database, public_id: str, admin_id: int, note: str | None = None, now: str | None = None) -> None:
+def flag_round(
+    db: Database,
+    public_id: str,
+    admin_id: int,
+    note: str | None = None,
+    now: str | None = None,
+) -> None:
     """Flag a round, or replace a flagged round's note, and log it. Raises KeyError for a missing round."""
     note = _note(note)
     with db.transaction() as conn:
         _require_round(conn, public_id)
-        conn.execute("UPDATE rounds SET flagged = 1, flag_note = ? WHERE public_id = ?", (note, public_id))
-        audit.record(conn, admin_id, audit.FLAG, audit.ROUND, public_id, now or utc_now(), note=note)
+        conn.execute(
+            "UPDATE rounds SET flagged = 1, flag_note = ? WHERE public_id = ?",
+            (note, public_id),
+        )
+        audit.record(
+            conn,
+            admin_id,
+            audit.FLAG,
+            audit.ROUND,
+            public_id,
+            now or utc_now(),
+            note=note,
+        )
 
 
-def unflag_round(db: Database, public_id: str, admin_id: int, now: str | None = None) -> None:
+def unflag_round(
+    db: Database, public_id: str, admin_id: int, now: str | None = None
+) -> None:
     """Clear a round's flag and its note, and log it. Raises KeyError for a missing round."""
     with db.transaction() as conn:
         _require_round(conn, public_id)
-        conn.execute("UPDATE rounds SET flagged = 0, flag_note = NULL WHERE public_id = ?", (public_id,))
-        audit.record(conn, admin_id, audit.UNFLAG, audit.ROUND, public_id, now or utc_now())
+        conn.execute(
+            "UPDATE rounds SET flagged = 0, flag_note = NULL WHERE public_id = ?",
+            (public_id,),
+        )
+        audit.record(
+            conn, admin_id, audit.UNFLAG, audit.ROUND, public_id, now or utc_now()
+        )
 
 
-def void_round(db: Database, public_id: str, admin_id: int, note: str | None = None, now: str | None = None) -> None:
+def void_round(
+    db: Database,
+    public_id: str,
+    admin_id: int,
+    note: str | None = None,
+    now: str | None = None,
+) -> None:
     """Move a round to the voided archive, freeing its slot, and log it. Raises KeyError for a missing round."""
     voided_at = now if now is not None else utc_now()
     note = _note(note)
@@ -366,10 +419,14 @@ def void_round(db: Database, public_id: str, admin_id: int, note: str | None = N
         )
         conn.execute("DELETE FROM round_holes WHERE round_id = ?", (row["id"],))
         conn.execute("DELETE FROM rounds WHERE id = ?", (row["id"],))
-        audit.record(conn, admin_id, audit.VOID, audit.ROUND, public_id, voided_at, note=note)
+        audit.record(
+            conn, admin_id, audit.VOID, audit.ROUND, public_id, voided_at, note=note
+        )
 
 
-def restore_round(db: Database, public_id: str, admin_id: int, now: str | None = None) -> None:
+def restore_round(
+    db: Database, public_id: str, admin_id: int, now: str | None = None
+) -> None:
     """Put a voided round back as its entry's round for its slot, and log it.
 
     The holes and totals come from the payload again, and the round keeps its received_at,
@@ -384,7 +441,9 @@ def restore_round(db: Database, public_id: str, admin_id: int, now: str | None =
         if row is None:
             raise KeyError(public_id)
         if round_in_slot(conn, row["entry_id"], row["slot"]) is not None:
-            raise SlotTakenError(f"entry {row['entry_id']} already has a round for slot {row['slot']}")
+            raise SlotTakenError(
+                f"entry {row['entry_id']} already has a round for slot {row['slot']}"
+            )
         _insert_round(
             conn,
             public_id,
@@ -396,4 +455,6 @@ def restore_round(db: Database, public_id: str, admin_id: int, now: str | None =
             flag_note=row["flag_note"],
         )
         conn.execute("DELETE FROM voided_rounds WHERE public_id = ?", (public_id,))
-        audit.record(conn, admin_id, audit.RESTORE, audit.ROUND, public_id, now or utc_now())
+        audit.record(
+            conn, admin_id, audit.RESTORE, audit.ROUND, public_id, now or utc_now()
+        )

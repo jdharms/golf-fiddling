@@ -15,6 +15,7 @@ from pathlib import Path
 
 from golf.core import rom_utils
 from golf.core.course_validation import InvalidTileError
+from golf.core.instrumented_io import InstrumentedRomWriter
 from golf.core.patches import CoursePatch, CourseWriteStats, PatchError
 from golf.core.rom_writer import BankOverflowError, RomWriter
 from golf.formats.hole_data import HoleData
@@ -63,8 +64,12 @@ def print_stats(stats: CourseWriteStats) -> None:
         print(f"  Bank {bank}: {used:,} / {capacity:,} bytes ({pct:.1f}%)")
 
     total_capacity = sum(stats.bank_capacity.values())
-    total_pct = (stats.total_terrain_bytes / total_capacity * 100) if total_capacity > 0 else 0
-    print(f"  Total:  {stats.total_terrain_bytes:,} / {total_capacity:,} bytes ({total_pct:.1f}%)")
+    total_pct = (
+        (stats.total_terrain_bytes / total_capacity * 100) if total_capacity > 0 else 0
+    )
+    print(
+        f"  Total:  {stats.total_terrain_bytes:,} / {total_capacity:,} bytes ({total_pct:.1f}%)"
+    )
     print()
     print(f"Greens: {stats.total_greens_bytes:,} bytes")
 
@@ -99,7 +104,9 @@ Examples:
     )
 
     parser.add_argument("rom_file", help="Source ROM file (read-only)")
-    parser.add_argument("course_dir", help="Course directory (hole_01.json-hole_18.json)")
+    parser.add_argument(
+        "course_dir", help="Course directory (hole_01.json-hole_18.json)"
+    )
     parser.add_argument(
         "-o",
         "--output",
@@ -132,10 +139,7 @@ Examples:
         print(f"Error: Course directory not found: {course_dir}")
         sys.exit(1)
 
-    if args.output:
-        output_path = args.output
-    else:
-        output_path = str(rom_path.with_suffix("")) + ".modified.nes"
+    output_path = args.output or str(rom_path.with_suffix("")) + ".modified.nes"
 
     try:
         print(f"ROM: {rom_path}")
@@ -147,8 +151,6 @@ Examples:
             print_stats(patch.stats)
 
         if args.trace_io and not args.validate_only:
-            from golf.core.instrumented_io import InstrumentedRomWriter
-
             rom_writer = InstrumentedRomWriter(str(rom_path), output_path)
         else:
             rom_writer = RomWriter(str(rom_path), output_path)
@@ -159,7 +161,9 @@ Examples:
 
         if args.validate_only:
             if not requirements_ok:
-                print("Validation FAILED: a required patch cannot be applied to this ROM")
+                print(
+                    "Validation FAILED: a required patch cannot be applied to this ROM"
+                )
                 sys.exit(1)
             print("Validation PASSED - course will fit in ROM")
             sys.exit(0)
@@ -169,7 +173,7 @@ Examples:
         patch.apply(rom_writer)
         rom_writer.save()
 
-        if args.trace_io and hasattr(rom_writer, "write_trace"):
+        if isinstance(rom_writer, InstrumentedRomWriter):
             trace_path = str(Path(output_path).parent / "write_trace.json")
             rom_writer.write_trace(trace_path)
 

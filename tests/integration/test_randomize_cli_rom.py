@@ -12,7 +12,12 @@ from golf.core.patches import load_credentials
 from golf.core.patches.qr_credentials import PLACEHOLDERS, placeholder_offset
 from golf.core.patches.sram_defaults import VANILLA_CLUBS, VANILLA_NAME, Club
 from golf.qr import port
-from golf.randomizer.build import PlayerOptions, build_unfinished, clubs_from_labels, finish
+from golf.randomizer.build import (
+    PlayerOptions,
+    build_unfinished,
+    clubs_from_labels,
+    finish,
+)
 from golf.randomizer.catalog import Catalog, HoleStore
 from golf.randomizer.curation import CurationSnapshot
 from golf.randomizer.generate import generate
@@ -22,7 +27,9 @@ ROOT = Path(__file__).resolve().parents[2]
 ROM_PATH = ROOT / "nes_open_us.nes"
 HEADER = 0x10
 
-pytestmark = pytest.mark.skipif(not ROM_PATH.exists(), reason=f"{ROM_PATH.name} not present")
+pytestmark = pytest.mark.skipif(
+    not ROM_PATH.exists(), reason=f"{ROM_PATH.name} not present"
+)
 
 
 def run(module: str, *args) -> subprocess.CompletedProcess:
@@ -65,7 +72,9 @@ def manifest_path(manifest, tmp_path) -> Path:
     return path
 
 
-def test_build_defaults_to_a_finished_guest_rom(manifest, manifest_path, unfinished, vanilla, tmp_path):
+def test_build_defaults_to_a_finished_guest_rom(
+    manifest, manifest_path, unfinished, vanilla, tmp_path
+):
     out, patch = tmp_path / "out.nes", tmp_path / "out.ips"
     completed = build(manifest_path, "-o", out, "--ips", patch)
     assert completed.returncode == 0, completed.stderr
@@ -78,7 +87,9 @@ def test_build_defaults_to_a_finished_guest_rom(manifest, manifest_path, unfinis
     assert "bank 0:" in completed.stdout
 
 
-def test_build_unfinished_writes_the_first_stage_next_to_the_manifest(manifest_path, unfinished):
+def test_build_unfinished_writes_the_first_stage_next_to_the_manifest(
+    manifest_path, unfinished
+):
     completed = build(manifest_path, "--unfinished")
     assert completed.returncode == 0, completed.stderr
 
@@ -90,22 +101,30 @@ def test_build_unfinished_writes_the_first_stage_next_to_the_manifest(manifest_p
     assert "built: unfinished" in completed.stdout
 
 
-def test_build_with_credentials_finishes_signed_in(manifest, manifest_path, unfinished, vanilla, tmp_path):
+def test_build_with_credentials_finishes_signed_in(
+    manifest, manifest_path, unfinished, vanilla, tmp_path
+):
     keys, out = tmp_path / "keys.json", tmp_path / "out.nes"
     assert run("tools.qr.credentials", "-o", keys, "--rng-seed", "7").returncode == 0
     completed = build(manifest_path, "--credentials", keys, "-o", out)
     assert completed.returncode == 0, completed.stderr
 
     options = PlayerOptions(VANILLA_NAME, frozenset(VANILLA_CLUBS))
-    expected = finish(manifest, vanilla, unfinished.ips, options, load_credentials(keys))
+    expected = finish(
+        manifest, vanilla, unfinished.ips, options, load_credentials(keys)
+    )
     assert out.read_bytes() == expected.rom
     assert "built: finished, signed in" in completed.stdout
     assert load_credentials(keys).keys[0].hex() not in completed.stdout
 
 
-def test_build_applies_the_player_options(manifest, manifest_path, unfinished, vanilla, tmp_path):
+def test_build_applies_the_player_options(
+    manifest, manifest_path, unfinished, vanilla, tmp_path
+):
     out = tmp_path / "out.nes"
-    completed = build(manifest_path, "--name", "LUIGI", "--clubs", "1W,3W,5I", "--no-bgm", "-o", out)
+    completed = build(
+        manifest_path, "--name", "LUIGI", "--clubs", "1W,3W,5I", "--no-bgm", "-o", out
+    )
     assert completed.returncode == 0, completed.stderr
 
     options = PlayerOptions("LUIGI", clubs_from_labels(["1W", "3W", "5I"]), bgm=False)
@@ -113,7 +132,11 @@ def test_build_applies_the_player_options(manifest, manifest_path, unfinished, v
 
 
 def test_build_refuses_a_bag_the_seed_bans(catalog, tmp_path):
-    strict = generate(catalog, CurationSnapshot.load(), Settings(prng_seed="cli-rom", clubs=ClubRules(banned={Club.W1})))
+    strict = generate(
+        catalog,
+        CurationSnapshot.load(),
+        Settings(prng_seed="cli-rom", clubs=ClubRules(banned=frozenset({Club.W1}))),
+    )
     path = tmp_path / "strict.json"
     path.write_text(json.dumps(strict.to_json()))
     completed = build(path, "--clubs", "1W,PW", "-o", tmp_path / "out.nes")

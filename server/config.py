@@ -46,11 +46,15 @@ class Config:
             value = environ.get(PREFIX + name.upper())
             return value if value else None
 
+        def get_path(name: str, default: Path) -> Path:
+            value = get(name)
+            return Path(value) if value else default
+
         defaults = cls()
         return cls(
             database=get("database") or defaults.database,
-            rom_dir=Path(get("rom_dir")) if get("rom_dir") else defaults.rom_dir,
-            holes_dir=Path(get("holes_dir")) if get("holes_dir") else defaults.holes_dir,
+            rom_dir=get_path("rom_dir", defaults.rom_dir),
+            holes_dir=get_path("holes_dir", defaults.holes_dir),
             base_url=get("base_url") or defaults.base_url,
             discord_client_id=get("discord_client_id"),
             discord_client_secret=get("discord_client_secret"),
@@ -74,9 +78,17 @@ class Config:
     def validate(self) -> None:
         """Refuse settings that would be unsafe to serve. Raises ConfigError."""
         if self.dev_login and urlsplit(self.base_url).hostname not in LOCAL_HOSTS:
-            raise ConfigError(f"the development login bypass only runs on localhost, not {self.base_url}")
+            raise ConfigError(
+                f"the development login bypass only runs on localhost, not {self.base_url}"
+            )
         if self.discord_enabled and not self.session_secret:
-            raise ConfigError("Discord sign-in needs a session secret (GOLF_SESSION_SECRET)")
-        dev_admins = sorted(user for user in self.admin_users if user.startswith("dev:"))
+            raise ConfigError(
+                "Discord sign-in needs a session secret (GOLF_SESSION_SECRET)"
+            )
+        dev_admins = sorted(
+            user for user in self.admin_users if user.startswith("dev:")
+        )
         if dev_admins and not self.dev_login:
-            raise ConfigError(f"development users can only be admins with the login bypass on: {dev_admins}")
+            raise ConfigError(
+                f"development users can only be admins with the login bypass on: {dev_admins}"
+            )

@@ -13,31 +13,41 @@ from golf.core.patches.sram_defaults import (
     parse_club,
     player_name_bytes,
 )
+from tests.prg_writer import PrgImageWriter
 
 
 def prg(cpu_addr: int) -> int:
     return rom_utils.cpu_to_prg_switched(cpu_addr, 9)
 
 
-class MockRomWriter:
+class MockRomWriter(PrgImageWriter):
     """A bare PRG image with every sub-patch's original bytes."""
 
     def __init__(self, patch):
-        self.data = bytearray(0x40000)
+        super().__init__()
         for leaf in patch.patches:
             self.write_prg(leaf.prg_offset, leaf.original)
-
-    def read_prg(self, prg_offset: int, length: int) -> bytes:
-        return bytes(self.data[prg_offset : prg_offset + length])
-
-    def write_prg(self, prg_offset: int, data: bytes):
-        self.data[prg_offset : prg_offset + len(data)] = data
 
 
 class TestClubs:
     def test_labels_follow_the_screen(self):
         assert [club.label for club in Club] == [
-            "1W", "2W", "3W", "4W", "1I", "2I", "3I", "4I", "5I", "6I", "7I", "8I", "9I", "PW", "SW", "PT",
+            "1W",
+            "2W",
+            "3W",
+            "4W",
+            "1I",
+            "2I",
+            "3I",
+            "4I",
+            "5I",
+            "6I",
+            "7I",
+            "8I",
+            "9I",
+            "PW",
+            "SW",
+            "PT",
         ]
 
     def test_parse_is_case_insensitive(self):
@@ -50,20 +60,44 @@ class TestClubs:
 
     def test_vanilla_bag_is_the_rom_table(self):
         assert club_bag_bytes(VANILLA_CLUBS) == bytes(
-            [0x00, 0x01, 0x02, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F]
+            [
+                0x00,
+                0x01,
+                0x02,
+                0x05,
+                0x06,
+                0x07,
+                0x08,
+                0x09,
+                0x0A,
+                0x0B,
+                0x0C,
+                0x0D,
+                0x0E,
+                0x0F,
+            ]
         )
 
     def test_bag_is_sorted_with_the_putter_added_and_padded(self):
-        assert club_bag_bytes(["SW", Club.W1, "7i"]) == bytes([0x00, 0x0A, 0x0E, 0x0F] + [0xFF] * 10)
+        assert club_bag_bytes(["SW", Club.W1, "7i"]) == bytes(
+            [0x00, 0x0A, 0x0E, 0x0F] + [0xFF] * 10
+        )
 
     def test_an_empty_bag_holds_the_putter(self):
         assert club_bag_bytes([]) == bytes([0x0F] + [0xFF] * 13)
 
     def test_fourteen_clubs_with_the_putter_fit(self):
-        assert club_bag_bytes([club for club in Club if club not in (Club.W4, Club.I1)])[-1] == 0x0F
+        assert (
+            club_bag_bytes([club for club in Club if club not in (Club.W4, Club.I1)])[
+                -1
+            ]
+            == 0x0F
+        )
 
     def test_fourteen_clubs_without_the_putter_do_not(self):
-        with pytest.raises(ValueError, match="at most 14 clubs including the putter, got 15"):
+        with pytest.raises(
+            ValueError, match="at most 14 clubs including the putter, got 15"
+        ):
             club_bag_bytes([club for club in Club if club not in (Club.PT, Club.W4)])
 
     def test_rejects_repeated_clubs(self):
@@ -81,12 +115,15 @@ class TestPlayerName:
     def test_takes_dots_and_spaces(self):
         assert player_name_bytes("J.D. SMITH") == b"J.D. SMITH"
 
-    @pytest.mark.parametrize(("name", "message"), [
-        ("", "1-10 characters"),
-        ("ABCDEFGHIJK", "1-10 characters"),
-        ("MARIO1", "cannot store: '1'"),
-        ("MARIO!", "cannot store: '!'"),
-    ])
+    @pytest.mark.parametrize(
+        ("name", "message"),
+        [
+            ("", "1-10 characters"),
+            ("ABCDEFGHIJK", "1-10 characters"),
+            ("MARIO1", "cannot store: '1'"),
+            ("MARIO!", "cannot store: '!'"),
+        ],
+    )
     def test_rejects_names_that_cannot_be_stored(self, name, message):
         with pytest.raises(ValueError, match=message):
             player_name_bytes(name)
@@ -113,7 +150,11 @@ class TestPatch:
 
     def test_player_name(self):
         (leaf,) = sram_defaults_patches(player_name="luigi")
-        assert (leaf.prg_offset, leaf.original, leaf.patched) == (prg(0xAD5B), b"MARIO     ", b"LUIGI     ")
+        assert (leaf.prg_offset, leaf.original, leaf.patched) == (
+            prg(0xAD5B),
+            b"MARIO     ",
+            b"LUIGI     ",
+        )
 
     def test_clubs(self):
         (leaf,) = sram_defaults_patches(clubs=["1W", "PW"])
@@ -122,7 +163,11 @@ class TestPatch:
 
     def test_bgm_off_turns_the_fill_loop_bpl_into_bne(self):
         (leaf,) = sram_defaults_patches(bgm=False)
-        assert (leaf.prg_offset, leaf.original, leaf.patched) == (prg(0xAD4E), b"\x10", b"\xd0")
+        assert (leaf.prg_offset, leaf.original, leaf.patched) == (
+            prg(0xAD4E),
+            b"\x10",
+            b"\xd0",
+        )
 
     def test_magic_rewrites_the_check_and_the_writes(self):
         leaves = sram_defaults_patches(sram_magic=0x1234)

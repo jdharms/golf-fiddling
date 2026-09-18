@@ -1,7 +1,6 @@
 """Unit tests for compression table loading."""
 
 
-
 def test_load_real_tables(compression_tables):
     """Load from compression_tables.json and validate structure."""
     # Verify top-level structure

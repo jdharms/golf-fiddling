@@ -2,7 +2,6 @@
 Paint tool for terrain and greens editing.
 """
 
-
 import pygame
 from pygame import Rect
 

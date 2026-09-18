@@ -47,7 +47,15 @@ def record(
         INSERT INTO admin_actions (admin_id, action, target_type, target_id, note, detail, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
-        (admin_id, action, target_type, str(target_id), note, json.dumps(detail or {}, sort_keys=True), created_at),
+        (
+            admin_id,
+            action,
+            target_type,
+            str(target_id),
+            note,
+            json.dumps(detail or {}, sort_keys=True),
+            created_at,
+        ),
     ).lastrowid
     assert row_id is not None
     return row_id

@@ -17,6 +17,7 @@ error. See docs/manifest.md.
 
 from collections.abc import Iterable
 from dataclasses import dataclass
+from typing import TypeGuard
 
 from golf.core.patches.sram_defaults import BAG_SIZE, Club, magic_bytes, parse_club
 
@@ -49,20 +50,26 @@ def _fields(data: object, keys: tuple[str, ...], what: str) -> dict:
     return data
 
 
-def _is_int(value: object) -> bool:
+def _is_int(value: object) -> TypeGuard[int]:
     return isinstance(value, int) and not isinstance(value, bool)
 
 
 def _strings(value: object, what: str) -> list[str]:
-    if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
-        raise ManifestError(f"{what} must be a list of non-empty strings, got {value!r}")
+    if not isinstance(value, list) or not all(
+        isinstance(item, str) and item for item in value
+    ):
+        raise ManifestError(
+            f"{what} must be a list of non-empty strings, got {value!r}"
+        )
     if len(set(value)) != len(value):
         raise ManifestError(f"{what} lists an entry more than once: {value!r}")
     return value
 
 
 def _check_mercy(mercy_point: object) -> None:
-    if mercy_point is not None and not (_is_int(mercy_point) and mercy_point in MERCY_POINTS):
+    if mercy_point is not None and not (
+        _is_int(mercy_point) and mercy_point in MERCY_POINTS
+    ):
         raise ManifestError(f"mercy_point must be null or 1-255, got {mercy_point!r}")
 
 
@@ -121,7 +128,9 @@ class ClubRules:
         return {
             "max": self.max,
             "banned": _club_labels(self.banned),
-            "required_bag": None if self.required_bag is None else _club_labels(self.required_bag),
+            "required_bag": None
+            if self.required_bag is None
+            else _club_labels(self.required_bag),
         }
 
     @classmethod
@@ -131,7 +140,9 @@ class ClubRules:
         return cls(
             max=data["max"],
             banned=_clubs_from_labels(data["banned"], "clubs banned"),
-            required_bag=None if required is None else _clubs_from_labels(required, "clubs required_bag"),
+            required_bag=None
+            if required is None
+            else _clubs_from_labels(required, "clubs required_bag"),
         )
 
 
@@ -165,18 +176,30 @@ class Settings:
     def __post_init__(self):
         object.__setattr__(self, "sources", frozenset(self.sources))
         object.__setattr__(self, "exclude_tags", frozenset(self.exclude_tags))
-        if self.prng_seed is not None and not (isinstance(self.prng_seed, str) and self.prng_seed):
-            raise ManifestError(f"prng_seed must be a non-empty string, got {self.prng_seed!r}")
+        if self.prng_seed is not None and not (
+            isinstance(self.prng_seed, str) and self.prng_seed
+        ):
+            raise ManifestError(
+                f"prng_seed must be a non-empty string, got {self.prng_seed!r}"
+            )
         if not _is_int(self.par) or self.par not in COUNTS:
-            raise ManifestError(f"par must be one of {sorted(COUNTS)}, got {self.par!r}")
+            raise ManifestError(
+                f"par must be one of {sorted(COUNTS)}, got {self.par!r}"
+            )
         if not self.sources or not self.sources <= set(SOURCES):
-            raise ManifestError(f"sources must be a non-empty selection of {list(SOURCES)}, got {list(self.sources)}")
+            raise ManifestError(
+                f"sources must be a non-empty selection of {list(SOURCES)}, got {list(self.sources)}"
+            )
         if not all(isinstance(tag, str) and tag for tag in self.exclude_tags):
-            raise ManifestError(f"exclude_tags must be non-empty strings, got {list(self.exclude_tags)}")
+            raise ManifestError(
+                f"exclude_tags must be non-empty strings, got {list(self.exclude_tags)}"
+            )
         if not isinstance(self.allow_family_repeats, bool):
             raise ManifestError("allow_family_repeats must be true or false")
         if self.music != RANDOM and self.music not in TRACKS:
-            raise ManifestError(f"music must be {RANDOM!r} or one of {', '.join(TRACKS)}, got {self.music!r}")
+            raise ManifestError(
+                f"music must be {RANDOM!r} or one of {', '.join(TRACKS)}, got {self.music!r}"
+            )
         _check_mercy(self.mercy_point)
         if not isinstance(self.clubs, ClubRules):
             raise ManifestError(f"clubs must be ClubRules, got {self.clubs!r}")
@@ -226,12 +249,18 @@ class Slot:
         if not isinstance(self.id, HoleId):
             raise ManifestError(f"slot id must be a HoleId, got {self.id!r}")
         if not _is_int(self.par) or self.par not in HOLE_PARS:
-            raise ManifestError(f"{self.id}: par must be one of {list(HOLE_PARS)}, got {self.par!r}")
+            raise ManifestError(
+                f"{self.id}: par must be one of {list(HOLE_PARS)}, got {self.par!r}"
+            )
         if not _is_int(self.wind_seed) or self.wind_seed not in WIND_SEEDS:
-            raise ManifestError(f"{self.id}: wind_seed must be 0-65535, got {self.wind_seed!r}")
+            raise ManifestError(
+                f"{self.id}: wind_seed must be 0-65535, got {self.wind_seed!r}"
+            )
         object.__setattr__(self, "transforms", tuple(self.transforms))
         if self.transforms:
-            raise ManifestError(f"{self.id}: schema {SCHEMA} defines no transforms, got {list(self.transforms)}")
+            raise ManifestError(
+                f"{self.id}: schema {SCHEMA} defines no transforms, got {list(self.transforms)}"
+            )
 
     def to_json(self) -> dict:
         return {
@@ -250,10 +279,14 @@ class Slot:
         except CatalogError as problem:
             raise ManifestError(str(problem)) from None
         if str(hole_id) != text:
-            raise ManifestError(f"hole id {text!r} is not canonical; write it as {hole_id}")
+            raise ManifestError(
+                f"hole id {text!r} is not canonical; write it as {hole_id}"
+            )
         transforms = data["transforms"]
         if not isinstance(transforms, list):
-            raise ManifestError(f"{hole_id}: transforms must be a list, got {transforms!r}")
+            raise ManifestError(
+                f"{hole_id}: transforms must be a list, got {transforms!r}"
+            )
         return cls(hole_id, data["par"], data["wind_seed"], tuple(transforms))
 
 
@@ -272,14 +305,22 @@ class Course:
 
     def __post_init__(self):
         object.__setattr__(self, "holes", tuple(self.holes))
-        if len(self.holes) != HOLE_COUNT or not all(isinstance(slot, Slot) for slot in self.holes):
-            raise ManifestError(f"a course has {HOLE_COUNT} holes, got {len(self.holes)}")
+        if len(self.holes) != HOLE_COUNT or not all(
+            isinstance(slot, Slot) for slot in self.holes
+        ):
+            raise ManifestError(
+                f"a course has {HOLE_COUNT} holes, got {len(self.holes)}"
+            )
         ids = [slot.id for slot in self.holes]
         repeated = sorted({hole_id for hole_id in ids if ids.count(hole_id) > 1})
         if repeated:
-            raise ManifestError(f"holes appear more than once: {', '.join(map(str, repeated))}")
+            raise ManifestError(
+                f"holes appear more than once: {', '.join(map(str, repeated))}"
+            )
         if self.music not in TRACKS:
-            raise ManifestError(f"course music must be one of {', '.join(TRACKS)}, got {self.music!r}")
+            raise ManifestError(
+                f"course music must be one of {', '.join(TRACKS)}, got {self.music!r}"
+            )
         _check_mercy(self.mercy_point)
         if not isinstance(self.clubs, ClubRules):
             raise ManifestError(f"clubs must be ClubRules, got {self.clubs!r}")
@@ -313,11 +354,17 @@ class Course:
 
     @classmethod
     def from_json(cls, data: object) -> "Course":
-        data = _fields(data, ("holes", "music", "mercy_point", "clubs", "magic_words", "sram_magic"), "course")
+        data = _fields(
+            data,
+            ("holes", "music", "mercy_point", "clubs", "magic_words", "sram_magic"),
+            "course",
+        )
         if not isinstance(data["holes"], list):
             raise ManifestError(f"course holes must be a list, got {data['holes']!r}")
         if not isinstance(data["magic_words"], list):
-            raise ManifestError(f"magic_words must be a list, got {data['magic_words']!r}")
+            raise ManifestError(
+                f"magic_words must be a list, got {data['magic_words']!r}"
+            )
         return cls(
             holes=tuple(Slot.from_json(slot) for slot in data["holes"]),
             music=data["music"],
@@ -328,7 +375,14 @@ class Course:
         )
 
 
-_MANIFEST_KEYS = ("schema", "generator_version", "catalog_version", "curation_stamp", "settings", "course")
+_MANIFEST_KEYS = (
+    "schema",
+    "generator_version",
+    "catalog_version",
+    "curation_stamp",
+    "settings",
+    "course",
+)
 
 
 @dataclass(frozen=True)
@@ -342,7 +396,9 @@ class Manifest:
 
     def __post_init__(self):
         if self.schema != SCHEMA:
-            raise ManifestError(f"unsupported manifest schema {self.schema!r}; this code reads schema {SCHEMA}")
+            raise ManifestError(
+                f"unsupported manifest schema {self.schema!r}; this code reads schema {SCHEMA}"
+            )
         for name in ("generator_version", "catalog_version"):
             value = getattr(self, name)
             if not _is_int(value) or value < 1:
@@ -350,7 +406,9 @@ class Manifest:
         if not isinstance(self.curation_stamp, str) or not self.curation_stamp:
             raise ManifestError("curation_stamp must be a non-empty string")
         if self.settings.prng_seed is None:
-            raise ManifestError("a manifest's settings record the prng_seed generation used")
+            raise ManifestError(
+                "a manifest's settings record the prng_seed generation used"
+            )
 
     def to_json(self) -> dict:
         return {
@@ -365,7 +423,9 @@ class Manifest:
     @classmethod
     def from_json(cls, data: object) -> "Manifest":
         if isinstance(data, dict) and data.get("schema") != SCHEMA:
-            raise ManifestError(f"unsupported manifest schema {data.get('schema')!r}; this code reads schema {SCHEMA}")
+            raise ManifestError(
+                f"unsupported manifest schema {data.get('schema')!r}; this code reads schema {SCHEMA}"
+            )
         data = _fields(data, _MANIFEST_KEYS, "manifest")
         return cls(
             schema=data["schema"],

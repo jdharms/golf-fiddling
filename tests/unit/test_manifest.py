@@ -1,11 +1,19 @@
 """Unit tests for the manifest model and its JSON form."""
 
 import json
+from typing import Any
 
 import pytest
 
 from golf.core.patches.sram_defaults import Club
-from golf.randomizer.catalog import JP_ROM, US_ROM, Catalog, CatalogEntry, HoleId, RomSource
+from golf.randomizer.catalog import (
+    JP_ROM,
+    US_ROM,
+    Catalog,
+    CatalogEntry,
+    HoleId,
+    RomSource,
+)
 from golf.randomizer.manifest import (
     ClubRules,
     Course,
@@ -20,11 +28,14 @@ PARS = (4, 5, 4, 3, 4, 3, 4, 5, 4, 4, 4, 3, 5, 4, 5, 3, 4, 4)
 
 
 def slots(prefix: str = "nes_us") -> tuple[Slot, ...]:
-    return tuple(Slot(HoleId(f"{prefix}/{number:02d}"), par, number) for number, par in enumerate(PARS, start=1))
+    return tuple(
+        Slot(HoleId(f"{prefix}/{number:02d}"), par, number)
+        for number, par in enumerate(PARS, start=1)
+    )
 
 
 def course(**overrides) -> Course:
-    fields = dict(
+    fields: dict[str, Any] = dict(
         holes=slots(),
         music="nes_uk",
         mercy_point=9,
@@ -36,7 +47,7 @@ def course(**overrides) -> Course:
 
 
 def manifest(**overrides) -> Manifest:
-    fields = dict(
+    fields: dict[str, Any] = dict(
         schema=1,
         generator_version=1,
         catalog_version=1,
@@ -56,22 +67,41 @@ def test_round_trips_through_json():
         settings=Settings(
             prng_seed="abc",
             par=70,
-            sources={JP_ROM},
-            exclude_tags={"expert"},
+            sources=frozenset({JP_ROM}),
+            exclude_tags=frozenset({"expert"}),
             allow_family_repeats=True,
             music="jp_hawaii",
             mercy_point=None,
-            clubs=ClubRules(max=10, banned={Club.W1}, required_bag={Club.I7, Club.W3}),
+            clubs=ClubRules(
+                max=10,
+                banned=frozenset({Club.W1}),
+                required_bag=frozenset({Club.I7, Club.W3}),
+            ),
         ),
-        course=course(mercy_point=None, clubs=ClubRules(max=12, banned={Club.SW, Club.W2})),
+        course=course(
+            mercy_point=None,
+            clubs=ClubRules(max=12, banned=frozenset({Club.SW, Club.W2})),
+        ),
     )
     assert round_trip(value) == value
 
 
 def test_json_shape():
     data = manifest().to_json()
-    assert list(data) == ["schema", "generator_version", "catalog_version", "curation_stamp", "settings", "course"]
-    assert data["course"]["holes"][0] == {"id": "nes_us/01", "par": 4, "transforms": [], "wind_seed": 1}
+    assert list(data) == [
+        "schema",
+        "generator_version",
+        "catalog_version",
+        "curation_stamp",
+        "settings",
+        "course",
+    ]
+    assert data["course"]["holes"][0] == {
+        "id": "nes_us/01",
+        "par": 4,
+        "transforms": [],
+        "wind_seed": 1,
+    }
     assert data["settings"]["clubs"] == {"max": 14, "banned": [], "required_bag": None}
     assert data["settings"]["sources"] == [US_ROM, JP_ROM]
 
@@ -84,7 +114,9 @@ def test_course_json_carries_the_sram_magic():
         Manifest.from_json(data)
 
 
-@pytest.mark.parametrize("sram_magic", [0x0047, 0xFF47, 0x5200, 0x52FF, -1, 0x10000, "0x5247", True, None])
+@pytest.mark.parametrize(
+    "sram_magic", [0x0047, 0xFF47, 0x5200, 0x52FF, -1, 0x10000, "0x5247", True, None]
+)
 def test_rejects_a_bad_sram_magic(sram_magic):
     with pytest.raises(ManifestError, match="sram_magic"):
         course(sram_magic=sram_magic)
@@ -100,12 +132,15 @@ def test_course_par_and_layout():
 
 
 def test_club_labels_are_written_in_club_order():
-    rules = ClubRules(banned={Club.SW, Club.W1, Club.I5})
+    rules = ClubRules(banned=frozenset({Club.SW, Club.W1, Club.I5}))
     assert rules.to_json()["banned"] == ["1W", "5I", "SW"]
 
 
 def test_required_bag_gains_the_putter():
-    assert ClubRules(required_bag={Club.W1}).required_bag == {Club.W1, Club.PT}
+    assert ClubRules(required_bag=frozenset({Club.W1})).required_bag == {
+        Club.W1,
+        Club.PT,
+    }
 
 
 @pytest.mark.parametrize(
@@ -176,7 +211,9 @@ def test_rejects_bad_slots():
     with pytest.raises(ManifestError, match="no transforms"):
         Slot(HoleId("nes_us/01"), 4, 0, ("mirror",))
     with pytest.raises(ManifestError, match="not canonical"):
-        Slot.from_json({"id": "nes_us/01@1", "par": 4, "transforms": [], "wind_seed": 0})
+        Slot.from_json(
+            {"id": "nes_us/01@1", "par": 4, "transforms": [], "wind_seed": 0}
+        )
 
 
 def test_rejects_missing_and_unknown_fields():
@@ -203,9 +240,19 @@ def test_a_manifest_records_its_prng_seed():
 
 def test_required_roms_count_holes_and_music():
     entries = [
-        CatalogEntry(slot.id, RomSource(US_ROM, "us", number), "0" * 64, slot.par, 400, "Nintendo")
+        CatalogEntry(
+            slot.id,
+            RomSource(US_ROM, "us", number),
+            "0" * 64,
+            slot.par,
+            400,
+            "Nintendo",
+        )
         for number, slot in enumerate(slots(), start=1)
     ]
     holes = Catalog(1, {item.id: item for item in entries})
     assert required_roms(manifest(), holes) == (US_ROM,)
-    assert required_roms(manifest(course=course(music="jp_france")), holes) == (US_ROM, JP_ROM)
+    assert required_roms(manifest(course=course(music="jp_france")), holes) == (
+        US_ROM,
+        JP_ROM,
+    )

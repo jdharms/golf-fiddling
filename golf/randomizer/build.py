@@ -18,7 +18,6 @@ import hashlib
 import json
 from collections.abc import Iterable
 from dataclasses import dataclass
-from pathlib import Path
 
 from golf.core import ips, rom_utils
 from golf.core.patches import (
@@ -44,7 +43,12 @@ from golf.core.patches import (
     sram_defaults_patch,
 )
 from golf.core.patches.signpost_random_banner import signpost_banner_patch
-from golf.core.patches.sram_defaults import Club, club_bag_bytes, parse_club, player_name_bytes
+from golf.core.patches.sram_defaults import (
+    Club,
+    club_bag_bytes,
+    parse_club,
+    player_name_bytes,
+)
 from golf.core.rom_reader import RomReader
 from golf.qr import payload
 
@@ -53,7 +57,9 @@ from .manifest import ClubRules, Manifest
 from .music import MUSIC_DUMPS, track
 from .words import scorecard_title
 
-SIGNPOST_ART = REPO_ROOT / "golf" / "core" / "patches" / "data" / "signpost_random.aseprite"
+SIGNPOST_ART = (
+    REPO_ROOT / "golf" / "core" / "patches" / "data" / "signpost_random.aseprite"
+)
 
 #: The largest seed ID the 8-byte field holds. The site draws below 62**10.
 MAX_SEED_ID = (1 << (8 * payload.SEED_ID_LEN)) - 1
@@ -90,9 +96,13 @@ class PlayerOptions:
         """Raise BuildError if the bag breaks the seed's club rules."""
         labels = lambda clubs: " ".join(club.label for club in sorted(clubs))  # noqa: E731
         if rules.required_bag is not None and self.clubs != rules.required_bag:
-            raise BuildError(f"this seed requires the bag {labels(rules.required_bag)}, got {labels(self.clubs)}")
+            raise BuildError(
+                f"this seed requires the bag {labels(rules.required_bag)}, got {labels(self.clubs)}"
+            )
         if len(self.clubs) > rules.max:
-            raise BuildError(f"this seed allows at most {rules.max} clubs, got {len(self.clubs)}")
+            raise BuildError(
+                f"this seed allows at most {rules.max} clubs, got {len(self.clubs)}"
+            )
         banned = self.clubs & rules.banned
         if banned:
             raise BuildError(f"this seed bans {labels(banned)}")
@@ -103,23 +113,37 @@ class PlayerOptions:
 
 def seed_id_bytes(qr_seed_id: int) -> bytes:
     """A seed's `qr_seed_id` as the QR payload's seed ID field: big-endian."""
-    if isinstance(qr_seed_id, bool) or not isinstance(qr_seed_id, int) or not 1 <= qr_seed_id <= MAX_SEED_ID:
+    if (
+        isinstance(qr_seed_id, bool)
+        or not isinstance(qr_seed_id, int)
+        or not 1 <= qr_seed_id <= MAX_SEED_ID
+    ):
         raise BuildError(f"qr_seed_id must be 1-{MAX_SEED_ID}, got {qr_seed_id!r}")
     return qr_seed_id.to_bytes(payload.SEED_ID_LEN, "big")
 
 
 def player_id_bytes(player_id: int) -> bytes:
     """A user's `player_id` as the QR payload's player ID field: big-endian."""
-    if isinstance(player_id, bool) or not isinstance(player_id, int) or not 1 <= player_id <= MAX_PLAYER_ID:
+    if (
+        isinstance(player_id, bool)
+        or not isinstance(player_id, int)
+        or not 1 <= player_id <= MAX_PLAYER_ID
+    ):
         raise BuildError(f"player_id must be 1-{MAX_PLAYER_ID}, got {player_id!r}")
     return player_id.to_bytes(payload.PLAYER_ID_LEN, "big")
 
 
-def credentials_for(qr_seed_id: int, player_id: int, keys: tuple[bytes, bytes]) -> QrCredentials:
+def credentials_for(
+    qr_seed_id: int, player_id: int, keys: tuple[bytes, bytes]
+) -> QrCredentials:
     """A signed-in player's credentials: their player ID in both slots, one key per slot."""
     player = player_id_bytes(player_id)
     try:
-        return QrCredentials(seed_id=seed_id_bytes(qr_seed_id), player_ids=(player, player), keys=tuple(keys))
+        return QrCredentials(
+            seed_id=seed_id_bytes(qr_seed_id),
+            player_ids=(player, player),
+            keys=keys,
+        )
     except ValueError as problem:
         raise BuildError(str(problem)) from None
 
@@ -137,12 +161,16 @@ def music_step(slug: str) -> ROMPatch:
     if theme.rom == US_ROM:
         return course_theme_patch(theme.music_id)
     if theme.rom == JP_ROM:
-        dump = json.loads(Path(MUSIC_DUMPS[JP_ROM]).read_text())
+        dump = json.loads(MUSIC_DUMPS[JP_ROM].read_text())
         return music_import_patch(dump, track=theme.music_id)
-    raise BuildError(f"music {slug!r} comes from {theme.rom!r}, which no build knows")  # pragma: no cover
+    raise BuildError(
+        f"music {slug!r} comes from {theme.rom!r}, which no build knows"
+    )  # pragma: no cover
 
 
-def unfinished_steps(manifest: Manifest, catalog: Catalog, store: HoleStore, vanilla: bytes) -> list[ROMPatch]:
+def unfinished_steps(
+    manifest: Manifest, catalog: Catalog, store: HoleStore, vanilla: bytes
+) -> list[ROMPatch]:
     """The unfinished stack's steps, in order. `vanilla` is read for the signpost art."""
     course = manifest.course
     holes = [store.load(catalog[slot.id]) for slot in course.holes]
@@ -185,10 +213,14 @@ class UnfinishedBuild:
 def _check_vanilla(vanilla: bytes) -> None:
     actual = hashlib.sha1(vanilla).hexdigest()
     if actual != rom_utils.US_ROM_SHA1:
-        raise BuildError(f"the base ROM has SHA-1 {actual}, not the vanilla US ROM's {rom_utils.US_ROM_SHA1}")
+        raise BuildError(
+            f"the base ROM has SHA-1 {actual}, not the vanilla US ROM's {rom_utils.US_ROM_SHA1}"
+        )
 
 
-def build_unfinished(manifest: Manifest, catalog: Catalog, store: HoleStore, vanilla: bytes) -> UnfinishedBuild:
+def build_unfinished(
+    manifest: Manifest, catalog: Catalog, store: HoleStore, vanilla: bytes
+) -> UnfinishedBuild:
     _check_vanilla(vanilla)
     steps = unfinished_steps(manifest, catalog, store, vanilla)
     build = PatchStack(steps).build(vanilla)
@@ -204,12 +236,18 @@ def build_unfinished(manifest: Manifest, catalog: Catalog, store: HoleStore, van
 # -- Finished -------------------------------------------------------------------------------
 
 
-def finishing_steps(options: PlayerOptions, sram_magic: int, credentials: QrCredentials | None) -> list[ROMPatch]:
+def finishing_steps(
+    options: PlayerOptions, sram_magic: int, credentials: QrCredentials | None
+) -> list[ROMPatch]:
     """New-save defaults, then credentials when signed in or the QR screen disabled for a guest."""
     steps: list[ROMPatch] = [
-        sram_defaults_patch(options.player_name, sorted(options.clubs), options.bgm, sram_magic),
+        sram_defaults_patch(
+            options.player_name, sorted(options.clubs), options.bgm, sram_magic
+        ),
     ]
-    steps.append(QR_DISABLE_PATCH if credentials is None else qr_credentials_patch(credentials))
+    steps.append(
+        QR_DISABLE_PATCH if credentials is None else qr_credentials_patch(credentials)
+    )
     return steps
 
 
@@ -235,7 +273,9 @@ def finish(
     unfinished = ips.apply(vanilla, unfinished_ips)
     steps = finishing_steps(options, manifest.course.sram_magic, credentials)
     build = PatchStack(steps, base_sha1=None).build(unfinished)
-    return FinishedBuild(rom=build.rom, ips=ips.diff(vanilla, build.rom), regions=build.regions)
+    return FinishedBuild(
+        rom=build.rom, ips=ips.diff(vanilla, build.rom), regions=build.regions
+    )
 
 
 def clubs_from_labels(labels: Iterable[str]) -> frozenset[Club]:

@@ -1,65 +1,71 @@
 {% extends "base.html" %}
 {% block title %}{{ t_plain("round.page_title", words=round.magic_words|join(" ")) }}{% endblock %}
 {% block content %}
-{# a stroke count's class against its par: over-par and under-par color it, level par stays plain #}
-{% macro to_par(strokes, par) %}{% if strokes > par %} over-par{% elif strokes < par %} under-par{% endif %}{% endmacro %}
-{# one nine as a table of its own; the back nine's also carries the round's totals #}
-{% macro nine_table(nine, total_label, totals=none) %}
-<table class="nine striped">
-  <colgroup><col class="hole"><col class="par"><col class="strokes"><col class="putts"></colgroup>
-  <thead>
-    <tr>
-      <th scope="col" class="num">{{ t("round.holes.number") }}</th>
-      <th scope="col" class="num">{{ t("round.holes.par") }}</th>
-      <th scope="col" class="num">{{ t("round.holes.strokes") }}</th>
-      <th scope="col" class="num">{{ t("round.holes.putts") }}</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for hole in nine.holes %}
-    <tr>
-      <td class="num">{{ hole.number }}</td>
-      <td class="num">{{ hole.par }}</td>
-      <td class="num{{ to_par(hole.strokes, hole.par) }}">{{ hole.strokes }}</td>
-      <td class="num">{{ hole.putts }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-  <tfoot>
-    <tr>
-      <th scope="row" class="num">{{ total_label }}</th>
-      <td class="num">{{ nine.par }}</td>
-      <td class="num{{ to_par(nine.strokes, nine.par) }}">{{ nine.strokes }}</td>
-      <td class="num">{{ nine.putts }}</td>
-    </tr>
-    {% if totals %}
-    <tr>
-      <th scope="row" class="num">{{ t("round.holes.total") }}</th>
-      <td class="num">{{ totals.total_par }}</td>
-      <td class="num{{ to_par(totals.total_strokes, totals.total_par) }}">{{ totals.total_strokes }}</td>
-      <td class="num">{{ totals.total_putts }}</td>
-    </tr>
-    {% endif %}
-  </tfoot>
-</table>
-{% endmacro %}
-<hgroup>
-  <h1>{% if round.recorded %}{{ t("round.heading_recorded") }}{% else %}{{ t("round.heading") }}{% endif %}</h1>
-  <p>
-    {% if round.slot == 1 %}{{ t("round.player_two", name=round.player_name, received=round.received_at) }}
-    {% else %}{{ t("round.player_one", name=round.player_name, received=round.received_at) }}{% endif %}
+  {# a stroke count's class against its par: over-par and under-par color it, level par stays plain #}
+  {% macro to_par(strokes, par) %}{% if strokes > par %} over-par{% elif strokes < par %} under-par{% endif %}{% endmacro %}
+  {# one nine as a table of its own; the back nine's also carries the round's totals #}
+  {% macro nine_table(nine, total_label, totals=none) %}
+    <table class="nine striped">
+      <colgroup>
+        <col class="hole">
+        <col class="par">
+        <col class="strokes">
+        <col class="putts">
+      </colgroup>
+      <thead>
+        <tr>
+          <th scope="col" class="num">{{ t("round.holes.number") }}</th>
+          <th scope="col" class="num">{{ t("round.holes.par") }}</th>
+          <th scope="col" class="num">{{ t("round.holes.strokes") }}</th>
+          <th scope="col" class="num">{{ t("round.holes.putts") }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for hole in nine.holes %}
+          <tr>
+            <td class="num">{{ hole.number }}</td>
+            <td class="num">{{ hole.par }}</td>
+            <td class="num{{ to_par(hole.strokes, hole.par) }}">{{ hole.strokes }}</td>
+            <td class="num">{{ hole.putts }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th scope="row" class="num">{{ total_label }}</th>
+          <td class="num">{{ nine.par }}</td>
+          <td class="num{{ to_par(nine.strokes, nine.par) }}">{{ nine.strokes }}</td>
+          <td class="num">{{ nine.putts }}</td>
+        </tr>
+        {% if totals %}
+          <tr>
+            <th scope="row" class="num">{{ t("round.holes.total") }}</th>
+            <td class="num">{{ totals.total_par }}</td>
+            <td class="num{{ to_par(totals.total_strokes, totals.total_par) }}">{{ totals.total_strokes }}</td>
+            <td class="num">{{ totals.total_putts }}</td>
+          </tr>
+        {% endif %}
+      </tfoot>
+    </table>
+  {% endmacro %}
+  <hgroup>
+    <h1>{% if round.recorded %}{{ t("round.heading_recorded") }}{% else %}{{ t("round.heading") }}{% endif %}</h1>
+    <p>
+      {% if round.slot == 1 %}{{ t("round.player_two", name=round.player_name, received=round.received_at) }}
+{% else %}{{ t("round.player_one", name=round.player_name, received=round.received_at) }}{% endif %}
   </p>
-</hgroup>
+  </hgroup>
 
-<p>{{ t("round.seed") }} <a href="/h/{{ round.seed_id }}" class="magic-words">{{ round.magic_words|join(" ") }}</a></p>
+  <p>{{ t("round.seed") }} <a href="/h/{{ round.seed_id }}"
+    class="magic-words">{{ round.magic_words|join(" ") }}</a></p>
 
-<div class="nines">
-  {{ nine_table(round.front, t("round.holes.front_total")) }}
-  {{ nine_table(round.back, t("round.holes.back_total"), round) }}
-</div>
-{% if round.recorded %}
-{# arrived from the scan that recorded this round: confirm it once, then leave the address
+  <div class="nines">
+    {{ nine_table(round.front, t("round.holes.front_total")) }}
+    {{ nine_table(round.back, t("round.holes.back_total"), round) }}
+  </div>
+  {% if round.recorded %}
+    {# arrived from the scan that recorded this round: confirm it once, then leave the address
    bar on the bare permalink, so a reload or a copied link is the plain scorecard #}
-<script>history.replaceState(null, "", location.pathname)</script>
-{% endif %}
+    <script>history.replaceState(null, "", location.pathname)</script>
+  {% endif %}
 {% endblock %}

@@ -49,9 +49,7 @@ from dataclasses import dataclass, field
 
 VRAM_SIZE = 0x4000
 
-_BIT_REVERSE = bytes(
-    int(f"{value:08b}"[::-1], 2) for value in range(256)
-)
+_BIT_REVERSE = bytes(int(f"{value:08b}"[::-1], 2) for value in range(256))
 
 
 class VideoMemory:
@@ -112,7 +110,9 @@ class GraphicsTable:
     @property
     def compressed_length(self) -> int:
         """Header plus every stream."""
-        return 3 + 2 * len(self.streams) + sum(s.compressed_length for s in self.streams)
+        return (
+            3 + 2 * len(self.streams) + sum(s.compressed_length for s in self.streams)
+        )
 
     @property
     def end_ppu_addr(self) -> int:
@@ -219,9 +219,7 @@ def load_graphics_table(
     table = GraphicsTable(bank=bank, cpu_addr=cpu_addr, dest_ppu_addr=dest)
     cursor = dest
     for i in range(count):
-        ptr = (
-            bank_data[header + 3 + 2 * i] | (bank_data[header + 4 + 2 * i] << 8)
-        )
+        ptr = bank_data[header + 3 + 2 * i] | (bank_data[header + 4 + 2 * i] << 8)
         result = decompress_stream(bank_data, ptr - 0x8000, vram, cursor)
         result.cpu_addr = ptr
         table.streams.append(result)

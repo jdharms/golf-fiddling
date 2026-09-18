@@ -15,6 +15,7 @@ import json
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from golf.core.rom_reader import RomReader
 from golf.formats.hole_data import HoleData
@@ -31,10 +32,16 @@ from .multi_bank import COURSE_MIRRORS_PATCH, MULTI_BANK_CODE_PATCH
 from .music_import import music_import_patch
 from .practice_swing import DEFAULT_HOLD_FRAMES, practice_swing_patch
 from .putting_practice import putting_practice_patches
+from .qr_credentials import load_credentials, qr_credentials_patch
 from .scorecard_course_name import DEFAULT_NAME as DEFAULT_COURSE_NAME
 from .scorecard_course_name import scorecard_course_name_patch
-from .qr_credentials import load_credentials, qr_credentials_patch
-from .scorecard_qr import QR_BANK, QR_DISABLE_PATCH, SCORECARD_QR_PATCH, TRAMPOLINE_CPU_ADDR, ScorecardQrPatch
+from .scorecard_qr import (
+    QR_BANK,
+    QR_DISABLE_PATCH,
+    SCORECARD_QR_PATCH,
+    TRAMPOLINE_CPU_ADDR,
+    ScorecardQrPatch,
+)
 from .seeded_wind import derive_hole_seeds, predict_hole, seeded_wind_patch
 from .signpost_banner import remove_course_banner_patches
 from .signpost_random_banner import signpost_banner_patch
@@ -64,19 +71,19 @@ class BuildContext:
         return self._reader
 
 
-def _no_report(params, patch) -> list[str]:
+def _no_report(params: object, patch: ROMPatch) -> list[str]:
     return []
 
 
 @dataclass(frozen=True)
-class PatchSpec:
+class PatchSpec[P, R: ROMPatch]:
     """One patch type: its id, parameters, factory and report."""
 
     id: str
     summary: str
-    params: type
-    build: Callable[[BuildContext, object], ROMPatch]
-    report: Callable[[object, ROMPatch], list[str]] = _no_report
+    params: type[P]
+    build: Callable[[BuildContext, P], R]
+    report: Callable[[P, R], list[str]] = _no_report
 
 
 # --- Parameters ---------------------------------------------------------------
@@ -173,12 +180,15 @@ class SramDefaultsParams:
 # --- Factories and reports ------------------------------------------------------
 
 
-def _build_course(ctx: BuildContext, params: CourseParams) -> ROMPatch:
+def _build_course(ctx: BuildContext, params: CourseParams) -> CoursePatch:
     if (params.course is None) == (params.holes is None):
-        raise ValueError("course takes exactly one of 'course' (a directory) or 'holes' (18 files)")
+        raise ValueError(
+            "course takes exactly one of 'course' (a directory) or 'holes' (18 files)"
+        )
     if params.holes is not None:
         files = params.holes
     else:
+        assert params.course is not None
         files = [params.course / f"hole_{number:02d}.json" for number in range(1, 19)]
     holes = []
     for path in files:
@@ -195,17 +205,26 @@ def _report_course(params: CourseParams, patch: CoursePatch) -> list[str]:
         for bank, capacity in stats.bank_capacity.items()
     ]
     lines.append(f"greens: {stats.total_greens_bytes:,} bytes")
-    lines.append(f"scorecard totals: {stats.total_yards:,} yards, par {stats.total_par}")
+    lines.append(
+        f"scorecard totals: {stats.total_yards:,} yards, par {stats.total_par}"
+    )
     return lines
 
 
 def _build_signpost(ctx: BuildContext, params: SignpostBannerParams) -> ROMPatch:
-    return signpost_banner_patch(ctx.reader, params.art, banner=params.banner, hole=params.hole)
+    return signpost_banner_patch(
+        ctx.reader, params.art, banner=params.banner, hole=params.hole
+    )
 
 
 def _report_signpost(params: SignpostBannerParams, patch) -> list[str]:
-    ranges = ", ".join(f"${first:02X}-${first + count - 1:02X}" for first, count in patch.chunks)
-    return [f"{patch.new_tiles} new tile(s)" + (f" at {ranges}" if ranges else ""), *patch.notes]
+    ranges = ", ".join(
+        f"${first:02X}-${first + count - 1:02X}" for first, count in patch.chunks
+    )
+    return [
+        f"{patch.new_tiles} new tile(s)" + (f" at {ranges}" if ranges else ""),
+        *patch.notes,
+    ]
 
 
 def _build_mercy(ctx: BuildContext, params: MercyTapInParams) -> ROMPatch:
@@ -220,7 +239,9 @@ def _report_seeded_wind(params: SeededWindParams, patch) -> list[str]:
     lines = ["hole  seed  pin  dir  spd  first 6 winds (dir/spd)"]
     for hole, seed in enumerate(derive_hole_seeds(params.seed), start=1):
         forecast = predict_hole(seed, 6)
-        winds = " ".join(f"{direction:02X}/{speed}" for direction, speed in forecast.winds)
+        winds = " ".join(
+            f"{direction:02X}/{speed}" for direction, speed in forecast.winds
+        )
         lines.append(
             f"{hole:>4}  {seed:04X}  {forecast.pin_index:>3}  ${forecast.direction_anchor:02X}"
             f"  {forecast.speed_anchor:>3}  {winds}"
@@ -252,19 +273,25 @@ def _report_qr_credentials(params: QrCredentialsParams, patch) -> list[str]:
 
 def _build_music(ctx: BuildContext, params: MusicImportParams) -> ROMPatch:
     dump = json.loads(Path(params.dump).read_text())
-    return music_import_patch(dump, track=params.track, transpose_adjust=params.transpose_adjust)
+    return music_import_patch(
+        dump, track=params.track, transpose_adjust=params.transpose_adjust
+    )
 
 
 def _report_music(params: MusicImportParams, patch) -> list[str]:
     lines = []
     if patch.track is not None:
-        lines.append(f"dump music ${patch.track:02X} is the only course theme (CourseBgmTable 03 03 03)")
+        lines.append(
+            f"dump music ${patch.track:02X} is the only course theme (CourseBgmTable 03 03 03)"
+        )
     lines += [
         f"music ${track['music_id']:02X}: {len(track['patterns'])} patterns, transpose "
         f"{track['transpose']:+d} -> {track['transpose'] + patch.transpose_adjust:+d}"
         for track in patch.tracks
     ]
-    lines += [f"{name}: {used:,} / {size:,} bytes" for name, used, size in patch.usage()]
+    lines += [
+        f"{name}: {used:,} / {size:,} bytes" for name, used, size in patch.usage()
+    ]
     lines.append(
         f"envelope table relocated to ${patch.envelope_addr:04X} ({len(patch.envelope_table)} bytes)"
     )
@@ -283,11 +310,11 @@ def _report_sram_defaults(params: SramDefaultsParams, patch) -> list[str]:
     ]
 
 
-def _fixed(patch: ROMPatch) -> Callable[[BuildContext, object], ROMPatch]:
+def _fixed[R: ROMPatch](patch: R) -> Callable[[BuildContext, NoParams], R]:
     return lambda ctx, params: patch
 
 
-PATCH_SPECS: dict[str, PatchSpec] = {
+PATCH_SPECS: dict[str, PatchSpec[Any, Any]] = {
     spec.id: spec
     for spec in [
         PatchSpec(

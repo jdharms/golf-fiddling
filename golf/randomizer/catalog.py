@@ -27,7 +27,9 @@ VANILLA_AUTHOR = "Nintendo"
 
 _SEGMENT = r"[a-z0-9_]+"
 LINEAGE_PATTERN = re.compile(rf"{_SEGMENT}/{_SEGMENT}")
-_ID_PATTERN = re.compile(rf"(?P<lineage>{_SEGMENT}/{_SEGMENT})(?:@(?P<version>[1-9][0-9]*))?")
+_ID_PATTERN = re.compile(
+    rf"(?P<lineage>{_SEGMENT}/{_SEGMENT})(?:@(?P<version>[1-9][0-9]*))?"
+)
 
 # HoleData.to_dict() keys whose values reach the ROM (see CoursePatch). `hole` and
 # `_debug` do not; nor do terrain rows past `terrain.height`.
@@ -58,7 +60,9 @@ class HoleId:
 
     def __post_init__(self):
         if not LINEAGE_PATTERN.fullmatch(self.lineage):
-            raise CatalogError(f"bad hole lineage {self.lineage!r}: expected owner/slug")
+            raise CatalogError(
+                f"bad hole lineage {self.lineage!r}: expected owner/slug"
+            )
         if self.version < 1:
             raise CatalogError(f"bad hole version {self.version} for {self.lineage}")
 
@@ -68,7 +72,9 @@ class HoleId:
             return text
         match = _ID_PATTERN.fullmatch(text)
         if not match:
-            raise CatalogError(f"bad hole id {text!r}: expected owner/slug or owner/slug@N")
+            raise CatalogError(
+                f"bad hole id {text!r}: expected owner/slug or owner/slug@N"
+            )
         return cls(match["lineage"], int(match["version"] or 1))
 
     def __str__(self) -> str:
@@ -149,11 +155,15 @@ _ENTRY_KEYS = {"source", "content_hash", "par", "distance", "author"}
 def _entry_from_json(key: str, data: dict) -> CatalogEntry:
     hole_id = HoleId.parse(key)
     if str(hole_id) != key:
-        raise CatalogError(f"catalog key {key!r} is not canonical; write it as {hole_id}")
+        raise CatalogError(
+            f"catalog key {key!r} is not canonical; write it as {hole_id}"
+        )
     missing = _ENTRY_KEYS - set(data)
     unknown = set(data) - _ENTRY_KEYS - {"withdrawn"}
     if missing or unknown:
-        raise CatalogError(f"{key}: missing fields {sorted(missing)}, unknown {sorted(unknown)}")
+        raise CatalogError(
+            f"{key}: missing fields {sorted(missing)}, unknown {sorted(unknown)}"
+        )
     return CatalogEntry(
         id=hole_id,
         source=_source_from_json(key, data["source"]),
@@ -179,7 +189,9 @@ class Catalog:
     @classmethod
     def from_json(cls, data: dict) -> "Catalog":
         if set(data) != {"version", "holes"}:
-            raise CatalogError(f"catalog index needs exactly 'version' and 'holes', got {sorted(data)}")
+            raise CatalogError(
+                f"catalog index needs exactly 'version' and 'holes', got {sorted(data)}"
+            )
         entries = {}
         for key, value in data["holes"].items():
             entry = _entry_from_json(key, value)
@@ -189,7 +201,10 @@ class Catalog:
     def to_json(self) -> dict:
         return {
             "version": self.version,
-            "holes": {str(hole_id): self.entries[hole_id].to_json() for hole_id in sorted(self.entries)},
+            "holes": {
+                str(hole_id): self.entries[hole_id].to_json()
+                for hole_id in sorted(self.entries)
+            },
         }
 
     def save(self, path: Path = DEFAULT_INDEX) -> None:
@@ -223,7 +238,9 @@ class Catalog:
         highest: dict[str, CatalogEntry] = {}
         for entry in self:
             highest[entry.id.lineage] = entry  # iteration is sorted, so versions ascend
-        return {lineage: entry for lineage, entry in highest.items() if not entry.withdrawn}
+        return {
+            lineage: entry for lineage, entry in highest.items() if not entry.withdrawn
+        }
 
 
 class HoleStore:
@@ -266,8 +283,14 @@ class HoleStore:
 # -- Syncing vanilla holes -----------------------------------------------------------------
 
 VANILLA_COURSES: tuple[tuple[str, str, int], ...] = (
-    *((US_ROM, course["name"], rom_utils.HOLES_PER_COURSE) for course in rom_utils.COURSES),
-    *((JP_ROM, course["name"], jp_rom_utils.HOLES_PER_COURSE) for course in jp_rom_utils.COURSES),
+    *(
+        (US_ROM, course["name"], rom_utils.HOLES_PER_COURSE)
+        for course in rom_utils.COURSES
+    ),
+    *(
+        (JP_ROM, course["name"], jp_rom_utils.HOLES_PER_COURSE)
+        for course in jp_rom_utils.COURSES
+    ),
 )
 
 
@@ -277,7 +300,9 @@ def vanilla_lineage(rom: str, course: str, hole: int) -> str:
     return f"{prefix}/{hole:02d}"
 
 
-def vanilla_entry(store: HoleStore, rom: str, course: str, hole_number: int) -> CatalogEntry | None:
+def vanilla_entry(
+    store: HoleStore, rom: str, course: str, hole_number: int
+) -> CatalogEntry | None:
     """The version 1 entry for a vanilla hole as dumped under the store, or None if absent."""
     source = RomSource(rom, course, hole_number)
     hole_id = HoleId(vanilla_lineage(rom, course, hole_number))

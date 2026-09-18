@@ -1,7 +1,6 @@
 """Integration tests for greens compression round-trip validation."""
 
 
-
 def test_simple_greens_roundtrip(simple_greens_fixture, greens_decompressor):
     """Compress and decompress simple greens fixture (24x24)."""
     from golf.core.compressor import GreensCompressor
@@ -20,7 +19,9 @@ def test_simple_greens_roundtrip(simple_greens_fixture, greens_decompressor):
     assert all(len(row) == 24 for row in decompressed), "Not all rows have 24 columns"
 
     # Verify content
-    for i, (original, decomp) in enumerate(zip(original_rows, decompressed)):
+    for i, (original, decomp) in enumerate(
+        zip(original_rows, decompressed, strict=True)
+    ):
         assert original == decomp, (
             f"Row {i} mismatch: original length={len(original)}, decompressed length={len(decomp)}"
         )
@@ -42,7 +43,9 @@ def test_hole_04_greens_roundtrip(hole_04_data, greens_decompressor):
     assert all(len(row) == 24 for row in decompressed)
 
     # Verify content
-    for i, (original, decomp) in enumerate(zip(original_rows, decompressed)):
+    for i, (original, decomp) in enumerate(
+        zip(original_rows, decompressed, strict=True)
+    ):
         assert original == decomp, f"Hole 4 greens row {i} mismatch"
 
 
@@ -62,7 +65,7 @@ def test_hole_01_greens_roundtrip(hole_01_data, greens_decompressor):
     assert all(len(row) == 24 for row in decompressed)
 
     # Verify content
-    for original, decomp in zip(original_rows, decompressed):
+    for original, decomp in zip(original_rows, decompressed, strict=True):
         assert original == decomp
 
 
@@ -86,7 +89,7 @@ def test_all_greens_zeros(greens_decompressor):
     # Verify round-trip
     assert len(decompressed) == 24
     assert all(len(row) == 24 for row in decompressed)
-    for original, decomp in zip(original_rows, decompressed):
+    for original, decomp in zip(original_rows, decompressed, strict=True):
         assert original == decomp
 
 

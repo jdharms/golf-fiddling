@@ -35,25 +35,40 @@ def _tracks(spec: str | None, rom: bytes) -> list[int]:
     for part in spec.split(","):
         n = int(part, 0)
         if not FIRST_MUSIC_ID <= n <= LAST_MUSIC_ID:
-            raise SystemExit(f"track {n} out of range "
-                             f"(${FIRST_MUSIC_ID:02X}-${LAST_MUSIC_ID:02X})")
+            raise SystemExit(
+                f"track {n} out of range (${FIRST_MUSIC_ID:02X}-${LAST_MUSIC_ID:02X})"
+            )
         out.append(n)
     return out
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__,
-                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     ap.add_argument("rom", type=Path)
     ap.add_argument("-o", "--output", type=Path, help="output file")
-    ap.add_argument("--drums", action="store_true",
-                    help="export the 10 DPCM drum samples as an NSF, one song each")
-    ap.add_argument("--dump", action="store_true",
-                    help="write tracks as relocatable JSON instead of an NSF")
-    ap.add_argument("--tracks", metavar="N[,N...]|courses|all", default="courses",
-                    help="which tracks to dump (default: the three course themes)")
-    ap.add_argument("--reference", type=Path,
-                    help="ROM to compare note tuning against, recorded in the dump")
+    ap.add_argument(
+        "--drums",
+        action="store_true",
+        help="export the 10 DPCM drum samples as an NSF, one song each",
+    )
+    ap.add_argument(
+        "--dump",
+        action="store_true",
+        help="write tracks as relocatable JSON instead of an NSF",
+    )
+    ap.add_argument(
+        "--tracks",
+        metavar="N[,N...]|courses|all",
+        default="courses",
+        help="which tracks to dump (default: the three course themes)",
+    )
+    ap.add_argument(
+        "--reference",
+        type=Path,
+        help="ROM to compare note tuning against, recorded in the dump",
+    )
     args = ap.parse_args(argv)
 
     rom = args.rom.read_bytes()
@@ -61,7 +76,9 @@ def main(argv=None) -> int:
     if args.drums:
         out = args.output or args.rom.with_name("drum_kit.nsf")
         out.write_bytes(build_drum_nsf(rom))
-        print(f"wrote {out}  ({DMC_SAMPLE_COUNT} songs, one per slot x1-x{DMC_SAMPLE_COUNT})")
+        print(
+            f"wrote {out}  ({DMC_SAMPLE_COUNT} songs, one per slot x1-x{DMC_SAMPLE_COUNT})"
+        )
         return 0
 
     if args.dump:
@@ -72,22 +89,30 @@ def main(argv=None) -> int:
         out.write_text(json.dumps(data, indent=2) + "\n")
         cb = data["course_bgm"]
         print(f"wrote {out}")
-        print(f"  {len(cb['slots'])} course slots, {len(cb['unique_music_ids'])} distinct themes: "
-              + ", ".join(f"{s['name']}=${s['music_id']:02X}" for s in cb["slots"]))
+        print(
+            f"  {len(cb['slots'])} course slots, {len(cb['unique_music_ids'])} distinct themes: "
+            + ", ".join(f"{s['name']}=${s['music_id']:02X}" for s in cb["slots"])
+        )
         for t in data["tracks"]:
-            print(f"  track ${t['music_id']:02X}: {len(t['patterns'])} patterns, "
-                  f"{len(t['order'])} order entries, transpose {t['transpose']:+d}, "
-                  f"{t['bytes']} bytes")
+            print(
+                f"  track ${t['music_id']:02X}: {len(t['patterns'])} patterns, "
+                f"{len(t['order'])} order entries, transpose {t['transpose']:+d}, "
+                f"{t['bytes']} bytes"
+            )
         if ref is not None:
             n = data["engine"]["semitones_sharper_than_reference"]
-            print(f"  tuning: {n:+d} semitones vs {args.reference.name} "
-                  f"(add {n:+d} to each track's transpose when inserting there)")
+            print(
+                f"  tuning: {n:+d} semitones vs {args.reference.name} "
+                f"(add {n:+d} to each track's transpose when inserting there)"
+            )
         return 0
 
     out = args.output or args.rom.with_suffix(".nsf")
     out.write_bytes(build_nsf(rom))
-    print(f"wrote {out}  ({TRACK_COUNT} tracks, "
-          f"${FIRST_MUSIC_ID:02X}-${LAST_MUSIC_ID:02X})")
+    print(
+        f"wrote {out}  ({TRACK_COUNT} tracks, "
+        f"${FIRST_MUSIC_ID:02X}-${LAST_MUSIC_ID:02X})"
+    )
     return 0
 
 

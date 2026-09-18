@@ -29,7 +29,15 @@ def draws(*values):
 
 
 def test_a_first_sign_in_inserts_the_user(db):
-    user = sign_in(db, "80351110224678912", "nelly", "Nelly", "abc123", now="2026-09-16T00:00:00Z", draw=draws(77))
+    user = sign_in(
+        db,
+        "80351110224678912",
+        "nelly",
+        "Nelly",
+        "abc123",
+        now="2026-09-16T00:00:00Z",
+        draw=draws(77),
+    )
     assert user == User(
         id=user.id,
         discord_id="80351110224678912",
@@ -44,9 +52,22 @@ def test_a_first_sign_in_inserts_the_user(db):
 
 
 def test_a_later_sign_in_refreshes_names_and_last_login_only(db):
-    first = sign_in(db, "1", "nelly", "Nelly", None, now="2026-09-16T00:00:00Z", draw=draws(77))
-    again = sign_in(db, "1", "nelly2", None, "def456", now="2026-09-17T00:00:00Z", draw=draws(99))
-    assert again == User(first.id, "1", "nelly2", None, "def456", 77, "2026-09-16T00:00:00Z", "2026-09-17T00:00:00Z")
+    first = sign_in(
+        db, "1", "nelly", "Nelly", None, now="2026-09-16T00:00:00Z", draw=draws(77)
+    )
+    again = sign_in(
+        db, "1", "nelly2", None, "def456", now="2026-09-17T00:00:00Z", draw=draws(99)
+    )
+    assert again == User(
+        first.id,
+        "1",
+        "nelly2",
+        None,
+        "def456",
+        77,
+        "2026-09-16T00:00:00Z",
+        "2026-09-17T00:00:00Z",
+    )
     assert load_user(db, first.id) == again
 
 

@@ -63,16 +63,24 @@ def test_dev_login_anything_else_is_off(value):
 def test_sign_in_needs_both_discord_credentials_or_the_bypass():
     assert Config().sign_in_enabled is False
     assert Config(discord_client_id="id").sign_in_enabled is False
-    assert Config(discord_client_id="id", discord_client_secret="secret").sign_in_enabled is True
+    assert (
+        Config(discord_client_id="id", discord_client_secret="secret").sign_in_enabled
+        is True
+    )
     assert Config(dev_login=True).sign_in_enabled is True
 
 
-@pytest.mark.parametrize("base_url", ["http://127.0.0.1:8000", "http://localhost:5000", "http://[::1]:8000"])
+@pytest.mark.parametrize(
+    "base_url", ["http://127.0.0.1:8000", "http://localhost:5000", "http://[::1]:8000"]
+)
 def test_the_bypass_runs_on_localhost(base_url):
     Config(dev_login=True, base_url=base_url).validate()
 
 
-@pytest.mark.parametrize("base_url", ["https://golf.example", "http://192.168.1.10:8000", "http://localhost.example"])
+@pytest.mark.parametrize(
+    "base_url",
+    ["https://golf.example", "http://192.168.1.10:8000", "http://localhost.example"],
+)
 def test_the_bypass_is_refused_anywhere_else(base_url):
     with pytest.raises(ConfigError, match="localhost"):
         Config(dev_login=True, base_url=base_url).validate()
@@ -81,9 +89,10 @@ def test_the_bypass_is_refused_anywhere_else(base_url):
 def test_discord_sign_in_needs_a_session_secret():
     with pytest.raises(ConfigError, match="GOLF_SESSION_SECRET"):
         Config(discord_client_id="id", discord_client_secret="secret").validate()
-    Config(discord_client_id="id", discord_client_secret="secret", session_secret="s").validate()
+    Config(
+        discord_client_id="id", discord_client_secret="secret", session_secret="s"
+    ).validate()
     Config().validate()
-
 
 
 @pytest.mark.parametrize("value", ["1234 5678", "1234,5678", " 1234 ,\t5678, "])

@@ -38,18 +38,25 @@ class TestDiff:
     def test_single_byte(self):
         patched = bytearray(32)
         patched[5] = 0xAB
-        assert ips.diff(bytes(32), bytes(patched)) == b"PATCH" + bytes([0, 0, 5, 0, 1, 0xAB]) + b"EOF"
+        assert (
+            ips.diff(bytes(32), bytes(patched))
+            == b"PATCH" + bytes([0, 0, 5, 0, 1, 0xAB]) + b"EOF"
+        )
 
     def test_offsets_count_from_the_start_of_the_file(self):
         patched = bytearray(0x20000)
         patched[0x10203] = 1
-        assert records(roundtrip(bytes(0x20000), bytes(patched))) == [(0x10203, "literal", 1)]
+        assert records(roundtrip(bytes(0x20000), bytes(patched))) == [
+            (0x10203, "literal", 1)
+        ]
 
     def test_short_gaps_merge_into_one_record(self):
         patched = bytearray(64)
         patched[10] = 1
         patched[10 + MERGE_GAP] = 1  # MERGE_GAP - 1 unchanged bytes between
-        assert records(roundtrip(bytes(64), bytes(patched))) == [(10, "literal", MERGE_GAP + 1)]
+        assert records(roundtrip(bytes(64), bytes(patched))) == [
+            (10, "literal", MERGE_GAP + 1)
+        ]
 
     def test_longer_gaps_split_records(self):
         patched = bytearray(64)
@@ -69,7 +76,9 @@ class TestDiff:
     def test_short_runs_stay_literal(self):
         patched = bytearray(100)
         patched[10 : 10 + RLE_MIN_RUN - 1] = b"\xff" * (RLE_MIN_RUN - 1)
-        assert records(roundtrip(bytes(100), bytes(patched))) == [(10, "literal", RLE_MIN_RUN - 1)]
+        assert records(roundtrip(bytes(100), bytes(patched))) == [
+            (10, "literal", RLE_MIN_RUN - 1)
+        ]
 
     def test_run_inside_a_span_splits_it(self):
         patched = bytearray(100)

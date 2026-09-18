@@ -1,6 +1,7 @@
 """Tests for the music engine export path (golf/core/audio.py)."""
 
 import struct
+from itertools import pairwise
 
 import pytest
 
@@ -20,18 +21,19 @@ def rom():
 
 # --------------------------------------------------------------------- NSF
 
+
 def test_nsf_header(rom):
     nsf = audio.build_nsf(rom)
     assert nsf[:5] == b"NESM\x1a"
-    assert nsf[5] == 1                       # version
+    assert nsf[5] == 1  # version
     assert nsf[6] == audio.TRACK_COUNT == 23
-    assert nsf[7] == 1                       # starting song
+    assert nsf[7] == 1  # starting song
     load, init, play = struct.unpack_from("<HHH", nsf, 8)
     assert load == 0x8000
     assert init == 0xD000
     assert play == init + len(audio._NSF_STUB) - 3
     assert list(nsf[112:120]) == [0, 1, 2, 3, 4, 5, 5, 5]
-    assert nsf[122] == 0 and nsf[123] == 0   # NTSC, no expansion audio
+    assert nsf[122] == 0 and nsf[123] == 0  # NTSC, no expansion audio
     assert len(nsf) == 0x80 + 6 * 0x1000
 
 
@@ -40,8 +42,8 @@ def test_nsf_maps_engine_and_samples(rom):
     nsf = audio.build_nsf(rom)
     body = nsf[0x80:]
     raw = rom[16:]
-    assert body[0:0x4000] == raw[audio.BANK14_OFF:audio.BANK15_OFF]
-    assert body[0x4000:0x5000] == raw[audio.BANK15_OFF:audio.BANK15_OFF + 0x1000]
+    assert body[0:0x4000] == raw[audio.BANK14_OFF : audio.BANK15_OFF]
+    assert body[0x4000:0x5000] == raw[audio.BANK15_OFF : audio.BANK15_OFF + 0x1000]
 
 
 def test_nsf_stub_runs_under_emulation(rom):
@@ -51,7 +53,7 @@ def test_nsf_stub_runs_under_emulation(rom):
     nsf = audio.build_nsf(rom)
     init, play = struct.unpack_from("<HH", nsf, 10)
     body = nsf[0x80:]
-    pages = [body[i * 0x1000:(i + 1) * 0x1000] for i in range(len(body) // 0x1000)]
+    pages = [body[i * 0x1000 : (i + 1) * 0x1000] for i in range(len(body) // 0x1000)]
     prg = bytearray(b"".join(pages[b] for b in nsf[112:120]))
 
     bus = audio._Bus(prg)
@@ -60,12 +62,12 @@ def test_nsf_stub_runs_under_emulation(rom):
     # INIT must not clear the stack page or it could not return to the player.
     for i in range(0x0100, 0x0180):
         bus.ram[i] = 0xA5
-    mpu.a, mpu.x = 0, 0                     # song 1 (0-based), NTSC
-    audio._call(mpu, init)                  # raises if it never returns
+    mpu.a, mpu.x = 0, 0  # song 1 (0-based), NTSC
+    audio._call(mpu, init)  # raises if it never returns
     assert bus.ram[audio.MUSIC_REQUEST] == 1
     assert bus.ram[audio.SFX_ACTIVE] == 1
     assert all(bus.ram[i] == 0xA5 for i in range(0x0100, 0x0180))
-    assert bus.ram[0x0200:0x0800] == bytes(0x600)   # everything else cleared
+    assert bus.ram[0x0200:0x0800] == bytes(0x600)  # everything else cleared
 
     for f in range(120):
         bus.frame = f
@@ -75,6 +77,7 @@ def test_nsf_stub_runs_under_emulation(rom):
 
 
 # ---------------------------------------------------------------- engine run
+
 
 @pytest.mark.parametrize("track", [1, 4, 0x0A, 0x17])
 def test_engine_runs_every_track(rom, track):
@@ -93,6 +96,7 @@ def test_dmc_flag_gates_percussion(rom):
 
 # --------------------------------------------------------------- drum kit NSF
 
+
 def test_drum_nsf_header(rom):
     nsf = audio.build_drum_nsf(rom)
     assert nsf[:5] == b"NESM\x1a"
@@ -110,7 +114,7 @@ def test_drum_nsf_plays_the_right_sample(rom, sid):
     nsf = audio.build_drum_nsf(rom)
     init, play = struct.unpack_from("<HH", nsf, 10)
     body = nsf[0x80:]
-    pages = [body[i * 0x1000:(i + 1) * 0x1000] for i in range(len(body) // 0x1000)]
+    pages = [body[i * 0x1000 : (i + 1) * 0x1000] for i in range(len(body) // 0x1000)]
     prg = bytearray(b"".join(pages[b] for b in nsf[112:120]))
 
     bus = audio._Bus(prg)
@@ -132,7 +136,7 @@ def test_drum_nsf_plays_the_right_sample(rom, sid):
     assert rate[0] & 0x0F == info["rate_index"]
     # repeats on a steady 48-frame cycle so it can be auditioned
     hits = [f for f, _ in addr]
-    assert all(b - a == 48 for a, b in zip(hits, hits[1:]))
+    assert all(b - a == 48 for a, b in pairwise(hits))
 
 
 def test_drum_nsf_reproduces_the_cutoff(rom):
@@ -142,13 +146,13 @@ def test_drum_nsf_reproduces_the_cutoff(rom):
     nsf = audio.build_drum_nsf(rom)
     init, play = struct.unpack_from("<HH", nsf, 10)
     body = nsf[0x80:]
-    pages = [body[i * 0x1000:(i + 1) * 0x1000] for i in range(len(body) // 0x1000)]
+    pages = [body[i * 0x1000 : (i + 1) * 0x1000] for i in range(len(body) // 0x1000)]
     prg = bytearray(b"".join(pages[b] for b in nsf[112:120]))
 
     bus = audio._Bus(prg)
     mpu = MPU(memory=bus)
     mpu.sp = 0xFD
-    mpu.a, mpu.x = 0, 0          # song 1 -> sample 1, runs 8 frames
+    mpu.a, mpu.x = 0, 0  # song 1 -> sample 1, runs 8 frames
     audio._call(mpu, init)
     for f in range(60):
         bus.frame = f

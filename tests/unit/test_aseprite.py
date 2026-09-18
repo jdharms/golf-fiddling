@@ -34,7 +34,9 @@ def parse(data):
     pos = 128
     palette, layers, all_frames = {}, [], []
     for _ in range(frames):
-        frame_size, frame_magic, _, duration = struct.unpack("<IHHH", data[pos : pos + 10])
+        frame_size, frame_magic, _, duration = struct.unpack(
+            "<IHHH", data[pos : pos + 10]
+        )
         chunk_count = struct.unpack("<I", data[pos + 12 : pos + 16])[0]
         assert frame_magic == 0xF1FA
         p, end = pos + 16, pos + frame_size
@@ -75,16 +77,24 @@ def parse(data):
         all_frames.append((duration, cels))
     assert pos == len(data)
     return dict(
-        width=width, height=height, depth=depth, frames=frames,
-        transparent=transparent, ncolors=ncolors, grid=grid,
-        palette=palette, layers=layers, cels=all_frames,
+        width=width,
+        height=height,
+        depth=depth,
+        frames=frames,
+        transparent=transparent,
+        ncolors=ncolors,
+        grid=grid,
+        palette=palette,
+        layers=layers,
+        cels=all_frames,
     )
 
 
 @pytest.fixture
 def sample():
     ase = AsepriteFile(
-        width=8, height=4,
+        width=8,
+        height=4,
         palette=[(0, 0, 0, 0), (255, 0, 0, 255), (0, 128, 255, 255)],
         grid=(2, 3, 8, 8),
     )
@@ -117,7 +127,8 @@ class TestStructure:
 
     def test_named_entries_round_trip_and_keep_later_ones_aligned(self):
         ase = AsepriteFile(
-            width=1, height=1,
+            width=1,
+            height=1,
             palette=[
                 (0, 0, 0, 0),
                 (1, 2, 3, 255, "$16 - body 1"),
@@ -212,8 +223,12 @@ class TestReader:
         # Grow the frame's size and chunk counts to match the injected chunk.
         frame_size = struct.unpack_from("<I", data, 128)[0] + len(extra)
         struct.pack_into("<I", data, 128, frame_size)
-        struct.pack_into("<H", data, 128 + 6, struct.unpack_from("<H", data, 128 + 6)[0] + 1)
-        struct.pack_into("<I", data, 128 + 12, struct.unpack_from("<I", data, 128 + 12)[0] + 1)
+        struct.pack_into(
+            "<H", data, 128 + 6, struct.unpack_from("<H", data, 128 + 6)[0] + 1
+        )
+        struct.pack_into(
+            "<I", data, 128 + 12, struct.unpack_from("<I", data, 128 + 12)[0] + 1
+        )
         struct.pack_into("<I", data, 0, len(data))
 
         back = AsepriteFile.from_bytes(bytes(data))
@@ -262,6 +277,6 @@ class TestReader:
 
     def test_a_non_indexed_file_is_refused(self, sample):
         data = bytearray(sample.to_bytes())
-        struct.pack_into("<H", data, 12, 32)      # RGBA
+        struct.pack_into("<H", data, 12, 32)  # RGBA
         with pytest.raises(ValueError, match="indexed"):
             AsepriteFile.from_bytes(bytes(data))

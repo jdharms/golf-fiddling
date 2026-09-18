@@ -186,17 +186,23 @@ class StampCreationDialog:
                     self.name_input_active = False
                     if event.key == pygame.K_TAB:
                         self.category_input_active = True
-                elif event.unicode and event.unicode.isprintable():
-                    if len(self.stamp_name) < 50:
-                        self.stamp_name += event.unicode
+                elif (
+                    event.unicode
+                    and event.unicode.isprintable()
+                    and len(self.stamp_name) < 50
+                ):
+                    self.stamp_name += event.unicode
             elif self.category_input_active:
                 if event.key == pygame.K_BACKSPACE:
                     self.category = self.category[:-1]
                 elif event.key == pygame.K_RETURN:
                     self.category_input_active = False
-                elif event.unicode and event.unicode.isprintable():
-                    if len(self.category) < 50:
-                        self.category += event.unicode
+                elif (
+                    event.unicode
+                    and event.unicode.isprintable()
+                    and len(self.category) < 50
+                ):
+                    self.category += event.unicode
             elif event.key == pygame.K_ESCAPE:
                 self.cancelled = True
                 return True
@@ -215,7 +221,10 @@ class StampCreationDialog:
         col = local_x // tile_size
         row = local_y // tile_size
 
-        if 0 <= row < self.clipboard_data.height and 0 <= col < self.clipboard_data.width:
+        if (
+            0 <= row < self.clipboard_data.height
+            and 0 <= col < self.clipboard_data.width
+        ):
             self.transparency_mask[row][col] = not self.transparency_mask[row][col]
 
     def _save_stamp(self):
@@ -260,7 +269,9 @@ class StampCreationDialog:
 
         # Title
         title_surf = self.font.render("Create Stamp", True, COLOR_TEXT)
-        title_rect = title_surf.get_rect(centerx=self.dialog_rect.centerx, y=self.title_y)
+        title_rect = title_surf.get_rect(
+            centerx=self.dialog_rect.centerx, y=self.title_y
+        )
         screen.blit(title_surf, title_rect)
 
         # Instructions
@@ -284,7 +295,9 @@ class StampCreationDialog:
         pygame.draw.rect(screen, COLOR_BUTTON, self.name_input_rect)
         pygame.draw.rect(screen, input_color, self.name_input_rect, 2)
 
-        name_surf = self.font.render(self.stamp_name or "auto-generated", True, COLOR_TEXT)
+        name_surf = self.font.render(
+            self.stamp_name or "auto-generated", True, COLOR_TEXT
+        )
         name_rect = name_surf.get_rect(
             left=self.name_input_rect.left + 5,
             centery=self.name_input_rect.centery,
@@ -301,10 +314,7 @@ class StampCreationDialog:
         pygame.draw.rect(screen, cat_input_color, self.category_input_rect, 2)
 
         # Category text or placeholder
-        if self.category:
-            cat_text = self.category
-        else:
-            cat_text = "e.g., bunker/small or green/edges/top"
+        cat_text = self.category or "e.g., bunker/small or green/edges/top"
 
         cat_surf = self.font.render(cat_text, True, COLOR_TEXT)
         cat_rect = cat_surf.get_rect(

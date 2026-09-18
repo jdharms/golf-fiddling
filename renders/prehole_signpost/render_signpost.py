@@ -12,7 +12,9 @@ import sys
 
 from PIL import Image
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 from golf.core.palettes import NES_SYSTEM_PALETTE
 from golf.core.rom_reader import RomReader
@@ -25,10 +27,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 def render(vram, pal, out_path):
     img = Image.new("RGB", (256, 240))
     px = img.load()
+    assert px is not None
     for y, row in enumerate(render_screen(vram, pal)):
         for x, value in enumerate(row):
             px[x, y] = NES_SYSTEM_PALETTE[value & 0x3F]
-    img.resize((512, 480), Image.NEAREST).save(out_path)
+    img.resize((512, 480), Image.Resampling.NEAREST).save(out_path)
     print("wrote", out_path)
 
 
@@ -45,7 +48,9 @@ def main():
     # numbers since the banner itself doesn't depend on course.
     vram, pal = build_screen(rom, 0, 5, hole_match_status=1, contest_palette_patch=True)
     render(vram, pal, os.path.join(HERE, "signpost_longdrive_contest.png"))
-    vram, pal = build_screen(rom, 1, 12, hole_match_status=2, contest_palette_patch=True)
+    vram, pal = build_screen(
+        rom, 1, 12, hole_match_status=2, contest_palette_patch=True
+    )
     render(vram, pal, os.path.join(HERE, "signpost_nearestpin_contest.png"))
 
 

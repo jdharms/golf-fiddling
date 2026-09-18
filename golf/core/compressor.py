@@ -8,6 +8,9 @@ decompression algorithm. See golf/core/compression.md for algorithm details.
 import json
 from pathlib import Path
 
+# longest run a single repeat code can encode
+MAX_REPEAT = 31
+
 
 def _get_default_tables_path() -> Path:
     """Get default path to compression_tables.json."""
@@ -36,15 +39,12 @@ def load_compression_tables(tables_path: str | None = None) -> dict:
         FileNotFoundError: If tables file not found
         ValueError: If tables structure is invalid
     """
-    if tables_path is None:
-        tables_path = _get_default_tables_path()
-    else:
-        tables_path = Path(tables_path)
+    path = _get_default_tables_path() if tables_path is None else Path(tables_path)
 
-    if not tables_path.exists():
-        raise FileNotFoundError(f"Compression tables not found: {tables_path}")
+    if not path.exists():
+        raise FileNotFoundError(f"Compression tables not found: {path}")
 
-    with open(tables_path) as f:
+    with open(path) as f:
         tables = json.load(f)
 
     # Validate structure
@@ -148,7 +148,6 @@ def generate_repeat_code(
     Returns:
         (repeat_code, match_length) where code is 1-31, or None if no match
     """
-    MAX_REPEAT = 31
     count = 0
     current = prev_byte
 

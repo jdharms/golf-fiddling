@@ -14,7 +14,7 @@ from golf.randomizer.manifest import Settings
 from server.db import Database
 from server.entries import load_entry, upsert_entry
 from server.rounds import RoundHole
-from server.seeds import MAX_QR_SEED_ID, insert_seed, load_seed
+from server.seeds import MAX_QR_SEED_ID, insert_seed
 from server.submissions import (
     MALFORMED,
     UNFINISHED,
@@ -23,6 +23,7 @@ from server.submissions import (
     submit_scan,
 )
 from server.users import sign_in
+from tests.unit.test_server_seeds import seed_row
 
 LUIGI = PlayerOptions("LUIGI", frozenset({Club.W1, Club.PW}))
 TOAD = PlayerOptions("TOAD", frozenset({Club.W3, Club.SW}))
@@ -33,7 +34,9 @@ HOLES = (HoleRecord(4, 2),) * 17 + (HoleRecord(6, 3),)
 
 @pytest.fixture(scope="module")
 def manifest():
-    return generate(Catalog.load(), CurationSnapshot.load(), Settings(prng_seed="submissions"))
+    return generate(
+        Catalog.load(), CurationSnapshot.load(), Settings(prng_seed="submissions")
+    )
 
 
 @pytest.fixture
@@ -47,12 +50,16 @@ def db():
 class Player:
     """A signed-in player entered in a seed: what their ROM's QR code is built from."""
 
-    def __init__(self, db: Database, seed_id: str, name: str, global_name: str | None = None):
+    def __init__(
+        self, db: Database, seed_id: str, name: str, global_name: str | None = None
+    ):
         self.user = sign_in(db, f"dev:{name}", name, global_name, None)
         self.entry = upsert_entry(db, seed_id, self.user.id, LUIGI)
-        self.qr_seed_id = load_seed(db, seed_id).qr_seed_id
+        self.qr_seed_id = seed_row(db, seed_id).qr_seed_id
 
-    def payload(self, slot: int = 0, holes=HOLES, key: bytes | None = None, **changes) -> bytes:
+    def payload(
+        self, slot: int = 0, holes=HOLES, key: bytes | None = None, **changes
+    ) -> bytes:
         fields = {
             "seed_id": self.qr_seed_id.to_bytes(8, "big"),
             "player_id": self.user.player_id.to_bytes(4, "big"),
@@ -60,7 +67,9 @@ class Player:
             "player_slot": slot,
             **changes,
         }
-        return RoundPayload(**fields).to_bytes(key if key is not None else self.entry.keys[slot])
+        return RoundPayload(**fields).to_bytes(
+            key if key is not None else self.entry.keys[slot]
+        )
 
     def scan(self, slot: int = 0, **changes) -> str:
         return base64url_encode(self.payload(slot, **changes))
@@ -179,11 +188,19 @@ def test_a_payload_matching_no_entry_is_not_recognized(db, manifest, seed_id, al
     other_seed = insert_seed(db, manifest, b"PATCHEOF")
     bob = sign_in(db, "dev:bob", "bob", None, None)
     cases = {
-        "unknown seed": alice.scan(seed_id=(alice.qr_seed_id % MAX_QR_SEED_ID + 1).to_bytes(8, "big")),
+        "unknown seed": alice.scan(
+            seed_id=(alice.qr_seed_id % MAX_QR_SEED_ID + 1).to_bytes(8, "big")
+        ),
         "seed id past the range": alice.scan(seed_id=b"\xff" * 8),
-        "unknown player": alice.scan(player_id=(alice.user.player_id ^ 1 or 2).to_bytes(4, "big")),
-        "player without an entry": alice.scan(player_id=bob.player_id.to_bytes(4, "big")),
-        "entry on another seed": alice.scan(seed_id=load_seed(db, other_seed).qr_seed_id.to_bytes(8, "big")),
+        "unknown player": alice.scan(
+            player_id=(alice.user.player_id ^ 1 or 2).to_bytes(4, "big")
+        ),
+        "player without an entry": alice.scan(
+            player_id=bob.player_id.to_bytes(4, "big")
+        ),
+        "entry on another seed": alice.scan(
+            seed_id=seed_row(db, other_seed).qr_seed_id.to_bytes(8, "big")
+        ),
         "wrong key": alice.scan(key=b"\x00" * 8),
     }
     for case, text in cases.items():
@@ -204,7 +221,11 @@ def test_a_recorded_round_locks_the_entrys_choices(db, seed_id, alice):
     upsert_entry(db, seed_id, alice.user.id, TOAD, now="2026-09-17T10:00:00Z")
     submit_scan(db, alice.scan())
     after = upsert_entry(db, seed_id, alice.user.id, LUIGI, now="2026-09-18T10:00:00Z")
-    assert (after.player_name, after.clubs, after.updated_at) == ("TOAD", ("3W", "SW", "PT"), "2026-09-17T10:00:00Z")
+    assert (after.player_name, after.clubs, after.updated_at) == (
+        "TOAD",
+        ("3W", "SW", "PT"),
+        "2026-09-17T10:00:00Z",
+    )
     assert after.keys == alice.entry.keys
     assert load_entry(db, seed_id, alice.user.id) == after
 
@@ -214,7 +235,10 @@ def test_a_recorded_round_locks_the_entrys_choices(db, seed_id, alice):
 
 def rejection_log(caplog, text: str, db: Database) -> str:
     caplog.clear()
-    with caplog.at_level(logging.WARNING, logger="server.submissions"), pytest.raises(ScanError):
+    with (
+        caplog.at_level(logging.WARNING, logger="server.submissions"),
+        pytest.raises(ScanError),
+    ):
         submit_scan(db, text)
     [record] = caplog.records
     return record.getMessage()
@@ -233,11 +257,17 @@ def test_a_rejection_logs_its_exact_cause(db, manifest, seed_id, alice, caplog):
         alice.scan(player_id=bytes(4)): "unfinished: zero player id",
         alice.scan(seed_id=b"\xff" * 8): "unrecognized: seed id past the range",
         alice.scan(seed_id=unknown_seed): "unrecognized: unknown seed",
-        alice.scan(player_id=(alice.user.player_id ^ 1 or 2).to_bytes(4, "big")): "unrecognized: unknown player",
-        alice.scan(player_id=bob.player_id.to_bytes(4, "big")): "unrecognized: no entry for the seed and player",
+        alice.scan(
+            player_id=(alice.user.player_id ^ 1 or 2).to_bytes(4, "big")
+        ): "unrecognized: unknown player",
+        alice.scan(
+            player_id=bob.player_id.to_bytes(4, "big")
+        ): "unrecognized: no entry for the seed and player",
         alice.scan(key=b"\x00" * 8): "unrecognized: MAC does not verify",
     }
     for text, cause in cases.items():
-        assert rejection_log(caplog, text, db).startswith(f"scan rejected as {cause}"), cause
+        assert rejection_log(caplog, text, db).startswith(
+            f"scan rejected as {cause}"
+        ), cause
     message = rejection_log(caplog, alice.scan(key=b"\x00" * 8), db)
     assert f"seed={seed_id} player_id={alice.user.player_id} slot=0" in message

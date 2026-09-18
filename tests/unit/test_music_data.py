@@ -31,31 +31,32 @@ def jp():
 
 # ------------------------------------------------------------------- discovery
 
+
 def test_layout_matches_known_us_addresses(us):
     """The US addresses were derived by hand in docs/music_format.md."""
-    L = discover_layout(us)
-    assert L.order_table == 0x8E9E
-    assert L.duration_table == 0x8107
-    assert L.period_table == 0x818A
-    assert L.envelope_table == 0x81A4
-    assert L.transpose_table == 0x884F
-    assert L.noise_drum_table == 0x8232
-    assert L.dmc_duration_table == 0x8DCB
-    assert L.dmc_rate_table == 0x8DD5
-    assert L.dmc_ptr_table == 0x8DDF
-    assert L.header_base(1) == 0x8F2A
-    assert L.header_base(5) == 0x900A
-    assert L.header_base(0x11) == 0x90C5
+    layout = discover_layout(us)
+    assert layout.order_table == 0x8E9E
+    assert layout.duration_table == 0x8107
+    assert layout.period_table == 0x818A
+    assert layout.envelope_table == 0x81A4
+    assert layout.transpose_table == 0x884F
+    assert layout.noise_drum_table == 0x8232
+    assert layout.dmc_duration_table == 0x8DCB
+    assert layout.dmc_rate_table == 0x8DD5
+    assert layout.dmc_ptr_table == 0x8DDF
+    assert layout.header_base(1) == 0x8F2A
+    assert layout.header_base(5) == 0x900A
+    assert layout.header_base(0x11) == 0x90C5
 
 
 def test_layout_differs_for_the_japanese_rom(jp, us):
     """Mario Open Golf runs the same engine assembled at shifted addresses."""
     j, u = discover_layout(jp), discover_layout(us)
-    assert j.order_table == u.order_table == 0x8E9E     # this one did not move
+    assert j.order_table == u.order_table == 0x8E9E  # this one did not move
     assert j.duration_table != u.duration_table
     assert j.transpose_table != u.transpose_table
     assert j.header_base(1) != u.header_base(1)
-    assert len(j.header_bases) == 4                     # JP has one more than the US
+    assert len(j.header_bases) == 4  # JP has one more than the US
     for f in ("duration_table", "period_table", "envelope_table", "transpose_table"):
         assert 0x8000 <= getattr(j, f) < 0xC000
 
@@ -64,8 +65,9 @@ def test_duration_table_is_identical_across_regions(jp, us):
     """Tempos and note lengths port unchanged; pitch does not."""
     j, u = discover_layout(jp), discover_layout(us)
     jb, ub = md._bank14(jp), md._bank14(us)
-    assert [jb(j.duration_table + i) for i in range(131)] == \
-           [ub(u.duration_table + i) for i in range(131)]
+    assert [jb(j.duration_table + i) for i in range(131)] == [
+        ub(u.duration_table + i) for i in range(131)
+    ]
 
 
 def test_japanese_rom_is_two_semitones_sharp(jp, us):
@@ -75,6 +77,7 @@ def test_japanese_rom_is_two_semitones_sharp(jp, us):
 
 
 # ---------------------------------------------------------------- course lookup
+
 
 def test_us_course_bgm_table(us):
     u = md.discover_course_bgm(us)
@@ -108,21 +111,24 @@ def test_course_table_stops_before_code(us, jp):
 
 def test_jp_course_themes_are_distinct(jp):
     ids = md.discover_course_bgm(jp)["unique_music_ids"]
-    sigs = {tuple(sorted(p["stream"] for p in md.extract_track(jp, i)["patterns"]))
-            for i in ids}
+    sigs = {
+        tuple(sorted(p["stream"] for p in md.extract_track(jp, i)["patterns"]))
+        for i in ids
+    }
     assert len(sigs) == len(ids) == 5
 
 
 # ------------------------------------------------------------------- extraction
 
+
 @pytest.mark.parametrize("path", [US, JP])
 def test_every_pattern_block_is_valid(path):
     rom = _load(path)
-    L = discover_layout(rom)
-    pats = md.all_patterns(rom, L)
+    layout = discover_layout(rom)
+    pats = md.all_patterns(rom, layout)
     assert pats
     for addr, h in pats.items():
-        n = md.block_size(rom, L, h)
+        n = md.block_size(rom, layout, h)
         assert 0 < n <= 255, f"${addr:04X} block of {n} bytes"
 
 
@@ -130,17 +136,17 @@ def test_every_pattern_block_is_valid(path):
 def test_extracted_track_round_trips(path):
     """Rebuilding the order list from the dump must reproduce the ROM's bytes."""
     rom = _load(path)
-    L = discover_layout(rom)
+    layout = discover_layout(rom)
     for mid in sorted(set(md.discover_course_bgm(rom)["music_ids"].values())):
-        t = md.extract_track(rom, mid, L)
-        loop, seq = md._order(rom, L, mid)
+        t = md.extract_track(rom, mid, layout)
+        loop, seq = md._order(rom, layout, mid)
         assert t["loop_position"] == loop
         assert len(t["order"]) == len(seq)
 
         # Each order entry must map back to the byte it came from, and a given
         # pattern index must always correspond to the same order byte.
         rebuilt, seen = [], {}
-        for entry, original in zip(t["order"], seq):
+        for entry, original in zip(t["order"], seq, strict=True):
             if entry["type"] == "flag":
                 assert entry["value"] == original < 3
                 rebuilt.append(entry["value"])
@@ -152,9 +158,11 @@ def test_extracted_track_round_trips(path):
         # Every pattern's captured stream must be exactly the bytes the engine reads.
         b = md._bank14(rom)
         for index, order_byte in seen.items():
-            h = md._header(rom, L.header_base(mid) + order_byte)
+            h = md._header(rom, layout.header_base(mid) + order_byte)
             stream = bytes(int(x, 16) for x in t["patterns"][index]["stream"].split())
-            expected = bytes(b(h["ptr"] + i) for i in range(md.block_size(rom, L, h)))
+            expected = bytes(
+                b(h["ptr"] + i) for i in range(md.block_size(rom, layout, h))
+            )
             assert stream == expected
             assert t["patterns"][index]["tempo"] == h["tempo"]
             assert t["patterns"][index]["pulse1_start"] == h["pulse1_start"]
@@ -189,20 +197,24 @@ def test_export_is_json_serialisable_and_complete(path):
 def test_exported_envelope_rows_are_the_bytes_the_engine_reads(path):
     """A row is 16 bytes read straight from the table at the named base."""
     rom = _load(path)
-    L = discover_layout(rom)
+    layout = discover_layout(rom)
     b = md._bank14(rom)
     for mid in sorted(set(md.discover_course_bgm(rom)["music_ids"].values())):
-        for base, row in md.extract_track(rom, mid, L)["envelope_rows"].items():
-            expected = [f"{b(L.envelope_table + int(base, 16) + i):02X}" for i in range(16)]
+        for base, row in md.extract_track(rom, mid, layout)["envelope_rows"].items():
+            expected = [
+                f"{b(layout.envelope_table + int(base, 16) + i):02X}" for i in range(16)
+            ]
             assert row.split() == expected
 
 
 def test_japanese_course_themes_need_envelope_rows_the_us_rom_lacks(jp, us):
     """Why the rows have to travel with the track: the US table stops at $60."""
     jl, ul = discover_layout(jp), discover_layout(us)
-    used = {int(k, 16)
-            for mid in md.discover_course_bgm(jp)["unique_music_ids"]
-            for k in md.extract_track(jp, mid, jl)["envelope_rows"]}
+    used = {
+        int(k, 16)
+        for mid in md.discover_course_bgm(jp)["unique_music_ids"]
+        for k in md.extract_track(jp, mid, jl)["envelope_rows"]
+    }
     assert max(used) > ul.noise_drum_table - ul.envelope_table - 16
 
 
@@ -213,6 +225,7 @@ def test_export_records_tuning_against_a_reference(jp, us):
 
 # --------------------------------------------------------------------- JP NSF
 
+
 def test_japanese_rom_exports_a_working_nsf(jp):
     """The stub is ROM-agnostic: same RAM map, same AudioEngineMain entry."""
     from py65.devices.mpu6502 import MPU
@@ -222,7 +235,7 @@ def test_japanese_rom_exports_a_working_nsf(jp):
     nsf = build_nsf(jp)
     init, play = struct_unpack(nsf)
     body = nsf[0x80:]
-    pages = [body[i * 0x1000:(i + 1) * 0x1000] for i in range(len(body) // 0x1000)]
+    pages = [body[i * 0x1000 : (i + 1) * 0x1000] for i in range(len(body) // 0x1000)]
     prg = bytearray(b"".join(pages[b] for b in nsf[112:120]))
 
     bus = audio._Bus(prg)
@@ -239,4 +252,5 @@ def test_japanese_rom_exports_a_working_nsf(jp):
 
 def struct_unpack(nsf):
     import struct
+
     return struct.unpack_from("<HH", nsf, 10)

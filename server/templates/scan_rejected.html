@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block title %}{{ t_plain("scan_rejected.page_title") }}{% endblock %}
 {% block content %}
-<hgroup>
-  <h1>{{ t("scan_rejected.heading") }}</h1>
-  <p>
-    {% if rejection == "malformed" %}{{ t("scan_rejected.malformed") }}
-    {% elif rejection == "unfinished" %}{{ t("scan_rejected.unfinished") }}
-    {% else %}{{ t("scan_rejected.unrecognized") }}{% endif %}
+  <hgroup>
+    <h1>{{ t("scan_rejected.heading") }}</h1>
+    <p>
+      {% if rejection == "malformed" %}{{ t("scan_rejected.malformed") }}
+      {% elif rejection == "unfinished" %}{{ t("scan_rejected.unfinished") }}
+{% else %}{{ t("scan_rejected.unrecognized") }}{% endif %}
   </p>
-</hgroup>
+  </hgroup>
 {% endblock %}

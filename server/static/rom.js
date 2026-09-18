@@ -42,7 +42,11 @@ function setupRom(article) {
       const bytes = await file.arrayBuffer();
       const actual = await sha1Hex(bytes);
       if (actual !== expected) {
-        setState(article, "error", t("rom.status.mismatch", { file: file.name, sha1: actual }));
+        setState(
+          article,
+          "error",
+          t("rom.status.mismatch", { file: file.name, sha1: actual }),
+        );
         return;
       }
       await putRom({ id, sha1: actual, bytes });
@@ -74,10 +78,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const articles = document.querySelectorAll("article.rom");
   if (!window.isSecureContext || !window.crypto?.subtle || !window.indexedDB) {
     document.getElementById("rom-unsupported").hidden = false;
-    articles.forEach((article) => setState(article, "unavailable", t("rom.status.unavailable")));
+    for (const article of articles) {
+      setState(article, "unavailable", t("rom.status.unavailable"));
+    }
     return;
   }
   articles.forEach((article) => {
-    setupRom(article).catch((error) => setState(article, "error", t("rom.status.storage_failed", { error })));
+    setupRom(article).catch((error) =>
+      setState(article, "error", t("rom.status.storage_failed", { error })),
+    );
   });
 });

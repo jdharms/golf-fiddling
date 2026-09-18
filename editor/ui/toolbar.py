@@ -2,6 +2,9 @@
 Toolbar for editor buttons.
 """
 
+from collections.abc import Callable
+from dataclasses import dataclass
+
 import pygame
 from pygame import Rect
 
@@ -10,12 +13,16 @@ from editor.core.constants import COLOR_TOOLBAR, PALETTES, TOOLBAR_HEIGHT
 from .widgets import Button
 
 
+@dataclass(frozen=True)
 class ToolbarCallbacks:
     """Container for toolbar callbacks."""
 
-    def __init__(self, **callbacks):
-        for name, callback in callbacks.items():
-            setattr(self, name, callback)
+    on_load: Callable[[], None]
+    on_save: Callable[[], None]
+    on_set_mode: Callable[[str], None]
+    on_toggle_grid: Callable[[], None]
+    on_select_flag: Callable[[int], None]
+    on_set_palette: Callable[[int], None]
 
 
 class Toolbar:

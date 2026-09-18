@@ -3,7 +3,12 @@
 import pytest
 
 from golf.core import rom_utils
-from golf.core.patches import QrCredentials, course_theme_patch
+from golf.core.patches import (
+    BytePatch,
+    CompositePatch,
+    QrCredentials,
+    course_theme_patch,
+)
 from golf.core.patches.course_theme import VANILLA_COURSE_BGM
 from golf.core.patches.music_import import MusicImportPatch
 from golf.core.patches.sram_defaults import Club, magic_bytes
@@ -26,7 +31,9 @@ KEYS = (bytes(range(1, 9)), bytes(range(9, 17)))
 
 
 def options(**overrides) -> PlayerOptions:
-    return PlayerOptions(**({"player_name": "LUIGI", "clubs": {Club.W1, Club.PW}} | overrides))
+    return PlayerOptions(
+        **({"player_name": "LUIGI", "clubs": {Club.W1, Club.PW}} | overrides)
+    )
 
 
 class TestPlayerOptions:
@@ -42,12 +49,12 @@ class TestPlayerOptions:
 
     def test_a_banned_club(self):
         with pytest.raises(BuildError, match="bans 1W"):
-            options().check(ClubRules(banned={Club.W1, Club.SW}))
+            options().check(ClubRules(banned=frozenset({Club.W1, Club.SW})))
 
     def test_a_required_bag_must_match(self):
-        options().check(ClubRules(required_bag={Club.W1, Club.PW}))
+        options().check(ClubRules(required_bag=frozenset({Club.W1, Club.PW})))
         with pytest.raises(BuildError, match="requires the bag"):
-            options().check(ClubRules(required_bag={Club.W1}))
+            options().check(ClubRules(required_bag=frozenset({Club.W1})))
 
     @pytest.mark.parametrize(
         "overrides, message",
@@ -97,13 +104,18 @@ class TestCredentials:
 
 
 class TestMusicStep:
-    @pytest.mark.parametrize("slug", [slug for slug, theme in TRACKS.items() if theme.rom == US_ROM])
+    @pytest.mark.parametrize(
+        "slug", [slug for slug, theme in TRACKS.items() if theme.rom == US_ROM]
+    )
     def test_nes_open_themes_only_repoint_the_course_bgm_table(self, slug):
         step = music_step(slug)
+        assert isinstance(step, BytePatch)
         assert step.name == "course_theme"
         assert step.patched == bytes([TRACKS[slug].music_id]) * 3
 
-    @pytest.mark.parametrize("slug", [slug for slug, theme in TRACKS.items() if theme.rom == JP_ROM])
+    @pytest.mark.parametrize(
+        "slug", [slug for slug, theme in TRACKS.items() if theme.rom == JP_ROM]
+    )
     def test_mario_open_themes_are_imported(self, slug):
         step = music_step(slug)
         assert isinstance(step, MusicImportPatch)
@@ -130,13 +142,21 @@ class TestFinishingSteps:
         assert [step.name for step in steps] == ["sram_defaults", "qr_credentials"]
 
     def test_guest(self):
-        assert [step.name for step in finishing_steps(options(), 0x5247, None)] == ["sram_defaults", "qr_disable"]
+        assert [step.name for step in finishing_steps(options(), 0x5247, None)] == [
+            "sram_defaults",
+            "qr_disable",
+        ]
 
     def test_the_seed_magic_is_written(self):
         (defaults, _) = finishing_steps(options(bgm=False), 0x5247, None)
+        assert isinstance(defaults, CompositePatch)
         writes = {sub.name: sub.patched for sub in defaults.patches}
-        assert writes["sram_defaults_magic_write_6001"] + writes["sram_defaults_magic_write_6002"] == magic_bytes(0x5247)
-        assert writes["sram_defaults_magic_check_6001"] + writes["sram_defaults_magic_check_6002"] == magic_bytes(0x5247)
+        assert writes["sram_defaults_magic_write_6001"] + writes[
+            "sram_defaults_magic_write_6002"
+        ] == magic_bytes(0x5247)
+        assert writes["sram_defaults_magic_check_6001"] + writes[
+            "sram_defaults_magic_check_6002"
+        ] == magic_bytes(0x5247)
         assert "sram_defaults_bgm_off" in writes
         assert writes["sram_defaults_player_name"] == b"LUIGI     "
 

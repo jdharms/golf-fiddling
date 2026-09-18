@@ -67,7 +67,11 @@ class EyedropperTool:
         mode = context.state.mode
 
         # Check if PaletteTool is active
-        active_tool_name = context.tool_manager.get_active_tool_name() if context.tool_manager else None
+        active_tool_name = (
+            context.tool_manager.get_active_tool_name()
+            if context.tool_manager
+            else None
+        )
 
         if active_tool_name == "palette" and mode == "terrain":
             # Sample palette attribute

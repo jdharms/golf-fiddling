@@ -16,17 +16,11 @@ from golf.core.patches.seeded_wind import (
     wind_adjust,
     wind_jitter,
 )
+from tests.prg_writer import PrgImageWriter
 
 
-class MockRomWriter:
-    def __init__(self, data: bytes):
-        self.data = bytearray(data)
-
-    def read_prg(self, prg_offset: int, length: int) -> bytes:
-        return bytes(self.data[prg_offset : prg_offset + length])
-
-    def write_prg(self, prg_offset: int, data: bytes):
-        self.data[prg_offset : prg_offset + len(data)] = data
+class MockRomWriter(PrgImageWriter):
+    pass
 
 
 def make_vanilla_like_rom(mirrored: bool = True) -> MockRomWriter:
@@ -36,7 +30,9 @@ def make_vanilla_like_rom(mirrored: bool = True) -> MockRomWriter:
     for p in seeded_wind_patches("x"):
         rom.write_prg(p.prg_offset, p.original)
     for mirror in COURSE_MIRRORS_PATCH.patches:
-        rom.write_prg(mirror.prg_offset, mirror.patched if mirrored else mirror.original)
+        rom.write_prg(
+            mirror.prg_offset, mirror.patched if mirrored else mirror.original
+        )
     return rom
 
 
@@ -153,22 +149,34 @@ class TestSeedDerivation:
 
 class TestPatchLayout:
     def test_fixed_bank_site_is_byte_neutral(self):
-        init = next(p for p in seeded_wind_patches("x") if p.name == "seeded_wind_init_hole")
+        init = next(
+            p for p in seeded_wind_patches("x") if p.name == "seeded_wind_init_hole"
+        )
         assert len(init.original) == len(init.patched) == 10
         assert init.prg_offset == 0x3DB0B
 
     def test_init_hole_reads_seed_table(self):
-        init = next(p for p in seeded_wind_patches("x") if p.name == "seeded_wind_init_hole")
+        init = next(
+            p for p in seeded_wind_patches("x") if p.name == "seeded_wind_init_hole"
+        )
         # LDA $DFE7,X ; STA $42 ; LDA $DFE8,X ; STA $43
-        assert init.patched == bytes([0xBD, 0xE7, 0xDF, 0x85, 0x42, 0xBD, 0xE8, 0xDF, 0x85, 0x43])
+        assert init.patched == bytes(
+            [0xBD, 0xE7, 0xDF, 0x85, 0x42, 0xBD, 0xE8, 0xDF, 0x85, 0x43]
+        )
 
     def test_writeback_becomes_nops_same_length(self):
-        wb = next(p for p in seeded_wind_patches("x") if p.name == "seeded_wind_remove_writeback")
+        wb = next(
+            p
+            for p in seeded_wind_patches("x")
+            if p.name == "seeded_wind_remove_writeback"
+        )
         assert wb.prg_offset == 0x342C0
         assert wb.patched == bytes([0xEA] * len(wb.original))
 
     def test_trampoline_sits_after_mercy_routines(self):
-        tr = next(p for p in seeded_wind_patches("x") if p.name == "seeded_wind_trampoline")
+        tr = next(
+            p for p in seeded_wind_patches("x") if p.name == "seeded_wind_trampoline"
+        )
         assert TRAMPOLINE_CPU_ADDR == 0xBFAF
         assert tr.prg_offset == 13 * 0x4000 + (TRAMPOLINE_CPU_ADDR - 0x8000)
         assert tr.original == bytes([0xFF] * 16)
@@ -178,27 +186,39 @@ class TestPatchLayout:
         assert TRAMPOLINE_CPU_ADDR + len(tr.patched) <= 0xBFF3
 
     def test_call_redirect_targets_trampoline(self):
-        call = next(p for p in seeded_wind_patches("x") if p.name == "seeded_wind_call_redirect")
+        call = next(
+            p for p in seeded_wind_patches("x") if p.name == "seeded_wind_call_redirect"
+        )
         assert call.prg_offset == 0x3424F
         assert call.original == bytes([0x20, 0x25, 0xDA])
-        assert call.patched == bytes([0x20, TRAMPOLINE_CPU_ADDR & 0xFF, TRAMPOLINE_CPU_ADDR >> 8])
+        assert call.patched == bytes(
+            [0x20, TRAMPOLINE_CPU_ADDR & 0xFF, TRAMPOLINE_CPU_ADDR >> 8]
+        )
 
     def test_call_redirect_is_last(self):
         assert seeded_wind_patches("x")[-1].name == "seeded_wind_call_redirect"
 
     def test_seed_table_is_18_holes(self):
-        t = next(p for p in seeded_wind_patches("x") if p.name == "seeded_wind_seed_table")
+        t = next(
+            p for p in seeded_wind_patches("x") if p.name == "seeded_wind_seed_table"
+        )
         assert t.prg_offset == SEED_TABLE_PRG_OFFSET
         assert len(t.original) == len(t.patched) == 36
 
     def test_seed_table_matches_derivation(self):
         seeds = derive_hole_seeds("abc")
-        t = next(p for p in seeded_wind_patches("abc") if p.name == "seeded_wind_seed_table")
+        t = next(
+            p for p in seeded_wind_patches("abc") if p.name == "seeded_wind_seed_table"
+        )
         assert t.patched == seed_table_bytes(seeds)
 
     def test_explicit_seeds(self):
         seeds = [0x0102] + [0] * 17
-        t = next(p for p in seeded_wind_patches(seeds=seeds) if p.name == "seeded_wind_seed_table")
+        t = next(
+            p
+            for p in seeded_wind_patches(seeds=seeds)
+            if p.name == "seeded_wind_seed_table"
+        )
         assert t.patched[:2] == bytes([0x02, 0x01])
 
     def test_rejects_both_and_neither(self):

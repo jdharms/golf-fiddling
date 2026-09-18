@@ -10,7 +10,9 @@ class CategoryNode:
     name: str  # Display name (e.g., "water")
     path: str  # Full path (e.g., "terrain/water")
     children: dict[str, "CategoryNode"] = field(default_factory=dict)
-    stamp_ids: list[str] = field(default_factory=list)  # Stamps directly in this category
+    stamp_ids: list[str] = field(
+        default_factory=list
+    )  # Stamps directly in this category
     is_expanded: bool = False  # UI state: is folder expanded?
 
     def get_all_stamp_ids(self) -> list[str]:
@@ -49,6 +51,7 @@ class CategoryTree:
         parts = category_path.split("/")
         current_dict = self.root
         current_path_parts = []
+        node: CategoryNode | None = None
 
         for part in parts:
             current_path_parts.append(part)
@@ -61,7 +64,8 @@ class CategoryTree:
             node = current_dict[part]
             current_dict = node.children
 
-        # Add stamp to leaf node
+        # Add stamp to leaf node (split() always yields at least one part)
+        assert node is not None
         node.stamp_ids.append(stamp_id)
 
     def get_node(self, category_path: str) -> CategoryNode | None:
@@ -71,6 +75,7 @@ class CategoryTree:
 
         parts = category_path.split("/")
         current_dict = self.root
+        node = None
 
         for part in parts:
             if part not in current_dict:

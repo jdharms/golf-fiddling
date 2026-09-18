@@ -96,7 +96,10 @@ def load_labels(path) -> list[Label]:
 
 
 def save_labels(path, labels: list[Label]) -> None:
-    ordered = sorted(labels, key=lambda l: (_TYPE_ORDER.get(l.type, len(LABEL_TYPES)), l.start))
+    ordered = sorted(
+        labels,
+        key=lambda label: (_TYPE_ORDER.get(label.type, len(LABEL_TYPES)), label.start),
+    )
     with open(path, "w", encoding="utf-8-sig", newline="\n") as f:
         for label in ordered:
             f.write(label.to_line() + "\n")
@@ -129,7 +132,7 @@ class LabelIndex:
 
     def search_name(self, substring: str) -> list[Label]:
         needle = substring.lower()
-        return [l for l in self.labels if needle in l.name.lower()]
+        return [label for label in self.labels if needle in label.name.lower()]
 
     def add(self, label: Label) -> None:
         existing = self.find_exact(label.type, label.start)
@@ -175,7 +178,9 @@ class LabelStore:
         self.sidecar_path = sidecar_path
 
     @classmethod
-    def load(cls, base_path: str | None, sidecar_path: str | None = None) -> "LabelStore":
+    def load(
+        cls, base_path: str | None, sidecar_path: str | None = None
+    ) -> "LabelStore":
         if sidecar_path is None and base_path is not None:
             sidecar_path = default_sidecar_path(base_path)
         base = LabelIndex.load(base_path) if base_path else LabelIndex([])

@@ -17,7 +17,9 @@ class StampLibrary:
     def __init__(self):
         """Initialize stamp library."""
         self.stamps: dict[str, StampData] = {}  # stamp_id -> StampData
-        self.categories: dict[str, list[str]] = {}  # category -> list of stamp_ids (backward compat)
+        self.categories: dict[
+            str, list[str]
+        ] = {}  # category -> list of stamp_ids (backward compat)
         self.category_tree = CategoryTree()  # Hierarchical category tree
 
         # Paths
@@ -85,9 +87,13 @@ class StampLibrary:
             List of StampData objects in the category
         """
         stamp_ids = self.categories.get(category, [])
-        return [self.stamps[stamp_id] for stamp_id in stamp_ids if stamp_id in self.stamps]
+        return [
+            self.stamps[stamp_id] for stamp_id in stamp_ids if stamp_id in self.stamps
+        ]
 
-    def get_stamps_by_path(self, category_path: str, recursive: bool = False) -> list[StampData]:
+    def get_stamps_by_path(
+        self, category_path: str, recursive: bool = False
+    ) -> list[StampData]:
         """
         Get stamps by category path (supports hierarchical paths).
 
@@ -102,10 +108,7 @@ class StampLibrary:
         if not node:
             return []
 
-        if recursive:
-            stamp_ids = node.get_all_stamp_ids()
-        else:
-            stamp_ids = node.stamp_ids
+        stamp_ids = node.get_all_stamp_ids() if recursive else node.stamp_ids
 
         return [self.stamps[sid] for sid in stamp_ids if sid in self.stamps]
 

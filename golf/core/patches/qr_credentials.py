@@ -97,10 +97,15 @@ class QrCredentials:
                     bytes.fromhex(players[0]["player_id"]),
                     bytes.fromhex(players[1]["player_id"]),
                 ),
-                keys=(bytes.fromhex(players[0]["key"]), bytes.fromhex(players[1]["key"])),
+                keys=(
+                    bytes.fromhex(players[0]["key"]),
+                    bytes.fromhex(players[1]["key"]),
+                ),
             )
         except (KeyError, TypeError) as error:
-            raise ValueError(f"not a credentials file: missing or malformed {error}") from error
+            raise ValueError(
+                f"not a credentials file: missing or malformed {error}"
+            ) from error
 
 
 def load_credentials(path) -> QrCredentials:
@@ -122,7 +127,7 @@ def placeholder_offset(symbol: str) -> int:
     return _prg_offset(port.build().symbol(symbol), QR_BANK)
 
 
-def qr_credentials_patch(credentials: QrCredentials) -> CompositePatch:
+def qr_credentials_patch(credentials: QrCredentials) -> CompositePatch[BytePatch]:
     """Write `credentials` over the fill `scorecard_qr` left in its placeholders."""
     values = {
         "seed_id": credentials.seed_id,

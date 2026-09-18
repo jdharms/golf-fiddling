@@ -92,6 +92,13 @@ Build a standalone editor executable with `uv run pyinstaller run_editor.spec`.
 | `golf-hex2bin <input.txt> <output.bin>` | Convert a hex string file to binary |
 | `golf-expand-dict <meta.json> [terrain or greens]` | Expand dictionary codes into their horizontal transition sequences |
 
+### Developer tooling
+
+| Command | Description |
+|---------|-------------|
+| `golf-check [--fix]` | Run every linter, formatter check and type checker (ruff, pyright, djLint, Biome); `--fix` formats and applies safe fixes |
+| `golf-biome <biome args>` | Run the pinned Biome JS/CSS linter and formatter, downloading and hash-checking it on first use |
+
 ### ROM patches
 
 | Command | Description |

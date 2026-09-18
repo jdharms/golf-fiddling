@@ -17,16 +17,15 @@ import json
 import sys
 from pathlib import Path
 
-
 DIRECTION_OFFSETS = {
-    'N': (-1, 0),   # North (row above)
-    'S': (1, 0),    # South (row below)
-    'E': (0, 1),    # East (column right)
-    'W': (0, -1),   # West (column left)
-    'NE': (-1, 1),  # Northeast
-    'NW': (-1, -1), # Northwest
-    'SE': (1, 1),   # Southeast
-    'SW': (1, -1),  # Southwest
+    "N": (-1, 0),  # North (row above)
+    "S": (1, 0),  # South (row below)
+    "E": (0, 1),  # East (column right)
+    "W": (0, -1),  # West (column left)
+    "NE": (-1, 1),  # Northeast
+    "NW": (-1, -1),  # Northwest
+    "SE": (1, 1),  # Southeast
+    "SW": (1, -1),  # Southwest
 }
 
 
@@ -46,7 +45,9 @@ def find_neighbor_matches(terrain, tile1, direction, tile2):
     Returns list of (row, col) positions where tile1 is found with the relationship.
     """
     if direction not in DIRECTION_OFFSETS:
-        raise ValueError(f"Invalid direction: {direction}. Must be one of {list(DIRECTION_OFFSETS.keys())}")
+        raise ValueError(
+            f"Invalid direction: {direction}. Must be one of {list(DIRECTION_OFFSETS.keys())}"
+        )
 
     tile1 = tile1.upper()
     tile2 = tile2.upper()
@@ -64,9 +65,11 @@ def find_neighbor_matches(terrain, tile1, direction, tile2):
                 neighbor_row = row + drow
                 neighbor_col = col + dcol
 
-                if (0 <= neighbor_row < height and
-                    0 <= neighbor_col < len(terrain[neighbor_row]) and
-                    terrain[neighbor_row][neighbor_col] == tile2):
+                if (
+                    0 <= neighbor_row < height
+                    and 0 <= neighbor_col < len(terrain[neighbor_row])
+                    and terrain[neighbor_row][neighbor_col] == tile2
+                ):
                     matches.append((row, col))
 
     return matches
@@ -101,7 +104,9 @@ def search_all_holes(tile1, direction, tile2):
                 if matches:
                     found_any = True
                     print(f"\n{country_dir.name}/{hole_file.name}:")
-                    print(f"  Found {len(matches)} occurrence(s) of {tile1} {direction} {tile2}")
+                    print(
+                        f"  Found {len(matches)} occurrence(s) of {tile1} {direction} {tile2}"
+                    )
                     for row, col in matches:
                         print(f"    Position: row {row}, col {col}")
 

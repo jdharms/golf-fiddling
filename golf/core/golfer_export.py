@@ -26,13 +26,6 @@ The CLI is `golf-golfer-export` (tools/art/golfer_export.py).
 import json
 import os
 
-from golf.core.golfer_sprites import (
-    BODY_IN_FRONT_FRAMES,
-    GOLFER_NAMES,
-    PUTTER_CLUB,
-    SWING_CLUB_GROUPS,
-    GolferSprites,
-)
 from golf.core.aseprite import (
     LAYER_EDITABLE,
     LAYER_LOCK_MOVEMENT,
@@ -42,6 +35,13 @@ from golf.core.aseprite import (
     Frame,
     Layer,
     LinkedCel,
+)
+from golf.core.golfer_sprites import (
+    BODY_IN_FRONT_FRAMES,
+    GOLFER_NAMES,
+    PUTTER_CLUB,
+    SWING_CLUB_GROUPS,
+    GolferSprites,
 )
 from golf.core.palettes import (
     NES_CANONICAL_BLACK,
@@ -102,13 +102,13 @@ def build_palette(body_nes, club_nes):
     return palette
 
 
-def nes_by_index() -> list:
+def nes_by_index() -> list[int | None]:
     """Palette index -> NES colour, with None for transparent and the guides.
 
     The authoritative map for an importer, since the collapsed blacks mean the
     relationship is no longer arithmetic.
     """
-    table = [None] * PALETTE_SIZE
+    table: list[int | None] = [None] * PALETTE_SIZE
     for value in NES_ENTRIES:
         table[nes_index(value)] = value
     return table
@@ -138,7 +138,7 @@ def canvas_bounds(sprites: GolferSprites) -> tuple[int, int, int, int]:
             body = sprites.body_frames(golfer, putt)
             for club in clubs_for(putt):
                 clubs = sprites.club_frames(golfer, club, putt)
-                for frame, (b, c) in enumerate(zip(body, clubs)):
+                for frame, (b, c) in enumerate(zip(body, clubs, strict=True)):
                     bx0, by0, bx1, by1 = b.bounds()
                     cx0, cy0, cx1, cy1 = c.bounds()
                     ndx, ndy = sprites.club_nudge(golfer, club, frame)
@@ -252,7 +252,9 @@ def export_golfer(rom, sprites, golfer, putt, bounds, out_dir, visible_club=0):
     ase.layers = [Layer("body - draw here", LAYER_VISIBLE | LAYER_EDITABLE)]
     club_layer_index = {}
     for club in club_list:
-        low, high = SWING_CLUB_GROUPS[sprites.club_group(club)] if not putt else (15, 15)
+        low, high = (
+            SWING_CLUB_GROUPS[sprites.club_group(club)] if not putt else (15, 15)
+        )
         cls = sprites.nudge_class(club)
         span = f"club {low}" if low == high else f"clubs {low}-{high}"  # layer name
         suffix = "putter, no nudge" if cls is None else f"nudge class {cls}"
@@ -303,8 +305,9 @@ def export_golfer(rom, sprites, golfer, putt, bounds, out_dir, visible_club=0):
         "frames": [],
     }
 
-    seen_body: dict[int, int] = {}
-    seen_club: dict[tuple, int] = {}
+    # first frame to draw each metasprite, and where its cel went
+    seen_body: dict[int, tuple[int, tuple[int, int]]] = {}
+    seen_club: dict[tuple, tuple[int, tuple[int, int]]] = {}
     for frame in range(len(body)):
         cels = []
         b = body[frame]
@@ -329,7 +332,9 @@ def export_golfer(rom, sprites, golfer, putt, bounds, out_dir, visible_club=0):
                 cels.append(LinkedCel(layer, source, sx, sy))
                 pos = {"x": sx, "y": sy, "linked_to": source}
             else:
-                buf = render_metasprite(c, vrams[club], club_indices, ox, oy, w, h, ndx, ndy)
+                buf = render_metasprite(
+                    c, vrams[club], club_indices, ox, oy, w, h, ndx, ndy
+                )
                 cx, cy, cw, chh, pixels = _tight(buf, w, h)
                 seen_club[key] = (frame, (cx, cy))
                 cels.append(Cel(layer, cx, cy, cw, chh, pixels))
@@ -345,9 +350,17 @@ def export_golfer(rom, sprites, golfer, putt, bounds, out_dir, visible_club=0):
 
         cels.append(
             Cel(
-                guides_layer, 0, 0, w, h,
+                guides_layer,
+                0,
+                0,
+                w,
+                h,
                 build_guides(
-                    w, h, ox, oy, (bx0, by0, bx1, by1),
+                    w,
+                    h,
+                    ox,
+                    oy,
+                    (bx0, by0, bx1, by1),
                     not putt and frame in BODY_IN_FRONT_FRAMES,
                 ),
             )

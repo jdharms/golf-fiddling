@@ -1,7 +1,6 @@
 """Integration tests for terrain compression round-trip validation."""
 
 
-
 def test_simple_terrain_roundtrip(simple_terrain_fixture, terrain_decompressor):
     """Compress and decompress simple fixture - should match original."""
     from golf.core.compressor import TerrainCompressor
@@ -20,7 +19,9 @@ def test_simple_terrain_roundtrip(simple_terrain_fixture, terrain_decompressor):
         f"Height mismatch: original={len(original_rows)}, decompressed={len(decompressed)}"
     )
 
-    for i, (original, decomp) in enumerate(zip(original_rows, decompressed)):
+    for i, (original, decomp) in enumerate(
+        zip(original_rows, decompressed, strict=True)
+    ):
         assert original == decomp, (
             f"Row {i} mismatch: original={original}, decompressed={decomp}"
         )
@@ -43,7 +44,9 @@ def test_hole_04_roundtrip(hole_04_data, terrain_decompressor):
     )
 
     # Verify content
-    for i, (original, decomp) in enumerate(zip(original_rows, decompressed)):
+    for i, (original, decomp) in enumerate(
+        zip(original_rows, decompressed, strict=True)
+    ):
         assert original == decomp, (
             f"Hole 4 row {i} mismatch: {len(original)} tiles vs {len(decomp)} tiles"
         )
@@ -66,7 +69,9 @@ def test_hole_01_roundtrip(hole_01_data, terrain_decompressor):
     )
 
     # Verify content
-    for i, (original, decomp) in enumerate(zip(original_rows, decompressed)):
+    for i, (original, decomp) in enumerate(
+        zip(original_rows, decompressed, strict=True)
+    ):
         assert original == decomp, f"Hole 1 row {i} mismatch"
 
 
@@ -89,7 +94,7 @@ def test_all_terrain_zeros(terrain_decompressor):
 
     # Verify round-trip
     assert len(decompressed) == len(original_rows)
-    for original, decomp in zip(original_rows, decompressed):
+    for original, decomp in zip(original_rows, decompressed, strict=True):
         assert original == decomp
 
 
@@ -113,7 +118,7 @@ def test_no_vertical_fills(terrain_decompressor):
     decompressed = terrain_decompressor.decompress(compressed, row_width=22)
 
     # Verify round-trip
-    for original, decomp in zip(original_rows, decompressed):
+    for original, decomp in zip(original_rows, decompressed, strict=True):
         assert original == decomp
 
 
@@ -135,5 +140,5 @@ def test_compression_stats(simple_terrain_fixture, terrain_decompressor):
 
     # Verify round-trip still works
     decompressed = terrain_decompressor.decompress(compressed, row_width=22)
-    for original, decomp in zip(original_rows, decompressed):
+    for original, decomp in zip(original_rows, decompressed, strict=True):
         assert original == decomp

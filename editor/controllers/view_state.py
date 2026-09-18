@@ -4,7 +4,6 @@ NES Open Tournament Golf - View State
 Manages viewport camera position, zoom, and coordinate transformations.
 """
 
-
 from pygame import Rect
 
 from editor.core.constants import TILE_SIZE

@@ -79,14 +79,18 @@ def _matchable(pars: Sequence[int], families: Sequence[Family]) -> bool:
 def _shortfall(pool: Pool, layout: Sequence[int]) -> str:
     needed = Counter(layout)
     wants = ", ".join(f"{needed[par]} par {par}" for par in sorted(needed))
-    offers = ", ".join(f"par {par}: {pool.families_with_par(par)}" for par in sorted(needed))
+    offers = ", ".join(
+        f"par {par}: {pool.families_with_par(par)}" for par in sorted(needed)
+    )
     return (
         f"the pool cannot fill a par {sum(layout)} course from distinct families: it needs "
         f"{wants}, and the families offering each par are {offers}"
     )
 
 
-def draw_holes(pool: Pool, layout: Sequence[int], rng: random.Random) -> list[CatalogEntry]:
+def draw_holes(
+    pool: Pool, layout: Sequence[int], rng: random.Random
+) -> list[CatalogEntry]:
     """One hole per slot, from a different family each time.
 
     Slot by slot, the candidate families are shuffled and the first one that leaves the
@@ -104,7 +108,9 @@ def draw_holes(pool: Pool, layout: Sequence[int], rng: random.Random) -> list[Ca
         rng.shuffle(candidates)
         rest_of_layout = layout[position + 1 :]
         for family in candidates:
-            if _matchable(rest_of_layout, [other for other in families if other is not family]):
+            if _matchable(
+                rest_of_layout, [other for other in families if other is not family]
+            ):
                 break
         else:  # pragma: no cover - the matching above guarantees a candidate
             raise AssertionError("no fillable family for a matchable layout")
@@ -113,8 +119,12 @@ def draw_holes(pool: Pool, layout: Sequence[int], rng: random.Random) -> list[Ca
     return chosen
 
 
-def generate(catalog: Catalog, curation: CurationSnapshot, settings: Settings) -> Manifest:
-    prng_seed = settings.prng_seed if settings.prng_seed is not None else new_prng_seed()
+def generate(
+    catalog: Catalog, curation: CurationSnapshot, settings: Settings
+) -> Manifest:
+    prng_seed = (
+        settings.prng_seed if settings.prng_seed is not None else new_prng_seed()
+    )
     pool = build_pool(catalog, curation, settings)
     layout = choose_layout(settings.par, stream(prng_seed, "layout"))
     entries = draw_holes(pool, layout, stream(prng_seed, "holes"))

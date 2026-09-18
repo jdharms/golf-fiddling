@@ -60,7 +60,9 @@ class FringeGenerationTool:
         self.generator = FringeGenerator()
         self.generator.load_data()
 
-    def handle_mouse_down(self, pos: tuple[int, int], button: int, modifiers: int, context: ToolContext) -> ToolResult:
+    def handle_mouse_down(
+        self, pos: tuple[int, int], button: int, modifiers: int, context: ToolContext
+    ) -> ToolResult:
         """Handle mouse click to start pathing."""
         # Only process in greens mode
         if context.state.mode != "greens":
@@ -115,17 +117,25 @@ class FringeGenerationTool:
         # Update highlights
         self._update_highlights(context)
 
-        return ToolResult.modified(message="Fringe path started - use arrow keys to trace")
+        return ToolResult.modified(
+            message="Fringe path started - use arrow keys to trace"
+        )
 
-    def handle_mouse_up(self, pos: tuple[int, int], button: int, context: ToolContext) -> ToolResult:
+    def handle_mouse_up(
+        self, pos: tuple[int, int], button: int, context: ToolContext
+    ) -> ToolResult:
         """Handle mouse release (no-op for this tool)."""
         return ToolResult.not_handled()
 
-    def handle_mouse_motion(self, pos: tuple[int, int], context: ToolContext) -> ToolResult:
+    def handle_mouse_motion(
+        self, pos: tuple[int, int], context: ToolContext
+    ) -> ToolResult:
         """Handle mouse motion (no-op for this tool)."""
         return ToolResult.not_handled()
 
-    def handle_key_down(self, key: int, modifiers: int, context: ToolContext) -> ToolResult:
+    def handle_key_down(
+        self, key: int, modifiers: int, context: ToolContext
+    ) -> ToolResult:
         """Handle keyboard input for path navigation."""
         # Only process if pathing is active
         if not self.state.is_active:
@@ -233,7 +243,10 @@ class FringeGenerationTool:
             return ToolResult.modified(message=f"Path length: {len(self.state.path)}")
 
         # Check for loop completion (returning to initial position)
-        if len(self.state.path) >= MIN_PATH_LENGTH and new_pos == self.state.initial_pos:
+        if (
+            len(self.state.path) >= MIN_PATH_LENGTH
+            and new_pos == self.state.initial_pos
+        ):
             return self._generate_fringe(context)
 
         # Extend path to new position
@@ -270,7 +283,9 @@ class FringeGenerationTool:
 
             # Show success message
             num_tiles = len(results)
-            message = f"Generated {num_tiles} fringe tile{'s' if num_tiles != 1 else ''}"
+            message = (
+                f"Generated {num_tiles} fringe tile{'s' if num_tiles != 1 else ''}"
+            )
 
             # Clear state and highlights
             self.state = FringeToolState()
@@ -288,13 +303,15 @@ class FringeGenerationTool:
             if "Shape key not found" in error_msg:
                 user_message = "Fringe shape not recognized - try a different path"
             elif "No valid candidates" in error_msg:  # Fixed typo
-                user_message = "Could not generate fringe for this path - try a simpler shape"
+                user_message = (
+                    "Could not generate fringe for this path - try a simpler shape"
+                )
             else:
                 user_message = f"Fringe generation failed: {error_msg}"
 
             # Cancel pathing and show error to user
             self._cancel_pathing(context)
-            return ToolResult(handled=True, message=user_message)
+            return ToolResult(is_handled=True, message=user_message)
 
     def _cancel_pathing(self, context: ToolContext) -> ToolResult:
         """Cancel pathing and restore original tiles."""

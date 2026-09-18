@@ -46,7 +46,9 @@ def refusal(**changes) -> FormError:
 
 
 def test_the_default_form_submits_the_default_settings():
-    settings = settings_from_state(FormState.from_form(FormData(FormState.default().to_pairs())))
+    settings = settings_from_state(
+        FormState.from_form(FormData([*FormState.default().to_pairs()]))
+    )
     assert settings == Settings()
 
 
@@ -58,7 +60,10 @@ def test_the_form_lists_every_par_music_and_club_but_the_putter():
 
 def test_the_mercy_point_is_always_the_default_whatever_is_sent():
     form = FormData([*FormState.default().to_pairs(), ("mercy_point", "3")])
-    assert settings_from_state(FormState.from_form(form)).mercy_point == DEFAULT_MERCY_POINT
+    assert (
+        settings_from_state(FormState.from_form(form)).mercy_point
+        == DEFAULT_MERCY_POINT
+    )
 
 
 def test_every_field_reaches_the_settings():
@@ -73,25 +78,41 @@ def test_every_field_reaches_the_settings():
     )
     assert settings == Settings(
         par=70,
-        sources={US_ROM},
+        sources=frozenset({US_ROM}),
         allow_family_repeats=True,
         music="jp_france",
         clubs=ClubRules(
             max=10,
-            banned={Club.W1, Club.SW},
-            required_bag={Club.W3, Club.I5, Club.PW},
+            banned=frozenset({Club.W1, Club.SW}),
+            required_bag=frozenset({Club.W3, Club.I5, Club.PW}),
         ),
     )
 
 
 def test_a_submission_round_trips_through_its_pairs():
-    submitted = state(par="71", sources={JP_ROM}, allow_family_repeats=True, banned={"2I"}, required_bag={"1W"})
-    assert FormState.from_form(FormData(submitted.to_pairs())) == submitted
+    submitted = state(
+        par="71",
+        sources={JP_ROM},
+        allow_family_repeats=True,
+        banned={"2I"},
+        required_bag={"1W"},
+    )
+    assert FormState.from_form(FormData([*submitted.to_pairs()])) == submitted
 
 
 def test_unknown_fields_and_blank_space_are_ignored():
-    form = FormData([("par", " 72 "), ("sources", US_ROM), ("music", "random"), ("clubs_max", "14"), ("prng_seed", "x")])
-    assert settings_from_state(FormState.from_form(form)) == Settings(sources={US_ROM})
+    form = FormData(
+        [
+            ("par", " 72 "),
+            ("sources", US_ROM),
+            ("music", "random"),
+            ("clubs_max", "14"),
+            ("prng_seed", "x"),
+        ]
+    )
+    assert settings_from_state(FormState.from_form(form)) == Settings(
+        sources=frozenset({US_ROM})
+    )
 
 
 def test_no_required_bag_checked_means_players_choose():
@@ -137,7 +158,6 @@ def test_a_required_bag_holding_banned_clubs_is_refused():
     assert problem.values == {"clubs": "1W SW"}
 
 
-
 # -- Download ---------------------------------------------------------------------------------
 
 RULES = ClubRules()
@@ -145,8 +165,14 @@ US_SHA1 = vanilla_rom(US_ROM).sha1
 JP_SHA1 = vanilla_rom(JP_ROM).sha1
 
 
-def download(name: str = "luigi", clubs: set[str] | None = None, **hashes: str) -> DownloadState:
-    return DownloadState(player_name=name, clubs={"1W", "PW"} if clubs is None else clubs, rom_hashes=hashes)
+def download(
+    name: str = "luigi", clubs: set[str] | None = None, **hashes: str
+) -> DownloadState:
+    return DownloadState(
+        player_name=name,
+        clubs={"1W", "PW"} if clubs is None else clubs,
+        rom_hashes=hashes,
+    )
 
 
 def download_refusal(state: DownloadState, rules: ClubRules = RULES) -> FormError:
@@ -167,8 +193,10 @@ def test_a_download_submission_reads_name_clubs_and_rom_hashes():
         ]
     )
     state = DownloadState.from_form(form)
-    assert state == DownloadState("luigi", {"1W", "PW"}, {US_ROM: US_SHA1, JP_ROM: JP_SHA1})
-    assert DownloadState.from_form(FormData(state.to_pairs())) == state
+    assert state == DownloadState(
+        "luigi", {"1W", "PW"}, {US_ROM: US_SHA1, JP_ROM: JP_SHA1}
+    )
+    assert DownloadState.from_form(FormData([*state.to_pairs()])) == state
 
 
 def test_the_download_default_is_the_vanilla_name_and_bag_without_banned_clubs():
@@ -206,7 +234,10 @@ def test_a_name_the_game_cannot_store_is_refused(name, chars):
 
 
 def test_a_ten_character_name_with_dots_and_spaces_is_allowed():
-    assert player_options_from_state(download("dr. mario."), RULES).player_name == "DR. MARIO."
+    assert (
+        player_options_from_state(download("dr. mario."), RULES).player_name
+        == "DR. MARIO."
+    )
 
 
 def test_an_unknown_club_is_refused():
@@ -229,7 +260,9 @@ def test_a_bag_over_the_max_is_refused_counting_the_putter():
 
 
 def test_rom_hashes_must_match_every_required_rom():
-    check_rom_hashes(download(nes_open_us=US_SHA1, mario_open_jp=JP_SHA1), (US_ROM, JP_ROM))
+    check_rom_hashes(
+        download(nes_open_us=US_SHA1, mario_open_jp=JP_SHA1), (US_ROM, JP_ROM)
+    )
     check_rom_hashes(download(nes_open_us=US_SHA1), (US_ROM,))
 
 

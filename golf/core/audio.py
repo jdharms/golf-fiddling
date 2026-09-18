@@ -28,19 +28,20 @@ BANK14_OFF = 0x38000
 BANK15_OFF = 0x3C000
 AUDIO_ENGINE_MAIN = 0x8000
 
-MUSIC_REQUEST = 0xF4      # $F4, see docs/music_format.md
-MUSIC_SUSPEND = 0xFF      # $FF, non-zero disables the sequencer
-SFX_ACTIVE = 0xFE         # $FE, gates DmcUpdate (the percussion track)
+MUSIC_REQUEST = 0xF4  # $F4, see docs/music_format.md
+MUSIC_SUSPEND = 0xFF  # $FF, non-zero disables the sequencer
+SFX_ACTIVE = 0xFE  # $FE, gates DmcUpdate (the percussion track)
 
 
 def _prg_image(rom: bytes) -> bytearray:
     """Bank 14 at $8000-$BFFF and bank 15 at $C000-$FFFF, as the engine sees them."""
     if len(rom) >= 16 and rom[:4] == b"NES\x1a":
         rom = rom[16:]
-    return bytearray(rom[BANK14_OFF:BANK15_OFF] + rom[BANK15_OFF:BANK15_OFF + 0x4000])
+    return bytearray(rom[BANK14_OFF:BANK15_OFF] + rom[BANK15_OFF : BANK15_OFF + 0x4000])
 
 
 # ------------------------------------------------------------------- ROM layout
+
 
 @dataclass(frozen=True)
 class MusicLayout:
@@ -51,8 +52,9 @@ class MusicLayout:
     recovered by matching the instruction that reads the table, which is stable across
     both versions.
     """
+
     order_table: int
-    header_bases: tuple           # ((max_music_id, base), ..., (None, default_base))
+    header_bases: tuple  # ((max_music_id, base), ..., (None, default_base))
     duration_table: int
     period_table: int
     envelope_table: int
@@ -69,14 +71,18 @@ class MusicLayout:
         raise AssertionError("header_bases must end with a default")
 
 
-def _find(blk: bytes, pat) -> int:
+# matches any byte in a _find pattern
+W = None
+
+
+def _find(blk: bytes | bytearray, pat) -> int:
     for i in range(len(blk) - len(pat)):
         if all(p is None or blk[i + k] == p for k, p in enumerate(pat)):
             return i
     return -1
 
 
-def _operand(blk: bytes, pat, index: int, bank_base: int = 0x8000) -> int:
+def _operand(blk: bytes | bytearray, pat, index: int, bank_base: int = 0x8000) -> int:
     i = _find(blk, pat)
     if i < 0:
         raise ValueError(f"could not locate table for pattern at index {index}")
@@ -85,8 +91,7 @@ def _operand(blk: bytes, pat, index: int, bank_base: int = 0x8000) -> int:
 
 def discover_layout(rom: bytes) -> MusicLayout:
     """Locate the music tables in `rom` by matching the code that reads them."""
-    blk = _prg_image(rom)[:0x4000]          # bank 14
-    W = None
+    blk = _prg_image(rom)[:0x4000]  # bank 14
 
     # the header-base chain: LDA PlayingMusicID, then CMP #limit / LDA #hi / LDX #lo
     tail = _find(blk, [0x85, 0xFD, 0x86, 0xFC, 0xB1, 0xFC])
@@ -102,20 +107,26 @@ def discover_layout(rom: bytes) -> MusicLayout:
     while blk[i] == 0xC9 and blk[i + 2] == 0xB0:
         bases.append((blk[i + 1], blk[i + 7] | (blk[i + 5] << 8)))
         i += 10
-    bases.append((None, blk[i + 3] | (blk[i + 1] << 8)))       # LDA #hi / LDX #lo
+    bases.append((None, blk[i + 3] | (blk[i + 1] << 8)))  # LDA #hi / LDX #lo
 
     return MusicLayout(
-        order_table=_operand(blk, [0xAC, W, W, 0xB9, W, W, 0x18, 0x6D, W, W,
-                                   0xEE, W, W, 0xA8, 0xB9, W, W], 4),
+        order_table=_operand(
+            blk,
+            [0xAC, W, W, 0xB9, W, W, 0x18, 0x6D, W, W, 0xEE, W, W, 0xA8, 0xB9, W, W],
+            4,
+        ),
         header_bases=tuple(bases),
-        duration_table=_operand(blk, [0x29, 0x1F, 0x18, 0x6D, W, W, 0xA8, 0xB9, W, W], 8),
+        duration_table=_operand(
+            blk, [0x29, 0x1F, 0x18, 0x6D, W, W, 0xA8, 0xB9, W, W], 8
+        ),
         period_table=_operand(blk, [0x98, 0x0A, 0xA8, 0xB9, W, W, 0x85, 0xFC], 4),
         envelope_table=_operand(blk, [0x18, 0x6D, W, W, 0xA8, 0xB9, W, W, 0xAA], 6),
         transpose_table=_operand(blk, [0xA4, 0xF9, 0xB9, W, W, 0xAE, 0xC1, 0x07], 3),
         noise_drum_table=_operand(blk, [0xB9, W, W, 0x8D, 0x0C, 0x40], 1),
         # DMC tables are indexed 1-based (and the pointer table by id*2), so the
         # operands sit one and two bytes below the tables themselves.
-        dmc_duration_table=_operand(blk, [0x84, 0xF8, 0xB9, W, W, 0x8D, W, 0x07], 3) + 1,
+        dmc_duration_table=_operand(blk, [0x84, 0xF8, 0xB9, W, W, 0x8D, W, 0x07], 3)
+        + 1,
         dmc_rate_table=_operand(blk, [0xB9, W, W, 0x8D, 0xD8, 0x07], 1) + 1,
         dmc_ptr_table=_operand(blk, [0xB9, W, W, 0x8D, 0x12, 0x40], 1) + 2,
     )
@@ -124,39 +135,65 @@ def discover_layout(rom: bytes) -> MusicLayout:
 # --------------------------------------------------------------------------- NSF
 
 # Assembled by hand; see docs/music_format.md. Lives at $D000 in its own NSF page.
-_NSF_STUB = bytes([
-    0xA8,                    # TAY            stash the song number
-    0xA9, 0x00,              # LDA #$00
-    0xAA,                    # TAX
-    0x95, 0x00,              # STA $00,X      clear $0000-$00FF
-    0x9D, 0x00, 0x02,        # STA $0200,X    ...and $0200-$07FF, but never the
-    0x9D, 0x00, 0x03,        # STA $0300,X       stack page: INIT has to RTS
-    0x9D, 0x00, 0x04,        # STA $0400,X
-    0x9D, 0x00, 0x05,        # STA $0500,X
-    0x9D, 0x00, 0x06,        # STA $0600,X
-    0x9D, 0x00, 0x07,        # STA $0700,X
-    0xE8,                    # INX
-    0xD0, 0xE9,              # BNE -23
-    0xA9, 0x0F,              # LDA #$0F
-    0x8D, 0x15, 0x40,        # STA $4015
-    0xC8,                    # INY            song 0-based -> music ID 1-based
-    0x84, 0xF4,              # STY MusicRequest
-    0xA9, 0x01,              # LDA #$01
-    0x85, 0xFE,              # STA SfxActiveFlag   enable the DMC percussion
-    0x60,                    # RTS
-    0x4C, 0x00, 0x80,        # PLAY: JMP AudioEngineMain
-])
+_NSF_STUB = bytes(
+    [
+        0xA8,  # TAY            stash the song number
+        0xA9,
+        0x00,  # LDA #$00
+        0xAA,  # TAX
+        0x95,
+        0x00,  # STA $00,X      clear $0000-$00FF
+        0x9D,
+        0x00,
+        0x02,  # STA $0200,X    ...and $0200-$07FF, but never the
+        0x9D,
+        0x00,
+        0x03,  # STA $0300,X       stack page: INIT has to RTS
+        0x9D,
+        0x00,
+        0x04,  # STA $0400,X
+        0x9D,
+        0x00,
+        0x05,  # STA $0500,X
+        0x9D,
+        0x00,
+        0x06,  # STA $0600,X
+        0x9D,
+        0x00,
+        0x07,  # STA $0700,X
+        0xE8,  # INX
+        0xD0,
+        0xE9,  # BNE -23
+        0xA9,
+        0x0F,  # LDA #$0F
+        0x8D,
+        0x15,
+        0x40,  # STA $4015
+        0xC8,  # INY            song 0-based -> music ID 1-based
+        0x84,
+        0xF4,  # STY MusicRequest
+        0xA9,
+        0x01,  # LDA #$01
+        0x85,
+        0xFE,  # STA SfxActiveFlag   enable the DMC percussion
+        0x60,  # RTS
+        0x4C,
+        0x00,
+        0x80,  # PLAY: JMP AudioEngineMain
+    ]
+)
 _NSF_INIT_ADDR = 0xD000
 _NSF_PLAY_ADDR = _NSF_INIT_ADDR + len(_NSF_STUB) - 3
 
 
-def _assemble_nsf(rom, stub, init_addr, play_addr, songs, name, artist,
-                  copyright_, starting_song) -> bytes:
+def _assemble_nsf(
+    rom, stub, init_addr, play_addr, songs, name, artist, copyright_, starting_song
+) -> bytes:
     prg = _prg_image(rom)
-    pages = [bytes(prg[i * 0x1000:(i + 1) * 0x1000]) for i in range(4)]   # bank 14
-    pages.append(bytes(prg[0x4000:0x5000]))                              # $C000 DPCM page
+    pages = [bytes(prg[i * 0x1000 : (i + 1) * 0x1000]) for i in range(4)]  # bank 14
+    pages.append(bytes(prg[0x4000:0x5000]))  # $C000 DPCM page
     page = bytearray(0x1000)
-    page[:len(stub)] = stub
+    page[: len(stub)] = stub
     pages.append(bytes(page))
 
     def field(s: str) -> bytes:
@@ -174,70 +211,151 @@ def _assemble_nsf(rom, stub, init_addr, play_addr, songs, name, artist,
     struct.pack_into("<H", header, 110, int(round(1_000_000 / FRAME_HZ)))
     #   $8000 $9000 $A000 $B000  $C000  $D000 $E000 $F000
     header[112:120] = bytes([0, 1, 2, 3, 4, 5, 5, 5])
-    struct.pack_into("<H", header, 120, 19997)   # PAL, unused
-    header[122] = 0      # NTSC
-    header[123] = 0      # no expansion audio
+    struct.pack_into("<H", header, 120, 19997)  # PAL, unused
+    header[122] = 0  # NTSC
+    header[123] = 0  # no expansion audio
     return bytes(header) + b"".join(pages)
 
 
-def build_nsf(rom: bytes, *, name: str = "NES Open Tournament Golf",
-              artist: str = "", copyright_: str = "Nintendo 1991",
-              starting_song: int = 1) -> bytes:
+def build_nsf(
+    rom: bytes,
+    *,
+    name: str = "NES Open Tournament Golf",
+    artist: str = "",
+    copyright_: str = "Nintendo 1991",
+    starting_song: int = 1,
+) -> bytes:
     """Package the game's audio engine as a bankswitched NSF with every track."""
-    return _assemble_nsf(rom, _NSF_STUB, _NSF_INIT_ADDR, _NSF_PLAY_ADDR,
-                         TRACK_COUNT, name, artist, copyright_, starting_song)
+    return _assemble_nsf(
+        rom,
+        _NSF_STUB,
+        _NSF_INIT_ADDR,
+        _NSF_PLAY_ADDR,
+        TRACK_COUNT,
+        name,
+        artist,
+        copyright_,
+        starting_song,
+    )
 
 
 # Drum-kit NSF: one song per DPCM slot. Rather than synthesising anything, this
 # hands the sample id to the game's own DmcUpdate and lets it run, so the hit --
 # including the frame-counter cut-off -- is byte-for-byte what plays in game.
-_DRUM_STUB = bytes([
-    0xA8,                    # INIT: TAY        stash the song number
-    0xA9, 0x00,              # LDA #$00
-    0xAA,                    # TAX
-    0x95, 0x00,              # STA $00,X        clear RAM, never the stack page
-    0x9D, 0x00, 0x02,        # STA $0200,X
-    0x9D, 0x00, 0x03,        # STA $0300,X
-    0x9D, 0x00, 0x04,        # STA $0400,X
-    0x9D, 0x00, 0x05,        # STA $0500,X
-    0x9D, 0x00, 0x06,        # STA $0600,X
-    0x9D, 0x00, 0x07,        # STA $0700,X
-    0xE8,                    # INX
-    0xD0, 0xE9,              # BNE -23
-    0xA9, 0x0F,              # LDA #$0F
-    0x8D, 0x15, 0x40,        # STA $4015
-    0xC8,                    # INY              song 0-based -> sample id 1-10
-    0x8C, 0x00, 0x03,        # STY $0300        remember which sample
-    0xB9, 0x47, 0xD0,        # LDA $D047,Y      rate index (samples 1-3 only)
-    0x8D, 0xD8, 0x07,        # STA $07D8
-    0xA9, 0x80,              # LDA #$80
-    0x85, 0xF4,              # STA MusicRequest stop the music
-    0xA9, 0x01,              # LDA #$01
-    0x85, 0xFE,              # STA SfxActiveFlag  so DmcUpdate runs
-    0x8D, 0x01, 0x03,        # STA $0301        counter = 1: hit on the first frame
-    0x60,                    # RTS
-    0xCE, 0x01, 0x03,        # PLAY: DEC $0301
-    0xD0, 0x0A,              # BNE +10
-    0xA9, 0x30,              # LDA #48          frames between hits
-    0x8D, 0x01, 0x03,        # STA $0301
-    0xAD, 0x00, 0x03,        # LDA $0300
-    0x85, 0xF3,              # STA DmcSampleRequest
-    0x4C, 0x00, 0x80,        # JMP AudioEngineMain
-    #    1     2     3   (4-10 get their rate from DmcSampleRateTable instead)
-    0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-])
+_DRUM_STUB = bytes(
+    [
+        0xA8,  # INIT: TAY        stash the song number
+        0xA9,
+        0x00,  # LDA #$00
+        0xAA,  # TAX
+        0x95,
+        0x00,  # STA $00,X        clear RAM, never the stack page
+        0x9D,
+        0x00,
+        0x02,  # STA $0200,X
+        0x9D,
+        0x00,
+        0x03,  # STA $0300,X
+        0x9D,
+        0x00,
+        0x04,  # STA $0400,X
+        0x9D,
+        0x00,
+        0x05,  # STA $0500,X
+        0x9D,
+        0x00,
+        0x06,  # STA $0600,X
+        0x9D,
+        0x00,
+        0x07,  # STA $0700,X
+        0xE8,  # INX
+        0xD0,
+        0xE9,  # BNE -23
+        0xA9,
+        0x0F,  # LDA #$0F
+        0x8D,
+        0x15,
+        0x40,  # STA $4015
+        0xC8,  # INY              song 0-based -> sample id 1-10
+        0x8C,
+        0x00,
+        0x03,  # STY $0300        remember which sample
+        0xB9,
+        0x47,
+        0xD0,  # LDA $D047,Y      rate index (samples 1-3 only)
+        0x8D,
+        0xD8,
+        0x07,  # STA $07D8
+        0xA9,
+        0x80,  # LDA #$80
+        0x85,
+        0xF4,  # STA MusicRequest stop the music
+        0xA9,
+        0x01,  # LDA #$01
+        0x85,
+        0xFE,  # STA SfxActiveFlag  so DmcUpdate runs
+        0x8D,
+        0x01,
+        0x03,  # STA $0301        counter = 1: hit on the first frame
+        0x60,  # RTS
+        0xCE,
+        0x01,
+        0x03,  # PLAY: DEC $0301
+        0xD0,
+        0x0A,  # BNE +10
+        0xA9,
+        0x30,  # LDA #48          frames between hits
+        0x8D,
+        0x01,
+        0x03,  # STA $0301
+        0xAD,
+        0x00,
+        0x03,  # LDA $0300
+        0x85,
+        0xF3,  # STA DmcSampleRequest
+        0x4C,
+        0x00,
+        0x80,  # JMP AudioEngineMain
+        #    1     2     3   (4-10 get their rate from DmcSampleRateTable instead)
+        0x02,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+    ]
+)
 _DRUM_INIT_ADDR = 0xD000
 _DRUM_PLAY_ADDR = _DRUM_INIT_ADDR + 0x36
 
 
-def build_drum_nsf(rom: bytes, *, name: str = "NES Open Golf drum kit",
-                   artist: str = "", copyright_: str = "Nintendo 1991") -> bytes:
+def build_drum_nsf(
+    rom: bytes,
+    *,
+    name: str = "NES Open Golf drum kit",
+    artist: str = "",
+    copyright_: str = "Nintendo 1991",
+) -> bytes:
     """An NSF with one song per DPCM drum slot, played by the game's own engine."""
-    return _assemble_nsf(rom, _DRUM_STUB, _DRUM_INIT_ADDR, _DRUM_PLAY_ADDR,
-                         DMC_SAMPLE_COUNT, name, artist, copyright_, 1)
+    return _assemble_nsf(
+        rom,
+        _DRUM_STUB,
+        _DRUM_INIT_ADDR,
+        _DRUM_PLAY_ADDR,
+        DMC_SAMPLE_COUNT,
+        name,
+        artist,
+        copyright_,
+        1,
+    )
 
 
 # ------------------------------------------------------------------- emulation
+
 
 class _Bus:
     """Enough of an NES bus to run the audio engine: RAM, APU registers, PRG."""
@@ -248,9 +366,12 @@ class _Bus:
         self.writes: list[tuple[int, int, int]] = []
         self.frame = 0
 
-    def __getitem__(self, a):
+    def __getitem__(self, a: int | slice) -> int | bytes:
         if isinstance(a, slice):
-            return bytes(self[i] for i in range(a.start, a.stop))
+            return bytes(self._read(i) for i in range(a.start, a.stop))
+        return self._read(a)
+
+    def _read(self, a: int) -> int:
         if a < 0x2000:
             return self.ram[a & 0x7FF]
         if a >= 0x8000:
@@ -259,7 +380,7 @@ class _Bus:
 
     def __setitem__(self, a, v):
         if isinstance(a, slice):
-            for i, val in zip(range(a.start, a.stop), v):
+            for i, val in zip(range(a.start, a.stop), v, strict=True):
                 self[i] = val
             return
         v &= 0xFF
@@ -302,9 +423,9 @@ def run_engine(rom: bytes, music_id: int, frames: int, *, dmc: bool = True):
 
 # --------------------------------------------------------------------- DPCM kit
 
-DMC_DURATION_TABLE = 0x8DCB   # frames the engine lets a sample run, indexed 1-10
-DMC_RATE_TABLE = 0x8DD5       # $4010 value, used only for samples 4-10
-DMC_PTR_TABLE = 0x8DDF        # address/length byte pairs
+DMC_DURATION_TABLE = 0x8DCB  # frames the engine lets a sample run, indexed 1-10
+DMC_RATE_TABLE = 0x8DD5  # $4010 value, used only for samples 4-10
+DMC_PTR_TABLE = 0x8DDF  # address/length byte pairs
 DMC_SAMPLE_COUNT = 10
 
 # Samples 1-3 take their rate from the low nibble of the stream byte instead of
@@ -318,7 +439,10 @@ def dmc_sample_info(rom, sample_id: int) -> dict:
     if not 1 <= sample_id <= DMC_SAMPLE_COUNT:
         raise ValueError(f"sample id {sample_id} out of range 1-{DMC_SAMPLE_COUNT}")
     prg = _prg_image(rom)
-    at = lambda cpu: prg[cpu - 0x8000]
+
+    def at(cpu: int) -> int:
+        return prg[cpu - 0x8000]
+
     i = sample_id - 1
     addr = 0xC000 + at(DMC_PTR_TABLE + i * 2) * 64
     length = at(DMC_PTR_TABLE + i * 2 + 1) * 16 + 1

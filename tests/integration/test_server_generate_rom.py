@@ -15,11 +15,21 @@ from golf.randomizer.roms import vanilla_rom
 from server.app import create_app
 from server.config import Config
 from server.forms import FormState
+from tests.app_state import app_state
 
 ROOT = Path(__file__).resolve().parents[2]
 ROM_PATH = ROOT / "nes_open_us.nes"
 
-pytestmark = pytest.mark.skipif(not ROM_PATH.exists(), reason=f"{ROM_PATH.name} not present")
+pytestmark = pytest.mark.skipif(
+    not ROM_PATH.exists(), reason=f"{ROM_PATH.name} not present"
+)
+
+
+def seed_id_from(response) -> str:
+    """The seed id in a /generate redirect."""
+    match = re.fullmatch(r"/h/([0-9A-Za-z]{10})", response.headers["location"])
+    assert match is not None
+    return match.group(1)
 
 
 def form_data() -> dict[str, list[str]]:
@@ -35,10 +45,12 @@ def test_a_generated_seed_stores_the_unfinished_build_of_its_manifest():
     with TestClient(create_app(Config(database=":memory:", rom_dir=ROOT))) as client:
         response = client.post("/generate", data=form_data(), follow_redirects=False)
         assert response.status_code == 303, response.text
-        seed_id = re.fullmatch(r"/h/([0-9A-Za-z]{10})", response.headers["location"]).group(1)
+        seed_id = seed_id_from(response)
 
-        with client.app.state.db.transaction() as conn:
-            row = conn.execute("SELECT manifest, unfinished_ips FROM seeds WHERE id = ?", (seed_id,)).fetchone()
+        with app_state(client).db.transaction() as conn:
+            row = conn.execute(
+                "SELECT manifest, unfinished_ips FROM seeds WHERE id = ?", (seed_id,)
+            ).fetchone()
         manifest = Manifest.from_json(json.loads(row["manifest"]))
         page = client.get(f"/h/{seed_id}").text
 
@@ -54,11 +66,16 @@ def test_a_generated_seed_stores_the_unfinished_build_of_its_manifest():
 
 
 def test_rebuilding_a_fresh_seed_with_the_real_builder_is_unchanged():
-    config = Config(database=":memory:", rom_dir=ROOT, dev_login=True, admin_users=frozenset({"dev:admin"}))
+    config = Config(
+        database=":memory:",
+        rom_dir=ROOT,
+        dev_login=True,
+        admin_users=frozenset({"dev:admin"}),
+    )
     with TestClient(create_app(config)) as client:
         client.get("/auth/login", params={"as": "admin"})
         response = client.post("/generate", data=form_data(), follow_redirects=False)
-        seed_id = re.fullmatch(r"/h/([0-9A-Za-z]{10})", response.headers["location"]).group(1)
+        seed_id = seed_id_from(response)
         rebuilt = client.post(f"/admin/seeds/{seed_id}/rebuild", follow_redirects=False)
     assert rebuilt.status_code == 303, rebuilt.text
     assert rebuilt.headers["location"] == f"/admin/seeds/{seed_id}?result=unchanged"

@@ -3,19 +3,11 @@
 import pytest
 
 from golf.core.patches import BytePatch, CompositePatch, PatchError
+from tests.prg_writer import PrgImageWriter
 
 
-class MockRomWriter:
+class MockRomWriter(PrgImageWriter):
     """Mock RomWriter for testing patches."""
-
-    def __init__(self, data: bytes):
-        self.data = bytearray(data)
-
-    def read_prg(self, prg_offset: int, length: int) -> bytes:
-        return bytes(self.data[prg_offset : prg_offset + length])
-
-    def write_prg(self, prg_offset: int, data: bytes):
-        self.data[prg_offset : prg_offset + len(data)] = data
 
 
 class TestBytePatchCanApply:
@@ -23,7 +15,7 @@ class TestBytePatchCanApply:
 
     def test_can_apply_when_original_bytes_present(self):
         """can_apply returns True when original bytes match."""
-        rom = MockRomWriter(b"\x00\x00\xAA\xBB\xCC\x00\x00")
+        rom = MockRomWriter(b"\x00\x00\xaa\xbb\xcc\x00\x00")
         patch = BytePatch(
             name="test",
             description="Test patch",
@@ -35,7 +27,7 @@ class TestBytePatchCanApply:
 
     def test_can_apply_false_when_bytes_differ(self):
         """can_apply returns False when bytes don't match original."""
-        rom = MockRomWriter(b"\x00\x00\xAA\xBB\xDD\x00\x00")
+        rom = MockRomWriter(b"\x00\x00\xaa\xbb\xdd\x00\x00")
         patch = BytePatch(
             name="test",
             description="Test patch",
@@ -75,7 +67,7 @@ class TestBytePatchIsApplied:
 
     def test_is_applied_false_when_original_bytes_present(self):
         """is_applied returns False when original bytes are present."""
-        rom = MockRomWriter(b"\x00\x00\xAA\xBB\xCC\x00\x00")
+        rom = MockRomWriter(b"\x00\x00\xaa\xbb\xcc\x00\x00")
         patch = BytePatch(
             name="test",
             description="Test patch",
@@ -87,7 +79,7 @@ class TestBytePatchIsApplied:
 
     def test_is_applied_false_when_unexpected_bytes(self):
         """is_applied returns False when bytes are neither original nor patched."""
-        rom = MockRomWriter(b"\x00\x00\xFF\xFF\xFF\x00\x00")
+        rom = MockRomWriter(b"\x00\x00\xff\xff\xff\x00\x00")
         patch = BytePatch(
             name="test",
             description="Test patch",
@@ -103,7 +95,7 @@ class TestBytePatchApply:
 
     def test_apply_writes_patched_bytes(self):
         """apply() writes patched bytes to ROM."""
-        rom = MockRomWriter(b"\x00\x00\xAA\xBB\xCC\x00\x00")
+        rom = MockRomWriter(b"\x00\x00\xaa\xbb\xcc\x00\x00")
         patch = BytePatch(
             name="test",
             description="Test patch",
@@ -130,7 +122,7 @@ class TestBytePatchApply:
 
     def test_apply_raises_on_unexpected_bytes(self):
         """apply() raises PatchError when ROM has unexpected bytes."""
-        rom = MockRomWriter(b"\x00\x00\xFF\xFF\xFF\x00\x00")
+        rom = MockRomWriter(b"\x00\x00\xff\xff\xff\x00\x00")
         patch = BytePatch(
             name="test",
             description="Test patch",
@@ -145,7 +137,7 @@ class TestBytePatchApply:
 
     def test_apply_preserves_surrounding_bytes(self):
         """apply() only modifies bytes at patch location."""
-        rom = MockRomWriter(b"\xDE\xAD\xAA\xBB\xCC\xBE\xEF")
+        rom = MockRomWriter(b"\xde\xad\xaa\xbb\xcc\xbe\xef")
         patch = BytePatch(
             name="test",
             description="Test patch",
@@ -155,8 +147,8 @@ class TestBytePatchApply:
         )
         patch.apply(rom)
         # DEAD and BEEF should be preserved
-        assert rom.data[0:2] == bytearray(b"\xDE\xAD")
-        assert rom.data[5:7] == bytearray(b"\xBE\xEF")
+        assert rom.data[0:2] == bytearray(b"\xde\xad")
+        assert rom.data[5:7] == bytearray(b"\xbe\xef")
 
 
 class TestBytePatchRepr:
@@ -200,7 +192,7 @@ class TestCompositePatch:
         patch.apply(rom)  # should not raise
 
     def test_can_apply_true_when_all_sub_patches_original(self):
-        rom = MockRomWriter(b"\xAA\xBB")
+        rom = MockRomWriter(b"\xaa\xbb")
         sub_a = _make_patch(0, 0xAA, 0x11, "a")
         sub_b = _make_patch(1, 0xBB, 0x22, "b")
         patch = CompositePatch(name="group", description="", patches=[sub_a, sub_b])

@@ -25,13 +25,18 @@ def main():
     parser.add_argument("rom")
     parser.add_argument("out_dir")
     parser.add_argument(
-        "-g", "--golfer", default="all",
+        "-g",
+        "--golfer",
+        default="all",
         help="name or index (default: all six)",
     )
     parser.add_argument(
-        "-c", "--club", type=int, default=0,
+        "-c",
+        "--club",
+        type=int,
+        default=0,
         help="which club layer starts visible in the swing file (default: 0); "
-             "every club group gets a layer regardless",
+        "every club group gets a layer regardless",
     )
     parser.add_argument(
         "-a", "--animation", choices=["swing", "putt", "both"], default="both"
@@ -53,7 +58,9 @@ def main():
     else:
         lowered = [n.lower() for n in GOLFER_NAMES]
         if args.golfer.lower() not in lowered:
-            parser.error(f"unknown golfer {args.golfer!r}; expected one of {GOLFER_NAMES}")
+            parser.error(
+                f"unknown golfer {args.golfer!r}; expected one of {GOLFER_NAMES}"
+            )
         golfers = [lowered.index(args.golfer.lower())]
 
     os.makedirs(args.out_dir, exist_ok=True)

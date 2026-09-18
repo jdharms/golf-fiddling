@@ -37,7 +37,11 @@ class SeedIdExhaustedError(RuntimeError):
 
 def encode_seed_id(value: int) -> str:
     """A qr_seed_id as its 10-character base62 URL id."""
-    if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= MAX_QR_SEED_ID:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, int)
+        or not 1 <= value <= MAX_QR_SEED_ID
+    ):
         raise SeedIdError(f"a qr_seed_id is 1-{MAX_QR_SEED_ID}, got {value!r}")
     return encode_base62(value)
 
@@ -45,7 +49,9 @@ def encode_seed_id(value: int) -> str:
 def decode_seed_id(text: str) -> int:
     """A URL id as its qr_seed_id. Raises SeedIdError for anything else."""
     if not is_id(text):
-        raise SeedIdError(f"a seed id is {ID_LENGTH} characters of 0-9, A-Z and a-z, got {text!r}")
+        raise SeedIdError(
+            f"a seed id is {ID_LENGTH} characters of 0-9, A-Z and a-z, got {text!r}"
+        )
     value = decode_base62(text)
     if value == 0:
         raise SeedIdError("no seed has the id 0000000000")
@@ -88,7 +94,9 @@ def hole_rows(seed_id: str, manifest: Manifest) -> list[tuple]:
 
 def _is_id_collision(problem: sqlite3.IntegrityError) -> bool:
     message = str(problem)
-    return "UNIQUE" in message and ("seeds.id" in message or "seeds.qr_seed_id" in message)
+    return "UNIQUE" in message and (
+        "seeds.id" in message or "seeds.qr_seed_id" in message
+    )
 
 
 def insert_seed(
@@ -128,7 +136,10 @@ def insert_seed(
                         created_at,
                     ),
                 )
-                conn.executemany("INSERT INTO seed_holes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", hole_rows(seed_id, manifest))
+                conn.executemany(
+                    "INSERT INTO seed_holes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    hole_rows(seed_id, manifest),
+                )
         except sqlite3.IntegrityError as problem:
             if _is_id_collision(problem):
                 continue
@@ -158,7 +169,8 @@ def load_seed(db: Database, seed_id: str) -> SeedRow | None:
         return None
     with db.transaction() as conn:
         row = conn.execute(
-            "SELECT id, qr_seed_id, manifest, creator_id, created_at, rebuilt_at FROM seeds WHERE id = ?", (seed_id,)
+            "SELECT id, qr_seed_id, manifest, creator_id, created_at, rebuilt_at FROM seeds WHERE id = ?",
+            (seed_id,),
         ).fetchone()
     if row is None:
         return None
@@ -183,11 +195,19 @@ def load_unfinished_ips(db: Database, seed_id: str) -> bytes | None:
     except SeedIdError:
         return None
     with db.transaction() as conn:
-        row = conn.execute("SELECT unfinished_ips FROM seeds WHERE id = ?", (seed_id,)).fetchone()
+        row = conn.execute(
+            "SELECT unfinished_ips FROM seeds WHERE id = ?", (seed_id,)
+        ).fetchone()
     return None if row is None else bytes(row["unfinished_ips"])
 
 
-def rebuild_seed(db: Database, seed_id: str, unfinished_ips: bytes, admin_id: int, now: str | None = None) -> bool:
+def rebuild_seed(
+    db: Database,
+    seed_id: str,
+    unfinished_ips: bytes,
+    admin_id: int,
+    now: str | None = None,
+) -> bool:
     """Store a rebuilt unfinished IPS, log the rebuild, and return whether the IPS changed.
 
     Only a changed IPS is written and stamps `rebuilt_at`, so the seed page never announces a
@@ -195,13 +215,24 @@ def rebuild_seed(db: Database, seed_id: str, unfinished_ips: bytes, admin_id: in
     """
     rebuilt_at = now if now is not None else utc_now()
     with db.transaction() as conn:
-        row = conn.execute("SELECT unfinished_ips FROM seeds WHERE id = ?", (seed_id,)).fetchone()
+        row = conn.execute(
+            "SELECT unfinished_ips FROM seeds WHERE id = ?", (seed_id,)
+        ).fetchone()
         if row is None:
             raise KeyError(seed_id)
         changed = bytes(row["unfinished_ips"]) != unfinished_ips
         if changed:
             conn.execute(
-                "UPDATE seeds SET unfinished_ips = ?, rebuilt_at = ? WHERE id = ?", (unfinished_ips, rebuilt_at, seed_id)
+                "UPDATE seeds SET unfinished_ips = ?, rebuilt_at = ? WHERE id = ?",
+                (unfinished_ips, rebuilt_at, seed_id),
             )
-        audit.record(conn, admin_id, audit.REBUILD, audit.SEED, seed_id, rebuilt_at, detail={"changed": changed})
+        audit.record(
+            conn,
+            admin_id,
+            audit.REBUILD,
+            audit.SEED,
+            seed_id,
+            rebuilt_at,
+            detail={"changed": changed},
+        )
     return changed

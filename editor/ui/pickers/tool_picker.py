@@ -2,7 +2,7 @@
 Tool picker - UI component for selecting active editor tool.
 """
 
-from typing import Callable
+from collections.abc import Callable
 
 import pygame
 from pygame import Rect, Surface
@@ -20,7 +20,9 @@ from editor.resources import get_resource_path
 class ToolButton:
     """Individual tool button in the picker."""
 
-    def __init__(self, tool_name: str, label: str, icon_char: str, is_action: bool = False):
+    def __init__(
+        self, tool_name: str, label: str, icon_char: str, is_action: bool = False
+    ):
         self.tool_name = tool_name  # "paint", "transform", "forest_fill"
         self.label = label  # "Paint", "Transform", "Forest Fill"
         self.icon_char = icon_char  # Unicode icon/emoji
@@ -40,11 +42,15 @@ class ToolPicker:
         self.rect = rect
         self.on_tool_change = on_tool_change
         self.selected_tool = "paint"  # Default
-        self.icon_font = pygame.font.Font(str(get_resource_path('data/fonts/NotoEmoji.ttf')), 36)
+        self.icon_font = pygame.font.Font(
+            str(get_resource_path("data/fonts/NotoEmoji.ttf")), 36
+        )
         self.buttons: list[ToolButton] = []
         self.scroll_y = 0  # Scroll offset for overflow
 
-    def register_tool(self, tool_name: str, label: str, icon: str, is_action: bool = False):
+    def register_tool(
+        self, tool_name: str, label: str, icon: str, is_action: bool = False
+    ):
         """Add a tool to the picker."""
         button = ToolButton(tool_name, label, icon, is_action)
         self.buttons.append(button)
@@ -61,7 +67,9 @@ class ToolPicker:
         """Calculate total height of all buttons."""
         if not self.buttons:
             return 0
-        return self.TOP_PADDING + len(self.buttons) * (self.BUTTON_HEIGHT + self.BUTTON_SPACING)
+        return self.TOP_PADDING + len(self.buttons) * (
+            self.BUTTON_HEIGHT + self.BUTTON_SPACING
+        )
 
     def _get_max_scroll(self) -> int:
         """Calculate maximum scroll offset."""
@@ -99,7 +107,11 @@ class ToolPicker:
                             # Create scroll-adjusted rect for hit testing
                             adjusted_rect = button.rect.move(0, -self.scroll_y)
                             # Check if visible and clicked
-                            if adjusted_rect.collidepoint(event.pos) and adjusted_rect.bottom > self.rect.top and adjusted_rect.top < self.rect.bottom:
+                            if (
+                                adjusted_rect.collidepoint(event.pos)
+                                and adjusted_rect.bottom > self.rect.top
+                                and adjusted_rect.top < self.rect.bottom
+                            ):
                                 if button.is_action:
                                     # Action tools: always execute, don't change selection
                                     self.on_tool_change(button.tool_name)
@@ -116,7 +128,9 @@ class ToolPicker:
             for button in self.buttons:
                 if button.rect:
                     adjusted_rect = button.rect.move(0, -self.scroll_y)
-                    button.hovered = adjusted_rect.collidepoint(mouse_pos) and self.rect.collidepoint(mouse_pos)
+                    button.hovered = adjusted_rect.collidepoint(
+                        mouse_pos
+                    ) and self.rect.collidepoint(mouse_pos)
 
         return False
 
@@ -137,7 +151,10 @@ class ToolPicker:
             adjusted_rect = button.rect.move(0, -self.scroll_y)
 
             # Skip buttons that are fully outside visible area
-            if adjusted_rect.bottom < self.rect.top or adjusted_rect.top > self.rect.bottom:
+            if (
+                adjusted_rect.bottom < self.rect.top
+                or adjusted_rect.top > self.rect.bottom
+            ):
                 continue
 
             # Determine button color

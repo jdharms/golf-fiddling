@@ -47,7 +47,12 @@ class DiscordIdentity:
 
 
 class DiscordClient:
-    def __init__(self, client_id: str, client_secret: str, transport: httpx2.AsyncBaseTransport | None = None):
+    def __init__(
+        self,
+        client_id: str,
+        client_secret: str,
+        transport: httpx2.AsyncBaseTransport | None = None,
+    ):
         self.client_id = client_id
         self.client_secret = client_secret
         self._transport = transport
@@ -66,17 +71,26 @@ class DiscordClient:
     async def identify(self, code: str, redirect_uri: str) -> DiscordIdentity:
         """The Discord account that granted this authorization code."""
         try:
-            async with httpx2.AsyncClient(transport=self._transport, timeout=TIMEOUT_SECONDS) as client:
+            async with httpx2.AsyncClient(
+                transport=self._transport, timeout=TIMEOUT_SECONDS
+            ) as client:
                 token = await client.post(
                     f"{API_BASE}/oauth2/token",
-                    data={"grant_type": "authorization_code", "code": code, "redirect_uri": redirect_uri},
+                    data={
+                        "grant_type": "authorization_code",
+                        "code": code,
+                        "redirect_uri": redirect_uri,
+                    },
                     auth=(self.client_id, self.client_secret),
                 )
                 token.raise_for_status()
                 access_token = token.json()["access_token"]
                 if not isinstance(access_token, str):
                     raise DiscordError("the token response has no access token")
-                me = await client.get(f"{API_BASE}/users/@me", headers={"Authorization": f"Bearer {access_token}"})
+                me = await client.get(
+                    f"{API_BASE}/users/@me",
+                    headers={"Authorization": f"Bearer {access_token}"},
+                )
                 me.raise_for_status()
                 body = me.json()
         except (httpx2.HTTPError, ValueError, KeyError, TypeError) as problem:
@@ -88,7 +102,12 @@ def _identity(body: object) -> DiscordIdentity:
     if not isinstance(body, dict):
         raise DiscordError("the user response is not an object")
     discord_id, username = body.get("id"), body.get("username")
-    if not isinstance(discord_id, str) or not discord_id or not isinstance(username, str) or not username:
+    if (
+        not isinstance(discord_id, str)
+        or not discord_id
+        or not isinstance(username, str)
+        or not username
+    ):
         raise DiscordError("the user response has no id or username")
     optional = {}
     for name in ("global_name", "avatar"):
@@ -101,7 +120,12 @@ def _identity(body: object) -> DiscordIdentity:
 
 def safe_next(value: str | None) -> str:
     """A return path that stays on this site: a local path, or "/" for anything else."""
-    if not value or not value.startswith("/") or value.startswith("//") or "\\" in value:
+    if (
+        not value
+        or not value.startswith("/")
+        or value.startswith("//")
+        or "\\" in value
+    ):
         return "/"
     return value
 

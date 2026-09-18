@@ -70,9 +70,7 @@ from ..byte_patch import BytePatch
 # Lo grows from 10 to 17 entries (indices 10-16), reusing the first 7
 # bytes of Hi's vacated space (which held Hi's old indices 0-6: 00 00 FF
 # FF FF FF FF).
-_LO_NEW_ENTRIES_10_TO_16 = bytes(
-    [0x70, 0x60, 0x50, 0x40, 0x30, 0x20, 0x10]
-)
+_LO_NEW_ENTRIES_10_TO_16 = bytes([0x70, 0x60, 0x50, 0x40, 0x30, 0x20, 0x10])
 assert len(_LO_NEW_ENTRIES_10_TO_16) == 7
 
 SPRITE_SCREEN_OFFSET_LO_GROW_PATCH = BytePatch(

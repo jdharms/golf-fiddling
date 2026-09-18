@@ -11,7 +11,9 @@ from golf.formats.hole_data import HoleData
 
 ROM_PATH = "nes_open_us.nes"
 
-pytestmark = pytest.mark.skipif(not Path(ROM_PATH).exists(), reason=f"{ROM_PATH} not present")
+pytestmark = pytest.mark.skipif(
+    not Path(ROM_PATH).exists(), reason=f"{ROM_PATH} not present"
+)
 
 
 def load_holes(course_dir: str) -> list[HoleData]:
@@ -28,7 +30,12 @@ def test_patched_rom_roundtrips_through_ips(tmp_path):
 
     course = CoursePatch(load_holes("courses/jp/jp_uk"))
     writer = RomWriter(ROM_PATH, str(tmp_path / "unused.nes"))
-    for patch in [*course.requires, course, seeded_wind_patch("ips"), menu_trim_patch("ROUND TRIP TEST")]:
+    for patch in [
+        *course.requires,
+        course,
+        seeded_wind_patch("ips"),
+        menu_trim_patch("ROUND TRIP TEST"),
+    ]:
         patch.apply(writer)
     patched = bytes(writer.rom_data)
 

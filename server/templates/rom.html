@@ -1,36 +1,42 @@
 {% extends "base.html" %}
 {% block title %}{{ t_plain("rom.page_title") }}{% endblock %}
 {% block content %}
-<hgroup>
-  <h1>{{ t("rom.heading") }}</h1>
-  <p>{{ t("rom.tagline") }}</p>
-</hgroup>
+  <hgroup>
+    <h1>{{ t("rom.heading") }}</h1>
+    <p>{{ t("rom.tagline") }}</p>
+  </hgroup>
 
-<p>{{ t("rom.requirements") }}</p>
+  <p>{{ t("rom.requirements") }}</p>
 
-<noscript>
-  <p><mark>{{ t("rom.noscript") }}</mark></p>
-</noscript>
-<p id="rom-unsupported" hidden><mark>{{ t("rom.unsupported") }}</mark></p>
+  <noscript>
+    <p><mark>{{ t("rom.noscript") }}</mark></p>
+  </noscript>
+  <p id="rom-unsupported" hidden><mark>{{ t("rom.unsupported") }}</mark></p>
 
-{% for rom in roms %}
-<article class="rom" data-rom-id="{{ rom.id }}" data-sha1="{{ rom.sha1 }}" data-state="checking">
-  <header>
-    <strong>{{ rom.title }}</strong>
-    <span class="rom-check" aria-hidden="true">✓</span>
-  </header>
-  <p class="rom-status" aria-live="polite">{{ t("rom.status.checking") }}</p>
-  <input type="file" accept=".nes,application/octet-stream"
-    aria-label="{{ t_plain('rom.file_input_label', title=rom.title) }}" disabled>
-  <small class="rom-expected">{{ t("rom.expected_hash", sha1=rom.sha1) }}</small>
-  <footer>
-    <button type="button" class="outline rom-forget secondary">{{ t("rom.forget") }}</button>
-  </footer>
-</article>
-{% endfor %}
+  {% for rom in roms %}
+    <article class="rom"
+             data-rom-id="{{ rom.id }}"
+             data-sha1="{{ rom.sha1 }}"
+             data-state="checking">
+      <header>
+        <strong>{{ rom.title }}</strong>
+        <span class="rom-check" aria-hidden="true">✓</span>
+      </header>
+      <p class="rom-status" aria-live="polite">{{ t("rom.status.checking") }}</p>
+      <input type="file"
+             accept=".nes,application/octet-stream"
+             aria-label="{{ t_plain('rom.file_input_label', title=rom.title) }}"
+             disabled>
+      <small class="rom-expected">{{ t("rom.expected_hash", sha1=rom.sha1) }}</small>
+      <footer>
+        <button type="button"
+                class="outline rom-forget secondary">{{ t("rom.forget") }}</button>
+      </footer>
+    </article>
+  {% endfor %}
 {% endblock %}
 {% block scripts %}
-<script type="application/json" id="rom-strings">{{ rom_strings | tojson }}</script>
-<script src="/static/romstore.js" defer></script>
-<script src="/static/rom.js" defer></script>
+  <script type="application/json" id="rom-strings">{{ rom_strings | tojson }}</script>
+  <script src="/static/romstore.js" defer></script>
+  <script src="/static/rom.js" defer></script>
 {% endblock %}

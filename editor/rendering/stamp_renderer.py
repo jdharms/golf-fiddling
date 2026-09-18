@@ -41,7 +41,10 @@ class StampRenderer:
             scale: Zoom scale (1-8)
             mode: "terrain" or "greens"
         """
-        if highlight_state.stamp_preview_pos is None or highlight_state.current_stamp is None:
+        if (
+            highlight_state.stamp_preview_pos is None
+            or highlight_state.current_stamp is None
+        ):
             return
 
         stamp = highlight_state.current_stamp
@@ -72,7 +75,9 @@ class StampRenderer:
                         palette_idx = 0  # Greens always use palette 0
 
                     # Render tile and make a copy to avoid modifying cached surface
-                    tile_surf = tileset.render_tile(tile_value, palette_idx, scale).copy()
+                    tile_surf = tileset.render_tile(
+                        tile_value, palette_idx, scale
+                    ).copy()
 
                     # Apply semi-transparency
                     tile_surf.set_alpha(StampRenderer.STAMP_PREVIEW_ALPHA)

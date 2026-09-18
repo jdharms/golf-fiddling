@@ -9,7 +9,12 @@ from pathlib import Path
 
 import pytest
 
-from editor.algorithms.better_forest_fill import PLACEHOLDER_TILE, BetterForestFiller as ForestFiller
+from editor.algorithms.better_forest_fill import (
+    PLACEHOLDER_TILE,
+)
+from editor.algorithms.better_forest_fill import (
+    BetterForestFiller as ForestFiller,
+)
 from golf.core.neighbor_validator import TerrainNeighborValidator
 from golf.formats.hole_data import HoleData
 

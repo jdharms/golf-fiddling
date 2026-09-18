@@ -9,7 +9,6 @@ import json
 import random
 from pathlib import Path
 
-
 # =============================================================================
 # Direction Constants and Utilities
 # =============================================================================
@@ -92,6 +91,7 @@ def opposite(direction: str) -> str:
 # Geometry Calculations
 # =============================================================================
 
+
 def compute_signed_area(path: list[tuple[int, int]]) -> float:
     """
     Compute signed area of closed path using shoelace formula.
@@ -129,9 +129,7 @@ def compute_cross_product(dir1: str, dir2: str) -> int:
 
 
 def compute_interior_side(
-    path: list[tuple[int, int]],
-    index: int,
-    is_clockwise: bool
+    path: list[tuple[int, int]], index: int, is_clockwise: bool
 ) -> str | tuple[str, str]:
     """
     Determine which side of the path is interior (putting surface) at given index.
@@ -158,7 +156,7 @@ def compute_interior_side(
     to_next = direction_from(curr_pos, next_pos)
 
     # Determine if this is a straight segment or corner
-    is_straight = (to_prev == opposite(to_next))
+    is_straight = to_prev == opposite(to_next)
 
     if is_straight:
         # For straight segments, interior is perpendicular to travel direction
@@ -180,9 +178,11 @@ def compute_interior_side(
         is_right_turn = cross > 0
 
         # Build edge sets
-        path_edges = tuple(sorted([to_prev, to_next]))
-        all_dirs = set(DIRECTIONS)
-        non_path_edges = tuple(sorted(all_dirs - set(path_edges)))
+        first, second = sorted([to_prev, to_next])
+        path_edges = (first, second)
+        all_dirs: set[str] = set(DIRECTIONS)
+        third, fourth = sorted(all_dirs - set(path_edges))
+        non_path_edges = (third, fourth)
 
         # Determine if corner is convex or concave from interior's perspective
         # Convex: interior bulges into this corner (like rectangle corner)
@@ -192,7 +192,7 @@ def compute_interior_side(
         #   - Right turn = convex (turning toward interior)
         #   - Left turn = concave (turning away from interior)
         # For CCW path: opposite
-        is_convex = (is_clockwise == is_right_turn)
+        is_convex = is_clockwise == is_right_turn
 
         if is_convex:
             # Green is in the corner of the tile (between path edges)
@@ -203,8 +203,7 @@ def compute_interior_side(
 
 
 def make_shape_key(
-    path_edges: tuple[str, str],
-    interior_side: str | tuple[str, str]
+    path_edges: tuple[str, str], interior_side: str | tuple[str, str]
 ) -> str:
     """
     Create shape key string matching classification_index format.
@@ -225,6 +224,7 @@ def make_shape_key(
 # =============================================================================
 # Main Generator Class
 # =============================================================================
+
 
 class FringeGenerator:
     """
@@ -257,7 +257,9 @@ class FringeGenerator:
         if data_path is None:
             data_path = (
                 Path(__file__).parent.parent.parent
-                / "data" / "tables" / "greens_neighbors.json"
+                / "data"
+                / "tables"
+                / "greens_neighbors.json"
             )
 
         with open(data_path) as f:
@@ -277,15 +279,12 @@ class FringeGenerator:
         # Convert classification index tile values from hex to int
         self.classification_index = {}
         for shape_key, tile_hexes in data["classification_index"].items():
-            self.classification_index[shape_key] = [
-                int(t, 16) for t in tile_hexes
-            ]
+            self.classification_index[shape_key] = [int(t, 16) for t in tile_hexes]
 
         self._data_loaded = True
 
     def generate(
-        self,
-        path: list[tuple[int, int]]
+        self, path: list[tuple[int, int]]
     ) -> list[tuple[tuple[int, int], int]]:
         """
         Generate fringe tiles for a closed path.
@@ -326,7 +325,7 @@ class FringeGenerator:
         # Step 3: Backtracking assignment
         assignment = self._backtracking_assign(candidates, path)
 
-        return list(zip(path, assignment))
+        return list(zip(path, assignment, strict=True))
 
     def _validate_path(self, path: list[tuple[int, int]]) -> None:
         """
@@ -350,18 +349,14 @@ class FringeGenerator:
             dr = abs(next_[0] - curr[0])
             dc = abs(next_[1] - curr[1])
             if dr + dc != 1:
-                raise ValueError(
-                    f"Non-orthogonal move at index {i}: {curr} -> {next_}"
-                )
+                raise ValueError(f"Non-orthogonal move at index {i}: {curr} -> {next_}")
 
         # Check for duplicates
         if len(set(path)) != len(path):
             raise ValueError("Path contains duplicate positions")
 
     def _build_candidate_sets(
-        self,
-        path: list[tuple[int, int]],
-        is_clockwise: bool
+        self, path: list[tuple[int, int]], is_clockwise: bool
     ) -> list[set[int]]:
         """
         Build candidate tile sets for each position based on shape classification.
@@ -408,9 +403,7 @@ class FringeGenerator:
         return neighbors.get(tile_b, 0) >= self.freq_threshold
 
     def _arc_consistency_filter(
-        self,
-        candidates: list[set[int]],
-        path: list[tuple[int, int]]
+        self, candidates: list[set[int]], path: list[tuple[int, int]]
     ) -> None:
         """
         Filter candidates using arc consistency (AC-3 algorithm).
@@ -432,7 +425,8 @@ class FringeGenerator:
 
                 # Filter candidates[i]: keep tiles with at least one compatible neighbor in j
                 valid_i = {
-                    tile_i for tile_i in candidates[i]
+                    tile_i
+                    for tile_i in candidates[i]
                     if any(
                         self._is_compatible(tile_i, dir_i_to_j, tile_j)
                         for tile_j in candidates[j]
@@ -444,7 +438,8 @@ class FringeGenerator:
 
                 # Filter candidates[j]: keep tiles with at least one compatible neighbor in i
                 valid_j = {
-                    tile_j for tile_j in candidates[j]
+                    tile_j
+                    for tile_j in candidates[j]
                     if any(
                         self._is_compatible(tile_i, dir_i_to_j, tile_j)
                         for tile_i in candidates[i]
@@ -455,9 +450,7 @@ class FringeGenerator:
                     changed = True
 
     def _backtracking_assign(
-        self,
-        candidates: list[set[int]],
-        path: list[tuple[int, int]]
+        self, candidates: list[set[int]], path: list[tuple[int, int]]
     ) -> list[int]:
         """
         Assign tiles using backtracking search.

@@ -8,9 +8,9 @@
 
 export class MeasurementState {
   constructor() {
-    this.points = [];  // Array of {x, y} in game pixels
-    this.previewPoint = null;  // {x, y} in game pixels, or null
-    this.courseId = 'japan';
+    this.points = []; // Array of {x, y} in game pixels
+    this.previewPoint = null; // {x, y} in game pixels, or null
+    this.courseId = "japan";
     this.holeNumber = 1;
   }
 
