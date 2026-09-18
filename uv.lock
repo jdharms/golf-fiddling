@@ -255,71 +255,6 @@ wheels = [
 ]
 
 [[package]]
-name = "golf-fiddling"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "fastapi" },
-    { name = "httpx2" },
-    { name = "itsdangerous" },
-    { name = "jinja2" },
-    { name = "markdown-it-py" },
-    { name = "numpy" },
-    { name = "pillow" },
-    { name = "plyer" },
-    { name = "py65" },
-    { name = "pygame" },
-    { name = "python-multipart" },
-    { name = "uvicorn", extra = ["standard"] },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "djlint" },
-    { name = "opencv-python-headless" },
-    { name = "playwright" },
-    { name = "pyinstaller" },
-    { name = "pyright" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-xdist" },
-    { name = "qrcode" },
-    { name = "ruff" },
-    { name = "zxing-cpp" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastapi", specifier = ">=0.141.1" },
-    { name = "httpx2", specifier = ">=2.13.0" },
-    { name = "itsdangerous", specifier = ">=2.2.0" },
-    { name = "jinja2", specifier = ">=3.1.6" },
-    { name = "markdown-it-py", specifier = ">=4.0.0" },
-    { name = "numpy", specifier = ">=2.4.0" },
-    { name = "pillow", specifier = ">=12.0.0" },
-    { name = "plyer", specifier = ">=2.1.0" },
-    { name = "py65", specifier = ">=1.2.0" },
-    { name = "pygame", specifier = ">=2.6.1" },
-    { name = "python-multipart", specifier = ">=0.0.20" },
-    { name = "uvicorn", extras = ["standard"], specifier = ">=0.53.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "djlint", specifier = ">=1.46.1" },
-    { name = "opencv-python-headless", specifier = ">=5.0.0.93" },
-    { name = "playwright", specifier = ">=1.63.0" },
-    { name = "pyinstaller", specifier = ">=6.18.0" },
-    { name = "pyright", specifier = ">=1.1.407" },
-    { name = "pytest", specifier = ">=8.0.0" },
-    { name = "pytest-cov", specifier = ">=4.1.0" },
-    { name = "pytest-xdist", specifier = ">=3.8.0" },
-    { name = "qrcode", specifier = ">=8.2" },
-    { name = "ruff", specifier = ">=0.14.10" },
-    { name = "zxing-cpp", specifier = ">=3.1.1" },
-]
-
-[[package]]
 name = "greenlet"
 version = "3.5.6"
 source = { registry = "https://pypi.org/simple" }
@@ -624,6 +559,71 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec958cb99bd3efefba235e65cdeb9c84d24a8293ba1d90/mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba", size = 8729, upload-time = "2022-08-14T12:40:10.846Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979, upload-time = "2022-08-14T12:40:09.779Z" },
+]
+
+[[package]]
+name = "nes-open-tools"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "fastapi" },
+    { name = "httpx2" },
+    { name = "itsdangerous" },
+    { name = "jinja2" },
+    { name = "markdown-it-py" },
+    { name = "numpy" },
+    { name = "pillow" },
+    { name = "plyer" },
+    { name = "py65" },
+    { name = "pygame" },
+    { name = "python-multipart" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "djlint" },
+    { name = "opencv-python-headless" },
+    { name = "playwright" },
+    { name = "pyinstaller" },
+    { name = "pyright" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-xdist" },
+    { name = "qrcode" },
+    { name = "ruff" },
+    { name = "zxing-cpp" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = ">=0.141.1" },
+    { name = "httpx2", specifier = ">=2.13.0" },
+    { name = "itsdangerous", specifier = ">=2.2.0" },
+    { name = "jinja2", specifier = ">=3.1.6" },
+    { name = "markdown-it-py", specifier = ">=4.0.0" },
+    { name = "numpy", specifier = ">=2.4.0" },
+    { name = "pillow", specifier = ">=12.0.0" },
+    { name = "plyer", specifier = ">=2.1.0" },
+    { name = "py65", specifier = ">=1.2.0" },
+    { name = "pygame", specifier = ">=2.6.1" },
+    { name = "python-multipart", specifier = ">=0.0.20" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.53.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "djlint", specifier = ">=1.46.1" },
+    { name = "opencv-python-headless", specifier = ">=5.0.0.93" },
+    { name = "playwright", specifier = ">=1.63.0" },
+    { name = "pyinstaller", specifier = ">=6.18.0" },
+    { name = "pyright", specifier = ">=1.1.407" },
+    { name = "pytest", specifier = ">=8.0.0" },
+    { name = "pytest-cov", specifier = ">=4.1.0" },
+    { name = "pytest-xdist", specifier = ">=3.8.0" },
+    { name = "qrcode", specifier = ">=8.2" },
+    { name = "ruff", specifier = ">=0.14.10" },
+    { name = "zxing-cpp", specifier = ">=3.1.1" },
 ]
 
 [[package]]

@@ -18,8 +18,8 @@ for a randomizer.
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone the repository
-git clone git@github.com:jdharms/golf-fiddling.git
-cd golf-fiddling
+git clone git@github.com:jdharms/nes-open-tools.git
+cd nes-open-tools
 
 # Install dependencies
 uv sync
@@ -32,8 +32,8 @@ uv sync
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 # Clone the repository
-git clone git@github.com:jdharms/golf-fiddling.git
-cd golf-fiddling
+git clone git@github.com:jdharms/nes-open-tools.git
+cd nes-open-tools
 
 # Install dependencies
 uv sync

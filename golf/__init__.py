@@ -1,5 +1,5 @@
 """
-Golf-Fiddling: NES Open Tournament Golf Tools
+NES Open Tools: NES Open Tournament Golf Tools
 
 A shared library for working with NES Open Tournament Golf ROM data,
 course files, and rendering.

@@ -1,1 +1,1 @@
-"""Test suite for golf-fiddling compression system."""
+"""Test suite for NES Open Tools."""
