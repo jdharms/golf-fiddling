@@ -17,7 +17,6 @@ import json
 import sys
 from pathlib import Path
 
-
 DIRECTION_OFFSETS = {
     "N": (-1, 0),  # North (row above)
     "S": (1, 0),  # South (row below)

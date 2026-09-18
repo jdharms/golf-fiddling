@@ -11,6 +11,8 @@ import pytest
 
 from editor.algorithms.better_forest_fill import (
     PLACEHOLDER_TILE,
+)
+from editor.algorithms.better_forest_fill import (
     BetterForestFiller as ForestFiller,
 )
 from golf.core.neighbor_validator import TerrainNeighborValidator

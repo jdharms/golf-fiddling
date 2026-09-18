@@ -7,7 +7,6 @@ in the same schema tools/dump.py produces for the US ROM.
 """
 
 import argparse
-import sys
 from pathlib import Path
 
 from golf.core import jp_rom_utils, rom_utils

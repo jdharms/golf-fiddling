@@ -78,9 +78,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const articles = document.querySelectorAll("article.rom");
   if (!window.isSecureContext || !window.crypto?.subtle || !window.indexedDB) {
     document.getElementById("rom-unsupported").hidden = false;
-    articles.forEach((article) =>
-      setState(article, "unavailable", t("rom.status.unavailable")),
-    );
+    for (const article of articles) {
+      setState(article, "unavailable", t("rom.status.unavailable"));
+    }
     return;
   }
   articles.forEach((article) => {

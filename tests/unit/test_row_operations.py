@@ -1,11 +1,9 @@
 """Unit tests for row operations (add/remove rows with constraints)."""
 
-import tempfile
 from unittest.mock import Mock
 
 import pytest
 
-from editor.controllers.editor_state import EditorState
 from editor.tools.add_row_tool import AddRowTool
 from editor.tools.base_tool import ToolContext
 from editor.tools.remove_row_tool import RemoveRowTool
@@ -81,31 +79,6 @@ class TestHoleDataTerrainHeight:
         """Loading JSON should set terrain_height from terrain.height field."""
         # Create JSON file with explicit height
         json_file = tmp_path / "test_hole.json"
-        json_content = """{
-  "hole": 1,
-  "par": 4,
-  "distance": 400,
-  "handicap": 1,
-  "scroll_limit": 3,
-  "green": {"x": 100, "y": 200},
-  "tee": {"x": 0, "y": 0},
-  "flag_positions": [],
-  "terrain": {
-    "width": 22,
-    "height": 32,
-    "rows": ["10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10"]
-  },
-  "attributes": {
-    "width": 11,
-    "height": 1,
-    "rows": [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
-  },
-  "greens": {
-    "width": 24,
-    "height": 24,
-    "rows": ["00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"]
-  }
-}"""
         # Need to expand terrain rows to match height
         terrain_rows = [
             "10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10"
@@ -160,7 +133,7 @@ class TestHoleDataTerrainHeight:
 
         import json
 
-        with open(json_file, "r") as f:
+        with open(json_file) as f:
             data = json.load(f)
 
         assert data["terrain"]["height"] == 30
@@ -251,7 +224,7 @@ class TestRowOperationsMaximumConstraint:
         mock_tool_context.hole_data.terrain_height = 46
         mock_tool_context.hole_data.terrain = [[0] * 22 for _ in range(46)]
 
-        result = row_operations_tool.add_row(mock_tool_context)
+        row_operations_tool.add_row(mock_tool_context)
 
         assert mock_tool_context.hole_data.terrain_height == 48  # Allowed
 
@@ -277,7 +250,7 @@ class TestRowOperationsMinimumConstraint:
         """Can remove rows down to exactly 30."""
         mock_tool_context.hole_data.terrain_height = 32
 
-        result = row_operations_tool.remove_row(mock_tool_context)
+        row_operations_tool.remove_row(mock_tool_context)
 
         assert mock_tool_context.hole_data.terrain_height == 30  # Allowed
 

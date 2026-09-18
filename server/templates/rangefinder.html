@@ -65,9 +65,11 @@
 
     <div class="rangefinder-viewer">
       <div class="rangefinder-image-container">
+        {# djlint:off H056 - the script sets src #}
         <img id="hole-image"
              src=""
              alt="{{ t_plain('rangefinder.hole_image_alt') }}">
+        {# djlint:on #}
         <canvas id="overlay-canvas"></canvas>
       </div>
     </div>
@@ -85,12 +87,14 @@
         </header>
         <div class="green-viewer">
           <div class="green-container">
+            {# djlint:off H056 - the script sets src #}
             <img id="green-image"
                  src=""
                  alt="{{ t_plain('rangefinder.green_image_alt') }}">
             <img id="flag-overlay"
                  src=""
                  alt="{{ t_plain('rangefinder.flag_image_alt') }}">
+            {# djlint:on #}
           </div>
         </div>
         <footer>

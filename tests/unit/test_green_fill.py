@@ -9,7 +9,6 @@ import pytest
 
 from editor.algorithms.green_fill import GreenFill
 
-
 # =============================================================================
 # Helper Functions
 # =============================================================================
@@ -204,7 +203,6 @@ class TestEdgeFilling:
     def test_left_of_fringe_left_odd(self, filler):
         """Tile LEFT of FRINGE_LEFT at odd position gets EDGE_LEFT[1]."""
         p = GreenFill.PLACEHOLDER
-        x = 0x50  # non-placeholder
         greens = [
             [p, p, GreenFill.FRINGE_LEFT],
         ]
@@ -602,9 +600,11 @@ class TestRoundTrip:
 
         # Compare to original
         differences = []
-        for row_idx, (orig_row, filled_row) in enumerate(zip(original, filled)):
+        for row_idx, (orig_row, filled_row) in enumerate(
+            zip(original, filled, strict=True)
+        ):
             for col_idx, (orig_tile, filled_tile) in enumerate(
-                zip(orig_row, filled_row)
+                zip(orig_row, filled_row, strict=True)
             ):
                 if orig_tile != filled_tile:
                     differences.append(
@@ -657,9 +657,11 @@ class TestRoundTrip:
 
         # Verify we only have the 3 known differences
         differences = []
-        for row_idx, (orig_row, filled_row) in enumerate(zip(original, filled)):
+        for row_idx, (orig_row, filled_row) in enumerate(
+            zip(original, filled, strict=True)
+        ):
             for col_idx, (orig_tile, filled_tile) in enumerate(
-                zip(orig_row, filled_row)
+                zip(orig_row, filled_row, strict=True)
             ):
                 if orig_tile != filled_tile:
                     differences.append((row_idx, col_idx))
@@ -760,4 +762,4 @@ class TestConstants:
             0x86,
             0x87,  # edge odd
         }
-        assert GreenFill.ROUGH_TILES == expected
+        assert expected == GreenFill.ROUGH_TILES

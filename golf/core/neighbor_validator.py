@@ -69,12 +69,10 @@ class TerrainNeighborValidator:
             else:
                 # New format: objects with counts
                 self.neighbors[tile_idx] = {
-                    "up": set(int(n, 16) for n in directions.get("up", {}).keys()),
-                    "down": set(int(n, 16) for n in directions.get("down", {}).keys()),
-                    "left": set(int(n, 16) for n in directions.get("left", {}).keys()),
-                    "right": set(
-                        int(n, 16) for n in directions.get("right", {}).keys()
-                    ),
+                    "up": set(int(n, 16) for n in directions.get("up", {})),
+                    "down": set(int(n, 16) for n in directions.get("down", {})),
+                    "left": set(int(n, 16) for n in directions.get("left", {})),
+                    "right": set(int(n, 16) for n in directions.get("right", {})),
                 }
                 self.neighbor_frequencies[tile_idx] = {
                     "up": {

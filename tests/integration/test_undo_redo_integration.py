@@ -1,16 +1,16 @@
 """Integration tests for undo/redo with editor components."""
 
+from unittest.mock import Mock
+
 import pytest
 from pygame import Rect
-
-from unittest.mock import Mock
 
 from editor.controllers.editor_state import EditorState
 from editor.controllers.event_handler import EventHandler
 from editor.controllers.transform_logic import TransformLogic
 from editor.core.pygame_rendering import Tileset
-from editor.tools.tool_manager import ToolManager
 from editor.tools.row_operations_tool import RowOperationsTool
+from editor.tools.tool_manager import ToolManager
 from editor.ui.pickers import GreensTilePicker, TilePicker
 from golf.core.compressor import load_compression_tables
 from golf.formats.hole_data import HoleData
@@ -240,7 +240,6 @@ class TestRowOperationUndo:
         Regression test for bug where _restore_hole_data() didn't restore terrain_height,
         causing IndexError in terrain renderer.
         """
-        state = editor_setup["state"]
         hole_data = editor_setup["hole_data"]
         event_handler = editor_setup["event_handler"]
         row_operations_tool = editor_setup["row_operations_tool"]
@@ -318,7 +317,6 @@ class TestFileLoadClearsUndoHistory:
     def test_set_initial_state_clears_history(self, editor_setup):
         """set_initial_state should clear undo/redo on file load."""
         state = editor_setup["state"]
-        hole_data = editor_setup["hole_data"]
         event_handler = editor_setup["event_handler"]
         row_operations_tool = editor_setup["row_operations_tool"]
 
@@ -338,7 +336,6 @@ class TestFileLoadClearsUndoHistory:
     def test_undo_redo_after_load(self, editor_setup):
         """Should be able to undo/redo after file load."""
         state = editor_setup["state"]
-        hole_data = editor_setup["hole_data"]
         event_handler = editor_setup["event_handler"]
         row_operations_tool = editor_setup["row_operations_tool"]
 

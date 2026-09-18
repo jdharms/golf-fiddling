@@ -1,8 +1,5 @@
 """Integration tests for ROM patch application."""
 
-import tempfile
-from pathlib import Path
-
 import pytest
 
 from golf.core.patches import (

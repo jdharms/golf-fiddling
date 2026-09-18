@@ -16,7 +16,6 @@ Usage:
 """
 
 from .attr_streaming import (
-    ATTR_STREAMING_PATCH,
     ATTR_STREAMING_BANK_SWITCH_PATCH,
     ATTR_STREAMING_FREE_SPACE_PATCH,
     ATTR_STREAMING_LE451_ENTRY_PATCH,
@@ -25,6 +24,7 @@ from .attr_streaming import (
     ATTR_STREAMING_LOADTERRAIN_COPY_LOOP_NOP_PATCH,
     ATTR_STREAMING_LOADTERRAIN_PTR_HIGH_PATCH,
     ATTR_STREAMING_LOADTERRAIN_PTR_LOW_PATCH,
+    ATTR_STREAMING_PATCH,
     ATTR_STREAMING_PATCHES,
 )
 from .base import PatchError, ROMPatch
@@ -39,46 +39,6 @@ from .menu_trim import (
     menu_trim_patches,
 )
 from .mercy_tap_in import mercy_tap_in_patches
-from .practice_swing import (
-    DEFAULT_HOLD_FRAMES,
-    PRACTICE_SWING_OFFSET,
-    practice_swing_patch,
-    practice_swing_patches,
-)
-from .scorecard_course_name import (
-    scorecard_course_name_patch,
-    scorecard_course_name_patches,
-)
-from .scorecard_qr import (
-    QR_DISABLE_PATCH,
-    SCORECARD_QR_PATCH,
-    ScorecardQrPatch,
-)
-from .qr_credentials import (
-    QrCredentials,
-    load_credentials,
-    qr_credentials_patch,
-)
-from .sram_defaults import Club, sram_defaults_patch, sram_defaults_patches
-from .signpost_banner import remove_course_banner_patches
-from .signpost_random_banner import (
-    build_code,
-    build_layout,
-    data_region,
-    random_banner_patches,
-)
-from .seeded_wind import (
-    HoleWindForecast,
-    derive_hole_seeds,
-    predict_hole,
-    seeded_wind_patch,
-    seeded_wind_patches,
-)
-from .music_import import (
-    COURSE_TRACKS,
-    MusicImportPatch,
-    music_import_patch,
-)
 from .multi_bank import (
     COURSE2_MIRROR_PATCH,
     COURSE2_MIRROR_PATCH_SCORECARD,
@@ -88,9 +48,22 @@ from .multi_bank import (
     MULTI_BANK_CODE_PATCH,
     MULTI_BANK_PATCHES,
 )
-from .stack import PatchStack, StackBuild, StackError
-from .wram_expansion import WRAM_EXPANSION_PATCH
-from .registry import PATCH_SPECS, BuildContext, PatchSpec
+from .music_import import (
+    COURSE_TRACKS,
+    MusicImportPatch,
+    music_import_patch,
+)
+from .practice_swing import (
+    DEFAULT_HOLD_FRAMES,
+    PRACTICE_SWING_OFFSET,
+    practice_swing_patch,
+    practice_swing_patches,
+)
+from .qr_credentials import (
+    QrCredentials,
+    load_credentials,
+    qr_credentials_patch,
+)
 from .recipe import (
     BuiltStep,
     Recipe,
@@ -99,7 +72,28 @@ from .recipe import (
     describe_params,
     parse_step_arg,
 )
-
+from .registry import PATCH_SPECS, BuildContext, PatchSpec
+from .scorecard_course_name import (
+    scorecard_course_name_patch,
+    scorecard_course_name_patches,
+)
+from .scorecard_qr import (
+    QR_DISABLE_PATCH,
+    SCORECARD_QR_PATCH,
+    ScorecardQrPatch,
+)
+from .seeded_wind import (
+    HoleWindForecast,
+    derive_hole_seeds,
+    predict_hole,
+    seeded_wind_patch,
+    seeded_wind_patches,
+)
+from .signpost_banner import remove_course_banner_patches
+from .signpost_random_banner import random_banner_patches
+from .sram_defaults import Club, sram_defaults_patch, sram_defaults_patches
+from .stack import PatchStack, StackBuild, StackError
+from .wram_expansion import WRAM_EXPANSION_PATCH
 
 __all__ = [
     "ROMPatch",
@@ -131,6 +125,7 @@ __all__ = [
     "PatchError",
     "mercy_tap_in_patches",
     "remove_course_banner_patches",
+    "random_banner_patches",
     "practice_swing_patch",
     "practice_swing_patches",
     "PRACTICE_SWING_OFFSET",

@@ -1,15 +1,11 @@
 """Unit tests for the ROM static-analysis helpers."""
 
-import pytest
-
 from golf.core.mlb_labels import Label, LabelIndex, LabelStore
 from golf.core.rom_analysis import (
     FIXED,
     PAIRS,
     TRIPLES,
     InlineArgSpec,
-    ReferenceReport,
-    Reference,
     data_range_at,
     disassemble,
     find_code_references,

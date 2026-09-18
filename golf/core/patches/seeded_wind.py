@@ -66,7 +66,6 @@ be checked against the expected pin index, anchors and per-swing wind.
 
 import hashlib
 from dataclasses import dataclass
-from typing import Sequence
 
 from .byte_patch import BytePatch
 from .composite import CompositePatch

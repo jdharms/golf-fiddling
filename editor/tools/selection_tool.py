@@ -18,7 +18,6 @@ from editor.data import ClipboardData
 
 from .base_tool import ToolContext, ToolResult
 
-
 DEFAULT_TILE = 0x100
 
 
@@ -105,8 +104,6 @@ class SelectionTool:
             context.state.canvas_offset_y,
             context.state.canvas_scale,
         )
-
-        mode = context.state.mode
 
         # If in paste mode, commit paste
         if self.state.paste_mode:

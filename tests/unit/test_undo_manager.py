@@ -243,7 +243,7 @@ class TestSetInitialState:
         undo_manager.push_state(simple_hole_data)
 
         simple_hole_data.terrain[0][1] = 88
-        restored = undo_manager.undo(simple_hole_data)
+        undo_manager.undo(simple_hole_data)
 
         assert undo_manager.can_undo()
         assert undo_manager.can_redo()

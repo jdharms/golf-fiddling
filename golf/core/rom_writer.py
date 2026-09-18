@@ -8,12 +8,9 @@ This class mirrors RomReader's interface for writes.
 from pathlib import Path
 
 from .rom_utils import (
-    FIXED_BANK_PRG_START,
     INES_HEADER_SIZE,
-    PRG_BANK_SIZE,
     cpu_to_prg_fixed,
     cpu_to_prg_switched,
-    prg_to_cpu_switched,
 )
 
 

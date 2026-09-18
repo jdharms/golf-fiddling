@@ -42,7 +42,6 @@ import sys
 
 from golf.core.mlb_labels import TYPE_ALIASES, Label, LabelStore, describe
 from golf.core.rom_analysis import (
-    FIXED_BANK,
     disassemble,
     find_code_references,
     find_data_references,
@@ -54,8 +53,10 @@ from golf.core.rom_utils import (
     PRG_BANK_SIZE,
     cpu_to_prg_fixed,
     cpu_to_prg_switched,
-    parse_cpu_or_prg_address as parse_address,
     prg_to_bank_and_cpu,
+)
+from golf.core.rom_utils import (
+    parse_cpu_or_prg_address as parse_address,
 )
 
 

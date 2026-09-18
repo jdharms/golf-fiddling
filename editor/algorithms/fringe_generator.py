@@ -9,7 +9,6 @@ import json
 import random
 from pathlib import Path
 
-
 # =============================================================================
 # Direction Constants and Utilities
 # =============================================================================
@@ -324,7 +323,7 @@ class FringeGenerator:
         # Step 3: Backtracking assignment
         assignment = self._backtracking_assign(candidates, path)
 
-        return list(zip(path, assignment))
+        return list(zip(path, assignment, strict=True))
 
     def _validate_path(self, path: list[tuple[int, int]]) -> None:
         """

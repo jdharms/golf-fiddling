@@ -10,12 +10,13 @@ Tests cover:
 - Tool activation behavior
 """
 
+from unittest.mock import Mock
+
 import pygame
 import pytest
-from unittest.mock import Mock, MagicMock
 
-from editor.tools.position_tool import PositionTool
 from editor.tools.base_tool import ToolContext
+from editor.tools.position_tool import PositionTool
 
 
 @pytest.fixture
@@ -288,7 +289,7 @@ class TestPositionToolModeChange:
         mock_context.state.mode = "greens"
 
         # update() should sync to flag1
-        result = position_tool.update(mock_context)
+        position_tool.update(mock_context)
 
         assert position_tool.selected_position_index == 0
         assert mock_context.highlight_state.position_tool_selected == "flag1"

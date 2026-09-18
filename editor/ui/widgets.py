@@ -31,10 +31,13 @@ class Button:
     def handle_event(self, event: pygame.event.Event) -> bool:
         if event.type == pygame.MOUSEMOTION:
             self.hovered = self.rect.collidepoint(event.pos)
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            if self.rect.collidepoint(event.pos):
-                self.callback()
-                return True
+        elif (
+            event.type == pygame.MOUSEBUTTONDOWN
+            and event.button == 1
+            and self.rect.collidepoint(event.pos)
+        ):
+            self.callback()
+            return True
         return False
 
     def render(self, screen: Surface, font: pygame.font.Font):

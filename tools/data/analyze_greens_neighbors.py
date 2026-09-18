@@ -13,6 +13,10 @@ from pathlib import Path
 
 from golf.formats.hole_data import HoleData
 
+# classify_tile thresholds
+FRINGE_THRESHOLD = 4
+DOMINANCE_RATIO = 2.0
+
 
 def is_target_tile(tile_idx: int) -> bool:
     """
@@ -71,9 +75,6 @@ def classify_tile(tile_id, neighbor_data):
     Returns:
         Classification dictionary with tile, path, interior_side, and ambiguous fields
     """
-    FRINGE_THRESHOLD = 4
-    DOMINANCE_RATIO = 2.0
-
     path_edges = []
     interior_edges = []
     exterior_edges = []

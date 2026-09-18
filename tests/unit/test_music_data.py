@@ -34,19 +34,19 @@ def jp():
 
 def test_layout_matches_known_us_addresses(us):
     """The US addresses were derived by hand in docs/music_format.md."""
-    L = discover_layout(us)
-    assert L.order_table == 0x8E9E
-    assert L.duration_table == 0x8107
-    assert L.period_table == 0x818A
-    assert L.envelope_table == 0x81A4
-    assert L.transpose_table == 0x884F
-    assert L.noise_drum_table == 0x8232
-    assert L.dmc_duration_table == 0x8DCB
-    assert L.dmc_rate_table == 0x8DD5
-    assert L.dmc_ptr_table == 0x8DDF
-    assert L.header_base(1) == 0x8F2A
-    assert L.header_base(5) == 0x900A
-    assert L.header_base(0x11) == 0x90C5
+    layout = discover_layout(us)
+    assert layout.order_table == 0x8E9E
+    assert layout.duration_table == 0x8107
+    assert layout.period_table == 0x818A
+    assert layout.envelope_table == 0x81A4
+    assert layout.transpose_table == 0x884F
+    assert layout.noise_drum_table == 0x8232
+    assert layout.dmc_duration_table == 0x8DCB
+    assert layout.dmc_rate_table == 0x8DD5
+    assert layout.dmc_ptr_table == 0x8DDF
+    assert layout.header_base(1) == 0x8F2A
+    assert layout.header_base(5) == 0x900A
+    assert layout.header_base(0x11) == 0x90C5
 
 
 def test_layout_differs_for_the_japanese_rom(jp, us):
@@ -124,11 +124,11 @@ def test_jp_course_themes_are_distinct(jp):
 @pytest.mark.parametrize("path", [US, JP])
 def test_every_pattern_block_is_valid(path):
     rom = _load(path)
-    L = discover_layout(rom)
-    pats = md.all_patterns(rom, L)
+    layout = discover_layout(rom)
+    pats = md.all_patterns(rom, layout)
     assert pats
     for addr, h in pats.items():
-        n = md.block_size(rom, L, h)
+        n = md.block_size(rom, layout, h)
         assert 0 < n <= 255, f"${addr:04X} block of {n} bytes"
 
 
@@ -136,17 +136,17 @@ def test_every_pattern_block_is_valid(path):
 def test_extracted_track_round_trips(path):
     """Rebuilding the order list from the dump must reproduce the ROM's bytes."""
     rom = _load(path)
-    L = discover_layout(rom)
+    layout = discover_layout(rom)
     for mid in sorted(set(md.discover_course_bgm(rom)["music_ids"].values())):
-        t = md.extract_track(rom, mid, L)
-        loop, seq = md._order(rom, L, mid)
+        t = md.extract_track(rom, mid, layout)
+        loop, seq = md._order(rom, layout, mid)
         assert t["loop_position"] == loop
         assert len(t["order"]) == len(seq)
 
         # Each order entry must map back to the byte it came from, and a given
         # pattern index must always correspond to the same order byte.
         rebuilt, seen = [], {}
-        for entry, original in zip(t["order"], seq):
+        for entry, original in zip(t["order"], seq, strict=True):
             if entry["type"] == "flag":
                 assert entry["value"] == original < 3
                 rebuilt.append(entry["value"])
@@ -158,9 +158,11 @@ def test_extracted_track_round_trips(path):
         # Every pattern's captured stream must be exactly the bytes the engine reads.
         b = md._bank14(rom)
         for index, order_byte in seen.items():
-            h = md._header(rom, L.header_base(mid) + order_byte)
+            h = md._header(rom, layout.header_base(mid) + order_byte)
             stream = bytes(int(x, 16) for x in t["patterns"][index]["stream"].split())
-            expected = bytes(b(h["ptr"] + i) for i in range(md.block_size(rom, L, h)))
+            expected = bytes(
+                b(h["ptr"] + i) for i in range(md.block_size(rom, layout, h))
+            )
             assert stream == expected
             assert t["patterns"][index]["tempo"] == h["tempo"]
             assert t["patterns"][index]["pulse1_start"] == h["pulse1_start"]
@@ -195,12 +197,12 @@ def test_export_is_json_serialisable_and_complete(path):
 def test_exported_envelope_rows_are_the_bytes_the_engine_reads(path):
     """A row is 16 bytes read straight from the table at the named base."""
     rom = _load(path)
-    L = discover_layout(rom)
+    layout = discover_layout(rom)
     b = md._bank14(rom)
     for mid in sorted(set(md.discover_course_bgm(rom)["music_ids"].values())):
-        for base, row in md.extract_track(rom, mid, L)["envelope_rows"].items():
+        for base, row in md.extract_track(rom, mid, layout)["envelope_rows"].items():
             expected = [
-                f"{b(L.envelope_table + int(base, 16) + i):02X}" for i in range(16)
+                f"{b(layout.envelope_table + int(base, 16) + i):02X}" for i in range(16)
             ]
             assert row.split() == expected
 

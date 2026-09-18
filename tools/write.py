@@ -138,10 +138,7 @@ Examples:
         print(f"Error: Course directory not found: {course_dir}")
         sys.exit(1)
 
-    if args.output:
-        output_path = args.output
-    else:
-        output_path = str(rom_path.with_suffix("")) + ".modified.nes"
+    output_path = args.output or str(rom_path.with_suffix("")) + ".modified.nes"
 
     try:
         print(f"ROM: {rom_path}")

@@ -1,5 +1,7 @@
 """Unit tests for the scorecard course name patch."""
 
+from itertools import pairwise
+
 import pytest
 
 from golf.core import rom_utils
@@ -212,7 +214,7 @@ class TestPatch:
         spans = sorted(
             (leaf.prg_offset, leaf.prg_offset + len(leaf.patched)) for leaf in leaves
         )
-        assert all(end <= start for (_, end), (start, _) in zip(spans, spans[1:]))
+        assert all(end <= start for (_, end), (start, _) in pairwise(spans))
 
     def test_the_longest_title_ends_before_the_mode_0_handler(self):
         leaves = {

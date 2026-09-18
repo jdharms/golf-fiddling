@@ -66,7 +66,7 @@ def test_untouched_cells_come_back_as_the_rom_s_own_bytes(imported):
     body = result.nametable()
     assert len(body) == descriptor.length
 
-    for offset, (was, now) in enumerate(zip(original, body)):
+    for offset, (was, now) in enumerate(zip(original, body, strict=True)):
         col = descriptor.col + offset % descriptor.width
         row = descriptor.row + offset // descriptor.width
         if (col, row) in NAME_CELLS:

@@ -6,7 +6,6 @@ Extracts course data from ROM and saves as human-readable JSON files.
 """
 
 import argparse
-import sys
 from pathlib import Path
 
 from golf.core import rom_utils

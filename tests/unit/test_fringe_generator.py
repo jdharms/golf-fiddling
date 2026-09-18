@@ -8,15 +8,14 @@ import random
 import pytest
 
 from editor.algorithms.fringe_generator import (
+    DIRECTIONS,
     FringeGenerator,
+    compute_signed_area,
     direction_from,
     direction_to,
-    opposite,
-    compute_signed_area,
     make_shape_key,
-    DIRECTIONS,
+    opposite,
 )
-
 
 # =============================================================================
 # Direction Utilities

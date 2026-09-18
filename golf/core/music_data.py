@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import hashlib
 
-from .audio import CPU_HZ, MusicLayout, _prg_image, discover_layout
+from .audio import CPU_HZ, MusicLayout, W, _prg_image, discover_layout
 
 FIXED_BANK_OFF = 0x3C000
 COURSE_NAMES = ("japan", "us", "uk")
@@ -77,7 +77,6 @@ def discover_course_bgm(rom: bytes) -> dict:
     fx = _fixed(rom)
     b = _bank14(rom)
     order_table = discover_layout(rom).order_table
-    W = None
     pat = [
         0xA9,
         0x00,
@@ -123,9 +122,9 @@ def discover_course_bgm(rom: bytes) -> dict:
             table=table,
             slots=[
                 {"slot": n, "name": nm, "music_id": v}
-                for n, (nm, v) in enumerate(zip(names, ids))
+                for n, (nm, v) in enumerate(zip(names, ids, strict=True))
             ],
-            music_ids=dict(zip(names, ids)),
+            music_ids=dict(zip(names, ids, strict=True)),
             unique_music_ids=sorted(set(ids)),
         )
     raise ValueError("could not locate StartCourseBgm")

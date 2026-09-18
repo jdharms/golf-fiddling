@@ -29,19 +29,19 @@ def parse_arguments():
         golf-editor terrain.bin greens.bin hole.json  # all explicit
     """
     # Default CHR paths (resolved for PyInstaller bundling)
-    DEFAULT_TERRAIN_CHR = str(get_resource_path("data/chr-ram.bin"))
-    DEFAULT_GREENS_CHR = str(get_resource_path("data/green-ram.bin"))
+    default_terrain_chr = str(get_resource_path("data/chr-ram.bin"))
+    default_greens_chr = str(get_resource_path("data/green-ram.bin"))
 
     args = sys.argv[1:]  # Exclude program name
 
     if len(args) == 0:
         # No args: use defaults, no hole
-        return DEFAULT_TERRAIN_CHR, DEFAULT_GREENS_CHR, None
+        return default_terrain_chr, default_greens_chr, None
 
     elif len(args) == 1:
         # 1 arg: if JSON, use defaults + hole; otherwise error
         if args[0].endswith(".json"):
-            return DEFAULT_TERRAIN_CHR, DEFAULT_GREENS_CHR, args[0]
+            return default_terrain_chr, default_greens_chr, args[0]
         else:
             print("Error: Single argument must be a hole JSON file")
             print("")

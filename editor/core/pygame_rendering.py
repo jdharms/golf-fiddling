@@ -18,7 +18,6 @@ from .constants import (
     SPRITE_OFFSET_Y,
 )
 
-
 _placeholder_cache: dict[int, Surface] = {}
 
 

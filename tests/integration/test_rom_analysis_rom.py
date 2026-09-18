@@ -15,7 +15,7 @@ from golf.core.rom_analysis import (
     find_data_references,
 )
 from golf.core.rom_reader import RomReader
-from golf.core.rom_utils import cpu_to_prg_switched, cpu_to_prg_fixed
+from golf.core.rom_utils import cpu_to_prg_switched
 
 ROM_PATH = "nes_open_us.nes"
 MLB_PATH = "NES Open Tournament Golf (USA).mlb"

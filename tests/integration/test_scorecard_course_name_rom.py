@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from golf.core.graphics_codec import load_graphics_table
 from golf.core.patches import (
     COURSE_MIRRORS_PATCH,
     PatchStack,
@@ -23,7 +24,6 @@ from golf.core.patches.scorecard_course_name import (
     TITLE_POINTER_ADDR,
     title_descriptor_bytes,
 )
-from golf.core.graphics_codec import load_graphics_table
 from golf.core.rom_reader import RomReader
 
 ROM_PATH = "nes_open_us.nes"

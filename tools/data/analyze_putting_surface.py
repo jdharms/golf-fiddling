@@ -12,7 +12,6 @@ from pathlib import Path
 from golf.formats import compact_json as json
 from golf.formats.putting_surface import count_putting_surface_tiles
 
-
 COURSES = ["japan", "us", "uk"]
 HOLES_PER_COURSE = 18
 

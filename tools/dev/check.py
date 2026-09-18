@@ -3,7 +3,7 @@
 
 Checks: ruff (lint and format) and pyright over the Python, djLint over the Jinja
 templates, and Biome over the site's JS and CSS. Each tool reads its configuration from
-pyproject.toml or biome.json. With --fix, the formatters rewrite files and the linters
+pyproject.toml or biome.jsonc. With --fix, the formatters rewrite files and the linters
 apply their safe fixes; pyright has nothing to fix and runs as a check.
 """
 
@@ -42,7 +42,9 @@ def commands(fix: bool) -> list[tuple[str, list[str]]]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(
+        description="Run every linter, formatter check and type checker the repo uses."
+    )
     parser.add_argument(
         "--fix",
         action="store_true",

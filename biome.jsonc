@@ -1,0 +1,52 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": ["server/static/**/*.js", "server/static/**/*.css", "!**/*.min.css"]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 88
+  },
+  "linter": {
+    "rules": {
+      "style": {
+        // Flags any two selectors ending in the same element, even ones that never
+        // match the same element or set the same property.
+        "noDescendingSpecificity": "off"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double"
+    }
+  },
+  "css": {
+    "formatter": {
+      "quoteStyle": "double"
+    }
+  },
+  "overrides": [
+    {
+      // Classic scripts, not modules: romstore.js defines globals the other two use,
+      // and "use strict" is not implied. Biome parses every .js file as a module.
+      "includes": [
+        "server/static/romstore.js",
+        "server/static/rom.js",
+        "server/static/download.js"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": { "noRedundantUseStrict": "off" },
+          "correctness": { "noUnusedVariables": "off" }
+        }
+      }
+    }
+  ]
+}
