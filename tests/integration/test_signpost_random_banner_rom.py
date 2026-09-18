@@ -127,7 +127,7 @@ def test_layout_stays_inside_the_reclaimed_banner_bodies(prepared):
         patterns, chunks, BANNER_US, body, (descriptor.pointer, descriptor.length)
     )
     origin, available = data_region(descriptor.pointer, descriptor.length)
-    assert BODY_REGION_START <= origin
+    assert origin >= BODY_REGION_START
     assert layout["end"] <= BODY_REGION_END
     assert layout["end"] - origin <= available
     # and never over the banner body that is being kept

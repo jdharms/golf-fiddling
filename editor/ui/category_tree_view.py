@@ -3,7 +3,6 @@
 import pygame
 from pygame import Rect, Surface
 
-from editor.resources import get_resource_path
 from editor.core.constants import (
     COLOR_BUTTON,
     COLOR_BUTTON_ACTIVE,
@@ -13,7 +12,8 @@ from editor.core.constants import (
     COLOR_SELECTION,
     COLOR_TEXT,
 )
-from editor.data.category_tree import CategoryNode, CategoryTree
+from editor.data.category_tree import CategoryTree
+from editor.resources import get_resource_path
 
 
 class CategoryTreeView:
@@ -62,32 +62,31 @@ class CategoryTreeView:
             else:
                 self.hovered_path = None
 
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            if self.rect.collidepoint(event.pos):
-                if event.button == 1:  # Left click
-                    category_path, click_zone = self._category_at_position_detailed(
-                        event.pos
-                    )
-                    if category_path:
-                        node = self.category_tree.get_node(category_path)
-                        if node:
-                            if click_zone == "icon" and node.children:
-                                # Toggle expand/collapse
-                                node.is_expanded = not node.is_expanded
-                                return True
-                            elif click_zone == "label":
-                                # Select category
-                                self.selected_path = category_path
-                                if self.on_category_selected:
-                                    self.on_category_selected(category_path)
-                                return True
+        elif event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos):
+            if event.button == 1:  # Left click
+                category_path, click_zone = self._category_at_position_detailed(
+                    event.pos
+                )
+                if category_path:
+                    node = self.category_tree.get_node(category_path)
+                    if node:
+                        if click_zone == "icon" and node.children:
+                            # Toggle expand/collapse
+                            node.is_expanded = not node.is_expanded
+                            return True
+                        elif click_zone == "label":
+                            # Select category
+                            self.selected_path = category_path
+                            if self.on_category_selected:
+                                self.on_category_selected(category_path)
+                            return True
 
-                elif event.button == 4:  # Scroll up
-                    self.scroll_y = max(0, self.scroll_y - 20)
-                    return True
-                elif event.button == 5:  # Scroll down
-                    self.scroll_y += 20
-                    return True
+            elif event.button == 4:  # Scroll up
+                self.scroll_y = max(0, self.scroll_y - 20)
+                return True
+            elif event.button == 5:  # Scroll down
+                self.scroll_y += 20
+                return True
 
         return False
 

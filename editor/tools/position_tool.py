@@ -273,13 +273,15 @@ class PositionTool:
 
     def handle_key_up(self, key, context):
         # Clear held key state when arrow key is released
-        if key in (pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT):
-            if key == self.held_key:
-                self.held_key = None
-                self.key_held_since = None
-                self.last_repeat_time = None
-                self.repeat_active = False
-                return ToolResult.handled()
+        if (
+            key in (pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT)
+            and key == self.held_key
+        ):
+            self.held_key = None
+            self.key_held_since = None
+            self.last_repeat_time = None
+            self.repeat_active = False
+            return ToolResult.handled()
 
         return ToolResult.not_handled()
 

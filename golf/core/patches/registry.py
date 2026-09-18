@@ -31,9 +31,9 @@ from .multi_bank import COURSE_MIRRORS_PATCH, MULTI_BANK_CODE_PATCH
 from .music_import import music_import_patch
 from .practice_swing import DEFAULT_HOLD_FRAMES, practice_swing_patch
 from .putting_practice import putting_practice_patches
+from .qr_credentials import load_credentials, qr_credentials_patch
 from .scorecard_course_name import DEFAULT_NAME as DEFAULT_COURSE_NAME
 from .scorecard_course_name import scorecard_course_name_patch
-from .qr_credentials import load_credentials, qr_credentials_patch
 from .scorecard_qr import (
     QR_BANK,
     QR_DISABLE_PATCH,

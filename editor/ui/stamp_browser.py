@@ -17,8 +17,11 @@ from editor.core.constants import (
     COLOR_SELECTION,
     COLOR_TEXT,
 )
-from editor.data import StampData
 from editor.ui.category_tree_view import CategoryTreeView
+
+# Checkered pattern colors (gray tones) for transparent tiles
+TRANSPARENT_COLOR1 = (100, 100, 100)
+TRANSPARENT_COLOR2 = (140, 140, 140)
 
 
 class StampBrowser:
@@ -104,23 +107,22 @@ class StampBrowser:
             else:
                 self.hovered_stamp_id = None
 
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            if self.rect.collidepoint(event.pos):
-                if event.button == 1:  # Left click
-                    stamp_id = self._stamp_at_position(event.pos)
-                    if stamp_id:
-                        self.selected_stamp_id = stamp_id
-                        stamp = self.stamp_library.get_stamp(stamp_id)
-                        if stamp and self.on_stamp_selected:
-                            self.on_stamp_selected(stamp)
-                        return True
+        elif event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos):
+            if event.button == 1:  # Left click
+                stamp_id = self._stamp_at_position(event.pos)
+                if stamp_id:
+                    self.selected_stamp_id = stamp_id
+                    stamp = self.stamp_library.get_stamp(stamp_id)
+                    if stamp and self.on_stamp_selected:
+                        self.on_stamp_selected(stamp)
+                    return True
 
-                elif event.button == 4:  # Scroll up (stamp list)
-                    self.scroll_y = max(0, self.scroll_y - 20)
-                    return True
-                elif event.button == 5:  # Scroll down (stamp list)
-                    self.scroll_y += 20
-                    return True
+            elif event.button == 4:  # Scroll up (stamp list)
+                self.scroll_y = max(0, self.scroll_y - 20)
+                return True
+            elif event.button == 5:  # Scroll down (stamp list)
+                self.scroll_y += 20
+                return True
 
         return False
 
@@ -159,10 +161,6 @@ class StampBrowser:
             y: Y position
             size: Tile size
         """
-        # Checkered pattern colors (gray tones)
-        TRANSPARENT_COLOR1 = (100, 100, 100)
-        TRANSPARENT_COLOR2 = (140, 140, 140)
-
         checker_size = max(size // 4, 2)
 
         for row in range(0, size, checker_size):

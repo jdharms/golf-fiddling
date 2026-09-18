@@ -97,7 +97,8 @@ def load_labels(path) -> list[Label]:
 
 def save_labels(path, labels: list[Label]) -> None:
     ordered = sorted(
-        labels, key=lambda l: (_TYPE_ORDER.get(l.type, len(LABEL_TYPES)), l.start)
+        labels,
+        key=lambda label: (_TYPE_ORDER.get(label.type, len(LABEL_TYPES)), label.start),
     )
     with open(path, "w", encoding="utf-8-sig", newline="\n") as f:
         for label in ordered:
@@ -131,7 +132,7 @@ class LabelIndex:
 
     def search_name(self, substring: str) -> list[Label]:
         needle = substring.lower()
-        return [l for l in self.labels if needle in l.name.lower()]
+        return [label for label in self.labels if needle in label.name.lower()]
 
     def add(self, label: Label) -> None:
         existing = self.find_exact(label.type, label.start)

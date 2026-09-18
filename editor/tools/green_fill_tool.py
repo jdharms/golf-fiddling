@@ -48,9 +48,11 @@ class GreenFillTool:
 
         # Find changes
         changes = []
-        for row_idx, (orig_row, filled_row) in enumerate(zip(greens, filled)):
+        for row_idx, (orig_row, filled_row) in enumerate(
+            zip(greens, filled, strict=True)
+        ):
             for col_idx, (orig_tile, filled_tile) in enumerate(
-                zip(orig_row, filled_row)
+                zip(orig_row, filled_row, strict=True)
             ):
                 if orig_tile != filled_tile:
                     changes.append((row_idx, col_idx, filled_tile))

@@ -69,7 +69,7 @@ const escapeHtml = (value) =>
 // The t() for the strings a page embeds in the element with this id.
 function makeT(elementId) {
   let strings;
-  return function (key, values = {}) {
+  return (key, values = {}) => {
     strings ??= JSON.parse(document.getElementById(elementId).textContent);
     if (!(key in strings)) throw new Error(`no string ${key} on this page`);
     const text = strings[key];

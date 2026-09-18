@@ -176,7 +176,6 @@ class TestClubAnimationPairing:
 
 def _linked_and_source_positions(data, layer):
     """Walk a .aseprite and pair each linked cel's position with its source's."""
-    import zlib
 
     frames = struct.unpack("<H", data[6:8])[0]
     pos, images, links = 128, {}, []
@@ -233,12 +232,12 @@ class TestExporter:
         assert len(shared) == 1 and len(next(iter(shared.values()))) == 3
 
     def test_palette_offers_every_nes_colour_once(self, rom, sprites, tmp_path):
+        from golf.core.golfer_export import PALETTE_SIZE, build_palette, nes_index
         from golf.core.palettes import (
             NES_BLACK_ENTRIES,
             NES_CANONICAL_BLACK,
             NES_SYSTEM_PALETTE,
         )
-        from golf.core.golfer_export import PALETTE_SIZE, build_palette, nes_index
 
         palette = build_palette([0x25, 0x0F, 0x36], [0x17, 0x0F, 0x30])
         assert len(palette) == PALETTE_SIZE
@@ -253,8 +252,8 @@ class TestExporter:
         assert "club 1" in palette[nes_index(0x17)][4]
 
     def test_the_spare_blacks_collapse_onto_one_entry(self):
-        from golf.core.palettes import NES_BLACK_ENTRIES, NES_CANONICAL_BLACK
         from golf.core.golfer_export import NES_ENTRIES, nes_index
+        from golf.core.palettes import NES_BLACK_ENTRIES, NES_CANONICAL_BLACK
 
         black = nes_index(NES_CANONICAL_BLACK)
         for value in NES_BLACK_ENTRIES:
@@ -294,7 +293,7 @@ class TestExporter:
         expected = [nes_index(v) for v in meta["body_palette_nes"][1:]]
         assert meta["palette"]["body_indices"] == expected
         table = meta["palette"]["nes_by_index"]
-        for index, nes in zip(expected, meta["body_palette_nes"][1:]):
+        for index, nes in zip(expected, meta["body_palette_nes"][1:], strict=True):
             assert table[index] == nes
 
     def test_linked_body_cels_repeat_the_source_position(self, rom, sprites, tmp_path):

@@ -2,7 +2,7 @@
 Tool picker - UI component for selecting active editor tool.
 """
 
-from typing import Callable
+from collections.abc import Callable
 
 import pygame
 from pygame import Rect, Surface

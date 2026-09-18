@@ -8,7 +8,6 @@ from datetime import datetime
 from pathlib import Path
 
 from golf.formats import compact_json as json
-from golf.formats import hex_utils
 
 from .clipboard_data import ClipboardData
 

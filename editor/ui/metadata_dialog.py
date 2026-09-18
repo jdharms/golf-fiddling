@@ -10,7 +10,6 @@ Allows user to:
 """
 
 import json
-from pathlib import Path
 
 import pygame
 from pygame import Rect, Surface

@@ -7,16 +7,13 @@ and pygame-specific settings.
 For NES-specific constants (tile sizes, palettes, dimensions), see golf.core modules.
 """
 
-# Import shared NES constants from golf.core
-from golf.core.chr_tile import TILE_SIZE, BYTES_PER_TILE
-from golf.core.palettes import (
-    TERRAIN_WIDTH,
-    GREENS_WIDTH,
-    GREENS_HEIGHT,
-    PALETTES,
-    GREENS_PALETTE,
-    GREEN_OVERLAY_COLOR,
-)
+# Shared NES constants from golf.core, re-exported for the editor
+from golf.core.chr_tile import TILE_SIZE as TILE_SIZE
+from golf.core.palettes import GREEN_OVERLAY_COLOR as GREEN_OVERLAY_COLOR
+from golf.core.palettes import GREENS_HEIGHT as GREENS_HEIGHT
+from golf.core.palettes import GREENS_WIDTH as GREENS_WIDTH
+from golf.core.palettes import PALETTES as PALETTES
+from golf.core.palettes import TERRAIN_WIDTH as TERRAIN_WIDTH
 
 # UI Layout
 PICKER_WIDTH = 400

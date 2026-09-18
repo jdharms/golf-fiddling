@@ -102,10 +102,9 @@ class TransformTool:
 
     def handle_key_up(self, key, context):
         # Cancel on Shift release
-        if key in (pygame.K_LSHIFT, pygame.K_RSHIFT):
-            if self.state.is_active:
-                self.state.reset()
-                return ToolResult.handled()
+        if key in (pygame.K_LSHIFT, pygame.K_RSHIFT) and self.state.is_active:
+            self.state.reset()
+            return ToolResult.handled()
         return ToolResult.not_handled()
 
     def on_activated(self, context):

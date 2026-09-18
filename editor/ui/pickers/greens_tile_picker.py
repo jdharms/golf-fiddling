@@ -5,8 +5,8 @@ Greens-specific tile picker panel.
 from pygame import Rect
 
 from .tile_banks import (
-    SimpleTileBankGreens,
     GroupedTileBankGreens,
+    SimpleTileBankGreens,
     TileSubBankGreens,
     range_to_list,
 )
@@ -91,9 +91,9 @@ class GreensTilePicker(TilePicker):
 
         self.selected_tile = 0x30
 
-    def find_tile_position(
+    def find_tile_position(  # type: ignore[override]
         self, tile_value: int
-    ) -> tuple[int, int] | tuple[int, int, int] | None:  # type: ignore[override]
+    ) -> tuple[int, int] | tuple[int, int, int] | None:
         """Find position of tile in bank hierarchy.
 
         Returns:

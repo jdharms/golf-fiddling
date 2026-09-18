@@ -1,7 +1,8 @@
 """Action tool for adding terrain rows."""
 
 import pygame
-from .base_tool import Tool, ToolContext, ToolResult
+
+from .base_tool import ToolContext, ToolResult
 
 
 class AddRowTool:

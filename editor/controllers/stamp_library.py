@@ -108,10 +108,7 @@ class StampLibrary:
         if not node:
             return []
 
-        if recursive:
-            stamp_ids = node.get_all_stamp_ids()
-        else:
-            stamp_ids = node.stamp_ids
+        stamp_ids = node.get_all_stamp_ids() if recursive else node.stamp_ids
 
         return [self.stamps[sid] for sid in stamp_ids if sid in self.stamps]
 

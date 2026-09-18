@@ -24,8 +24,6 @@ from dataclasses import dataclass, field
 from golf.core.rom_utils import (
     FIXED_BANK_PRG_START,
     PRG_BANK_SIZE,
-    cpu_to_prg_fixed,
-    cpu_to_prg_switched,
     prg_to_bank_and_cpu,
 )
 
@@ -608,33 +606,41 @@ def find_code_references(
 
         for i in range(len(data) - 2):
             op = data[i]
-            if same_context and op in (JSR, JMP_ABS, JMP_IND):
-                if data[i + 1] == lo and data[i + 2] == hi:
+            if (
+                same_context
+                and op in (JSR, JMP_ABS, JMP_IND)
+                and data[i + 1] == lo
+                and data[i + 2] == hi
+            ):
+                prg = base + i
+                _, cpu = prg_to_bank_and_cpu(prg)
+                kind = {JSR: "JSR", JMP_ABS: "JMP", JMP_IND: "JMP (ind)"}[op]
+                report.refs.append(
+                    Reference(
+                        kind, bank, cpu, prg, in_data_range=_annotate(labels, prg)
+                    )
+                )
+            # ExecuteFarCall: bank, lo, hi follow
+            if (
+                op == JSR
+                and data[i + 1] == 0x72
+                and data[i + 2] == 0xD3
+                and i + 5 < len(data)
+            ):
+                fb, flo, fhi = data[i + 3], data[i + 4], data[i + 5]
+                if flo == lo and fhi == hi and (fb == target_bank or fixed_target):
                     prg = base + i
                     _, cpu = prg_to_bank_and_cpu(prg)
-                    kind = {JSR: "JSR", JMP_ABS: "JMP", JMP_IND: "JMP (ind)"}[op]
                     report.refs.append(
                         Reference(
-                            kind, bank, cpu, prg, in_data_range=_annotate(labels, prg)
+                            "far call",
+                            bank,
+                            cpu,
+                            prg,
+                            detail=f"bank ${fb:02X}",
+                            in_data_range=_annotate(labels, prg),
                         )
                     )
-            if op == JSR and data[i + 1] == 0x72 and data[i + 2] == 0xD3:
-                # ExecuteFarCall: bank, lo, hi follow
-                if i + 5 < len(data):
-                    fb, flo, fhi = data[i + 3], data[i + 4], data[i + 5]
-                    if flo == lo and fhi == hi and (fb == target_bank or fixed_target):
-                        prg = base + i
-                        _, cpu = prg_to_bank_and_cpu(prg)
-                        report.refs.append(
-                            Reference(
-                                "far call",
-                                bank,
-                                cpu,
-                                prg,
-                                detail=f"bank ${fb:02X}",
-                                in_data_range=_annotate(labels, prg),
-                            )
-                        )
 
         if same_context:
             for i in range(len(data) - 1):
@@ -784,18 +790,19 @@ def find_data_references(reader, target_addr: int, labels=None, reach: int = 0):
                     reaching.setdefault(addr, []).append(
                         Reference(ABS_INDEXED_OPCODES[op], bank, cpu, prg)
                     )
-            if zero_page and (op in ZP_OPCODES or op in ZP_INDEXED_OPCODES):
-                if data[i + 1] == target_addr:
-                    table = ZP_OPCODES if op in ZP_OPCODES else ZP_INDEXED_OPCODES
-                    prg = base + i
-                    _, cpu = prg_to_bank_and_cpu(prg)
-                    direct.append(
-                        Reference(
-                            table[op],
-                            bank,
-                            cpu,
-                            prg,
-                            in_data_range=_annotate(labels, prg),
-                        )
+            if (zero_page and (op in ZP_OPCODES or op in ZP_INDEXED_OPCODES)) and data[
+                i + 1
+            ] == target_addr:
+                table = ZP_OPCODES if op in ZP_OPCODES else ZP_INDEXED_OPCODES
+                prg = base + i
+                _, cpu = prg_to_bank_and_cpu(prg)
+                direct.append(
+                    Reference(
+                        table[op],
+                        bank,
+                        cpu,
+                        prg,
+                        in_data_range=_annotate(labels, prg),
                     )
+                )
     return direct, reaching

@@ -26,13 +26,6 @@ The CLI is `golf-golfer-export` (tools/art/golfer_export.py).
 import json
 import os
 
-from golf.core.golfer_sprites import (
-    BODY_IN_FRONT_FRAMES,
-    GOLFER_NAMES,
-    PUTTER_CLUB,
-    SWING_CLUB_GROUPS,
-    GolferSprites,
-)
 from golf.core.aseprite import (
     LAYER_EDITABLE,
     LAYER_LOCK_MOVEMENT,
@@ -42,6 +35,13 @@ from golf.core.aseprite import (
     Frame,
     Layer,
     LinkedCel,
+)
+from golf.core.golfer_sprites import (
+    BODY_IN_FRONT_FRAMES,
+    GOLFER_NAMES,
+    PUTTER_CLUB,
+    SWING_CLUB_GROUPS,
+    GolferSprites,
 )
 from golf.core.palettes import (
     NES_CANONICAL_BLACK,
@@ -138,7 +138,7 @@ def canvas_bounds(sprites: GolferSprites) -> tuple[int, int, int, int]:
             body = sprites.body_frames(golfer, putt)
             for club in clubs_for(putt):
                 clubs = sprites.club_frames(golfer, club, putt)
-                for frame, (b, c) in enumerate(zip(body, clubs)):
+                for frame, (b, c) in enumerate(zip(body, clubs, strict=True)):
                     bx0, by0, bx1, by1 = b.bounds()
                     cx0, cy0, cx1, cy1 = c.bounds()
                     ndx, ndy = sprites.club_nudge(golfer, club, frame)

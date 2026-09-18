@@ -5,11 +5,11 @@ from pathlib import Path
 import pytest
 
 from golf.core.patches import (
+    COURSE_MIRRORS_PATCH,
     WRAM_EXPANSION_PATCH,
     mercy_tap_in_patches,
     practice_swing_patch,
     seeded_wind_patch,
-    COURSE_MIRRORS_PATCH,
 )
 from golf.core.rom_writer import RomWriter
 

@@ -3,6 +3,7 @@ Measure tool - measure distances between points in yards.
 """
 
 import math
+
 import pygame
 from pygame import Rect
 

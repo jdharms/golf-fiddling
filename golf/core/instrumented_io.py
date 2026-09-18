@@ -7,7 +7,8 @@ what data is being read from and written to specific addresses.
 """
 
 import json
-from pathlib import Path
+from collections.abc import Iterator
+from contextlib import contextmanager
 
 from .rom_reader import RomReader
 from .rom_utils import cpu_to_prg_fixed, cpu_to_prg_switched, prg_to_bank_and_cpu
@@ -200,23 +201,15 @@ class InstrumentedRomWriter(RomWriter):
         self._pending_annotation = description
         return self
 
-    def _suppress_nested_logging(self):
+    @contextmanager
+    def _suppress_nested_logging(self) -> Iterator[None]:
         """Context manager to suppress logging from nested operations."""
-
-        class SuppressContext:
-            def __init__(ctx, writer):
-                ctx.writer = writer
-                ctx.old_value = writer._suppress_logging
-
-            def __enter__(ctx):
-                ctx.writer._suppress_logging = True
-                return ctx
-
-            def __exit__(ctx, exc_type, exc_val, exc_tb):
-                ctx.writer._suppress_logging = ctx.old_value
-                return False
-
-        return SuppressContext(self)
+        old_value = self._suppress_logging
+        self._suppress_logging = True
+        try:
+            yield
+        finally:
+            self._suppress_logging = old_value
 
     def _log_operation(
         self,

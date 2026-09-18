@@ -34,8 +34,8 @@ from pathlib import Path
 
 from golf.core.asm6502 import assemble
 from golf.core.signpost import (
-    BANNER_TABLE,
     BANK,
+    BANNER_TABLE,
     allocate_patterns,
     build_screen,
     convert_banner,

@@ -74,9 +74,8 @@ def client(fake_builder):
 
 def _catalog_with_text(text_for) -> Strings:
     real = Strings.load()
-    return Strings(
-        {key: Entry(real.entry(key).note, text_for(key)) for key in real.keys()}
-    )  # noqa: SIM118 (Strings, not a dict)
+    keys = real.keys()
+    return Strings({key: Entry(real.entry(key).note, text_for(key)) for key in keys})
 
 
 #: nothing written, so every string renders as the placeholder naming its key and values

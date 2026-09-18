@@ -6,6 +6,7 @@ using arc consistency for bidirectional constraint propagation.
 """
 
 from __future__ import annotations
+
 from collections import deque
 
 # Constants

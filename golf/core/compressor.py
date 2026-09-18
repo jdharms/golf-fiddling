@@ -8,6 +8,9 @@ decompression algorithm. See golf/core/compression.md for algorithm details.
 import json
 from pathlib import Path
 
+# longest run a single repeat code can encode
+MAX_REPEAT = 31
+
 
 def _get_default_tables_path() -> Path:
     """Get default path to compression_tables.json."""
@@ -148,7 +151,6 @@ def generate_repeat_code(
     Returns:
         (repeat_code, match_length) where code is 1-31, or None if no match
     """
-    MAX_REPEAT = 31
     count = 0
     current = prev_byte
 

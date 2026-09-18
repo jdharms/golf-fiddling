@@ -99,6 +99,7 @@
   display: block;
   max-width: none;
   image-rendering: pixelated;
+  /* biome-ignore lint/suspicious/noDuplicateProperties: crisp-edges overrides pixelated where supported */
   image-rendering: crisp-edges;
 }
 

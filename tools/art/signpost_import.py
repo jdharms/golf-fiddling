@@ -209,7 +209,7 @@ def main():
     try:
         edited = screen_from_aseprite(args.aseprite)
     except ValueError as problem:
-        raise SystemExit(f"{os.path.basename(args.aseprite)}: {problem}")
+        raise SystemExit(f"{os.path.basename(args.aseprite)}: {problem}") from None
     screen, scale, ragged, ase = (
         edited.pixels,
         edited.scale,

@@ -2,6 +2,7 @@
 
 import pytest
 
+from golf.core import rom_utils
 from golf.core.patches import (
     ATTR_STREAMING_PATCH,
     COURSE_MIRRORS_PATCH,
@@ -9,7 +10,6 @@ from golf.core.patches import (
     CoursePatch,
     PatchError,
 )
-from golf.core import rom_utils
 from golf.core.patches.course import (
     BANK_TABLE_CPU_ADDR,
     BANK_TABLE_SIZE,

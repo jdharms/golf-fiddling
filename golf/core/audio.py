@@ -71,6 +71,10 @@ class MusicLayout:
         raise AssertionError("header_bases must end with a default")
 
 
+# matches any byte in a _find pattern
+W = None
+
+
 def _find(blk: bytes, pat) -> int:
     for i in range(len(blk) - len(pat)):
         if all(p is None or blk[i + k] == p for k, p in enumerate(pat)):
@@ -88,7 +92,6 @@ def _operand(blk: bytes, pat, index: int, bank_base: int = 0x8000) -> int:
 def discover_layout(rom: bytes) -> MusicLayout:
     """Locate the music tables in `rom` by matching the code that reads them."""
     blk = _prg_image(rom)[:0x4000]  # bank 14
-    W = None
 
     # the header-base chain: LDA PlayingMusicID, then CMP #limit / LDA #hi / LDX #lo
     tail = _find(blk, [0x85, 0xFD, 0x86, 0xFC, 0xB1, 0xFC])
@@ -374,7 +377,7 @@ class _Bus:
 
     def __setitem__(self, a, v):
         if isinstance(a, slice):
-            for i, val in zip(range(a.start, a.stop), v):
+            for i, val in zip(range(a.start, a.stop), v, strict=True):
                 self[i] = val
             return
         v &= 0xFF
@@ -433,7 +436,10 @@ def dmc_sample_info(rom, sample_id: int) -> dict:
     if not 1 <= sample_id <= DMC_SAMPLE_COUNT:
         raise ValueError(f"sample id {sample_id} out of range 1-{DMC_SAMPLE_COUNT}")
     prg = _prg_image(rom)
-    at = lambda cpu: prg[cpu - 0x8000]
+
+    def at(cpu: int) -> int:
+        return prg[cpu - 0x8000]
+
     i = sample_id - 1
     addr = 0xC000 + at(DMC_PTR_TABLE + i * 2) * 64
     length = at(DMC_PTR_TABLE + i * 2 + 1) * 16 + 1

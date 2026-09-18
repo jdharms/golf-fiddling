@@ -6,7 +6,7 @@ import re
 import pytest
 
 from golf.core.patches.seeded_wind import derive_hole_seeds
-from golf.core.patches.sram_defaults import Club
+from golf.core.patches.sram_defaults import Club, magic_bytes
 from golf.randomizer.catalog import (
     JP_ROM,
     US_ROM,
@@ -16,7 +16,6 @@ from golf.randomizer.catalog import (
     RomSource,
 )
 from golf.randomizer.curation import CurationSnapshot
-from golf.core.patches.sram_defaults import magic_bytes
 from golf.randomizer.generate import GENERATOR_VERSION, GenerationError, generate
 from golf.randomizer.layout import COUNTS, satisfies
 from golf.randomizer.manifest import ClubRules, Manifest, Settings, required_roms

@@ -1,6 +1,7 @@
 """Tests for the music engine export path (golf/core/audio.py)."""
 
 import struct
+from itertools import pairwise
 
 import pytest
 
@@ -135,7 +136,7 @@ def test_drum_nsf_plays_the_right_sample(rom, sid):
     assert rate[0] & 0x0F == info["rate_index"]
     # repeats on a steady 48-frame cycle so it can be auditioned
     hits = [f for f, _ in addr]
-    assert all(b - a == 48 for a, b in zip(hits, hits[1:]))
+    assert all(b - a == 48 for a, b in pairwise(hits))
 
 
 def test_drum_nsf_reproduces_the_cutoff(rom):

@@ -13,13 +13,12 @@ from editor.controllers.highlight_state import HighlightState
 from editor.controllers.view_state import ViewState
 from editor.core.constants import TERRAIN_WIDTH, TILE_SIZE
 from editor.core.pygame_rendering import render_placeholder_tile
-
 from golf.formats.hole_data import HoleData
 
+from .font_cache import get_font
 from .grid_renderer import GridRenderer
 from .highlight_utils import INVALID_NEIGHBOR_COLOR, draw_dashed_line, draw_tile_border
 from .render_context import RenderContext
-from .font_cache import get_font
 from .selection_renderer import SelectionRenderer
 from .sprite_renderer import SpriteRenderer
 

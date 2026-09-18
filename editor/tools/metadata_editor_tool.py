@@ -7,7 +7,6 @@ Opens a modal dialog when activated.
 import pygame
 
 from editor.rendering import font_cache
-
 from editor.ui.metadata_dialog import MetadataDialog
 
 from .base_tool import ToolContext, ToolResult
@@ -27,13 +26,12 @@ class MetadataEditorTool:
         self.undo_pushed: bool = False
 
     def handle_mouse_down(self, pos, button, modifiers, context):
-        if self.dialog:
-            # Delegate to dialog
-            if self.dialog.handle_event(
-                pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=button, pos=pos)
-            ):
-                # Dialog wants to close
-                return self._close_dialog(context)
+        # Delegate to dialog
+        if self.dialog and self.dialog.handle_event(
+            pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=button, pos=pos)
+        ):
+            # Dialog wants to close
+            return self._close_dialog(context)
         return ToolResult.handled()
 
     def handle_mouse_up(self, pos, button, context):

@@ -133,12 +133,11 @@ class GreenFill:
                 # Explore neighbors (only through placeholders)
                 for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                     nr, nc = row + dr, col + dc
-                    if 0 <= nr < height and 0 <= nc < width:
-                        if (nr, nc) not in visited:
-                            visited.add((nr, nc))
-                            # Only queue if it's a placeholder (continue BFS through placeholders only)
-                            if greens[nr][nc] == self.PLACEHOLDER:
-                                queue.append((nr, nc))
+                    if 0 <= nr < height and 0 <= nc < width and (nr, nc) not in visited:
+                        visited.add((nr, nc))
+                        # Only queue if it's a placeholder (continue BFS through placeholders only)
+                        if greens[nr][nc] == self.PLACEHOLDER:
+                            queue.append((nr, nc))
 
         return active
 

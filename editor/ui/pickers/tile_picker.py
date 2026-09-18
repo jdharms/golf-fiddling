@@ -181,17 +181,16 @@ class TilePicker:
                     self.shift_held = True
                     self.on_hover_change(self.hovered_tile)
 
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.rect.collidepoint(event.pos):
-                if event.button == 1:  # Left click
-                    self._select_at(event.pos)
-                    return True
-                elif event.button == 4:  # Scroll up
-                    self.scroll_y = max(0, self.scroll_y - 20)
-                    return True
-                elif event.button == 5:  # Scroll down
-                    self.scroll_y += 20
-                    return True
+        if event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos):
+            if event.button == 1:  # Left click
+                self._select_at(event.pos)
+                return True
+            elif event.button == 4:  # Scroll up
+                self.scroll_y = max(0, self.scroll_y - 20)
+                return True
+            elif event.button == 5:  # Scroll down
+                self.scroll_y += 20
+                return True
         return False
 
     def _select_at(self, pos: tuple[int, int]):

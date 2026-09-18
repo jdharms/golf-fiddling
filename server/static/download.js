@@ -113,8 +113,8 @@ function missingTitles(ids, roms, stored) {
 
 // The notice for a refusal the server answered with {error, values}.
 function refusal(body, status) {
-  const reason = body && body.error;
-  const values = (body && body.values) || {};
+  const reason = body?.error;
+  const values = body?.values || {};
   if (reason === "invalid_name")
     return t("seed.download.status.refused.invalid_name", {
       chars: values.chars ?? "",
