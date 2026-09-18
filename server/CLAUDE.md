@@ -48,8 +48,9 @@ in this package.
   read or write goes through `db.transaction()`, which holds the lock for its duration:
   keep work inside it short, and never build a ROM while holding it.
 - The schema is `server/migrations.py`, ordered SQL scripts applied by `PRAGMA
-  user_version`. A committed script is never edited; a schema change appends a script.
-  A table arrives with the work item that first writes to it.
+  user_version`. Migration 1 is the frozen version 1.0 baseline. A committed script is
+  never edited; a schema change appends a script. The baseline sets SQLite's
+  `application_id` to `GOLF`, and startup rejects unmarked pre-baseline databases.
 - `server/ids.py` holds the base62 alphabet and codec every public id shares. A seed's is
   the encoding of its `qr_seed_id`; a round's permalink id is drawn as text.
 - `server/seeds.py` is the only code that writes `seeds` and `seed_holes`, and the only

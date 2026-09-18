@@ -20,7 +20,7 @@ from .ids import ALPHABET, ID_LENGTH, MAX_VALUE, decode_base62, encode_base62, i
 
 __all__ = ["ALPHABET", "ID_LENGTH"]  # re-exported: a seed id is a base62 id
 
-#: the largest qr_seed_id, and the bound migration 1's CHECK holds the column to
+#: the largest qr_seed_id, and the version 1.0 baseline's CHECK holds the column to
 MAX_QR_SEED_ID = MAX_VALUE
 #: draws before an insert gives up on finding an unused id
 INSERT_ATTEMPTS = 10

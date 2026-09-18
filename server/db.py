@@ -11,7 +11,7 @@ import threading
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 
-from .migrations import MIGRATIONS
+from .migrations import APPLICATION_ID, MIGRATIONS
 
 MEMORY = ":memory:"
 
@@ -50,10 +50,24 @@ class Database:
         with self._lock:
             return self._conn.execute("PRAGMA user_version").fetchone()[0]
 
-    def migrate(self, migrations: Sequence[str] = MIGRATIONS) -> int:
+    def application_id(self) -> int:
+        with self._lock:
+            return self._conn.execute("PRAGMA application_id").fetchone()[0]
+
+    def migrate(self, migrations: Sequence[str] | None = None) -> int:
         """Apply every script past the database's version, each atomically. Returns the version."""
         with self._lock:
+            standard_schema = migrations is None
+            migrations = MIGRATIONS if migrations is None else migrations
             current = self.version()
+            if (
+                standard_schema
+                and current > 0
+                and self.application_id() != APPLICATION_ID
+            ):
+                raise DatabaseError(
+                    "the database predates the version 1.0 schema baseline; recreate it"
+                )
             if current > len(migrations):
                 raise DatabaseError(
                     f"the database is at schema version {current}, newer than this code's {len(migrations)}"
@@ -69,4 +83,8 @@ class Database:
                     if self._conn.in_transaction:
                         self._conn.execute("ROLLBACK")
                     raise
+            if standard_schema and self.application_id() != APPLICATION_ID:
+                raise DatabaseError(
+                    "the database does not have the expected application id"
+                )
             return self.version()

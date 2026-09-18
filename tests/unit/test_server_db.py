@@ -5,7 +5,24 @@ import sqlite3
 import pytest
 
 from server.db import Database, DatabaseError
-from server.migrations import MIGRATIONS
+from server.migrations import APPLICATION_ID, MIGRATIONS
+
+SCHEMA_TABLES = {
+    "admin_actions",
+    "entries",
+    "round_holes",
+    "rounds",
+    "seed_holes",
+    "seeds",
+    "users",
+    "voided_rounds",
+}
+SCHEMA_INDEXES = {
+    "admin_actions_by_admin",
+    "admin_actions_by_target",
+    "entries_by_user",
+    "voided_rounds_by_entry",
+}
 
 
 @pytest.fixture
@@ -21,6 +38,17 @@ def tables(db: Database) -> set[str]:
             row["name"]
             for row in conn.execute(
                 "SELECT name FROM sqlite_master WHERE type = 'table'"
+            )
+        }
+
+
+def explicit_indexes(db: Database) -> set[str]:
+    with db.transaction() as conn:
+        return {
+            row["name"]
+            for row in conn.execute(
+                "SELECT name FROM sqlite_master "
+                "WHERE type = 'index' AND name NOT LIKE 'sqlite_autoindex_%'"
             )
         }
 
@@ -53,7 +81,9 @@ def test_a_fresh_database_migrates_to_the_latest_version(db):
     assert db.version() == 0
     assert db.migrate() == len(MIGRATIONS)
     assert db.version() == len(MIGRATIONS)
-    assert {"seeds", "seed_holes", "users"} <= tables(db)
+    assert db.application_id() == APPLICATION_ID
+    assert tables(db) == SCHEMA_TABLES
+    assert explicit_indexes(db) == SCHEMA_INDEXES
 
 
 def test_migrating_again_changes_nothing(db):
@@ -78,6 +108,15 @@ def test_a_database_newer_than_the_code_is_refused(db):
     db.migrate(["CREATE TABLE a (x);", "CREATE TABLE b (x);"])
     with pytest.raises(DatabaseError, match="newer"):
         db.migrate(["CREATE TABLE a (x);"])
+
+
+@pytest.mark.parametrize("old_version", [1, 8])
+def test_a_pre_baseline_database_is_refused(db, old_version):
+    with db.transaction() as conn:
+        conn.execute("CREATE TABLE old_schema (x)")
+        conn.execute(f"PRAGMA user_version = {old_version}")
+    with pytest.raises(DatabaseError, match="predates the version 1.0 schema baseline"):
+        db.migrate()
 
 
 def test_a_transaction_rolls_back_on_error(db):
@@ -392,23 +431,6 @@ def insert_voided(db: Database, **overrides) -> None:
     insert_row(db, "voided_rounds", voided_row(**overrides))
 
 
-def test_migration_8_removes_rebuilt_at_without_changing_the_seed(db):
-    db.migrate(MIGRATIONS[:7])
-    insert_seed(db)
-    with db.transaction() as conn:
-        conn.execute(
-            "UPDATE seeds SET rebuilt_at = '2026-09-18T00:00:00Z' WHERE id = '0000000001'"
-        )
-    assert db.migrate() == len(MIGRATIONS)
-    with db.transaction() as conn:
-        columns = {row["name"] for row in conn.execute("PRAGMA table_info(seeds)")}
-        stored = conn.execute(
-            "SELECT manifest, unfinished_ips FROM seeds WHERE id = '0000000001'"
-        ).fetchone()
-    assert "rebuilt_at" not in columns
-    assert tuple(stored) == ("{}", b"PATCHEOF")
-
-
 def test_a_valid_voided_round_inserts(submitter_db):
     insert_voided(submitter_db, flag_note="note", void_note="why")
     assert "voided_rounds" in tables(submitter_db)
@@ -446,82 +468,6 @@ def test_a_payload_is_voided_once(submitter_db):
     insert_voided(submitter_db, payload=b"\x01" * 36, public_id="0000000002")
     with pytest.raises(sqlite3.IntegrityError):
         insert_voided(submitter_db, slot=1, public_id="0000000003")
-
-
-# -- migrations of the round tables -------------------------------------------------------
-
-
-def migrated_to(db: Database, version: int) -> Database:
-    """A database at an earlier schema version, holding a seed, a user and their entry."""
-    db.migrate(MIGRATIONS[:version])
-    insert_seed(db)
-    insert_user(db)
-    insert_entry(db)
-    return db
-
-
-def test_migration_6_gives_rounds_recorded_before_it_a_public_id(db):
-    migrated_to(db, 5)
-    old_round = {
-        key: value
-        for key, value in round_row(payload=bytes(35) + b"\x2a").items()
-        if key != "public_id"
-    }
-    insert_row(db, "submissions", old_round)
-    old_voided = {
-        key: value
-        for key, value in voided_row(payload=bytes(35) + b"\x2b").items()
-        if key != "public_id"
-    }
-    insert_row(db, "voided_submissions", old_voided)
-    assert db.migrate(MIGRATIONS[:6]) == 6
-    with db.transaction() as conn:
-        assert (
-            conn.execute("SELECT public_id FROM submissions").fetchone()[0]
-            == "000000002A"
-        )
-        assert (
-            conn.execute("SELECT public_id FROM voided_submissions").fetchone()[0]
-            == "000000002B"
-        )
-
-
-def test_migration_7_moves_every_round_into_the_round_tables(db):
-    migrated_to(db, 6)
-    insert_row(db, "submissions", round_row(id=5, flagged=1, flag_note="six on 18?"))
-    insert_row(
-        db,
-        "submission_holes",
-        {"submission_id": 5, "position": 1, "strokes": 4, "putts": 2},
-    )
-    insert_row(
-        db,
-        "voided_submissions",
-        voided_row(id=3, slot=1, payload=b"\x01" * 36, public_id="0000000002"),
-    )
-    assert db.migrate() == len(MIGRATIONS)
-    assert not {"submissions", "submission_holes", "voided_submissions"} & tables(db)
-    with db.transaction() as conn:
-        assert dict(conn.execute("SELECT * FROM rounds").fetchone()) == round_row(
-            id=5, flagged=1, flag_note="six on 18?"
-        )
-        assert dict(conn.execute("SELECT * FROM round_holes").fetchone()) == {
-            "round_id": 5,
-            "position": 1,
-            "strokes": 4,
-            "putts": 2,
-        }
-        assert dict(
-            conn.execute("SELECT * FROM voided_rounds").fetchone()
-        ) == voided_row(
-            id=3,
-            slot=1,
-            payload=b"\x01" * 36,
-            public_id="0000000002",
-            flag_note=None,
-            void_note=None,
-        )
-        assert conn.execute("PRAGMA foreign_key_check").fetchall() == []
 
 
 def action_row(**overrides):

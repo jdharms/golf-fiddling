@@ -16,7 +16,7 @@ from .seeds import utc_now
 
 #: draws before a first sign-in gives up on finding an unused player_id
 INSERT_ATTEMPTS = 10
-#: the largest player_id, and the bound migration 2's CHECK holds the column to
+#: the largest player_id, and the version 1.0 baseline's CHECK holds the column to
 MAX_PLAYER_ID = 2**32 - 1
 
 COLUMNS = (

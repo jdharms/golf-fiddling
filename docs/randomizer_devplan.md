@@ -274,7 +274,7 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
    the ROM setup page and `/healthz`; Jinja2 templates on vendored Pico CSS; `Config`
    from `GOLF_` environment variables; `Database` in `server/db.py`, one locked sqlite3
    connection in WAL mode, migrated by `PRAGMA user_version` from the ordered scripts in
-   `server/migrations.py`, the first creating `seeds` and `seed_holes`. The vanilla ROMs
+   `server/migrations.py`; migration 1 is the frozen version 1.0 baseline. The vanilla ROMs
    and their SHA-1s are `golf/randomizer/roms.py`; `server/static/rom.js` hashes a chosen
    file with SubtleCrypto and stores verified bytes in IndexedDB. `golf-site` launches
    it. `tests/unit/test_server_app.py`, `test_server_db.py` and `test_server_config.py`
@@ -305,7 +305,7 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
    against `finish`, and `tests/integration/test_site_download.py` downloads in headless
    Chromium and compares the saved ROM with the library's. The site can now run a league
    of guest ROMs. Playtest a downloaded ROM.
-10. **Discord sign-in.** Done: migration 2 adds `users`; `server/users.py` is its only
+10. **Discord sign-in.** Done: the 1.0 schema includes `users`; `server/users.py` is its only
     writer, with `sign_in` inserting or refreshing a user and drawing the `player_id`.
     `server/auth.py` has `DiscordClient`, `safe_next` and `current_user`. `/auth/login`,
     `/auth/callback` and `/auth/logout` sign in through Discord or the development bypass,
@@ -315,7 +315,7 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
     rate-limits per user. `golf-site-screenshot --login` captures pages signed in.
     `tests/unit/test_server_users.py` and `test_server_auth.py` (the client against a mock
     transport), and the sign-in tests in `test_server_app.py`, run without Discord.
-11. **Entries.** Done: migration 3 adds `entries`; `server/entries.py` is its only writer,
+11. **Entries.** Done: the 1.0 schema includes `entries`; `server/entries.py` is its only writer,
     with `upsert_entry` creating a player's entry for a seed with two drawn keys or updating
     its name and clubs, and `entries_for_user` listing them. A signed-in download upserts the
     entry and finishes through `SeedBuilder.finish` with `credentials_for` the seed's
@@ -326,7 +326,7 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
     in `test_server_app.py` and `test_server_db.py` run without a ROM;
     `tests/integration/test_server_download_rom.py` checks a signed-in download against
     `finish` with the entry's credentials.
-12. **Submissions.** Done: migrations 4 and 7 make `rounds` and `round_holes`, which
+12. **Submissions.** Done: the 1.0 schema includes `rounds` and `round_holes`, which
     `server/rounds.py` alone writes. `server/submissions.py`'s `submit_scan` decodes a scan
     with `golf.qr.payload`, rejects it as malformed (length, alphabet, protocol version, reserved
     flags, a slot past 1), unfinished (an all-zero seed or player ID) or unrecognized (no
@@ -348,7 +348,7 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
     `tests/integration/test_server_submission_rom.py` downloads a signed-in ROM, builds both
     players' URLs by running its QR routine in the simulator, and records them. Playtest a
     round through to a recorded scan.
-13. **Admin.** Done: migration 5 adds the flag note and the voided rounds table.
+13. **Admin.** Done: the 1.0 schema includes the flag note and the voided rounds table.
     `Config.admin_users` (`GOLF_ADMIN_USERS`) replaces
     the token. `server/admin.py` holds the admin pages' queries and `server/admin_routes.py`
     their router, behind `require_admin`; the templates in `server/templates/admin/` write
