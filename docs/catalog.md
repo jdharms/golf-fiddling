@@ -55,9 +55,9 @@ Guarantees, enforced by `tests/meta/test_catalog_frozen.py` and the loader:
 2. **No committed entry is ever removed or changed**, across the index's whole git
    history, and the index version never decreases.
 3. **Withdrawal is the one permitted mutation.** `"withdrawn": true` retires an entry for
-   a takedown. Its id stays reserved and seeds that used it keep their stored unfinished
-   IPS; only rebuilding such a seed fails. A lineage whose highest version is withdrawn
-   has nothing drawable.
+   a takedown. Its id stays reserved, and seeds that used it remain downloadable from
+   their stored unfinished IPS. A lineage whose highest version is withdrawn has nothing
+   drawable.
 
 ## The content hash
 

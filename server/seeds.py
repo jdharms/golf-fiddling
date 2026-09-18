@@ -15,7 +15,6 @@ from datetime import UTC, datetime
 from golf.core.patches.seeded_wind import predict_hole
 from golf.randomizer.manifest import Manifest
 
-from . import audit
 from .db import Database
 from .ids import ALPHABET, ID_LENGTH, MAX_VALUE, decode_base62, encode_base62, is_id
 
@@ -157,8 +156,6 @@ class SeedRow:
     manifest: Manifest
     creator_id: int | None
     created_at: str
-    #: when an admin's rebuild last changed the stored unfinished IPS, or None
-    rebuilt_at: str | None = None
 
 
 def load_seed(db: Database, seed_id: str) -> SeedRow | None:
@@ -169,7 +166,7 @@ def load_seed(db: Database, seed_id: str) -> SeedRow | None:
         return None
     with db.transaction() as conn:
         row = conn.execute(
-            "SELECT id, qr_seed_id, manifest, creator_id, created_at, rebuilt_at FROM seeds WHERE id = ?",
+            "SELECT id, qr_seed_id, manifest, creator_id, created_at FROM seeds WHERE id = ?",
             (seed_id,),
         ).fetchone()
     if row is None:
@@ -181,7 +178,6 @@ def load_seed(db: Database, seed_id: str) -> SeedRow | None:
         manifest=Manifest.from_json(json.loads(row["manifest"])),
         creator_id=row["creator_id"],
         created_at=row["created_at"],
-        rebuilt_at=row["rebuilt_at"],
     )
 
 
@@ -199,40 +195,3 @@ def load_unfinished_ips(db: Database, seed_id: str) -> bytes | None:
             "SELECT unfinished_ips FROM seeds WHERE id = ?", (seed_id,)
         ).fetchone()
     return None if row is None else bytes(row["unfinished_ips"])
-
-
-def rebuild_seed(
-    db: Database,
-    seed_id: str,
-    unfinished_ips: bytes,
-    admin_id: int,
-    now: str | None = None,
-) -> bool:
-    """Store a rebuilt unfinished IPS, log the rebuild, and return whether the IPS changed.
-
-    Only a changed IPS is written and stamps `rebuilt_at`, so the seed page never announces a
-    rebuild that changed nothing; the audit log records both. Raises KeyError for a missing seed.
-    """
-    rebuilt_at = now if now is not None else utc_now()
-    with db.transaction() as conn:
-        row = conn.execute(
-            "SELECT unfinished_ips FROM seeds WHERE id = ?", (seed_id,)
-        ).fetchone()
-        if row is None:
-            raise KeyError(seed_id)
-        changed = bytes(row["unfinished_ips"]) != unfinished_ips
-        if changed:
-            conn.execute(
-                "UPDATE seeds SET unfinished_ips = ?, rebuilt_at = ? WHERE id = ?",
-                (unfinished_ips, rebuilt_at, seed_id),
-            )
-        audit.record(
-            conn,
-            admin_id,
-            audit.REBUILD,
-            audit.SEED,
-            seed_id,
-            rebuilt_at,
-            detail={"changed": changed},
-        )
-    return changed

@@ -13,10 +13,6 @@ from urllib.parse import urlencode
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from starlette.concurrency import run_in_threadpool
-
-from golf.randomizer.build import BuildError
-from golf.randomizer.catalog import CatalogError
 
 from .admin import (
     actions_page,
@@ -30,7 +26,7 @@ from .admin import (
     voided_page,
 )
 from .auth import current_user
-from .builder import BuilderUnavailableError, SeedBuilder
+from .builder import SeedBuilder
 from .db import Database
 from .rounds import (
     SlotTakenError,
@@ -39,7 +35,6 @@ from .rounds import (
     unflag_round,
     void_round,
 )
-from .seeds import rebuild_seed
 from .users import User
 
 
@@ -106,28 +101,6 @@ def admin_router(templates: Jinja2Templates) -> APIRouter:
     @router.get("/seeds/{seed_id}", response_class=HTMLResponse)
     def seed(request: Request, seed_id: str):
         return seed_page(request, seed_id)
-
-    @router.post("/seeds/{seed_id}/rebuild", response_class=HTMLResponse)
-    async def rebuild(request: Request, seed_id: str, admin: Admin):
-        db = db_of(request)
-        seed_builder: SeedBuilder = request.app.state.builder
-        detail = seed_detail(db, seed_id, seed_builder.catalog)
-        if detail is None:
-            raise not_found()
-        try:
-            ips = await run_in_threadpool(seed_builder.build, detail.seed.manifest)
-        except (BuildError, CatalogError) as problem:
-            return seed_page(
-                request, seed_id, f"The rebuild failed: {problem}", status_code=409
-            )
-        except BuilderUnavailableError as problem:
-            return seed_page(
-                request, seed_id, f"The server cannot build: {problem}", status_code=503
-            )
-        changed = rebuild_seed(db, seed_id, ips, admin.id)
-        return _redirect(
-            f"/admin/seeds/{seed_id}", "rebuilt" if changed else "unchanged"
-        )
 
     @router.get("/rounds", response_class=HTMLResponse)
     def rounds(request: Request, page: PageNumber = 1, flagged: bool = False):

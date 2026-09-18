@@ -80,14 +80,14 @@ in this package.
   `create_app` includes, and every route sits behind `require_admin`, a 404 for anyone else.
   No page links to them.
 - `server/admin.py` holds the admin pages' reads and view dataclasses, with no web types.
-  When it grows, split it into a package by area (seeds, rounds, users, the audit log). Admin actions write
-  through the owning modules: `rebuild_seed` in `server/seeds.py`, and `flag_round`,
-  `unflag_round`, `void_round` and `restore_round` in `server/rounds.py`, which take the
-  round's `public_id`. Each takes the admin's `users.id` and logs itself through
+  When it grows, split it into a package by area (seeds, rounds, users, the audit log).
+  Admin actions write through the owning module: `flag_round`, `unflag_round`,
+  `void_round` and `restore_round` in `server/rounds.py`, which take the round's
+  `public_id`. Each takes the admin's `users.id` and logs itself through
   `server/audit.py`.
-- Who acted, and a seed's or round's history, are read from the audit log, never from a
-  column. A round's log rows are keyed by its `public_id`, so its history is one list
-  across a void and a restore.
+- Who acted, and a round's history, are read from the audit log, never from a column. A
+  round's log rows are keyed by its `public_id`, so its history is one list across a void
+  and a restore.
 - Actions are POST forms that redirect back with `?result=`, which the page shows. State
   never changes on a GET.
 - Templates live in `server/templates/admin/`, extend `base.html`, and share the macros in

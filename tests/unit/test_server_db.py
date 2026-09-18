@@ -392,9 +392,21 @@ def insert_voided(db: Database, **overrides) -> None:
     insert_row(db, "voided_rounds", voided_row(**overrides))
 
 
-def test_seeds_gain_a_rebuilt_at(submitter_db):
-    with submitter_db.transaction() as conn:
-        assert conn.execute("SELECT rebuilt_at FROM seeds").fetchone()[0] is None
+def test_migration_8_removes_rebuilt_at_without_changing_the_seed(db):
+    db.migrate(MIGRATIONS[:7])
+    insert_seed(db)
+    with db.transaction() as conn:
+        conn.execute(
+            "UPDATE seeds SET rebuilt_at = '2026-09-18T00:00:00Z' WHERE id = '0000000001'"
+        )
+    assert db.migrate() == len(MIGRATIONS)
+    with db.transaction() as conn:
+        columns = {row["name"] for row in conn.execute("PRAGMA table_info(seeds)")}
+        stored = conn.execute(
+            "SELECT manifest, unfinished_ips FROM seeds WHERE id = '0000000001'"
+        ).fetchone()
+    assert "rebuilt_at" not in columns
+    assert tuple(stored) == ("{}", b"PATCHEOF")
 
 
 def test_a_valid_voided_round_inserts(submitter_db):

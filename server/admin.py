@@ -1,9 +1,9 @@
 """What the admin pages show: lists and details across every seed, round and player.
 
-Reads only; the admin actions write through the owning modules (`server/seeds.py`,
-`server/rounds.py`), which log them through `server/audit.py`. Who did something, and
-a seed's or round's history, come from that log. Nothing here is a web type. Lists come a
-page at a time, newest first. See docs/randomizer_devplan.md, "Users and access".
+Reads only; admin actions write through `server/rounds.py`, which logs them through
+`server/audit.py`. Who did something, and a round's history, come from that log. Nothing
+here is a web type. Lists come a page at a time, newest first. See
+docs/randomizer_devplan.md, "Users and access".
 
 This module holds every admin page's reads in one file. When adding to it, consider
 splitting it into a `server/admin/` package by area (seeds, rounds, users, the audit log)
@@ -200,7 +200,6 @@ class SeedListing:
     magic_words: tuple[str, ...]
     par: int
     created_at: str
-    rebuilt_at: str | None
     creator_id: int | None
     creator_name: str | None
     entries: int
@@ -208,7 +207,7 @@ class SeedListing:
 
 
 _SEED_SELECT = f"""
-    SELECT seeds.id, seeds.manifest, seeds.created_at, seeds.rebuilt_at, seeds.creator_id,
+    SELECT seeds.id, seeds.manifest, seeds.created_at, seeds.creator_id,
            {_USER_NAME} AS creator_name,
            (SELECT count(*) FROM entries WHERE entries.seed_id = seeds.id) AS entries,
            (SELECT count(*) FROM rounds JOIN entries ON entries.id = rounds.entry_id
@@ -224,7 +223,6 @@ def _seed_listing(row: sqlite3.Row) -> SeedListing:
         magic_words=tuple(course["magic_words"]),
         par=sum(hole["par"] for hole in course["holes"]),
         created_at=row["created_at"],
-        rebuilt_at=row["rebuilt_at"],
         creator_id=row["creator_id"],
         creator_name=row["creator_name"],
         entries=row["entries"],
@@ -336,25 +334,6 @@ class SeedDetail:
     holes: tuple[HoleSlot, ...]
     entries: list[EntryListing]
     rounds: list[RoundListing]
-    #: every admin action on the seed, oldest first
-    history: list[AdminAction]
-
-    @property
-    def rebuilt_by(self) -> AdminAction | None:
-        """The rebuild that last changed the IPS."""
-        return next(
-            (
-                entry
-                for entry in reversed(self.history)
-                if entry.action == audit.REBUILD and entry.detail.get("changed")
-            ),
-            None,
-        )
-
-    @property
-    def withdrawn(self) -> tuple[HoleSlot, ...]:
-        """The holes a rebuild cannot load."""
-        return tuple(hole for hole in self.holes if hole.withdrawn)
 
 
 def seed_detail(db: Database, seed_id: str, catalog: Catalog) -> SeedDetail | None:
@@ -366,7 +345,6 @@ def seed_detail(db: Database, seed_id: str, catalog: Catalog) -> SeedDetail | No
             "SELECT length(unfinished_ips) AS ips_size FROM seeds WHERE id = ?",
             (seed_id,),
         ).fetchone()
-        history = _history(conn, audit.SEED, seed_id)
         entries = conn.execute(
             f"{_ENTRY_SELECT} WHERE entries.seed_id = ? ORDER BY entries.created_at, entries.id",
             (seed_id,),
@@ -392,7 +370,6 @@ def seed_detail(db: Database, seed_id: str, catalog: Catalog) -> SeedDetail | No
         holes=tuple(holes),
         entries=[_entry_listing(entry) for entry in entries],
         rounds=[_round_listing(listing) for listing in rounds],
-        history=history,
     )
 
 

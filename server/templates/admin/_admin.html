@@ -16,11 +16,7 @@
 
 {# the outcome of the action that redirected here #}
 {% macro result_notice(result) %}
-  {% if result == "rebuilt" %}
-    <p class="admin-result"><ins>Rebuilt: the stored IPS changed.</ins></p>
-  {% elif result == "unchanged" %}
-    <p class="admin-result">Rebuilt: the IPS is identical, so nothing was stored.</p>
-  {% elif result == "flagged" %}
+  {% if result == "flagged" %}
     <p class="admin-result"><ins>Round flagged.</ins></p>
   {% elif result == "unflagged" %}
     <p class="admin-result"><ins>Flag cleared.</ins></p>
@@ -100,7 +96,6 @@
           <th scope="col" class="num">Entries</th>
           <th scope="col" class="num">Rounds</th>
           <th scope="col">Created</th>
-          <th scope="col">Rebuilt</th>
         </tr>
       </thead>
       <tbody>
@@ -113,7 +108,6 @@
             <td class="num">{{ seed.entries }}</td>
             <td class="num">{{ seed.rounds }}</td>
             <td>{{ seed.created_at }}</td>
-            <td>{{ seed.rebuilt_at or "" }}</td>
           </tr>
         {% endfor %}
       </tbody>
@@ -152,11 +146,10 @@
 
 {# what an action did, in one phrase; detail carries whatever the action needed remembered #}
 {% macro action_label(entry) %}
-  {%- if entry.action == "rebuild" %}{% if entry.detail.changed %}rebuilt{% else %}rebuilt, no change{% endif %}
-{%- elif entry.action == "flag" %}flagged
-{%- elif entry.action == "unflag" %}flag cleared
-{%- elif entry.action == "void" %}voided
-{%- elif entry.action == "restore" %}restored
+  {%- if entry.action == "flag" %}flagged
+  {%- elif entry.action == "unflag" %}flag cleared
+  {%- elif entry.action == "void" %}voided
+  {%- elif entry.action == "restore" %}restored
 {%- else %}{{ entry.action }}{% endif %}
 {%- endmacro %}
 

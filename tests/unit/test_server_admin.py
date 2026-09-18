@@ -1,28 +1,22 @@
-"""The admin pages: who they admit, what they list, and the flag, void, restore and rebuild actions."""
+"""The admin pages: who they admit, what they list, and flag, void and restore actions."""
 
 import re
 
 import pytest
 from fastapi.testclient import TestClient
 
-from golf.randomizer.catalog import Catalog, CatalogError, HoleStore
+from golf.randomizer.catalog import Catalog, HoleStore
 from golf.randomizer.curation import CurationSnapshot
-from golf.randomizer.manifest import Manifest
 from server.app import create_app
-from server.builder import BuilderUnavailableError
 from server.config import Config
-from server.seeds import load_unfinished_ips
-from tests.app_state import app_state
 from tests.unit.test_server_app import (
     IPS,
     UNWRITTEN,
     FakeBuilder,
     entered_seed,
-    generate_seed,
     scan_path,
 )
 
-REBUILT_IPS = b"PATCH\x00\x00\x30\x00\x01\x42EOF"
 ROUND_LINK = re.compile(r'href="/admin/rounds/([0-9A-Za-z]{10})"')
 
 #: every admin page that needs no id
@@ -92,6 +86,7 @@ def test_admin_pages_are_not_found_for_anyone_else(fake_builder, who):
             assert post(client, path).status_code == 404, path
         sign_in(client, "admin")
         assert client.get(f"/admin/rounds/{round_id}").status_code == 200
+        assert post(client, f"/admin/seeds/{seed_id}/rebuild").status_code == 404
 
 
 def test_no_admins_are_configured_by_default(fake_builder):
@@ -159,28 +154,21 @@ def test_missing_details_are_not_found(fake_builder, path):
 # -- Flag, void and restore ---------------------------------------------------------------
 
 
-def test_the_activity_page_and_histories_show_who_did_what(fake_builder):
+def test_the_activity_page_and_round_history_show_who_did_what(fake_builder):
     with admin_client(fake_builder) as client:
-        seed_id, round_id = played_seed(client)
+        _seed_id, round_id = played_seed(client)
         post(client, f"/admin/rounds/{round_id}/flag", note="five on every hole?")
-        post(client, f"/admin/seeds/{seed_id}/rebuild")
         activity = client.get("/admin/activity").text
-        seed_page = client.get(f"/admin/seeds/{seed_id}").text
         round_page = client.get(f"/admin/rounds/{round_id}").text
         admin_link = re.search(r'href="/admin/users/(\d+)">admin<', activity)
         assert admin_link is not None
         admin_id = admin_link.group(1)
         admin_page = client.get(f"/admin/users/{admin_id}").text
-    # the rebuild made no change, so the seed says so and does not claim a rebuild date
-    assert "rebuilt, no change" in activity
     assert "flagged" in activity
     assert "five on every hole?" in activity
-    assert f'href="/admin/seeds/{seed_id}"' in activity
     assert f'href="/admin/rounds/{round_id}"' in activity
-    assert "rebuilt, no change" in seed_page
-    assert "<td>never</td>" in seed_page
     assert "flagged" in round_page and "by <a" in round_page
-    assert "rebuilt, no change" in admin_page
+    assert "flagged" in admin_page
 
 
 def test_a_restored_rounds_history_reaches_back_past_the_void(fake_builder):
@@ -326,83 +314,3 @@ def test_acting_on_a_missing_round_is_not_found(fake_builder, action):
     with admin_client(fake_builder) as client:
         sign_in(client, "admin")
         assert post(client, f"/admin/rounds/0000000000/{action}").status_code == 404
-
-
-# -- Rebuild ------------------------------------------------------------------------------
-
-
-class Rebuilds(FakeBuilder):
-    """Builds `IPS` for new seeds, then whatever `rebuild_ips` holds, or raises `problem`."""
-
-    rebuild_ips = IPS
-    problem: Exception | None = None
-
-    def build(self, manifest: Manifest) -> bytes:
-        if getattr(self, "built", None) is None:
-            self.built = manifest
-            return IPS
-        if self.problem is not None:
-            raise self.problem
-        return self.rebuild_ips
-
-
-@pytest.fixture
-def rebuilds(tmp_path):
-    return Rebuilds(
-        Catalog.load(), CurationSnapshot.load(), HoleStore(), tmp_path / "unused.nes"
-    )
-
-
-def test_a_rebuild_to_the_same_ips_changes_nothing(rebuilds):
-    with admin_client(rebuilds, strings=UNWRITTEN) as client:
-        sign_in(client, "admin")
-        seed_id = generate_seed(client)
-        response = post(client, f"/admin/seeds/{seed_id}/rebuild")
-        assert (
-            response.headers["location"] == f"/admin/seeds/{seed_id}?result=unchanged"
-        )
-        assert "seed.rebuilt" not in client.get(f"/h/{seed_id}").text
-
-
-def test_a_rebuild_that_changes_the_ips_stores_it_and_shows_the_date(rebuilds):
-    rebuilds.rebuild_ips = REBUILT_IPS
-    with admin_client(rebuilds, strings=UNWRITTEN) as client:
-        sign_in(client, "admin")
-        seed_id = generate_seed(client)
-        response = post(client, f"/admin/seeds/{seed_id}/rebuild")
-        assert response.headers["location"] == f"/admin/seeds/{seed_id}?result=rebuilt"
-        assert load_unfinished_ips(app_state(client).db, seed_id) == REBUILT_IPS
-        assert "seed.rebuilt rebuilt=" in client.get(f"/h/{seed_id}").text
-        seed_page = client.get(f"/admin/seeds/{seed_id}").text
-    assert "by <a" in seed_page
-    assert "rebuilt, no change" not in seed_page
-
-
-@pytest.mark.parametrize(
-    "problem, status_code",
-    [
-        (CatalogError("nes_us/01 is withdrawn"), 409),
-        (BuilderUnavailableError("no ROM"), 503),
-    ],
-)
-def test_a_failed_rebuild_keeps_the_ips_and_logs_nothing(
-    rebuilds, problem, status_code
-):
-    rebuilds.problem = problem
-    with admin_client(rebuilds) as client:
-        sign_in(client, "admin")
-        seed_id = generate_seed(client)
-        response = post(client, f"/admin/seeds/{seed_id}/rebuild")
-        assert load_unfinished_ips(app_state(client).db, seed_id) == IPS
-        assert (
-            "No admin action on this seed."
-            in client.get(f"/admin/seeds/{seed_id}").text
-        )
-    assert response.status_code == status_code
-    assert str(problem) in response.text
-
-
-def test_rebuilding_a_missing_seed_is_not_found(rebuilds):
-    with admin_client(rebuilds) as client:
-        sign_in(client, "admin")
-        assert post(client, "/admin/seeds/0000000001/rebuild").status_code == 404

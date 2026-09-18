@@ -129,8 +129,6 @@ class SeedView:
     id: str
     magic_words: tuple[str, ...]
     created_at: str
-    #: when an admin's rebuild last changed the seed's ROM, or None
-    rebuilt_at: str | None
     holes: tuple[HoleView, ...]
     total_par: int
     total_distance: int
@@ -200,7 +198,6 @@ def seed_view(row: SeedRow, catalog: Catalog, curation: CurationSnapshot) -> See
         id=row.id,
         magic_words=course.magic_words,
         created_at=row.created_at,
-        rebuilt_at=row.rebuilt_at,
         holes=holes,
         total_par=course.par,
         total_distance=sum(hole.distance for hole in holes),

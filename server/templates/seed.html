@@ -4,7 +4,6 @@
   <hgroup>
     <h1 class="magic-words">{{ seed.magic_words|join(" ") }}</h1>
     <p>{{ t("seed.tagline", id=seed.id, created=seed.created_at) }}</p>
-    {% if seed.rebuilt_at %}<p>{{ t("seed.rebuilt", rebuilt=seed.rebuilt_at) }}</p>{% endif %}
   </hgroup>
 
   {% set download = seed.download %}

@@ -208,4 +208,9 @@ MIGRATIONS: list[str] = [
 
     CREATE INDEX voided_rounds_by_entry ON voided_rounds (entry_id, slot);
     """,
+    # 8: seeds are immutable. A fix is published as a new seed rather than replacing the
+    # unfinished IPS of an existing one, so the rebuild timestamp has no meaning.
+    """
+    ALTER TABLE seeds DROP COLUMN rebuilt_at;
+    """,
 ]

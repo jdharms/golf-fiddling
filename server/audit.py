@@ -1,10 +1,10 @@
 """The admin audit log: the only code that writes `admin_actions`.
 
-Every admin action records one row: who, what, to which seed or round, when, the admin's
-note and a small JSON detail. The modules that own the tables an action changes call
-`record` with their own connection, inside the transaction that makes the change, so the
-log and the change commit together or not at all. The admin pages read the log for "who did
-this" and a target's history (`server/admin.py`). See docs/randomizer_devplan.md, "Data model".
+Every admin action records one row: who, what, to which target, when, the admin's note and
+a small JSON detail. The module that owns the table an action changes calls `record` with
+its own connection, inside the transaction that makes the change, so the log and the
+change commit together or not at all. The admin pages read the log for "who did this" and
+a target's history (`server/admin.py`). See docs/randomizer_devplan.md, "Data model".
 
 A new admin action adds its name below and records a row; the table needs no migration.
 """
@@ -13,7 +13,6 @@ import json
 import sqlite3
 
 #: actions
-REBUILD = "rebuild"
 FLAG = "flag"
 UNFLAG = "unflag"
 VOID = "void"
@@ -39,8 +38,7 @@ def record(
 ) -> int:
     """Log an admin action on the caller's connection, inside its transaction. Returns the row id.
 
-    `detail` is what the action needs remembered beyond its target, such as whether a rebuild
-    changed anything.
+    `detail` is what the action needs remembered beyond its target.
     """
     row_id = conn.execute(
         """

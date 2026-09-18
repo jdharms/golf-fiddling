@@ -24,9 +24,7 @@ from server.seeds import (
     load_unfinished_ips,
     manifest_text,
     new_qr_seed_id,
-    rebuild_seed,
 )
-from server.users import sign_in
 
 IPS = b"PATCH\x00\x00\x10\x00\x01\xeaEOF"
 
@@ -51,21 +49,6 @@ def db():
     database.migrate()
     yield database
     database.close()
-
-
-@pytest.fixture
-def admin(db):
-    return sign_in(db, "dev:admin", "admin", None, None)
-
-
-def audit_rows(db: Database) -> list[tuple]:
-    with db.transaction() as conn:
-        return [
-            tuple(row)
-            for row in conn.execute(
-                "SELECT action, target_type, target_id, admin_id, detail, created_at FROM admin_actions ORDER BY id"
-            )
-        ]
 
 
 def counts(db: Database) -> tuple[int, int]:
@@ -198,7 +181,6 @@ def test_load_seed_returns_the_stored_manifest(db, manifest):
     assert row.qr_seed_id == 99
     assert row.manifest == manifest
     assert row.manifest_json == manifest_text(manifest)
-    assert row.rebuilt_at is None
 
 
 @pytest.mark.parametrize("text", ["0000000001", "not-an-id", "nope.json"])
@@ -214,49 +196,3 @@ def test_load_unfinished_ips_returns_the_stored_blob(db, manifest):
 @pytest.mark.parametrize("text", ["0000000001", "not-an-id"])
 def test_load_unfinished_ips_is_none_for_a_missing_or_malformed_id(db, text):
     assert load_unfinished_ips(db, text) is None
-
-
-def test_a_rebuild_that_changes_the_ips_stores_and_stamps_it(db, manifest, admin):
-    seed_id = insert_seed(db, manifest, IPS)
-    rebuilt = IPS[:-3] + b"\x00\x00\x20\x00\x01\xebEOF"
-    assert rebuild_seed(
-        db, seed_id, rebuilt, admin_id=admin.id, now="2026-09-18T00:00:00Z"
-    )
-    assert load_unfinished_ips(db, seed_id) == rebuilt
-    assert seed_row(db, seed_id).rebuilt_at == "2026-09-18T00:00:00Z"
-    assert audit_rows(db) == [
-        (
-            "rebuild",
-            "seed",
-            seed_id,
-            admin.id,
-            '{"changed": true}',
-            "2026-09-18T00:00:00Z",
-        )
-    ]
-
-
-def test_a_rebuild_to_the_same_ips_stores_no_ips_but_is_still_logged(
-    db, manifest, admin
-):
-    seed_id = insert_seed(db, manifest, IPS)
-    assert not rebuild_seed(
-        db, seed_id, IPS, admin_id=admin.id, now="2026-09-18T00:00:00Z"
-    )
-    assert seed_row(db, seed_id).rebuilt_at is None
-    assert audit_rows(db) == [
-        (
-            "rebuild",
-            "seed",
-            seed_id,
-            admin.id,
-            '{"changed": false}',
-            "2026-09-18T00:00:00Z",
-        )
-    ]
-
-
-def test_rebuilding_a_missing_seed_is_an_error_and_logs_nothing(db, admin):
-    with pytest.raises(KeyError):
-        rebuild_seed(db, "0000000001", IPS, admin_id=admin.id)
-    assert audit_rows(db) == []
