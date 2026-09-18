@@ -7,6 +7,14 @@ V1 todos:
 * I think I want a variant of rom name in randomizer site pages w/o the region parens
 * Unaffiliation disclaimer
 * Privacy policy
+* Litestream backups (backblaze b2?)
+* Configuration backups to pw manager
+* Uptime monitoring
+* contact email address?
+* robots.txt
+
+Eventually:
+* deploy from github actions
 
 Randomizer:
 * Hole equivalence classes
