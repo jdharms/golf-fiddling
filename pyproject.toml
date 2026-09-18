@@ -41,6 +41,10 @@ golf-catalog-sync = "tools.data.catalog_sync:main"
 golf-hex2bin = "tools.hex2bin:main"
 golf-expand-dict = "tools.expand_dict:main"
 
+# Developer tooling
+golf-biome = "tools.dev.biome:main"
+golf-check = "tools.dev.check:main"
+
 # ROM patches
 golf-patch = "tools.patch:main"
 golf-randomize = "tools.randomize:main"
@@ -108,6 +112,7 @@ dev = [
     "qrcode>=8.2",
     "playwright>=1.63.0",
     "pytest-xdist>=3.8.0",
+    "djlint>=1.46.1",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -134,3 +139,12 @@ ignore = [
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
+
+[tool.djlint]
+profile = "jinja"
+indent = 2
+max_line_length = 88
+preserve_blank_lines = true
+max_blank_lines = 1
+# J004/J018 want url_for() for static and internal links; the site writes plain paths.
+ignore = "J004,J018"
