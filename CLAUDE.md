@@ -40,6 +40,8 @@ A toolset for reverse engineering, editing and patching the NES Open Tournament 
 - `editor/` - the course editor
 - `server/` - the randomizer website (FastAPI); conventions in `server/CLAUDE.md`, design in
   `docs/randomizer_devplan.md`
+- `deploy/` - the site's systemd unit, Caddyfile, Litestream configuration and release
+  script, described in `docs/deployment.md`
 - `tools/` - CLI entry points: `data/` (regenerates checked-in `data/` files), `research/`,
   `art/`, `music/`, `qr/`; course and patch tools at the top level; `archive/` for retired
   one-off scripts (no entry points)

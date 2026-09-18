@@ -1,0 +1,22 @@
+# Installed as /etc/caddy/Caddyfile; see docs/deployment.md. Caddy obtains and renews
+# the certificates for both names and redirects HTTP to HTTPS on its own.
+
+# The QR codes built into every ROM point at https://nesopengolf.com/s/, so the bare
+# domain is the site and www only ever redirects to it.
+www.nesopengolf.com {
+	redir https://nesopengolf.com{uri} permanent
+}
+
+nesopengolf.com {
+	encode zstd gzip
+
+	# The site's requests are small forms; nothing legitimate comes near this.
+	request_body {
+		max_size 1MB
+	}
+
+	# Caddy replaces any client-sent X-Forwarded-For with the address it saw, which the
+	# site's rate limiter reads, and sets X-Forwarded-Proto. The site sets its own
+	# Cache-Control on static files.
+	reverse_proxy 127.0.0.1:8000
+}

@@ -17,7 +17,8 @@ dependencies. The FastAPI app lives in the top-level `server/` package (`web/` h
 rangefinder at the time; `site` would shadow the standard library module) and imports from `golf/`
 only. `golf-site` (`tools/site.py`) runs it under uvicorn. A `golf-randomize` CLI drives the same code
 so ROMs can be built and playtested from a manifest file offline; it lives at
-`tools/randomize.py`.
+`tools/randomize.py`. The server's systemd unit, proxy and backup configuration are
+`deploy/`, and `docs/deployment.md` is how they are installed and releases deployed.
 
 **The catalog** is two checked-in files (`docs/catalog.md`). The frozen, append-only
 index holds versioned hole ids such as `jp_hawaii/07` or `dharms/cliffside@2`, each with
@@ -224,7 +225,8 @@ Everything is a form or a link. The only fetch from JavaScript is the IPS.
 **Configuration** from the environment (`server/config.py`): the database path
 `GOLF_DATABASE`, the server's vanilla ROM directory `GOLF_ROM_DIR` holding the ROMs under
 the file names in `golf/randomizer/roms.py` (`nes_open_us.nes`, `mario_open_jp.nes`), the holes directory
-`GOLF_HOLES_DIR` that `golf-rehydrate` fills from them, the public base URL `GOLF_BASE_URL` (also the OAuth redirect
+`GOLF_HOLES_DIR` that `golf-rehydrate` fills from them, the rangefinder render directory
+`GOLF_RANGEFINDER_DIR` it renders into, the public base URL `GOLF_BASE_URL` (also the OAuth redirect
 base; the QR URL prefix is assembled into the port and fixed before the first public seed
 ships), the Discord client id and secret `GOLF_DISCORD_CLIENT_ID` and
 `GOLF_DISCORD_CLIENT_SECRET`, the session secret `GOLF_SESSION_SECRET`, the admin users
@@ -375,15 +377,28 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
     `tests/conftest.py`, which skip without the ROM and fail with it if the data is
     missing or stale. `tests/unit/test_rehydrate.py` runs without a ROM;
     `tests/integration/test_rehydrate_rom.py` rehydrates from the real ROMs.
-15. **Deployment.** A systemd unit or container, reverse proxy configuration,
-    Litestream, and a deployment note under `docs/`. Configuration reaches the service
-    as environment variables from a root-owned, mode 0600 file the unit names with
-    `EnvironmentFile=` (such as `/etc/golf-site/env`), so the service account never reads
-    the secrets file. `GOLF_DEV_LOGIN` is never set there, and `GOLF_SESSION_SECRET` stays
-    fixed, since changing it signs everyone out. Litestream's storage credentials get a
-    file of their own. The unit runs `golf-rehydrate` as `ExecStartPre=`, as a user that
-    can write `GOLF_HOLES_DIR` and the rangefinder's static directory, so every start
-    serves verified data.
+15. **Deployment.** `deploy/` and `docs/deployment.md`. The site runs under systemd
+    (`deploy/golf-site.service`) as the system user `golf`, one uvicorn worker on
+    `127.0.0.1:8000` behind Caddy (`deploy/Caddyfile`), which holds the certificates and
+    redirects `www` and HTTP to `https://nesopengolf.com`, the host the QR prefix names.
+    `golf-site` trusts the forwarded headers from the loopback address only.
+    Configuration reaches the service as environment variables from the root-owned, mode
+    0600 `/etc/golf-site/env` the unit names with `EnvironmentFile=`, so the service
+    account never reads the secrets file; `deploy/golf-site.env.example` is its template.
+    `GOLF_DEV_LOGIN` is never set there, and `GOLF_SESSION_SECRET` stays fixed, since
+    changing it signs everyone out. The service can write only `/var/lib/golf-site`, which
+    holds the database, the ROMs, the hole store and `GOLF_RANGEFINDER_DIR`, the renders
+    the site serves at `/rangefinder-data/`, apart from the checked-in static files. Its
+    `ExecStartPre=` runs `golf-rehydrate --check` and a full `golf-rehydrate` only when
+    that fails, so every start serves verified data. Litestream (`deploy/litestream.yml`)
+    replicates the database with a daily snapshot kept a week, its storage credentials in
+    a file of their own. A release is a git tag: `deploy/deploy.sh <tag>` checks it out in
+    `/opt/golf-site`, runs `uv sync --frozen --no-dev`, restarts and waits for
+    `/healthz`, and rolling back is deploying the previous tag. Templates link static files
+    through `static_url` (`server/static_files.py`), which versions each URL with a hash
+    of the file's contents; versioned responses are immutable and the rest `no-cache`, so
+    no browser keeps an old script or stylesheet past a deploy.
+    `tests/unit/test_server_static_files.py` covers the versioning.
 16. **Polish.** The guest menu marker once its wording is settled, difficulty filters,
     mirrored holes and the transforms column, hole thumbnails, multi-course generation.
     - **Player 2's account.** Both ROM slots carry the downloader's `player_id`, so a
@@ -396,11 +411,6 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
       CLUBS out of the club house. With that in place, SRAM magic derived from the
       player's choices, and keys that change when the choices do, would make an entry's
       bag the bag played.
-    - **Static file versioning.** `/static/` URLs carry no version and no `Cache-Control`,
-      so a browser can keep a stale `site.css` or page script after a change, and after a
-      deploy old JavaScript can run against new pages. A template helper adding
-      `?v=<mtime or content hash>` to every `/static/` link would fix that, and would let
-      the reverse proxy serve `/static/` with a long `immutable` cache lifetime.
     - **Phone header.** The site has been laid out for desktop, where seeds are downloaded,
       but the scan page (`/s/`) opens on the phone that scanned the QR code. At phone width
       the header wraps into the site name, the nav links and the sign-in row, taking the

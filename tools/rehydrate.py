@@ -7,7 +7,8 @@ Mario Open ROM (optional) into the hole store, checks every hole against the cat
 content hashes before installing any of them, and renders the rangefinder's images from
 the result. The ROMs are found under their usual file names (nes_open_us.nes,
 mario_open_jp.nes) in GOLF_ROM_DIR, or the repository root; the hole store is
-GOLF_HOLES_DIR, or courses/. --check verifies an earlier run without writing anything.
+GOLF_HOLES_DIR, or courses/; the renders go to GOLF_RANGEFINDER_DIR, or rangefinder/.
+--check verifies an earlier run without writing anything.
 """
 
 import argparse
@@ -23,7 +24,6 @@ from golf.randomizer.rehydrate import (
     rehydrate,
 )
 from golf.randomizer.roms import vanilla_rom
-from golf.rendering.rangefinder import DEFAULT_OUTPUT
 from server.config import Config
 
 
@@ -55,8 +55,8 @@ def main() -> int:
     parser.add_argument(
         "--rangefinder",
         type=Path,
-        default=DEFAULT_OUTPUT,
-        help="the rangefinder's static directory (default: %(default)s)",
+        default=config.rangefinder_dir,
+        help="the rangefinder's render directory (default: %(default)s)",
     )
     parser.add_argument(
         "--check",

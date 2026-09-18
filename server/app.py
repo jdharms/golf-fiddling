@@ -8,7 +8,6 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -18,6 +17,7 @@ from golf.randomizer.build import credentials_for
 from golf.randomizer.generate import GenerationError
 from golf.randomizer.manifest import required_roms
 from golf.randomizer.roms import VANILLA_ROMS
+from golf.rendering.rangefinder import METADATA
 
 from .admin_routes import admin_router
 from .auth import (
@@ -52,6 +52,7 @@ from .ratelimit import (
 )
 from .rounds import VoidedRound, find_round, rounds_for_seed, rounds_for_user
 from .seeds import insert_seed, load_seed, load_unfinished_ips
+from .static_files import CachedStaticFiles, StaticVersions
 from .strings import Strings
 from .submissions import MALFORMED, UNFINISHED, ScanError, submit_scan
 from .users import load_user, sign_in
@@ -73,6 +74,8 @@ ROM_SCRIPT_STRINGS = "rom.status"
 DOWNLOAD_SCRIPT_STRINGS = "seed.download.status"
 #: the catalog prefix whose strings the rangefinder page embeds for its modules
 RANGEFINDER_SCRIPT_STRINGS = "rangefinder.script"
+#: where the rangefinder's renders (`Config.rangefinder_dir`) are served
+RANGEFINDER_DATA_URL = "/rangefinder-data"
 
 #: generate.html shows one notice per value: a FormError reason, or one of these
 RATE_LIMITED = "rate_limited"
@@ -186,7 +189,15 @@ def create_app(
     )
     templates.env.globals["t"] = strings.html
     templates.env.globals["t_plain"] = strings.plain
-    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    templates.env.globals["static_url"] = StaticVersions(STATIC_DIR).url
+    app.mount("/static", CachedStaticFiles(directory=STATIC_DIR), name="static")
+    # Not checked at startup: golf-site refuses to run without the renders, and tests
+    # build apps on a fresh clone that has none.
+    app.mount(
+        RANGEFINDER_DATA_URL,
+        CachedStaticFiles(directory=config.rangefinder_dir, check_dir=False),
+        name="rangefinder_data",
+    )
     app.include_router(admin_router(templates))
 
     def not_found() -> HTTPException:
@@ -234,6 +245,7 @@ def create_app(
             "rangefinder.html",
             {
                 "page": "rangefinder",
+                "metadata_url": f"{RANGEFINDER_DATA_URL}/{METADATA}",
                 "rangefinder_strings": strings.for_script(RANGEFINDER_SCRIPT_STRINGS),
             },
         )

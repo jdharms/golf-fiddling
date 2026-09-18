@@ -1,0 +1,41 @@
+# The randomizer site. Installed as /etc/systemd/system/golf-site.service; see
+# docs/deployment.md.
+#
+# One uvicorn worker, always: the rate limiter and the database lock live in the process,
+# so a second worker would split both.
+
+[Unit]
+Description=NES Open Golf randomizer site
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=golf
+Group=golf
+# Root-owned and mode 0600: systemd reads it, the golf user never can.
+EnvironmentFile=/etc/golf-site/env
+WorkingDirectory=/opt/golf-site
+# Serve verified data on every start: verify the holes and renders, and rehydrate them
+# from the ROMs only when that fails.
+ExecStartPre=/bin/sh -c '/opt/golf-site/.venv/bin/golf-rehydrate --check || exec /opt/golf-site/.venv/bin/golf-rehydrate'
+ExecStart=/opt/golf-site/.venv/bin/golf-site --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=5
+
+# The code tree and the rest of the system are read-only; only the state directory,
+# which holds the database, the ROMs, the holes and the rangefinder renders, is not.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/golf-site
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target

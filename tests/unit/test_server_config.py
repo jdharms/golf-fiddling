@@ -14,6 +14,7 @@ def test_an_empty_environment_gives_the_defaults():
     assert config.database == "golf_site.db"
     assert config.rom_dir == REPO_ROOT
     assert config.holes_dir == DEFAULT_COURSES
+    assert config.rangefinder_dir == REPO_ROOT / "rangefinder"
     assert config.base_url == "http://127.0.0.1:8000"
     assert config.discord_client_id is None
     assert config.dev_login is False
@@ -25,6 +26,7 @@ def test_every_variable_overrides_its_field():
             "GOLF_DATABASE": "/srv/golf/site.db",
             "GOLF_ROM_DIR": "/srv/golf/roms",
             "GOLF_HOLES_DIR": "/srv/golf/holes",
+            "GOLF_RANGEFINDER_DIR": "/srv/golf/rangefinder",
             "GOLF_BASE_URL": "https://golf.example",
             "GOLF_DISCORD_CLIENT_ID": "client",
             "GOLF_DISCORD_CLIENT_SECRET": "secret",
@@ -37,6 +39,7 @@ def test_every_variable_overrides_its_field():
         database="/srv/golf/site.db",
         rom_dir=Path("/srv/golf/roms"),
         holes_dir=Path("/srv/golf/holes"),
+        rangefinder_dir=Path("/srv/golf/rangefinder"),
         base_url="https://golf.example",
         discord_client_id="client",
         discord_client_secret="secret",

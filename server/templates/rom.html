@@ -37,6 +37,6 @@
 {% endblock %}
 {% block scripts %}
   <script type="application/json" id="rom-strings">{{ rom_strings | tojson }}</script>
-  <script src="/static/romstore.js" defer></script>
-  <script src="/static/rom.js" defer></script>
+  <script src="{{ static_url('romstore.js') }}" defer></script>
+  <script src="{{ static_url('rom.js') }}" defer></script>
 {% endblock %}

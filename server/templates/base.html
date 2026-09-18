@@ -8,8 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{{ t_plain("site.title") }}{% endblock %}</title>
     {% block metadata %}{% endblock %}
-    <link rel="stylesheet" href="/static/pico.green.min.css">
-    <link rel="stylesheet" href="/static/site.css">
+    <link rel="stylesheet" href="{{ static_url('pico.green.min.css') }}">
+    <link rel="stylesheet" href="{{ static_url('site.css') }}">
     {% block styles %}{% endblock %}
   </head>
 

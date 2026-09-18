@@ -187,21 +187,24 @@ uv run golf-site --reload
 ```
 
 The site refuses to start until `golf-rehydrate` has dumped the holes of every ROM in
-`GOLF_ROM_DIR` into `GOLF_HOLES_DIR` and rendered the rangefinder from them. The course
+`GOLF_ROM_DIR` into `GOLF_HOLES_DIR` and rendered the rangefinder from them into
+`GOLF_RANGEFINDER_DIR`. The course
 rangefinder is at `/rangefinder`; to re-render it without dumping again:
 
 ```bash
-uv run golf-render-web courses/ server/static/rangefinder/
+uv run golf-render-web courses/ rangefinder/
 ```
 
-The ROM setup page hashes ROMs in the browser, which needs HTTPS or localhost. The site
-reads its configuration from environment variables:
+The ROM setup page hashes ROMs in the browser, which needs HTTPS or localhost. Running it
+on its server is `docs/deployment.md`. The site reads its configuration from environment
+variables:
 
 | Variable | Default | Meaning |
 |----------|---------|---------|
 | `GOLF_DATABASE` | `golf_site.db` | SQLite database path, created and migrated at startup |
 | `GOLF_ROM_DIR` | the repository root | Directory holding the server's vanilla ROMs as `nes_open_us.nes` and `mario_open_jp.nes`; generating a seed needs the first |
 | `GOLF_HOLES_DIR` | `courses/` | Hole store root, which `golf-rehydrate` writes |
+| `GOLF_RANGEFINDER_DIR` | `rangefinder/` | The rangefinder's renders, which `golf-rehydrate` writes and the site serves at `/rangefinder-data/` |
 | `GOLF_BASE_URL` | `http://127.0.0.1:8000` | Public base URL, also the OAuth redirect base |
 | `GOLF_DISCORD_CLIENT_ID`, `GOLF_DISCORD_CLIENT_SECRET` | unset | Discord sign-in |
 | `GOLF_SESSION_SECRET` | unset | Signs the session cookie |

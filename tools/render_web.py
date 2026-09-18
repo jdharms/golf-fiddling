@@ -24,9 +24,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Example:
-  golf-render-web courses/ server/static/rangefinder/
+  golf-render-web courses/ rangefinder/
 
-This will replace server/static/rangefinder/images/ and metadata.json with:
+This will replace rangefinder/images/ and metadata.json with:
   images/japan/hole_01.png ... hole_18.png
   images/japan/hole_01_green.png ... hole_18_green.png
   images/japan/hole_01_flag_0.png ... hole_18_flag_3.png

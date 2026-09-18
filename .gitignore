@@ -34,5 +34,4 @@ wheels/
 /courses/**
 !/courses/**/
 !/courses/**/.gitkeep
-/server/static/rangefinder/images/
-/server/static/rangefinder/metadata.json
+/rangefinder/

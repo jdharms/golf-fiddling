@@ -98,7 +98,11 @@ in this package.
 
 - Server-rendered Jinja2 in `server/templates/`, extending `base.html`, styled with the
   vendored Pico CSS green theme (`server/static/VENDORED.md`). Pass `page` in the context
-  for the nav highlight. Reference static files by `/static/...` paths.
+  for the nav highlight. Link static files with `static_url("path")`, never a literal
+  `/static/` path (a test checks): `server/static_files.py` adds a hash of the file's
+  contents as `?v=`, and serves a versioned URL as immutable. What carries no version,
+  such as the rangefinder's module imports and its renders at `/rangefinder-data/`
+  (`Config.rangefinder_dir`), is served `no-cache`, so a browser revalidates it.
 - `server/static/site.css` holds only rules Pico has no class for, and takes its colors
   from Pico's variables (`--pico-ins-color`, `--pico-del-color` and the like) so dark mode
   follows. Components that change look with script state carry a `data-state` attribute

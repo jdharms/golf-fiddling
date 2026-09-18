@@ -3,14 +3,15 @@
 {% block title %}{{ t_plain("rangefinder.title") }}{% endblock %}
 
 {% block styles %}
-  <link rel="stylesheet" href="/static/rangefinder/rangefinder.css">
+  <link rel="stylesheet"
+        href="{{ static_url('rangefinder/rangefinder.css') }}">
 {% endblock %}
 
 {% block content %}
   <section id="rangefinder"
            class="rangefinder"
            data-state="loading"
-           data-metadata-url="/static/rangefinder/metadata.json">
+           data-metadata-url="{{ metadata_url }}">
     <hgroup>
       <h1>{{ t("rangefinder.heading") }}</h1>
       <p>{{ t("rangefinder.intro") }}</p>
@@ -108,5 +109,5 @@
 {% block scripts %}
   <script id="rangefinder-strings"
           type="application/json">{{ rangefinder_strings | tojson }}</script>
-  <script type="module" src="/static/rangefinder/app.js"></script>
+  <script type="module" src="{{ static_url('rangefinder/app.js') }}"></script>
 {% endblock %}

@@ -8,6 +8,7 @@ One line per document. Command-line tools are indexed in the top-level `README.m
 |-----|-------|
 | [randomizer.md](randomizer.md) | Randomizer design: goals, logic, what gets randomized |
 | [randomizer_devplan.md](randomizer_devplan.md) | Randomizer site architecture, data model, routes and the ordered development plan |
+| [deployment.md](deployment.md) | Running the randomizer site on its server: setup, releases, rollback and database restores |
 | [catalog.md](catalog.md) | The randomizer hole catalog: frozen index, curation, ids, versions and families |
 | [manifest.md](manifest.md) | Randomizer seed manifests: settings, the concrete course, and how generation fills them |
 | [jp_extraction.md](jp_extraction.md) | Extracting Mario Open Golf (JP) courses for import into the US ROM |

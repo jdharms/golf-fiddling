@@ -13,7 +13,6 @@ import sys
 
 from golf.randomizer.catalog import Catalog
 from golf.randomizer.rehydrate import RehydrateError, check_site_data
-from golf.rendering.rangefinder import DEFAULT_OUTPUT
 from server.config import Config
 
 
@@ -35,7 +34,7 @@ def main() -> int:
     config = Config.from_env()
     try:
         check_site_data(
-            Catalog.load(), config.rom_dir, config.holes_dir, DEFAULT_OUTPUT
+            Catalog.load(), config.rom_dir, config.holes_dir, config.rangefinder_dir
         )
     except RehydrateError as error:
         print(f"error: {error}\nrun `golf-rehydrate` first", file=sys.stderr)
@@ -43,12 +42,15 @@ def main() -> int:
 
     import uvicorn
 
-    # --reload also restarts on content that the app reads once at startup.
+    # --reload also restarts on content that the app reads once at startup. Behind the
+    # reverse proxy, the forwarded headers are trusted from the loopback address only.
     uvicorn.run(
         "server.app:create_app",
         factory=True,
         host=args.host,
         port=args.port,
+        proxy_headers=True,
+        forwarded_allow_ips="127.0.0.1",
         reload=args.reload,
         reload_includes=["*.toml", "*.md"] if args.reload else None,
     )

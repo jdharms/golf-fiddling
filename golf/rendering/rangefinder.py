@@ -23,8 +23,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = REPO_ROOT / "data"
 DEFAULT_TILESET = DATA_DIR / "chr-ram.bin"
 DEFAULT_GREENS_TILESET = DATA_DIR / "green-ram.bin"
-#: where the site serves the rangefinder's static files from
-DEFAULT_OUTPUT = REPO_ROOT / "server" / "static" / "rangefinder"
+#: where the rangefinder's renders go unless GOLF_RANGEFINDER_DIR says otherwise; the
+#: site serves them apart from its checked-in static files
+DEFAULT_OUTPUT = REPO_ROOT / "rangefinder"
 
 # The group label becomes an <optgroup> in the rangefinder's course selector, so the two
 # games' courses stay visually separated even though both have a course named "Japan".

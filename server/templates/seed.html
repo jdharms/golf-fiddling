@@ -202,6 +202,6 @@
           id="download-strings">{{ download_strings | tojson }}</script>
   <script type="application/json"
           id="download-roms">{{ seed.download.rom_details | tojson }}</script>
-  <script src="/static/romstore.js" defer></script>
-  <script src="/static/download.js" defer></script>
+  <script src="{{ static_url('romstore.js') }}" defer></script>
+  <script src="{{ static_url('download.js') }}" defer></script>
 {% endblock %}

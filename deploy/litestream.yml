@@ -1,0 +1,19 @@
+# Litestream (v0.5) replication of the site's database to S3-compatible object storage.
+# Installed as /etc/litestream.yml; see docs/deployment.md. The storage credentials are
+# not here: LITESTREAM_ACCESS_KEY_ID and LITESTREAM_SECRET_ACCESS_KEY come from
+# /etc/litestream.env through deploy/litestream-credentials.conf.
+
+# A snapshot a day, and a week of them kept: any point in the last week can be restored.
+snapshot:
+  interval: 24h
+  retention: 168h
+
+dbs:
+  - path: /var/lib/golf-site/golf_site.db
+    replica:
+      type: s3
+      bucket: replace-me
+      path: golf-site
+      # For example https://us-ord-1.linodeobjects.com for Linode Object Storage
+      endpoint: replace-me
+      region: replace-me

@@ -152,14 +152,16 @@ def test_rangefinder_page_embeds_its_assets_and_script_strings(unwritten_client)
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/html")
     assert re.search(r'href="/rangefinder"\s+aria-current="page"', response.text)
-    assert 'data-metadata-url="/static/rangefinder/metadata.json"' in response.text
-    assert 'src="/static/rangefinder/app.js"' in response.text
+    assert 'data-metadata-url="/rangefinder-data/metadata.json"' in response.text
+    assert re.search(
+        r'src="/static/rangefinder/app\.js\?v=[0-9a-f]{12}"', response.text
+    )
     assert '"rangefinder.script.distance": null' in response.text
 
 
 def test_rangefinder_generated_assets_are_served(client, rangefinder_assets):
-    metadata = client.get("/static/rangefinder/metadata.json")
-    image = client.get("/static/rangefinder/images/japan/hole_01.png")
+    metadata = client.get("/rangefinder-data/metadata.json")
+    image = client.get("/rangefinder-data/images/japan/hole_01.png")
     assert metadata.status_code == 200
     assert metadata.json()["courses"]["japan"]["holes"][0]["width"] == 176
     assert image.status_code == 200
@@ -259,8 +261,8 @@ def test_rom_setup_lists_every_vanilla_rom_with_its_hash(client):
         assert rom.title in response.text
     assert response.text.count('data-state="checking"') == len(VANILLA_ROMS)
     assert 'id="rom-strings"' in response.text
-    assert response.text.index('src="/static/romstore.js"') < response.text.index(
-        'src="/static/rom.js"'
+    assert response.text.index('src="/static/romstore.js?v=') < response.text.index(
+        'src="/static/rom.js?v='
     )
 
 
@@ -282,8 +284,8 @@ def test_static_files_are_served(client, path):
 
 def test_pages_use_the_vendored_and_site_stylesheets(client):
     page = client.get("/").text
-    assert 'href="/static/pico.green.min.css"' in page
-    assert 'href="/static/site.css"' in page
+    assert 'href="/static/pico.green.min.css?v=' in page
+    assert 'href="/static/site.css?v=' in page
 
 
 def test_api_docs_are_not_exposed(client):
@@ -514,8 +516,8 @@ def test_the_seed_page_offers_the_download_form(client):
         f'id="download-roms">{{"{US_ROM}": {{"sha1": "{vanilla_rom(US_ROM).sha1}"'
         in page
     )
-    assert page.index('src="/static/romstore.js"') < page.index(
-        'src="/static/download.js"'
+    assert page.index('src="/static/romstore.js?v=') < page.index(
+        'src="/static/download.js?v='
     )
 
 

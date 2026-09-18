@@ -11,6 +11,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from golf.randomizer.catalog import DEFAULT_COURSES, REPO_ROOT
+from golf.rendering.rangefinder import DEFAULT_OUTPUT as DEFAULT_RANGEFINDER
 
 PREFIX = "GOLF_"
 TRUE_WORDS = frozenset({"1", "true", "yes", "on"})
@@ -30,6 +31,8 @@ class Config:
     rom_dir: Path = REPO_ROOT
     #: the hole store root the catalog's ids resolve in
     holes_dir: Path = DEFAULT_COURSES
+    #: the rangefinder's renders, which `golf-rehydrate` writes and the site serves
+    rangefinder_dir: Path = DEFAULT_RANGEFINDER
     #: the public base URL, also the OAuth redirect base
     base_url: str = "http://127.0.0.1:8000"
     discord_client_id: str | None = None
@@ -55,6 +58,7 @@ class Config:
             database=get("database") or defaults.database,
             rom_dir=get_path("rom_dir", defaults.rom_dir),
             holes_dir=get_path("holes_dir", defaults.holes_dir),
+            rangefinder_dir=get_path("rangefinder_dir", defaults.rangefinder_dir),
             base_url=get("base_url") or defaults.base_url,
             discord_client_id=get("discord_client_id"),
             discord_client_secret=get("discord_client_secret"),
