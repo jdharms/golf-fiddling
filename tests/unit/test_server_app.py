@@ -533,7 +533,7 @@ def test_written_strings_render_without_placeholders(fake_builder):
     assert "TEXT:seed.download.submit" in pages[f"/h/{seed_id}"]
     assert '"TEXT:seed.download.status.ready"' in pages[f"/h/{seed_id}"]
     assert "TEXT:not_found.heading" in pages["/nope"]
-    assert "TEXT:submission.rejected.malformed" in pages[scan]
+    assert "TEXT:scan_rejected.malformed" in pages[scan]
 
 
 def test_unwritten_strings_render_as_placeholders_with_their_notes(fake_builder):
@@ -924,39 +924,77 @@ def entered_seed(test_client: TestClient, *names: str) -> str:
     return seed_id
 
 
-def submissions(client: TestClient) -> list[dict]:
+def recorded_rounds(client: TestClient) -> list[dict]:
     with client.app.state.db.transaction() as conn:
-        return [dict(row) for row in conn.execute("SELECT * FROM submissions ORDER BY id")]
+        return [dict(row) for row in conn.execute("SELECT * FROM rounds ORDER BY id")]
 
 
-def test_scanning_records_the_round_and_shows_it(fake_builder):
+def test_scanning_records_the_round_and_redirects_to_its_permalink(fake_builder):
     with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
         seed_id = entered_seed(test_client, "alice")
         test_client.post("/auth/logout", data={"next": "/"})
-        response = test_client.get(scan_path(test_client, seed_id, "alice", strokes=5))
-        recorded = submissions(test_client)
-    assert response.status_code == 200
+        response = test_client.get(
+            scan_path(test_client, seed_id, "alice", strokes=5), follow_redirects=False
+        )
+        recorded = recorded_rounds(test_client)
+        page = test_client.get(response.headers["location"])
+    assert response.status_code == 303
     assert response.headers["cache-control"] == "no-store"
-    assert "submission.recorded.heading_new" in response.text
-    assert "submission.recorded.player_one name=alice" in response.text
-    assert f'href="/h/{seed_id}"' in response.text
-    assert '<td class="num over-par">5</td>' in response.text
-    assert '<td class="num over-par">90</td>' in response.text
     assert [(row["slot"], row["total_strokes"], row["total_putts"]) for row in recorded] == [(0, 90, 36)]
+    assert response.headers["location"] == f"/r/{recorded[0]['public_id']}?recorded"
+    assert page.status_code == 200
+    assert "round.heading_recorded" in page.text
+    assert "round.player_one name=alice" in page.text
+    assert f'href="/h/{seed_id}"' in page.text
+    assert '<td class="num over-par">5</td>' in page.text
+    assert '<td class="num over-par">90</td>' in page.text
 
 
-def test_scanning_again_shows_the_first_round_and_records_nothing(fake_builder):
+def test_the_permalink_confirms_the_round_only_for_the_scan_that_recorded_it(fake_builder):
+    with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
+        seed_id = entered_seed(test_client, "alice")
+        test_client.get(scan_path(test_client, seed_id, "alice", strokes=5))
+        [row] = recorded_rounds(test_client)
+        confirmed = test_client.get(f"/r/{row['public_id']}?recorded")
+        plain = test_client.get(f"/r/{row['public_id']}")
+    for page in (confirmed, plain):
+        assert page.status_code == 200
+        # a permalink is an ordinary page: unlike /s/, it may be cached
+        assert "cache-control" not in page.headers
+        assert '<td class="num over-par">90</td>' in page.text
+    assert "round.heading_recorded" in confirmed.text
+    assert "history.replaceState" in confirmed.text
+    assert "round.heading" in plain.text
+    assert "round.heading_recorded" not in plain.text
+    assert "history.replaceState" not in plain.text
+
+
+@pytest.mark.parametrize("round_id", ["0123456789", "not-an-id", "", "short"])
+def test_a_permalink_naming_no_round_is_not_found(fake_builder, round_id):
+    with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
+        assert test_client.get(f"/r/{round_id}").status_code == 404
+
+
+def test_scanning_again_reaches_the_first_round_and_records_nothing(fake_builder):
     with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
         seed_id = entered_seed(test_client, "alice")
         path = scan_path(test_client, seed_id, "alice", strokes=5)
-        test_client.get(path)
-        again = test_client.get(path)
-        different = test_client.get(scan_path(test_client, seed_id, "alice", strokes=3))
-        recorded = submissions(test_client)
+        first = test_client.get(path, follow_redirects=False)
+        again = test_client.get(path, follow_redirects=False)
+        different = test_client.get(
+            scan_path(test_client, seed_id, "alice", strokes=3), follow_redirects=False
+        )
+        recorded = recorded_rounds(test_client)
+        pages = [test_client.get(response.headers["location"]) for response in (again, different)]
+    permalink = f"/r/{recorded[0]['public_id']}"
+    assert first.headers["location"] == f"{permalink}?recorded"
+    # a rescan lands on the same round, without the confirmation the first scan earned
     for response in (again, different):
-        assert response.status_code == 200
-        assert "submission.recorded.heading_earlier" in response.text
-        assert '<td class="num over-par">90</td>' in response.text
+        assert response.status_code == 303
+        assert response.headers["location"] == permalink
+    for page in pages:
+        assert "round.heading_recorded" not in page.text
+        assert '<td class="num over-par">90</td>' in page.text
     assert len(recorded) == 1
 
 
@@ -978,7 +1016,7 @@ def test_a_player_two_scan_is_marked_on_the_page(fake_builder):
         seed_id = entered_seed(test_client, "alice")
         response = test_client.get(scan_path(test_client, seed_id, "alice", slot=1))
     assert response.status_code == 200
-    assert "submission.recorded.player_two name=alice" in response.text
+    assert "round.player_two name=alice" in response.text
 
 
 @pytest.mark.parametrize(
@@ -994,17 +1032,17 @@ def test_scans_that_are_not_rounds_are_refused(fake_builder, path, status, notic
         response = test_client.get(path)
     assert response.status_code == status
     assert response.headers["cache-control"] == "no-store"
-    assert "submission.rejected.heading" in response.text
-    assert f"submission.rejected.{notice}" in response.text
+    assert "scan_rejected.heading" in response.text
+    assert f"scan_rejected.{notice}" in response.text
 
 
 def test_a_scan_signed_with_the_wrong_key_is_not_recognized(fake_builder):
     with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
         seed_id = entered_seed(test_client, "alice")
         response = test_client.get(scan_path(test_client, seed_id, "alice", key=bytes(8)))
-        assert submissions(test_client) == []
+        assert recorded_rounds(test_client) == []
     assert response.status_code == 404
-    assert "submission.rejected.unrecognized" in response.text
+    assert "scan_rejected.unrecognized" in response.text
 
 
 def test_the_seed_page_lists_recorded_rounds(fake_builder):
@@ -1017,7 +1055,9 @@ def test_the_seed_page_lists_recorded_rounds(fake_builder):
         page = test_client.get(f"/h/{seed_id}").text
     assert "seed.rounds.none" not in page
     rounds = page[page.index('class="rounds') :]
-    assert rounds.index("<td>bob</td>") < rounds.index("<td>alice</td>") < rounds.index("seed.rounds.player_two name=alice")
+    assert rounds.index(">bob</a>") < rounds.index(">alice</a>") < rounds.index("seed.rounds.player_two name=alice")
+    # every listed round links to its own permalink
+    assert len(set(re.findall(r'href="(/r/\w{10})"', rounds))) == 3
 
 
 def test_my_page_lists_my_rounds(fake_builder):
@@ -1033,10 +1073,11 @@ def test_my_page_lists_my_rounds(fake_builder):
     rounds = page[page.index('class="rounds') :]
     # only the player 2 round's magic words carry the asterisk
     assert rounds.count("</a>*</td>") == 1
-    assert rounds.count("</a></td>") == 1
+    assert rounds.count('class="magic-words"') == 3
+    assert len(set(re.findall(r'href="(/r/\w{10})"', rounds))) == 2
     assert "</a>*</td>" in player_two_only[player_two_only.index('class="rounds') :]
-    assert '<td class="num">90</td>' in rounds
-    assert '<td class="num">54</td>' not in rounds
+    assert ">90</a>" in rounds
+    assert ">54</a>" not in rounds
 
 
 def test_downloading_after_a_round_finishes_with_the_new_choices_and_leaves_the_entry(fake_builder):

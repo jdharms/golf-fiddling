@@ -1,0 +1,55 @@
+# Round page strings (round.html): a recorded round at its `/r/<id>` permalink. Reached
+# by the redirect from a scan of the end-of-round QR code, and by links from the seed page,
+# /me and a shared URL. Format: see common.toml, and server/CLAUDE.md "Player-facing text".
+
+[round.page_title]
+note = "plain: browser tab title, a recorded round's page; {words} the seed's three magic words"
+text = "Completed Round - NES Open Randomizer"
+
+[round.heading_recorded]
+note = "h1, shown only when the visitor arrived from the scan that just recorded this round; every other way in shows round.heading"
+text = "Round successfully recorded!"
+
+[round.heading]
+note = "h1, the default heading for the round's permalink: a rescan (which changes nothing, the round shown being the one recorded first), a link from the seed page or /me, a shared URL, or a reload"
+text = "Completed Round"
+
+[round.player_one]
+note = "line under the h1, round played as player 1; {name} the player's Discord display name, {received} when it was recorded, UTC ISO 8601"
+text = "{name} | {received}"
+
+[round.player_two]
+note = "line under the h1, round played as player 2 on the player's ROM, counted toward their entry; {name} the ROM owner's Discord display name, {received} when it was recorded, UTC ISO 8601"
+text = "teammate | {received}"
+
+[round.seed]
+note = "label before the link to the seed page, which shows the seed's magic words"
+text = "Seed permalink:"
+
+[round.holes.number]
+note = "round table column header; hole number 1-18"
+text = "Hole"
+
+[round.holes.par]
+note = "round table column header; the hole's par"
+text = "Par"
+
+[round.holes.strokes]
+note = "round table column header; strokes on the hole, putts included"
+text = "Total Strokes"
+
+[round.holes.putts]
+note = "round table column header; putts on the hole"
+text = "Putts"
+
+[round.holes.front_total]
+note = "round table footer label under the front nine; its total par, strokes and putts follow"
+text = "Out"
+
+[round.holes.back_total]
+note = "round table footer label under the back nine; its total par, strokes and putts follow"
+text = "In"
+
+[round.holes.total]
+note = "round table last footer row label, under the back nine's totals; all 18 holes' total par, strokes and putts follow"
+text = "Total"

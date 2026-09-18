@@ -121,23 +121,31 @@ cannot submit.
 | `seeds` | A 10-character base62 id for URLs and the same value as an integer, `qr_seed_id`, both unique; manifest JSON, generator and catalog versions, curation stamp, the unfinished IPS blob, nullable creator, created_at, and `rebuilt_at` once an admin's rebuild changed the IPS |
 | `seed_holes` | seed, position 1-18, catalog hole id, transforms, par, wind seed, pin index, wind direction anchor, wind speed anchor. Pure denormalization of the manifest for SQL stats; a migration can always backfill it |
 | `entries` | One per (seed, user), unique. The player's choices at their latest download (name, clubs), one MAC key per slot, created_at, updated_at |
-| `submissions` | entry, slot, raw payload, total strokes, total putts, received_at, flagged, with an admin-only flag note. Unique on (entry, slot), which is the first-submission rule |
-| `submission_holes` | submission, position, strokes, putts. Joins to `seed_holes` on (seed, position) |
-| `voided_submissions` | A round an admin voided: entry, slot, the payload (unique, and holding every hole, so no hole rows), received_at, its flag and note, voided_at, an admin-only note. A scan of a voided payload is refused; restoring moves it back while its slot is empty |
+| `rounds` | A scan the server accepted: a unique `public_id`, the base62 id of its `/r/<id>` permalink; entry, slot, raw payload, total strokes, total putts, received_at, flagged, with an admin-only flag note. Unique on (entry, slot), which is the first-submission rule |
+| `round_holes` | round, position, strokes, putts. Joins to `seed_holes` on (seed, position) |
+| `voided_rounds` | A round an admin voided: its `public_id`, entry, slot, the payload (unique, and holding every hole, so no hole rows), received_at, its flag and note, voided_at, an admin-only note. A scan of a voided payload is refused; restoring moves it back while its slot is empty |
 | `admin_actions` | The audit log: admin, action, target type and id, the admin's note, a JSON detail object, created_at. Who flagged, voided, restored or rebuilt anything, and every target's history, is read from here rather than from columns on the thing itself |
 
 An entry is the record that a signed-in player has entered a seed, in the tournament
 sense. Downloading again updates the entry's choices and finishes with the same
 credentials: the keys are drawn when the entry is created and never change. Settings lock
-once the entry has a submission.
+once the entry has a round.
 
 An entry's name and clubs are the new-save defaults of the latest download, not a record of
 the bag a round was played with. A save made before a re-download keeps its old defaults
 under the seed's SRAM magic, an older ROM file still submits, and the club house's CHOOSE
 CLUBS changes the bag in-game, so the bag is on the honour system.
 
+A scan is submitted; a scan the server accepts becomes a round, and a rejected one is
+stored nowhere. A round's `public_id` is drawn when it is recorded, moves to
+`voided_rounds` on a void and back on a restore, and is never reused: a different round
+filling a freed slot draws its own. It is the one id the site names a round by, in
+`/r/<id>`, the admin pages and the audit log, so each follows one scorecard for good. The
+row id stays internal, since a void and restore changes it and SQLite can hand it to a
+later round.
+
 The player ID is the user's, written to both ROM slots. The payload's slot flag tells the
-two apart, so a slot 1 submission is recorded against the same entry as the teammate's
+two apart, so a slot 1 round is recorded against the same entry as the teammate's
 round. Keys are per (entry, slot) so a leaked key is good for one seed only, and they
 never appear in a manifest. Resolving a scan is: seed ID to seed, player ID to user, the
 entry for that pair, the key for that slot.
@@ -182,7 +190,8 @@ player_id INTEGER NOT NULL UNIQUE CHECK (player_id BETWEEN 1 AND 4294967295)
 
 A seed's `qr_seed_id` is drawn uniformly from 1 to 62^10 - 1 when the row is inserted, and
 its URL id is that integer in base62 (`0-9A-Za-z`, most significant digit first), padded to
-10 characters. 62^10 is below 2^60, so every URL id converts to a seed ID the QR payload's
+10 characters. The alphabet and codec are `server/ids.py`, which a round's permalink id
+shares; a round's is drawn as text, since nothing but the URL holds it. 62^10 is below 2^60, so every URL id converts to a seed ID the QR payload's
 8 bytes hold and SQLite's signed `INTEGER` stores, and zero, which the server rejects as a
 seed ID, is never drawn. A collision on either unique column draws again, as for
 `player_id`:
@@ -202,12 +211,13 @@ qr_seed_id INTEGER NOT NULL UNIQUE CHECK (qr_seed_id BETWEEN 1 AND 8392993658683
 | `GET /h/<id>` | Seed page: the magic words, hole list with source, par and yards, totals, music, settings, required ROMs, the download form, the signed-in user's entry if any, recorded rounds |
 | `GET /h/<id>.json` | The manifest |
 | `POST /h/<id>/patch.ips` | Name, clubs, ROM hashes in; the finished IPS out. Signed in, upserts the entry and finishes with credentials; signed out, finishes as a guest. The page's script intercepts the form submit, fetches this, patches the ROM from IndexedDB and triggers the download |
-| `GET /s/<48 chars>` | QR submission: decode, verify MAC, record, render the result or the rejection |
+| `GET /s/<48 chars>` | QR submission: decode, verify MAC, record, then 303 to the round's permalink, with `?recorded` for the scan that recorded it. Uncached. A rejection has no round to point at, so it renders here |
+| `GET /r/<id>` | A round's permalink: its scorecard, or 410 and a page of its own once an admin has voided it. An ordinary cacheable page, linked from the seed page, `/me` and a scan |
 | `GET /auth/login`, `GET /auth/callback`, `POST /auth/logout` | Discord sign-in |
 | `GET /me` | The player's entries and rounds. Signed out, redirects to sign-in |
 | `GET /admin/...` | Counts, seeds, rounds (flagged filter), users, voided rounds, admin activity, and each seed, round and user. Admins only |
 | `POST /admin/seeds/<id>/rebuild` | Build the unfinished IPS again; a changed one is stored and stamped, an identical one writes nothing |
-| `POST /admin/submissions/<id>/flag`, `.../unflag`, `.../void`; `POST /admin/voided/<id>/restore` | Flag with a note, clear the flag, void with a note, restore into an empty slot |
+| `POST /admin/rounds/<id>/flag`, `.../unflag`, `.../void`, `.../restore` | Flag with a note, clear the flag, void with a note, restore into an empty slot. `<id>` is the round's `public_id` |
 | `GET /healthz` | For the reverse proxy |
 
 Everything is a form or a link. The only fetch from JavaScript is the IPS.
@@ -317,37 +327,42 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
     in `test_server_app.py` and `test_server_db.py` run without a ROM;
     `tests/integration/test_server_download_rom.py` checks a signed-in download against
     `finish` with the entry's credentials.
-12. **Submissions.** Done: migration 4 adds `submissions` and `submission_holes`;
-    `server/submissions.py` is their only writer. `submit_scan` decodes a scan with
-    `golf.qr.payload`, rejects it as malformed (length, alphabet, protocol version, reserved
+12. **Submissions.** Done: migrations 4 and 7 make `rounds` and `round_holes`, which
+    `server/rounds.py` alone writes. `server/submissions.py`'s `submit_scan` decodes a scan
+    with `golf.qr.payload`, rejects it as malformed (length, alphabet, protocol version, reserved
     flags, a slot past 1), unfinished (an all-zero seed or player ID) or unrecognized (no
     entry for the seed and player, or a MAC its slot's key does not verify, one reason for
     all of them), and records it against (entry, slot). A later scan for a recorded entry and
     slot that verifies, identical or not, records nothing and shows the first round.
-    `GET /s/<48 chars>` renders `submission.html` with the round or the rejection, uncached.
+    `GET /s/<48 chars>` redirects to the round's `/r/<id>`
+    permalink, uncached, with `?recorded` on the scan that recorded it, which
+    `round.html` turns into its confirmation heading before an inline `replaceState`
+    leaves the address bar on the bare permalink. A rejection has no round to point at, so
+    it renders in place as `scan_rejected.html`. `GET /r/<id>` renders the round, or
+    `round_voided.html` with a 410 once an admin has voided it; the id is drawn from
+    `server/ids.py` when the round is recorded and carried through a void and restore.
     The seed page lists the seed's rounds under Discord display names, fewest strokes first,
-    and `/me` lists the player's rounds. Once an entry has a round, `upsert_entry` leaves it
+    each linking to its permalink, and `/me` lists the player's rounds. Once an entry has a round, `upsert_entry` leaves it
     alone: a later download still finishes with the choices it posts and the entry's keys.
-    `tests/unit/test_server_submissions.py` and the submission tests in
-    `test_server_app.py` and `test_server_db.py` run without a ROM;
+    `tests/unit/test_server_submissions.py`, `tests/unit/test_server_rounds.py` and the
+    submission tests in `test_server_app.py` and `test_server_db.py` run without a ROM;
     `tests/integration/test_server_submission_rom.py` downloads a signed-in ROM, builds both
     players' URLs by running its QR routine in the simulator, and records them. Playtest a
     round through to a recorded scan.
 13. **Admin.** Done: migration 5 adds `seeds.rebuilt_at` and `rebuilt_by`, the flag note and
-    `flagged_by`, and `voided_submissions`. `Config.admin_users` (`GOLF_ADMIN_USERS`) replaces
+    `flagged_by`, and the voided rounds table. `Config.admin_users` (`GOLF_ADMIN_USERS`) replaces
     the token. `server/admin.py` holds the admin pages' queries and `server/admin_routes.py`
     their router, behind `require_admin`; the templates in `server/templates/admin/` write
     their own English. `server/seeds.py`'s `rebuild_seed` stores a changed IPS only;
-    `server/submissions.py` gains `flag_round`, `unflag_round`, `void_round` and
-    `restore_round`, refuses a voided payload as unrecognized, and logs every rejection's
-    exact cause at WARNING. Every action logs itself through `server/audit.py`, the only
+    `server/rounds.py` holds `flag_round`, `unflag_round`, `void_round` and
+    `restore_round`, and `server/submissions.py` refuses a voided payload as unrecognized
+    and logs every rejection's exact cause at WARNING. Every action logs itself through `server/audit.py`, the only
     writer of `admin_actions`, inside the transaction that makes the change; the admin pages
     read who acted and each seed's and round's history from that log, and `/admin/activity`
-    lists it. A round is logged by its payload as base64url, not its `submissions.id`, which
-    changes across a void and restore and can be reused, so one history follows a round
-    through being voided and restored. The seed page and `/me` mark flagged rounds, and the
+    lists it. A round is logged by its `public_id`, so one history follows a round through
+    being voided and restored. The seed page and `/me` mark flagged rounds, and the
     seed page shows a rebuild's date. `tests/unit/test_server_admin.py` and the admin tests in
-    `test_server_submissions.py`, `test_server_seeds.py`, `test_server_db.py` and
+    `test_server_rounds.py`, `test_server_seeds.py`, `test_server_db.py` and
     `test_server_config.py` run without a ROM; `tests/integration/test_server_generate_rom.py`
     rebuilds a fresh seed with the real builder and finds it unchanged.
 14. **Vanilla data out of the repository.** The ROM rehydration script that regenerates

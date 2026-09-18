@@ -50,6 +50,8 @@ in this package.
 - The schema is `server/migrations.py`, ordered SQL scripts applied by `PRAGMA
   user_version`. A committed script is never edited; a schema change appends a script.
   A table arrives with the work item that first writes to it.
+- `server/ids.py` holds the base62 alphabet and codec every public id shares. A seed's is
+  the encoding of its `qr_seed_id`; a round's permalink id is drawn as text.
 - `server/seeds.py` is the only code that writes `seeds` and `seed_holes`, and the only
   place seed ids are drawn or converted.
 - `server/users.py` is the only code that writes `users`, and the only place player ids
@@ -60,10 +62,16 @@ in this package.
   `record` takes the caller's connection, so an action and its log row commit together. A
   new admin action adds its name there and records a row; nothing needs a migration, and no
   table carries a "who did this" column of its own.
-- `server/submissions.py` is the only code that writes `submissions`,
-  `submission_holes` and `voided_submissions`, and the only place a scan is decoded and
-  verified. Its rejection reasons deliberately do not say which lookup or check failed; the
-  exact cause goes only to the log, at WARNING, through `logging.getLogger(__name__)`.
+- `server/submissions.py` is the only place a scan is decoded and verified. It writes
+  nothing itself: an accepted scan becomes a round through `server/rounds.py`, and a
+  rejected one is stored nowhere. Its rejection reasons deliberately do not say which lookup
+  or check failed; the exact cause goes only to the log, at WARNING, through
+  `logging.getLogger(__name__)`.
+- `server/rounds.py` is the only code that writes `rounds`, `round_holes` and
+  `voided_rounds`, and the only place a round's `public_id` is drawn. That id names the
+  round everywhere, from its `/r/<id>` permalink to the admin pages and the audit log, and
+  moves with it into `voided_rounds` and back on a restore. The row id stays inside the
+  module, since a void and restore changes it.
 
 ## Admin
 
@@ -74,12 +82,12 @@ in this package.
 - `server/admin.py` holds the admin pages' reads and view dataclasses, with no web types.
   When it grows, split it into a package by area (seeds, rounds, users, the audit log). Admin actions write
   through the owning modules: `rebuild_seed` in `server/seeds.py`, and `flag_round`,
-  `unflag_round`, `void_round` and `restore_round` in `server/submissions.py`. Each takes the
-  admin's `users.id` and logs itself through `server/audit.py`.
+  `unflag_round`, `void_round` and `restore_round` in `server/rounds.py`, which take the
+  round's `public_id`. Each takes the admin's `users.id` and logs itself through
+  `server/audit.py`.
 - Who acted, and a seed's or round's history, are read from the audit log, never from a
-  column. A round's log rows are keyed by its payload (`audit.round_target`), because a
-  `submissions.id` changes when a round is voided and restored and SQLite can hand it to a
-  later round.
+  column. A round's log rows are keyed by its `public_id`, so its history is one list
+  across a void and a restore.
 - Actions are POST forms that redirect back with `?result=`, which the page shows. State
   never changes on a GET.
 - Templates live in `server/templates/admin/`, extend `base.html`, and share the macros in
@@ -115,6 +123,10 @@ in this package.
   (`server/static/download.js`). Both load `server/static/romstore.js` first, which holds
   the ROM store and `makeT`. Plain scripts, no build step, no frameworks. Everything else is
   a form or a link.
+  The one exception is `round.html`'s inline `history.replaceState` line, which drops
+  the `?recorded` marker `/s/` redirects with once the page has shown its confirmation, so
+  a reload or a copied link is the plain permalink. It carries no English and no state, and
+  without it the page still renders correctly with the marker visible.
 - The ROM store is IndexedDB database `golf-randomizer`, object store `roms`, records
   `{id, sha1, bytes}` keyed by catalog ROM id. It holds only files whose SHA-1 matched.
 - A downloaded ROM is named `notgr_par<par>_<id>.nes` by `download_stem` in
@@ -143,7 +155,7 @@ strings catalog.
 - The catalog is the TOML files under `server/strings/`: `common.toml` for the elements on
   every page (`base.html`), and one file per template named for it - `home.toml`,
   `rom.toml`, `generate.toml`, `seed.toml`, `me.toml`, `not_found.toml`, `sign_in_failed.toml`,
-  `submission.toml`. Every file under the
+  `round.toml`, `scan_rejected.toml`, `round_voided.toml`. Every file under the
   directory is loaded and merged, subdirectories included. Entries carry their full dotted
   key (`[home.about]`), so a file name is organization only and a key still greps to its
   entry. A top-level namespace lives in exactly one file, and a new template-backed page's
@@ -210,7 +222,9 @@ subclass overrides `finish`, recording the credentials it was given; `tests/inte
 
 A scan's path is built from `RoundPayload` and the entry's stored keys (`scan_path` in
 `tests/unit/test_server_app.py`); `tests/integration/test_server_submission_rom.py` builds
-it instead by running a downloaded ROM's QR routine in the simulator.
+it instead by running a downloaded ROM's QR routine in the simulator. `/s/` answers a 303,
+and `TestClient` follows redirects unless a test passes `follow_redirects=False`, so a test
+that cares about the redirect itself says so.
 
 Sign-in tests build the app with `Config(dev_login=True)` and sign in with
 `/auth/login?as=<name>`, or with Discord credentials and `discord=` a `DiscordClient`

@@ -1,7 +1,7 @@
 """What the admin pages show: lists and details across every seed, round and player.
 
 Reads only; the admin actions write through the owning modules (`server/seeds.py`,
-`server/submissions.py`), which log them through `server/audit.py`. Who did something, and
+`server/rounds.py`), which log them through `server/audit.py`. Who did something, and
 a seed's or round's history, come from that log. Nothing here is a web type. Lists come a
 page at a time, newest first. See docs/randomizer_devplan.md, "Users and access".
 
@@ -19,8 +19,8 @@ from golf.randomizer.catalog import Catalog, CatalogError
 
 from . import audit
 from .db import Database
+from .rounds import Round, find_round
 from .seeds import SeedRow, load_seed
-from .submissions import Round, load_round
 from .users import User, load_user
 
 #: rows on one page of an admin list
@@ -66,9 +66,9 @@ def counts(db: Database) -> Counts:
         row = conn.execute(
             """
             SELECT (SELECT count(*) FROM seeds) AS seeds, (SELECT count(*) FROM users) AS users,
-                   (SELECT count(*) FROM entries) AS entries, (SELECT count(*) FROM submissions) AS rounds,
-                   (SELECT count(*) FROM submissions WHERE flagged) AS flagged,
-                   (SELECT count(*) FROM voided_submissions) AS voided,
+                   (SELECT count(*) FROM entries) AS entries, (SELECT count(*) FROM rounds) AS rounds,
+                   (SELECT count(*) FROM rounds WHERE flagged) AS flagged,
+                   (SELECT count(*) FROM voided_rounds) AS voided,
                    (SELECT count(*) FROM admin_actions) AS actions
             """
         ).fetchone()
@@ -147,25 +147,24 @@ def _resolve(conn: sqlite3.Connection, entry: AdminAction) -> ActionTarget:
             return ActionTarget(None, entry.target_id)
         return ActionTarget(f"/admin/seeds/{entry.target_id}", " ".join(_magic_words(row["manifest"])))
     if entry.target_type == audit.ROUND:
-        data = payload.base64url_decode(entry.target_id)
-        for table, path in (("submissions", "/admin/submissions/{id}"), ("voided_submissions", "/admin/voided")):
+        for table, path in (("rounds", f"/admin/rounds/{entry.target_id}"), ("voided_rounds", "/admin/voided")):
             row = conn.execute(
                 f"""
-                SELECT {table}.id, {_USER_NAME} AS user_name, {table}.slot, seeds.manifest
+                SELECT {_USER_NAME} AS user_name, {table}.slot, seeds.manifest
                 FROM {table}
                 JOIN entries ON entries.id = {table}.entry_id
                 JOIN users ON users.id = entries.user_id
                 JOIN seeds ON seeds.id = entries.seed_id
-                WHERE {table}.payload = ?
+                WHERE {table}.public_id = ?
                 """,
-                (data,),
+                (entry.target_id,),
             ).fetchone()
             if row is not None:
                 player = row["user_name"] + (" (P2)" if row["slot"] == 1 else "")
                 label = f"{player} on {' '.join(_magic_words(row['manifest']))}"
-                if table == "voided_submissions":
+                if table == "voided_rounds":
                     label += ", voided"
-                return ActionTarget(path.format(id=row["id"]), label)
+                return ActionTarget(path, label)
     return ActionTarget(None, entry.target_id)  # pragma: no cover - rounds are never deleted outright
 
 
@@ -196,7 +195,7 @@ _SEED_SELECT = f"""
     SELECT seeds.id, seeds.manifest, seeds.created_at, seeds.rebuilt_at, seeds.creator_id,
            {_USER_NAME} AS creator_name,
            (SELECT count(*) FROM entries WHERE entries.seed_id = seeds.id) AS entries,
-           (SELECT count(*) FROM submissions JOIN entries ON entries.id = submissions.entry_id
+           (SELECT count(*) FROM rounds JOIN entries ON entries.id = rounds.entry_id
             WHERE entries.seed_id = seeds.id) AS rounds
     FROM seeds LEFT JOIN users ON users.id = seeds.creator_id
 """
@@ -261,7 +260,7 @@ def _entry_listing(row: sqlite3.Row) -> EntryListing:
 
 @dataclass(frozen=True)
 class RoundListing:
-    id: int
+    public_id: str
     seed_id: str
     magic_words: tuple[str, ...]
     user_id: int
@@ -275,11 +274,11 @@ class RoundListing:
 
 
 _ROUND_SELECT = f"""
-    SELECT submissions.id, entries.seed_id, seeds.manifest, entries.user_id, {_USER_NAME} AS user_name,
-           submissions.slot, submissions.total_strokes, submissions.total_putts, submissions.received_at,
-           submissions.flagged, submissions.flag_note
-    FROM submissions
-    JOIN entries ON entries.id = submissions.entry_id
+    SELECT rounds.public_id, entries.seed_id, seeds.manifest, entries.user_id, {_USER_NAME} AS user_name,
+           rounds.slot, rounds.total_strokes, rounds.total_putts, rounds.received_at,
+           rounds.flagged, rounds.flag_note
+    FROM rounds
+    JOIN entries ON entries.id = rounds.entry_id
     JOIN seeds ON seeds.id = entries.seed_id
     JOIN users ON users.id = entries.user_id
 """
@@ -287,7 +286,7 @@ _ROUND_SELECT = f"""
 
 def _round_listing(row: sqlite3.Row) -> RoundListing:
     return RoundListing(
-        id=row["id"],
+        public_id=row["public_id"],
         seed_id=row["seed_id"],
         magic_words=_magic_words(row["manifest"]),
         user_id=row["user_id"],
@@ -345,7 +344,7 @@ def seed_detail(db: Database, seed_id: str, catalog: Catalog) -> SeedDetail | No
             f"{_ENTRY_SELECT} WHERE entries.seed_id = ? ORDER BY entries.created_at, entries.id", (seed_id,)
         ).fetchall()
         rounds = conn.execute(
-            f"{_ROUND_SELECT} WHERE entries.seed_id = ? ORDER BY submissions.received_at, submissions.id",
+            f"{_ROUND_SELECT} WHERE entries.seed_id = ? ORDER BY rounds.received_at, rounds.id",
             (seed_id,),
         ).fetchall()
     holes = []
@@ -369,14 +368,14 @@ def seed_detail(db: Database, seed_id: str, catalog: Catalog) -> SeedDetail | No
     )
 
 
-# -- Submissions --------------------------------------------------------------------------
+# -- Rounds -------------------------------------------------------------------------------
 
 
-def submissions_page(db: Database, number: int = 1, flagged_only: bool = False) -> Page[RoundListing]:
-    where = "WHERE submissions.flagged" if flagged_only else ""
+def rounds_page(db: Database, number: int = 1, flagged_only: bool = False) -> Page[RoundListing]:
+    where = "WHERE rounds.flagged" if flagged_only else ""
     with db.transaction() as conn:
         rows = conn.execute(
-            f"{_ROUND_SELECT} {where} ORDER BY submissions.received_at DESC, submissions.id DESC LIMIT ? OFFSET ?",
+            f"{_ROUND_SELECT} {where} ORDER BY rounds.received_at DESC, rounds.id DESC LIMIT ? OFFSET ?",
             _limit(number),
         ).fetchall()
     return _page([_round_listing(row) for row in rows], number)
@@ -391,7 +390,7 @@ class HoleScore:
 
 
 @dataclass(frozen=True)
-class SubmissionDetail:
+class RoundDetail:
     round: Round
     seed: SeedRow
     player: User
@@ -409,22 +408,22 @@ class SubmissionDetail:
         return sum(hole.par for hole in self.holes)
 
 
-def submission_detail(db: Database, submission_id: int) -> SubmissionDetail | None:
-    recorded = load_round(db, submission_id)
-    if recorded is None:
+def round_detail(db: Database, public_id: str) -> RoundDetail | None:
+    """A recorded round's page, or None for a voided or missing one, which the voided list shows."""
+    recorded = find_round(db, public_id)
+    if not isinstance(recorded, Round):
         return None
     seed = load_seed(db, recorded.seed_id)
     player = load_user(db, recorded.user_id)
     with db.transaction() as conn:
-        data = conn.execute("SELECT payload FROM submissions WHERE id = ?", (submission_id,)).fetchone()["payload"]
-        history = _history(conn, audit.ROUND, audit.round_target(data))
+        history = _history(conn, audit.ROUND, public_id)
     if seed is None or player is None:  # pragma: no cover - seeds and users are never deleted
         return None
     holes = tuple(
         HoleScore(hole.position, slot.par, hole.strokes, hole.putts)
         for hole, slot in zip(recorded.holes, seed.manifest.course.holes, strict=True)
     )
-    return SubmissionDetail(
+    return RoundDetail(
         round=recorded,
         seed=seed,
         player=player,
@@ -449,7 +448,7 @@ def users_page(db: Database, number: int = 1) -> Page[UserListing]:
             """
             SELECT users.*,
                    (SELECT count(*) FROM entries WHERE entries.user_id = users.id) AS entry_count,
-                   (SELECT count(*) FROM submissions JOIN entries ON entries.id = submissions.entry_id
+                   (SELECT count(*) FROM rounds JOIN entries ON entries.id = rounds.entry_id
                     WHERE entries.user_id = users.id) AS round_count
             FROM users ORDER BY users.last_login DESC, users.id DESC LIMIT ? OFFSET ?
             """,
@@ -494,7 +493,7 @@ def user_detail(db: Database, user_id: int) -> UserDetail | None:
             f"{_ENTRY_SELECT} WHERE entries.user_id = ? ORDER BY entries.created_at DESC, entries.id DESC", (user_id,)
         ).fetchall()
         rounds = conn.execute(
-            f"{_ROUND_SELECT} WHERE entries.user_id = ? ORDER BY submissions.received_at DESC, submissions.id DESC",
+            f"{_ROUND_SELECT} WHERE entries.user_id = ? ORDER BY rounds.received_at DESC, rounds.id DESC",
             (user_id,),
         ).fetchall()
         seeds = conn.execute(
@@ -518,7 +517,7 @@ def user_detail(db: Database, user_id: int) -> UserDetail | None:
 
 @dataclass(frozen=True)
 class VoidedListing:
-    id: int
+    public_id: str
     seed_id: str
     magic_words: tuple[str, ...]
     user_id: int
@@ -540,12 +539,12 @@ def voided_page(db: Database, number: int = 1) -> Page[VoidedListing]:
     with db.transaction() as conn:
         rows = conn.execute(
             f"""
-            SELECT voided.id, entries.seed_id, seeds.manifest, entries.user_id, {_USER_NAME} AS user_name,
+            SELECT voided.public_id, entries.seed_id, seeds.manifest, entries.user_id, {_USER_NAME} AS user_name,
                    voided.slot, voided.payload, voided.received_at, voided.flagged, voided.flag_note,
                    voided.voided_at, voided.void_note,
-                   EXISTS (SELECT 1 FROM submissions
-                           WHERE submissions.entry_id = voided.entry_id AND submissions.slot = voided.slot) AS slot_taken
-            FROM voided_submissions AS voided
+                   EXISTS (SELECT 1 FROM rounds
+                           WHERE rounds.entry_id = voided.entry_id AND rounds.slot = voided.slot) AS slot_taken
+            FROM voided_rounds AS voided
             JOIN entries ON entries.id = voided.entry_id
             JOIN seeds ON seeds.id = entries.seed_id
             JOIN users ON users.id = entries.user_id
@@ -553,16 +552,14 @@ def voided_page(db: Database, number: int = 1) -> Page[VoidedListing]:
             """,
             _limit(number),
         ).fetchall()
-        voids = {
-            row["id"]: _latest(_history(conn, audit.ROUND, audit.round_target(row["payload"])), audit.VOID) for row in rows
-        }
+        voids = {row["public_id"]: _latest(_history(conn, audit.ROUND, row["public_id"]), audit.VOID) for row in rows}
     listings = []
     for row in rows:
         round_payload, _mac = payload.RoundPayload.from_bytes(bytes(row["payload"]))
-        voided_by = voids[row["id"]]
+        voided_by = voids[row["public_id"]]
         listings.append(
             VoidedListing(
-                id=row["id"],
+                public_id=row["public_id"],
                 seed_id=row["seed_id"],
                 magic_words=_magic_words(row["manifest"]),
                 user_id=row["user_id"],

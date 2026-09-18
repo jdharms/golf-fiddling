@@ -15,8 +15,8 @@ from golf.randomizer.music import TRACKS, Track
 from golf.randomizer.roms import VanillaRom, vanilla_rom
 
 from .forms import MUSIC_CHOICES, PARS, RULE_CLUBS, DownloadState
+from .rounds import Round, VoidedRound
 from .seeds import SeedRow
-from .submissions import ScanResult
 
 #: (ROM id, course directory name) -> the course's display name
 COURSE_NAMES: dict[tuple[str, str], str] = {
@@ -227,15 +227,17 @@ class NineView:
 
 
 @dataclass(frozen=True)
-class SubmissionView:
-    """What the scan page shows of a recorded round."""
+class RoundView:
+    """What a round's permalink shows of it."""
 
+    #: the id in its `/r/<id>` URL
+    public_id: str
     seed_id: str
     magic_words: tuple[str, ...]
     player_name: str
     slot: int
-    #: whether this scan recorded the round, rather than finding it recorded
-    new: bool
+    #: whether the visitor arrived from the scan that recorded it, rather than by the permalink
+    recorded: bool
     received_at: str
     #: holes 1-9 and 10-18, a table each
     front: NineView
@@ -245,23 +247,49 @@ class SubmissionView:
     total_putts: int
 
 
-def submission_view(row: SeedRow, result: ScanResult, player_name: str) -> SubmissionView:
-    recorded = result.round
+def round_view(row: SeedRow, scorecard: Round, player_name: str, recorded: bool = False) -> RoundView:
+    """A recorded round as its permalink shows it; `recorded` marks the redirect from its scan."""
     course = row.manifest.course
     holes = tuple(
         RoundHoleView(hole.position, slot.par, hole.strokes, hole.putts)
-        for hole, slot in zip(recorded.holes, course.holes, strict=True)
+        for hole, slot in zip(scorecard.holes, course.holes, strict=True)
     )
-    return SubmissionView(
+    return RoundView(
+        public_id=scorecard.public_id,
         seed_id=row.id,
         magic_words=course.magic_words,
         player_name=player_name,
-        slot=recorded.slot,
-        new=result.new,
-        received_at=recorded.received_at,
+        slot=scorecard.slot,
+        recorded=recorded,
+        received_at=scorecard.received_at,
         front=NineView(holes[:9]),
         back=NineView(holes[9:]),
         total_par=course.par,
-        total_strokes=recorded.total_strokes,
-        total_putts=recorded.total_putts,
+        total_strokes=scorecard.total_strokes,
+        total_putts=scorecard.total_putts,
+    )
+
+
+@dataclass(frozen=True)
+class VoidedRoundView:
+    """What a voided round's permalink shows: that a round was here, and nothing of its scores."""
+
+    public_id: str
+    seed_id: str
+    magic_words: tuple[str, ...]
+    player_name: str
+    slot: int
+    received_at: str
+    voided_at: str
+
+
+def voided_round_view(row: SeedRow, voided: VoidedRound, player_name: str) -> VoidedRoundView:
+    return VoidedRoundView(
+        public_id=voided.public_id,
+        seed_id=row.id,
+        magic_words=row.manifest.course.magic_words,
+        player_name=player_name,
+        slot=voided.slot,
+        received_at=voided.received_at,
+        voided_at=voided.voided_at,
     )

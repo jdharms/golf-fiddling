@@ -120,7 +120,7 @@
       <tbody>
         {% for round in rounds %}
         <tr>
-          <td>{% if round.slot == 1 %}{{ t("seed.rounds.player_two", name=round.player_name) }}{% else %}{{ round.player_name }}{% endif %}</td>
+          <td><a href="/r/{{ round.public_id }}">{% if round.slot == 1 %}{{ t("seed.rounds.player_two", name=round.player_name) }}{% else %}{{ round.player_name }}{% endif %}</a></td>
           <td class="num">{{ round.total_strokes }}{% if round.flagged %} {{ t("seed.rounds.flagged") }}{% endif %}</td>
           <td class="num">{{ round.total_putts }}</td>
           <td>{{ round.received_at }}</td>

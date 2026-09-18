@@ -50,18 +50,18 @@ from .ratelimit import (
     RateLimiter,
     client_key,
 )
+from .rounds import VoidedRound, find_round, rounds_for_seed, rounds_for_user
 from .seeds import insert_seed, load_seed, load_unfinished_ips
 from .strings import Strings
-from .submissions import (
-    MALFORMED,
-    UNFINISHED,
-    ScanError,
-    rounds_for_seed,
-    rounds_for_user,
-    submit_scan,
-)
+from .submissions import MALFORMED, UNFINISHED, ScanError, submit_scan
 from .users import load_user, sign_in
-from .views import download_stem, generate_options, seed_view, submission_view
+from .views import (
+    download_stem,
+    generate_options,
+    round_view,
+    seed_view,
+    voided_round_view,
+)
 
 HERE = Path(__file__).resolve().parent
 STATIC_DIR = HERE / "static"
@@ -81,6 +81,10 @@ POOL_TOO_SMALL = "pool"
 
 #: paths a missing resource answers with JSON rather than the not-found page
 MACHINE_SUFFIXES = (".json", ".ips")
+
+#: the query parameter `/s/` adds for the scan that recorded the round, which the round page
+#: turns into its confirmation heading and a script then strips from the address bar
+RECORDED = "recorded"
 
 SESSION_COOKIE = "golf_session"
 #: seconds a sign-in lasts
@@ -335,8 +339,10 @@ def create_app(
 
     @app.get("/s/{scan}", response_class=HTMLResponse)
     def scan(request: Request, scan: str):
-        # A scan is a GET that records, so a repeat of it (the phone reopening the link, a
-        # chat unfurling it) must land on the same page, and nothing may cache the answer.
+        # A scan is a GET that records, so nothing may cache the answer, and a repeat of it
+        # (the phone reopening the link, a chat unfurling it) must reach the same round. It
+        # only submits: the round is shown by its permalink, which this redirects to.
+        # A rejection has no round to point at, so it renders here.
         db: Database = request.app.state.db
         headers = {"Cache-Control": "no-store"}
         try:
@@ -345,21 +351,38 @@ def create_app(
             status_code = 400 if rejection.reason in (MALFORMED, UNFINISHED) else 404
             return templates.TemplateResponse(
                 request,
-                "submission.html",
-                {"page": None, "rejection": rejection.reason, "submission": None},
+                "scan_rejected.html",
+                {"page": None, "rejection": rejection.reason},
                 status_code=status_code,
                 headers=headers,
             )
-        row = load_seed(db, result.round.seed_id)
-        player = load_user(db, result.round.user_id)
+        # `?recorded` only marks the scan that inserted the round, so the page can confirm it
+        # once; the permalink the browser settles on carries no query.
+        target = f"/r/{result.round.public_id}" + (f"?{RECORDED}" if result.new else "")
+        return RedirectResponse(target, status_code=303, headers=headers)
+
+    @app.get("/r/{round_id}", response_class=HTMLResponse)
+    def round_page(request: Request, round_id: str):
+        db: Database = request.app.state.db
+        found = find_round(db, round_id)
+        if found is None:
+            raise not_found()
+        row = load_seed(db, found.seed_id)
+        player = load_user(db, found.user_id)
         if row is None or player is None:  # pragma: no cover - seeds and users are never deleted
             raise not_found()
-        view = submission_view(row, result, player.display_name)
+        if isinstance(found, VoidedRound):
+            return templates.TemplateResponse(
+                request,
+                "round_voided.html",
+                {"page": None, "voided": voided_round_view(row, found, player.display_name)},
+                status_code=410,
+            )
+        recorded = RECORDED in request.query_params
         return templates.TemplateResponse(
             request,
-            "submission.html",
-            {"page": None, "rejection": None, "submission": view},
-            headers=headers,
+            "round.html",
+            {"page": None, "round": round_view(row, found, player.display_name, recorded)},
         )
 
     @app.get("/me", response_class=HTMLResponse)
