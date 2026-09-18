@@ -115,6 +115,7 @@ def render(rom, vram, out_path):
     pal = rom.read_switched(PALETTE, BANK, 32)
     img = Image.new("RGB", (256, 240))
     px = img.load()
+    assert px is not None
     for ty in range(30):
         for tx in range(32):
             tile = vram.data[0x2000 + ty * 32 + tx]
@@ -127,7 +128,7 @@ def render(rom, vram, out_path):
                     value = rows[y][x]
                     nes = pal[0] if value == 0 else pal[palette_index * 4 + value]
                     px[tx * 8 + x, ty * 8 + y] = NES_SYSTEM_PALETTE[nes & 0x3F]
-    img.resize((512, 480), Image.NEAREST).save(out_path)
+    img.resize((512, 480), Image.Resampling.NEAREST).save(out_path)
     print("wrote", out_path)
 
 

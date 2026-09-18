@@ -59,6 +59,7 @@ def test_same_inputs_give_the_same_manifest(real_catalog, real_curation):
 
 def test_draws_a_prng_seed_when_the_settings_have_none(real_catalog, real_curation):
     drawn = generate(real_catalog, real_curation, Settings())
+    assert drawn.settings.prng_seed is not None
     assert re.fullmatch(r"[0-9a-f]{16}", drawn.settings.prng_seed)
     assert generate(real_catalog, real_curation, drawn.settings) == drawn
 
@@ -82,7 +83,7 @@ def test_course_follows_a_valid_layout_of_real_holes(real_catalog, real_curation
 
 
 def test_copies_settings_into_the_course(real_catalog, real_curation):
-    clubs = ClubRules(max=12, banned={Club.W1})
+    clubs = ClubRules(max=12, banned=frozenset({Club.W1}))
     settings = Settings(prng_seed="abc", mercy_point=None, clubs=clubs, music="jp_uk")
     course = generate(real_catalog, real_curation, settings).course
     assert (course.mercy_point, course.clubs, course.music) == (None, clubs, "jp_uk")
@@ -96,7 +97,9 @@ def test_wind_seeds_come_from_the_prng_seed(real_catalog, real_curation):
 def test_each_draw_has_its_own_stream(real_catalog, real_curation):
     both = generate(real_catalog, real_curation, Settings(prng_seed="abc")).course
     us_only = generate(
-        real_catalog, real_curation, Settings(prng_seed="abc", sources={US_ROM})
+        real_catalog,
+        real_curation,
+        Settings(prng_seed="abc", sources=frozenset({US_ROM})),
     ).course
     assert both.layout == us_only.layout
     assert both.magic_words == us_only.magic_words
@@ -121,7 +124,9 @@ def test_sram_magic_is_drawn_per_seed_and_never_holds_a_blank_sram_byte(
 def test_nes_open_seeds_use_nes_open_music(real_catalog, real_curation):
     for seed in range(40):
         manifest = generate(
-            real_catalog, real_curation, Settings(prng_seed=str(seed), sources={US_ROM})
+            real_catalog,
+            real_curation,
+            Settings(prng_seed=str(seed), sources=frozenset({US_ROM})),
         )
         assert manifest.course.music.startswith("nes_")
         assert required_roms(manifest, real_catalog) == (US_ROM,)

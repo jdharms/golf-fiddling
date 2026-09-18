@@ -7,6 +7,7 @@ from server.audit import FLAG, RESTORE, ROUND, UNFLAG, VOID
 from server.db import Database
 from server.ids import is_id
 from server.rounds import (
+    Round,
     SlotTakenError,
     VoidedRound,
     find_round,
@@ -29,6 +30,13 @@ manifest = scans.manifest
 db = scans.db
 seed_id = scans.seed_id
 alice = scans.alice
+
+
+def live_round(db: Database, public_id: str) -> Round:
+    """The round with this id, which must be recorded and not voided."""
+    found = find_round(db, public_id)
+    assert isinstance(found, Round)
+    return found
 
 
 def test_a_seeds_rounds_list_fewest_strokes_first_under_display_names(
@@ -89,12 +97,12 @@ def audit_rows(db: Database) -> list[dict]:
 def test_flagging_marks_the_round_everywhere_it_is_listed(db, seed_id, alice):
     public_id = submit_scan(db, alice.scan()).round.public_id
     flag_round(db, public_id, admin_id=alice.user.id, note="  six on 18?  ")
-    flagged = find_round(db, public_id)
+    flagged = live_round(db, public_id)
     assert (flagged.flagged, flagged.flag_note) == (True, "six on 18?")
     assert rounds_for_seed(db, seed_id)[0].flagged
     assert rounds_for_user(db, alice.user.id)[0].flagged
     unflag_round(db, public_id, admin_id=alice.user.id)
-    unflagged = find_round(db, public_id)
+    unflagged = live_round(db, public_id)
     assert (unflagged.flagged, unflagged.flag_note) == (False, None)
     assert not rounds_for_seed(db, seed_id)[0].flagged
 
@@ -131,7 +139,7 @@ def test_every_action_logs_itself_against_the_rounds_public_id(db, seed_id, alic
     ]
     assert {row["admin_id"] for row in rows} == {alice.user.id}
     assert {row["detail"] for row in rows} == {"{}"}
-    assert find_round(db, public_id).flagged is False
+    assert live_round(db, public_id).flagged is False
 
 
 def test_a_failed_action_logs_nothing(db, alice):
@@ -148,7 +156,7 @@ def test_a_failed_action_logs_nothing(db, alice):
 def test_a_blank_flag_note_is_no_note(db, alice):
     public_id = submit_scan(db, alice.scan()).round.public_id
     flag_round(db, public_id, admin_id=alice.user.id, note="   ")
-    assert find_round(db, public_id).flag_note is None
+    assert live_round(db, public_id).flag_note is None
 
 
 @pytest.mark.parametrize(
@@ -186,7 +194,7 @@ def test_restoring_puts_the_round_back_as_it_was(db, seed_id, alice):
     flag_round(db, recorded.public_id, admin_id=alice.user.id, note="check")
     void_round(db, recorded.public_id, admin_id=alice.user.id)
     restore_round(db, recorded.public_id, admin_id=alice.user.id)
-    restored = find_round(db, recorded.public_id)
+    restored = live_round(db, recorded.public_id)
     assert restored.holes == recorded.holes
     assert (restored.total_strokes, restored.total_putts, restored.received_at) == (
         recorded.total_strokes,

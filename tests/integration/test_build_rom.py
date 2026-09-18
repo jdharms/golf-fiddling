@@ -86,7 +86,10 @@ def jp_manifest(catalog, curation):
 @pytest.fixture(scope="module")
 def nes_manifest(catalog, curation):
     settings = Settings(
-        prng_seed="build-stages-nes", sources={US_ROM}, music="nes_us", mercy_point=None
+        prng_seed="build-stages-nes",
+        sources=frozenset({US_ROM}),
+        music="nes_us",
+        mercy_point=None,
     )
     return generate(catalog, curation, settings)
 
@@ -233,7 +236,9 @@ def test_one_stack_of_both_stages_is_refused_at_the_qr_patch(
 def test_finishing_refuses_a_bag_the_seed_forbids(jp_manifest, vanilla, unfinished):
     strict = replace(
         jp_manifest,
-        course=replace(jp_manifest.course, clubs=ClubRules(banned={Club.W1})),
+        course=replace(
+            jp_manifest.course, clubs=ClubRules(banned=frozenset({Club.W1}))
+        ),
     )
     with pytest.raises(BuildError, match="bans 1W"):
         finish(strict, vanilla, unfinished.ips, OPTIONS)

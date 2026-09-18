@@ -3,19 +3,11 @@
 import pytest
 
 from golf.core.patches import BytePatch, CompositePatch, PatchError
+from tests.prg_writer import PrgImageWriter
 
 
-class MockRomWriter:
+class MockRomWriter(PrgImageWriter):
     """Mock RomWriter for testing patches."""
-
-    def __init__(self, data: bytes):
-        self.data = bytearray(data)
-
-    def read_prg(self, prg_offset: int, length: int) -> bytes:
-        return bytes(self.data[prg_offset : prg_offset + length])
-
-    def write_prg(self, prg_offset: int, data: bytes):
-        self.data[prg_offset : prg_offset + len(data)] = data
 
 
 class TestBytePatchCanApply:

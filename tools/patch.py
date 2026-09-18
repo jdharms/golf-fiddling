@@ -43,7 +43,7 @@ def list_specs() -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description=__doc__.strip().splitlines()[2],
+        description=(__doc__ or "").strip().splitlines()[2],
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=EXAMPLES,
     )

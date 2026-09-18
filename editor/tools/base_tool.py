@@ -2,7 +2,11 @@
 Tool protocol and base definitions for editor tools.
 """
 
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
+
+if TYPE_CHECKING:
+    from editor.controllers.highlight_state import HighlightState
+    from editor.tools.tool_manager import ToolManager
 
 
 class Tool(Protocol):
@@ -77,8 +81,8 @@ class ToolContext:
         forest_filler,
         screen_width: int,
         screen_height: int,
-        tool_manager=None,
-        highlight_state=None,
+        tool_manager: "ToolManager | None" = None,
+        highlight_state: "HighlightState | None" = None,
         stamp_library=None,
         on_revert_to_previous_tool=None,
         on_select_flag=None,
@@ -141,13 +145,13 @@ class ToolResult:
 
     def __init__(
         self,
-        handled: bool = False,
+        is_handled: bool = False,
         needs_undo_push: bool = False,
         needs_render: bool = False,
         terrain_modified: bool = False,
         message: str | None = None,
     ):
-        self.handled = handled
+        self.is_handled = is_handled
         self.needs_undo_push = needs_undo_push
         self.needs_render = needs_render
         self.terrain_modified = terrain_modified
@@ -156,18 +160,18 @@ class ToolResult:
     @staticmethod
     def handled() -> "ToolResult":
         """Event handled but no action needed."""
-        return ToolResult(handled=True)
+        return ToolResult(is_handled=True)
 
     @staticmethod
     def not_handled() -> "ToolResult":
         """Event not handled."""
-        return ToolResult(handled=False)
+        return ToolResult(is_handled=False)
 
     @staticmethod
     def modified(terrain: bool = False, message: str | None = None) -> "ToolResult":
         """Content was modified."""
         return ToolResult(
-            handled=True,
+            is_handled=True,
             needs_undo_push=False,  # Tool handles undo timing
             needs_render=True,
             terrain_modified=terrain,

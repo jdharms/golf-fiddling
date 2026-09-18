@@ -95,7 +95,7 @@ class GreensRenderer:
             )
 
         # Render transform preview with gold borders (ON TOP of tiles)
-        if transform_state.is_active:
+        if transform_state is not None and transform_state.is_active:
             GreensRenderer._render_transform_preview(
                 screen,
                 canvas_rect,
@@ -145,7 +145,11 @@ class GreensRenderer:
             )
 
         # Render paste preview
-        if highlight_state.paste_preview_pos and render_ctx.state.paste_preview_active:
+        if (
+            highlight_state.paste_preview_pos
+            and render_ctx.state
+            and render_ctx.state.paste_preview_active
+        ):
             SelectionRenderer.render_paste_preview(
                 screen,
                 highlight_state,

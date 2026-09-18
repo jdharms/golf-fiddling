@@ -17,6 +17,7 @@ error. See docs/manifest.md.
 
 from collections.abc import Iterable
 from dataclasses import dataclass
+from typing import TypeGuard
 
 from golf.core.patches.sram_defaults import BAG_SIZE, Club, magic_bytes, parse_club
 
@@ -49,7 +50,7 @@ def _fields(data: object, keys: tuple[str, ...], what: str) -> dict:
     return data
 
 
-def _is_int(value: object) -> bool:
+def _is_int(value: object) -> TypeGuard[int]:
     return isinstance(value, int) and not isinstance(value, bool)
 
 

@@ -429,7 +429,9 @@ def practice_swing_patches(hold_frames: int = DEFAULT_HOLD_FRAMES) -> list[ByteP
     return patches
 
 
-def practice_swing_patch(hold_frames: int = DEFAULT_HOLD_FRAMES) -> CompositePatch:
+def practice_swing_patch(
+    hold_frames: int = DEFAULT_HOLD_FRAMES,
+) -> CompositePatch[BytePatch]:
     """The practice swing patch set as a single named CompositePatch."""
     return CompositePatch(
         name="practice_swing",

@@ -53,7 +53,7 @@ class StampTool:
                 self.state.clear()
                 context.highlight_state.stamp_preview_pos = None
                 context.highlight_state.current_stamp = None
-                return ToolResult(handled=True, message="Stamp: Deselected")
+                return ToolResult(is_handled=True, message="Stamp: Deselected")
             return ToolResult.handled()
 
         if button != 1:  # Only left click
@@ -62,13 +62,13 @@ class StampTool:
         # If no stamp selected, do nothing
         if self.state.current_stamp is None:
             return ToolResult(
-                handled=True, message="Stamp: Select a stamp from the browser"
+                is_handled=True, message="Stamp: Select a stamp from the browser"
             )
 
         # Check mode compatibility
         if self.state.current_stamp.mode != context.state.mode:
             return ToolResult(
-                handled=True,
+                is_handled=True,
                 message=f"Stamp: Cannot place {self.state.current_stamp.mode} stamp in {context.state.mode} mode",
             )
 
@@ -129,7 +129,7 @@ class StampTool:
             self.state.clear()
             context.highlight_state.stamp_preview_pos = None
             context.highlight_state.current_stamp = None
-            return ToolResult(handled=True, message="Stamp: Cleared selection")
+            return ToolResult(is_handled=True, message="Stamp: Cleared selection")
 
         return ToolResult.not_handled()
 
@@ -180,7 +180,7 @@ class StampTool:
             ToolResult indicating success
         """
         if self.state.current_stamp is None:
-            return ToolResult(handled=True, message="Stamp: No stamp selected")
+            return ToolResult(is_handled=True, message="Stamp: No stamp selected")
 
         stamp = self.state.current_stamp
         place_row, place_col = tile_pos

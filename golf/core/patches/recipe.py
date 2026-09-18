@@ -25,6 +25,7 @@ import types
 import typing
 from dataclasses import MISSING, dataclass, field, fields
 from pathlib import Path
+from typing import Any
 
 from golf.core import rom_utils
 from golf.core.course_validation import InvalidTileError
@@ -39,7 +40,7 @@ class RecipeError(ValueError):
     """Raised for a recipe or step that cannot be read or built."""
 
 
-def get_spec(patch_id: str) -> PatchSpec:
+def get_spec(patch_id: str) -> PatchSpec[Any, Any]:
     try:
         return PATCH_SPECS[patch_id]
     except KeyError:
@@ -166,7 +167,8 @@ class RecipeStep:
     """One step: a patch type and its parameters."""
 
     patch: str
-    params: object
+    #: an instance of the spec's params dataclass
+    params: Any
 
     @classmethod
     def from_dict(cls, data, base_dir: Path, where: str = "step") -> "RecipeStep":

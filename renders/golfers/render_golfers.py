@@ -93,7 +93,7 @@ def sheet(sprites, out, putt=False, with_club=False, scale=3):
             )
         draw.line([(0, header + g * ch), (size[0], header + g * ch)], fill=(48, 52, 46))
 
-    img.resize((size[0] * scale, size[1] * scale), Image.NEAREST).save(out)
+    img.resize((size[0] * scale, size[1] * scale), Image.Resampling.NEAREST).save(out)
     print("wrote", out)
 
 

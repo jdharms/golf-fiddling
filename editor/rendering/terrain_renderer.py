@@ -111,7 +111,7 @@ class TerrainRenderer:
             )
 
         # Render transform preview with gold borders (ON TOP of tiles)
-        if transform_state.is_active:
+        if transform_state is not None and transform_state.is_active:
             TerrainRenderer._render_transform_preview(
                 screen,
                 canvas_rect,

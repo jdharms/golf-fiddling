@@ -19,6 +19,7 @@ from golf.randomizer.roms import vanilla_rom
 from server.app import create_app
 from server.config import Config
 from server.forms import FormState
+from tests.app_state import app_state
 
 ROOT = Path(__file__).resolve().parents[2]
 ROM_PATH = ROOT / "nes_open_us.nes"
@@ -88,7 +89,7 @@ def test_a_downloaded_roms_codes_record_both_players_rounds():
             response = client.get(permalink)
             assert response.status_code == 200, response.text
 
-        with client.app.state.db.transaction() as conn:
+        with app_state(client).db.transaction() as conn:
             recorded = conn.execute(
                 "SELECT slot, total_strokes, total_putts FROM rounds ORDER BY slot"
             ).fetchall()

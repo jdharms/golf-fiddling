@@ -230,7 +230,7 @@ class TerrainDecompressor:
 
     def __init__(
         self,
-        rom: RomReader,
+        rom: RomReader | None,
         horiz_addr: int = rom_utils.TABLE_HORIZ_TRANSITION,
         vert_addr: int = rom_utils.TABLE_VERT_CONTINUATION,
         dict_addr: int = rom_utils.TABLE_DICTIONARY,
@@ -368,7 +368,7 @@ class GreensDecompressor:
 
     def __init__(
         self,
-        rom: RomReader,
+        rom: RomReader | None,
         bank: int = 3,
         horiz_addr: int = 0x8000,
         vert_addr: int = 0x80C0,

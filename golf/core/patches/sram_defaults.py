@@ -221,7 +221,7 @@ def sram_defaults_patch(
     clubs: Iterable[Club | str] | None = None,
     bgm: bool = True,
     sram_magic: int = VANILLA_MAGIC,
-) -> CompositePatch:
+) -> CompositePatch[BytePatch]:
     return CompositePatch(
         name="sram_defaults",
         description="Change what a new save starts with",

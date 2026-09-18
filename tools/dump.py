@@ -16,6 +16,7 @@ from golf.core.decompressor import (
     bcd_to_int,
     unpack_attributes,
 )
+from golf.core.instrumented_io import InstrumentedRomReader
 from golf.core.palettes import (
     ATTR_TOTAL_BYTES,
     TERRAIN_ROW_WIDTH,
@@ -257,12 +258,7 @@ def main():
     output_dir = Path(args.output_dir)
 
     print(f"Loading ROM: {rom_path}")
-    if args.trace_io:
-        from golf.core.instrumented_io import InstrumentedRomReader
-
-        rom = InstrumentedRomReader(rom_path)
-    else:
-        rom = RomReader(rom_path)
+    rom = InstrumentedRomReader(rom_path) if args.trace_io else RomReader(rom_path)
 
     print(f"Output directory: {output_dir}")
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -296,7 +292,7 @@ def main():
     print(f"\nWrote statistics to {output_dir}/meta.json")
 
     # Write trace if instrumented
-    if args.trace_io and hasattr(rom, "write_trace"):
+    if isinstance(rom, InstrumentedRomReader):
         trace_path = str(output_dir / "read_trace.json")
         rom.write_trace(trace_path)
 

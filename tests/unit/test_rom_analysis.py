@@ -19,6 +19,12 @@ BANK_SIZE = 0x4000
 BANKS = 16
 
 
+def known_spec(target: int, bank: int | None) -> InlineArgSpec:
+    spec = inline_spec_for(target, bank)
+    assert spec is not None
+    return spec
+
+
 class MockReader:
     """A 256KB PRG image, banks addressable the same way the real ROM is."""
 
@@ -85,21 +91,21 @@ class TestInlineArgSpec:
 
 class TestInlineSpecLookup:
     def test_fixed_bank_routine_resolves_from_any_bank(self):
-        assert inline_spec_for(0xD372, 13).name == "ExecuteFarCall"
-        assert inline_spec_for(0xD372, None).name == "ExecuteFarCall"
+        assert known_spec(0xD372, 13).name == "ExecuteFarCall"
+        assert known_spec(0xD372, None).name == "ExecuteFarCall"
 
     def test_bank_specific_routine_needs_the_right_bank(self):
-        assert inline_spec_for(0x8A14, 12).name == "LookupInlineByteTable"
+        assert known_spec(0x8A14, 12).name == "LookupInlineByteTable"
         assert inline_spec_for(0x8A14, 13) is None
 
     def test_unknown_target(self):
         assert inline_spec_for(0x8000, 13) is None
 
     def test_dispatch_table_does_not_return(self):
-        assert inline_spec_for(0xD227, None).returns is False
+        assert known_spec(0xD227, None).returns is False
 
     def test_ff_terminated_dispatcher_is_registered(self):
-        spec = inline_spec_for(0xD267, None)
+        spec = known_spec(0xD267, None)
         assert spec.terminator == 0xFF
         assert spec.returns is True
 

@@ -15,6 +15,7 @@ from pathlib import Path
 
 from golf.core import rom_utils
 from golf.core.course_validation import InvalidTileError
+from golf.core.instrumented_io import InstrumentedRomWriter
 from golf.core.patches import CoursePatch, CourseWriteStats, PatchError
 from golf.core.rom_writer import BankOverflowError, RomWriter
 from golf.formats.hole_data import HoleData
@@ -150,8 +151,6 @@ Examples:
             print_stats(patch.stats)
 
         if args.trace_io and not args.validate_only:
-            from golf.core.instrumented_io import InstrumentedRomWriter
-
             rom_writer = InstrumentedRomWriter(str(rom_path), output_path)
         else:
             rom_writer = RomWriter(str(rom_path), output_path)
@@ -174,7 +173,7 @@ Examples:
         patch.apply(rom_writer)
         rom_writer.save()
 
-        if args.trace_io and hasattr(rom_writer, "write_trace"):
+        if isinstance(rom_writer, InstrumentedRomWriter):
             trace_path = str(Path(output_path).parent / "write_trace.json")
             rom_writer.write_trace(trace_path)
 

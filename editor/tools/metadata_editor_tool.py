@@ -113,7 +113,7 @@ class MetadataEditorTool:
                 return ToolResult.modified(message=message)
             else:
                 # Dialog was cancelled
-                return ToolResult(handled=True, message="Metadata edit cancelled")
+                return ToolResult(is_handled=True, message="Metadata edit cancelled")
 
         return ToolResult.handled()
 

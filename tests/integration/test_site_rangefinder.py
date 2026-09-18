@@ -71,7 +71,7 @@ def test_rangefinder_measures_zooms_switches_holes_and_opens_green():
             assert viewer.evaluate("element => element.clientHeight") == viewer_height
 
             page.select_option("#hole-select", "2")
-            assert "/images/japan/hole_02.png" in image.get_attribute("src")
+            assert "/images/japan/hole_02.png" in (image.get_attribute("src") or "")
             assert viewer.evaluate("element => element.clientHeight") == viewer_height
             assert (
                 page.locator("#distance-display").inner_text()

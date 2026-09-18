@@ -6,6 +6,7 @@ This class mirrors RomReader's interface for writes.
 """
 
 from pathlib import Path
+from typing import Self
 
 from .rom_utils import (
     INES_HEADER_SIZE,
@@ -44,7 +45,7 @@ class RomWriter:
             self._load(f.read(), output_path)
 
     @classmethod
-    def from_bytes(cls, data: bytes, output_path: str | None = None) -> "RomWriter":
+    def from_bytes(cls, data: bytes, output_path: str | None = None) -> Self:
         """
         Wrap a ROM image already in memory. The data is copied.
 
@@ -190,7 +191,7 @@ class RomWriter:
         print(f"Wrote modified ROM to: {self.output_path}")
 
     @classmethod
-    def from_file(cls, rom_path: str, output_path: str | None = None) -> "RomWriter":
+    def from_file(cls, rom_path: str, output_path: str | None = None) -> Self:
         """
         Create RomWriter from file path.
 

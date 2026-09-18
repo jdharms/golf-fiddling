@@ -5,6 +5,8 @@ ROM file reading and address translation for NES Open Tournament Golf.
 Handles iNES ROM format and CPU address mapping for both fixed and switched banks.
 """
 
+from typing import Self
+
 from .rom_utils import (
     INES_HEADER_SIZE,
     PRG_BANK_SIZE,
@@ -37,7 +39,7 @@ class RomReader:
         print(f"ROM loaded: {self.prg_banks} PRG banks ({self.prg_size // 1024}KB)")
 
     @classmethod
-    def from_bytes(cls, data: bytes) -> "RomReader":
+    def from_bytes(cls, data: bytes) -> Self:
         """
         Read a ROM image already in memory.
 

@@ -203,7 +203,7 @@ class TestRowOperationsMaximumConstraint:
 
         result = row_operations_tool.add_row(mock_tool_context)
 
-        assert result.handled is True
+        assert result.is_handled is True
         assert "48" in result.message
         assert mock_tool_context.hole_data.terrain_height == 48  # Unchanged
 
@@ -215,7 +215,7 @@ class TestRowOperationsMaximumConstraint:
 
         result = row_operations_tool.add_row(mock_tool_context)
 
-        assert result.handled is True
+        assert result.is_handled is True
         assert "48" in result.message
         assert mock_tool_context.hole_data.terrain_height == 47  # Unchanged
 
@@ -240,7 +240,7 @@ class TestRowOperationsMinimumConstraint:
 
         result = row_operations_tool.remove_row(mock_tool_context)
 
-        assert result.handled is True
+        assert result.is_handled is True
         assert "30" in result.message or "minimum" in result.message.lower()
         assert mock_tool_context.hole_data.terrain_height == 30  # Unchanged
 
@@ -510,6 +510,7 @@ class TestRowOperationsUndo:
 
         # Undo
         restored = real_undo_manager.undo(mock_tool_context.hole_data)
+        assert restored is not None
         assert restored.terrain_height == initial_height
 
     def test_undo_remove_row_restores_height_and_visibility(self, mock_tool_context):
@@ -534,6 +535,7 @@ class TestRowOperationsUndo:
 
         # Undo
         restored = real_undo_manager.undo(mock_tool_context.hole_data)
+        assert restored is not None
         assert restored.terrain_height == 32
 
     def test_redo_add_row_reapplies_height_change(self, mock_tool_context):
@@ -555,10 +557,12 @@ class TestRowOperationsUndo:
 
         # Undo
         restored = real_undo_manager.undo(mock_tool_context.hole_data)
+        assert restored is not None
         assert restored.terrain_height == 30
 
         # Redo
         redone = real_undo_manager.redo(restored)
+        assert redone is not None
         assert redone.terrain_height == 32
 
 

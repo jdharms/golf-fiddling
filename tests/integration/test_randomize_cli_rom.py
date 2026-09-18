@@ -135,7 +135,7 @@ def test_build_refuses_a_bag_the_seed_bans(catalog, tmp_path):
     strict = generate(
         catalog,
         CurationSnapshot.load(),
-        Settings(prng_seed="cli-rom", clubs=ClubRules(banned={Club.W1})),
+        Settings(prng_seed="cli-rom", clubs=ClubRules(banned=frozenset({Club.W1}))),
     )
     path = tmp_path / "strict.json"
     path.write_text(json.dumps(strict.to_json()))

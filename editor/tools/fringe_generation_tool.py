@@ -311,7 +311,7 @@ class FringeGenerationTool:
 
             # Cancel pathing and show error to user
             self._cancel_pathing(context)
-            return ToolResult(handled=True, message=user_message)
+            return ToolResult(is_handled=True, message=user_message)
 
     def _cancel_pathing(self, context: ToolContext) -> ToolResult:
         """Cancel pathing and restore original tiles."""

@@ -66,7 +66,7 @@ _OBJECT_PTR_PATCHED = bytes(
 )  # $B079 (record 1: HOLE-to-PAR link, now first)
 
 
-def remove_course_banner_patches() -> CompositePatch:
+def remove_course_banner_patches() -> CompositePatch[BytePatch]:
     """Skip drawing the country-name banner and the object linking it to HOLE."""
     skip_draw_patch = BytePatch(
         name="signpost_skip_banner_draw",

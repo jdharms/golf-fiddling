@@ -24,24 +24,19 @@ from golf.core.patches.scorecard_course_name import (
     title_font_tiles,
     title_text,
 )
+from tests.prg_writer import PrgImageWriter
 
 LONGEST_NAME = "ABCDEFGHIJKLM"
 LONGEST_TITLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
-class MockRomWriter:
+class MockRomWriter(PrgImageWriter):
     """A bare PRG image with every sub-patch's and requirement's original bytes."""
 
     def __init__(self, patch):
-        self.data = bytearray(0x40000)
+        super().__init__()
         for leaf in [*COURSE_MIRRORS_PATCH.patches, *patch.patches]:
             self.write_prg(leaf.prg_offset, leaf.original)
-
-    def read_prg(self, prg_offset: int, length: int) -> bytes:
-        return bytes(self.data[prg_offset : prg_offset + length])
-
-    def write_prg(self, prg_offset: int, data: bytes):
-        self.data[prg_offset : prg_offset + len(data)] = data
 
 
 class TestEncoding:

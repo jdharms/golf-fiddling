@@ -17,6 +17,7 @@ from server.app import create_app
 from server.config import Config
 from server.entries import load_entry
 from server.forms import FormState
+from tests.app_state import app_state
 
 ROOT = Path(__file__).resolve().parents[2]
 ROM_PATH = ROOT / "nes_open_us.nes"
@@ -43,7 +44,9 @@ def generate(client: TestClient, **changes) -> str:
         data.setdefault(name, []).append(value)
     response = client.post("/generate", data=data, follow_redirects=False)
     assert response.status_code == 303, response.text
-    return re.fullmatch(r"/h/([0-9A-Za-z]{10})", response.headers["location"]).group(1)
+    match = re.fullmatch(r"/h/([0-9A-Za-z]{10})", response.headers["location"])
+    assert match is not None
+    return match.group(1)
 
 
 def test_a_download_is_the_finished_build_of_the_stored_seed(client):
@@ -58,7 +61,7 @@ def test_a_download_is_the_finished_build_of_the_stored_seed(client):
     )
     assert response.status_code == 200, response.text
 
-    with client.app.state.db.transaction() as conn:
+    with app_state(client).db.transaction() as conn:
         row = conn.execute(
             "SELECT manifest, unfinished_ips FROM seeds WHERE id = ?", (seed_id,)
         ).fetchone()
@@ -90,7 +93,7 @@ def test_a_signed_in_download_is_finished_with_the_players_credentials():
         )
         assert response.status_code == 200, response.text
 
-        db = signed_in.app.state.db
+        db = app_state(signed_in).db
         with db.transaction() as conn:
             row = conn.execute(
                 "SELECT manifest, qr_seed_id, unfinished_ips FROM seeds WHERE id = ?",
@@ -98,6 +101,7 @@ def test_a_signed_in_download_is_finished_with_the_players_credentials():
             ).fetchone()
             player = conn.execute("SELECT id, player_id FROM users").fetchone()
         entry = load_entry(db, seed_id, player["id"])
+    assert entry is not None
 
     manifest = Manifest.from_json(json.loads(row["manifest"]))
     vanilla = ROM_PATH.read_bytes()

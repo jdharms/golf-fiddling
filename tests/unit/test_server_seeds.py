@@ -16,6 +16,7 @@ from server.seeds import (
     MAX_QR_SEED_ID,
     SeedIdError,
     SeedIdExhaustedError,
+    SeedRow,
     decode_seed_id,
     encode_seed_id,
     insert_seed,
@@ -28,6 +29,13 @@ from server.seeds import (
 from server.users import sign_in
 
 IPS = b"PATCH\x00\x00\x10\x00\x01\xeaEOF"
+
+
+def seed_row(db: Database, seed_id: str) -> SeedRow:
+    """The stored seed with this id, which must exist."""
+    row = load_seed(db, seed_id)
+    assert row is not None
+    return row
 
 
 @pytest.fixture(scope="module")
@@ -159,7 +167,7 @@ def test_a_seed_is_stored_with_its_eighteen_holes(db, manifest):
 
 def test_created_at_defaults_to_utc_now(db, manifest):
     seed_id = insert_seed(db, manifest, IPS)
-    assert load_seed(db, seed_id).created_at.endswith("Z")
+    assert seed_row(db, seed_id).created_at.endswith("Z")
 
 
 def test_a_taken_id_is_drawn_again(db, manifest):
@@ -185,7 +193,7 @@ def test_insert_gives_up_after_its_attempts(db, manifest):
 
 def test_load_seed_returns_the_stored_manifest(db, manifest):
     seed_id = insert_seed(db, manifest, IPS, creator_id=None, draw=lambda: 99)
-    row = load_seed(db, seed_id)
+    row = seed_row(db, seed_id)
     assert row.id == seed_id
     assert row.qr_seed_id == 99
     assert row.manifest == manifest
@@ -215,7 +223,7 @@ def test_a_rebuild_that_changes_the_ips_stores_and_stamps_it(db, manifest, admin
         db, seed_id, rebuilt, admin_id=admin.id, now="2026-09-18T00:00:00Z"
     )
     assert load_unfinished_ips(db, seed_id) == rebuilt
-    assert load_seed(db, seed_id).rebuilt_at == "2026-09-18T00:00:00Z"
+    assert seed_row(db, seed_id).rebuilt_at == "2026-09-18T00:00:00Z"
     assert audit_rows(db) == [
         (
             "rebuild",
@@ -235,7 +243,7 @@ def test_a_rebuild_to_the_same_ips_stores_no_ips_but_is_still_logged(
     assert not rebuild_seed(
         db, seed_id, IPS, admin_id=admin.id, now="2026-09-18T00:00:00Z"
     )
-    assert load_seed(db, seed_id).rebuilt_at is None
+    assert seed_row(db, seed_id).rebuilt_at is None
     assert audit_rows(db) == [
         (
             "rebuild",

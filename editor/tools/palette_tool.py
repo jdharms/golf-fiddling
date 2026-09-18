@@ -78,7 +78,7 @@ class PaletteTool:
         # Only works in terrain mode (greens have fixed palette)
         if context.state.mode != "terrain":
             return ToolResult(
-                handled=True, message="Palette: Not available in greens mode"
+                is_handled=True, message="Palette: Not available in greens mode"
             )
 
         # Create view state for coordinate conversion

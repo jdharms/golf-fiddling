@@ -68,14 +68,16 @@ def test_filters_by_source_and_never_draws_community_holes():
         "jp_uk/01": ["jp_uk/01"],
         "nes_us/01": ["nes_us/01"],
     }
-    us_only = build_pool(holes, CurationSnapshot(), Settings(sources={US_ROM}))
+    us_only = build_pool(
+        holes, CurationSnapshot(), Settings(sources=frozenset({US_ROM}))
+    )
     assert pool_keys(us_only) == {"nes_us/01": ["nes_us/01"]}
 
 
 def test_excludes_tagged_holes():
     holes = catalog(entry("a/one"), entry("a/two"))
     curation = CurationSnapshot.from_json({"a/one": {"tags": ["expert", "dogleg"]}})
-    pool = build_pool(holes, curation, Settings(exclude_tags={"expert"}))
+    pool = build_pool(holes, curation, Settings(exclude_tags=frozenset({"expert"})))
     assert pool_keys(pool) == {"a/two": ["a/two"]}
 
 

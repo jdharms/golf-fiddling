@@ -23,6 +23,7 @@ from server.migrations import MIGRATIONS
 from server.pages import PageCatalog
 from server.ratelimit import RateLimiter
 from server.strings import Entry, Strings
+from tests.app_state import app_state
 
 IPS = b"PATCH\x00\x00\x10\x00\x01\xeaEOF"
 FINISHED = b"PATCH\x00\x00\x20\x00\x01\x60EOF"
@@ -42,7 +43,7 @@ def curation() -> CurationSnapshot:
 class FakeBuilder(SeedBuilder):
     """Generates for real and stores a fixed IPS instead of building, so no ROM is needed."""
 
-    def build(self, manifest):
+    def build(self, manifest: Manifest) -> bytes:
         self.built = manifest
         return IPS
 
@@ -96,7 +97,11 @@ def form_data(form: FormState | None = None) -> dict[str, list[str]]:
     return data
 
 
-def post_generate(client: TestClient, form: FormState | None = None, **headers):
+def post_generate(
+    client: TestClient,
+    form: FormState | None = None,
+    headers: dict[str, str] | None = None,
+):
     return client.post(
         "/generate", data=form_data(form), headers=headers, follow_redirects=False
     )
@@ -105,11 +110,13 @@ def post_generate(client: TestClient, form: FormState | None = None, **headers):
 def generate_seed(client: TestClient, form: FormState | None = None) -> str:
     response = post_generate(client, form)
     assert response.status_code == 303, response.text
-    return SEED_URL.match(response.headers["location"]).group(1)
+    match = SEED_URL.match(response.headers["location"])
+    assert match is not None
+    return match.group(1)
 
 
 def seed_count(client: TestClient) -> int:
-    with client.app.state.db.transaction() as conn:
+    with app_state(client).db.transaction() as conn:
         return conn.execute("SELECT count(*) FROM seeds").fetchone()[0]
 
 
@@ -120,14 +127,14 @@ def test_health_check(client):
 
 
 def test_startup_migrates_the_database(client):
-    assert client.app.state.db.version() == len(MIGRATIONS)
+    assert app_state(client).db.version() == len(MIGRATIONS)
 
 
 def test_startup_makes_a_builder_from_the_config_when_given_none(tmp_path):
     with TestClient(
         create_app(Config(database=":memory:", rom_dir=tmp_path))
     ) as test_client:
-        assert test_client.app.state.builder.rom_path == tmp_path / "nes_open_us.nes"
+        assert app_state(test_client).builder.rom_path == tmp_path / "nes_open_us.nes"
 
 
 def test_home_links_to_rom_setup_and_generate(client):
@@ -319,7 +326,7 @@ def test_club_rules_are_a_section_of_their_own_after_the_everyday_settings(clien
 
 def test_generating_stores_the_seed_and_redirects_to_its_page(client, fake_builder):
     seed_id = generate_seed(client)
-    with client.app.state.db.transaction() as conn:
+    with app_state(client).db.transaction() as conn:
         seed = conn.execute("SELECT * FROM seeds WHERE id = ?", (seed_id,)).fetchone()
         holes = conn.execute(
             "SELECT count(*) FROM seed_holes WHERE seed_id = ?", (seed_id,)
@@ -353,7 +360,7 @@ def test_the_manifest_json_is_the_stored_manifest(client, fake_builder):
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/json")
     assert Manifest.from_json(response.json()) == fake_builder.built
-    with client.app.state.db.transaction() as conn:
+    with app_state(client).db.transaction() as conn:
         assert response.text == conn.execute("SELECT manifest FROM seeds").fetchone()[0]
 
 
@@ -413,14 +420,18 @@ def test_generating_is_rate_limited_per_client(fake_builder):
         strings=UNWRITTEN, builder=fake_builder, rate_limiter=RateLimiter(1, 3600)
     ) as test_client:
         assert (
-            post_generate(test_client, **{"X-Forwarded-For": "192.0.2.1"}).status_code
+            post_generate(
+                test_client, headers={"X-Forwarded-For": "192.0.2.1"}
+            ).status_code
             == 303
         )
-        refused = post_generate(test_client, **{"X-Forwarded-For": "192.0.2.1"})
+        refused = post_generate(test_client, headers={"X-Forwarded-For": "192.0.2.1"})
         assert refused.status_code == 429
         assert "generate.error.rate_limited" in refused.text
         assert (
-            post_generate(test_client, **{"X-Forwarded-For": "192.0.2.2"}).status_code
+            post_generate(
+                test_client, headers={"X-Forwarded-For": "192.0.2.2"}
+            ).status_code
             == 303
         )
         assert seed_count(test_client) == 2
@@ -671,7 +682,7 @@ class FakeDiscord(DiscordClient):
 
 
 def users(client: TestClient) -> list[dict]:
-    with client.app.state.db.transaction() as conn:
+    with app_state(client).db.transaction() as conn:
         return [dict(row) for row in conn.execute("SELECT * FROM users ORDER BY id")]
 
 
@@ -791,7 +802,7 @@ def test_sign_in_never_returns_off_site(fake_builder, next_path):
 def test_a_session_for_a_missing_user_is_signed_out(fake_builder):
     with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
         test_client.get("/auth/login", params={"as": "alice"})
-        with test_client.app.state.db.transaction() as conn:
+        with app_state(test_client).db.transaction() as conn:
             conn.execute("DELETE FROM users")
         assert "⟦nav.sign_in⟧" in test_client.get("/").text
 
@@ -926,7 +937,7 @@ def test_a_seed_records_the_player_who_generated_it(fake_builder):
         test_client.get("/auth/login", params={"as": "alice"})
         signed_in_seed = generate_seed(test_client)
         [alice] = users(test_client)
-        with test_client.app.state.db.transaction() as conn:
+        with app_state(test_client).db.transaction() as conn:
             creators = dict(conn.execute("SELECT id, creator_id FROM seeds").fetchall())
     assert creators == {guest_seed: None, signed_in_seed: alice["id"]}
 
@@ -935,12 +946,12 @@ def test_signed_in_players_are_rate_limited_per_user(fake_builder):
     with dev_client(fake_builder, rate_limiter=RateLimiter(1, 3600)) as test_client:
         same_address = {"X-Forwarded-For": "192.0.2.1"}
         test_client.get("/auth/login", params={"as": "alice"})
-        assert post_generate(test_client, **same_address).status_code == 303
-        assert post_generate(test_client, **same_address).status_code == 429
+        assert post_generate(test_client, headers=same_address).status_code == 303
+        assert post_generate(test_client, headers=same_address).status_code == 429
         test_client.get("/auth/login", params={"as": "bob"})
-        assert post_generate(test_client, **same_address).status_code == 303
+        assert post_generate(test_client, headers=same_address).status_code == 303
         test_client.post("/auth/logout")
-        assert post_generate(test_client, **same_address).status_code == 303
+        assert post_generate(test_client, headers=same_address).status_code == 303
         assert seed_count(test_client) == 3
 
 
@@ -948,12 +959,12 @@ def test_signed_in_players_are_rate_limited_per_user(fake_builder):
 
 
 def entries(client: TestClient) -> list[dict]:
-    with client.app.state.db.transaction() as conn:
+    with app_state(client).db.transaction() as conn:
         return [dict(row) for row in conn.execute("SELECT * FROM entries ORDER BY id")]
 
 
 def qr_seed_id(client: TestClient, seed_id: str) -> int:
-    with client.app.state.db.transaction() as conn:
+    with app_state(client).db.transaction() as conn:
         return conn.execute(
             "SELECT qr_seed_id FROM seeds WHERE id = ?", (seed_id,)
         ).fetchone()[0]
@@ -1066,7 +1077,7 @@ def test_my_page_lists_only_my_entries_newest_first(fake_builder):
         bob_page = test_client.get("/me").text
         test_client.get("/auth/login", params={"as": "alice"})
         post_download(test_client, second, name="peach")
-        with test_client.app.state.db.transaction() as conn:
+        with app_state(test_client).db.transaction() as conn:
             conn.execute(
                 "UPDATE entries SET created_at = '2026-01-01T00:00:00Z' WHERE seed_id = ?",
                 (first,),
@@ -1096,7 +1107,7 @@ def scan_path(
     key=None,
 ) -> str:
     """The path a ROM's QR code opens: username's entry in the seed, every hole `strokes` with 2 putts."""
-    with client.app.state.db.transaction() as conn:
+    with app_state(client).db.transaction() as conn:
         row = conn.execute(
             """
             SELECT seeds.qr_seed_id, users.player_id, entries.key_slot0, entries.key_slot1
@@ -1129,7 +1140,7 @@ def entered_seed(test_client: TestClient, *names: str) -> str:
 
 
 def recorded_rounds(client: TestClient) -> list[dict]:
-    with client.app.state.db.transaction() as conn:
+    with app_state(client).db.transaction() as conn:
         return [dict(row) for row in conn.execute("SELECT * FROM rounds ORDER BY id")]
 
 

@@ -106,7 +106,7 @@ class SpriteRenderer:
     def render_terrain_sprites(
         screen: Surface,
         view_state: ViewState,
-        sprites: dict[str, Sprite],
+        sprites: dict[str, Sprite | None],
         hole_data: HoleData,
         selected_flag_index: int,
         highlighted_position: str | None = None,
@@ -137,17 +137,18 @@ class SpriteRenderer:
             return sx, sy
 
         # Tee blocks
-        if sprites.get("tee"):
+        tee_sprite = sprites.get("tee")
+        if tee_sprite:
             tee = hole_data.metadata.get("tee", {})
             tee_x = tee.get("x", 0)
             tee_y = tee.get("y", 0)
             sx, sy = to_screen(tee_x, tee_y)
-            sprites["tee"].render(screen, sx, sy, canvas_scale)
+            tee_sprite.render(screen, sx, sy, canvas_scale)
 
             # Highlight if selected
             if highlighted_position == "tee":
                 # Calculate sprite bounding box with padding
-                bbox = sprites["tee"].get_bounding_box(tee_x, tee_y)
+                bbox = tee_sprite.get_bounding_box(tee_x, tee_y)
                 min_x, min_y, max_x, max_y = bbox
 
                 # Apply padding (in game pixels)
@@ -172,16 +173,18 @@ class SpriteRenderer:
                 pygame.draw.rect(screen, COLOR_SELECTION, highlight_rect, 2)
 
         # Ball at tee
-        if sprites.get("ball"):
+        ball_sprite = sprites.get("ball")
+        if ball_sprite:
             tee = hole_data.metadata.get("tee", {})
             tee_x = tee.get("x", 0)
             tee_y = tee.get("y", 0)
 
             sx, sy = to_screen(tee_x, tee_y)
-            sprites["ball"].render(screen, sx, sy, canvas_scale)
+            ball_sprite.render(screen, sx, sy, canvas_scale)
 
         # Flag
-        if sprites.get("flag"):
+        flag_sprite = sprites.get("flag")
+        if flag_sprite:
             flag_positions = hole_data.metadata.get("flag_positions", [])
             if flag_positions and 0 <= selected_flag_index < len(flag_positions):
                 flag_pos = flag_positions[selected_flag_index]
@@ -191,13 +194,13 @@ class SpriteRenderer:
                 flag_x = hole_data.green_x + (green_flag_x // 8)
                 flag_y = hole_data.green_y + (green_flag_y // 8)
                 sx, sy = to_screen(flag_x, flag_y)
-                sprites["flag"].render(screen, sx, sy, canvas_scale)
+                flag_sprite.render(screen, sx, sy, canvas_scale)
 
                 # Highlight if selected
                 flag_name = f"flag{selected_flag_index + 1}"
                 if highlighted_position == flag_name:
                     # Calculate sprite bounding box with padding
-                    bbox = sprites["flag"].get_bounding_box(flag_x, flag_y)
+                    bbox = flag_sprite.get_bounding_box(flag_x, flag_y)
                     min_x, min_y, max_x, max_y = bbox
 
                     # Apply padding (in game pixels)
@@ -233,7 +236,7 @@ class SpriteRenderer:
     def render_greens_sprites(
         screen: Surface,
         view_state: ViewState,
-        sprites: dict[str, Sprite],
+        sprites: dict[str, Sprite | None],
         hole_data: HoleData,
         selected_flag_index: int,
         highlighted_position: str | None = None,
@@ -249,7 +252,9 @@ class SpriteRenderer:
             selected_flag_index: Which flag position to render (0-3)
             highlighted_position: Position to highlight ("flag1", "flag2", etc.)
         """
-        if not sprites.get("green-cup") or not sprites.get("green-flag"):
+        cup_sprite = sprites.get("green-cup")
+        green_flag_sprite = sprites.get("green-flag")
+        if not cup_sprite or not green_flag_sprite:
             return
 
         canvas_rect = view_state.canvas_rect
@@ -269,15 +274,15 @@ class SpriteRenderer:
         screen_x = canvas_rect.x + flag_x * canvas_scale - canvas_offset_x
         screen_y = canvas_rect.y + flag_y * canvas_scale - canvas_offset_y
 
-        sprites["green-cup"].render(screen, screen_x, screen_y, canvas_scale)
-        sprites["green-flag"].render(screen, screen_x, screen_y, canvas_scale)
+        cup_sprite.render(screen, screen_x, screen_y, canvas_scale)
+        green_flag_sprite.render(screen, screen_x, screen_y, canvas_scale)
 
         # Highlight if selected
         flag_name = f"flag{selected_flag_index + 1}"
         if highlighted_position == flag_name:
             # Calculate combined bounding box for both flag and cup sprites
-            flag_bbox = sprites["green-flag"].get_bounding_box(flag_x, flag_y)
-            cup_bbox = sprites["green-cup"].get_bounding_box(flag_x, flag_y)
+            flag_bbox = green_flag_sprite.get_bounding_box(flag_x, flag_y)
+            cup_bbox = cup_sprite.get_bounding_box(flag_x, flag_y)
 
             # Union of both bounding boxes
             min_x = min(flag_bbox[0], cup_bbox[0])

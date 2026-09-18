@@ -99,7 +99,7 @@ class CycleTool:
 
         if new_tile is None:
             return ToolResult(
-                handled=True,
+                is_handled=True,
                 message=f"Cycle: Tile 0x{current_tile:02X} not found in any bank",
             )
 
@@ -137,7 +137,7 @@ class CycleTool:
 
         if new_tile is None:
             return ToolResult(
-                handled=True,
+                is_handled=True,
                 message=f"Cycle: Tile 0x{current_tile:02X} not found in any bank",
             )
 

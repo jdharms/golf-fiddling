@@ -311,7 +311,7 @@ def seeded_wind_patch(
     meta_seed: str | None = None,
     *,
     seeds: list[int] | None = None,
-) -> CompositePatch:
+) -> CompositePatch[BytePatch]:
     """
     The seeded wind patch set as one CompositePatch.
 

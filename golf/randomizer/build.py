@@ -18,7 +18,6 @@ import hashlib
 import json
 from collections.abc import Iterable
 from dataclasses import dataclass
-from pathlib import Path
 
 from golf.core import ips, rom_utils
 from golf.core.patches import (
@@ -143,7 +142,7 @@ def credentials_for(
         return QrCredentials(
             seed_id=seed_id_bytes(qr_seed_id),
             player_ids=(player, player),
-            keys=tuple(keys),
+            keys=keys,
         )
     except ValueError as problem:
         raise BuildError(str(problem)) from None
@@ -162,7 +161,7 @@ def music_step(slug: str) -> ROMPatch:
     if theme.rom == US_ROM:
         return course_theme_patch(theme.music_id)
     if theme.rom == JP_ROM:
-        dump = json.loads(Path(MUSIC_DUMPS[JP_ROM]).read_text())
+        dump = json.loads(MUSIC_DUMPS[JP_ROM].read_text())
         return music_import_patch(dump, track=theme.music_id)
     raise BuildError(
         f"music {slug!r} comes from {theme.rom!r}, which no build knows"

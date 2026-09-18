@@ -22,7 +22,9 @@ from golf.randomizer.catalog import (
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
+    parser = argparse.ArgumentParser(
+        description=(__doc__ or "").strip().splitlines()[0]
+    )
     parser.add_argument(
         "courses_root",
         nargs="?",

@@ -577,8 +577,9 @@ class EditorApplication:
 
             # Update active tool (for time-based behavior like key repeat)
             active_tool = self.tool_manager.get_active_tool()
-            if active_tool and hasattr(active_tool, "update"):
-                result = active_tool.update(self.event_handler.tool_context)
+            update = getattr(active_tool, "update", None)
+            if update is not None:
+                result = update(self.event_handler.tool_context)
                 self._process_tool_result(result)
 
             self._render()
@@ -622,8 +623,9 @@ class EditorApplication:
 
         # Tool overlays (metadata dialog, etc.)
         active_tool = self.tool_manager.get_active_tool()
-        if active_tool and hasattr(active_tool, "render_overlay"):
-            active_tool.render_overlay(self.screen)
+        render_overlay = getattr(active_tool, "render_overlay", None)
+        if render_overlay is not None:
+            render_overlay(self.screen)
 
         pygame.display.flip()
 

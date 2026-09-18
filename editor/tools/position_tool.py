@@ -200,7 +200,7 @@ class PositionTool:
                 context.select_flag(flag_index)
 
             message = self._get_status_message(current_position, context.hole_data)
-            return ToolResult(handled=True, message=message)
+            return ToolResult(is_handled=True, message=message)
 
         elif key == pygame.K_LEFTBRACKET or (
             key == pygame.K_TAB and (modifiers & pygame.KMOD_SHIFT)
@@ -218,7 +218,7 @@ class PositionTool:
                 context.select_flag(flag_index)
 
             message = self._get_status_message(current_position, context.hole_data)
-            return ToolResult(handled=True, message=message)
+            return ToolResult(is_handled=True, message=message)
 
         elif key == pygame.K_RIGHTBRACKET:
             # ]: next position
@@ -234,7 +234,7 @@ class PositionTool:
                 context.select_flag(flag_index)
 
             message = self._get_status_message(current_position, context.hole_data)
-            return ToolResult(handled=True, message=message)
+            return ToolResult(is_handled=True, message=message)
 
         # Handle arrow keys for position adjustment
         elif key in (pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT):

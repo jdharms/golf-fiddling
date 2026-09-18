@@ -221,7 +221,8 @@ def normalize_words(words: str | Sequence[str] | None = None) -> tuple[str, str,
                 f"word {word!r} contains characters the menu font cannot render: "
                 f"{''.join(bad)!r}. Allowed: {RENDERABLE_CHARS}"
             )
-    return tuple(words)
+    first, second, third = words
+    return first, second, third
 
 
 def header_lines(words: str | Sequence[str] | None = None) -> tuple[str, str]:
@@ -385,7 +386,9 @@ def menu_trim_patches(words: str | Sequence[str] | None = None) -> list[BytePatc
     ]
 
 
-def menu_trim_patch(words: str | Sequence[str] | None = None) -> CompositePatch:
+def menu_trim_patch(
+    words: str | Sequence[str] | None = None,
+) -> CompositePatch[BytePatch]:
     """Build the menu trim patch set as a single named CompositePatch."""
     patches = menu_trim_patches(words)
     return CompositePatch(

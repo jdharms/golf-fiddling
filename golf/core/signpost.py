@@ -360,7 +360,7 @@ class BannerImport:
         return bytes(body)
 
 
-def _colour_lookup(palette) -> dict:
+def _colour_lookup(palette) -> list[dict]:
     """NES colour value -> the 2-bit value that draws it, per subpalette.
 
     Keyed by RGB rather than by palette value: `$20` and `$30` are the same
