@@ -127,6 +127,15 @@ The indexes and pointers above only stay useful if changes keep them current:
 - `test_tools_layering.py` - nothing imports from `tools/`, and `tools/archive/` has no entry points
 - `test_import_order.py` - every `golf` module imports cleanly in a fresh interpreter
 
+### Linting, formatting and type checking
+
+`uv run golf-check` runs ruff (lint and format) and pyright over the Python, djLint over
+the Jinja templates and Biome over the site's JS and CSS; `--fix` formats and applies safe
+fixes. Configuration is in `pyproject.toml` and `biome.json`. The tools' output is the
+house style: Python is formatted by `ruff format` at 88 columns, and code that disagrees
+with a tool is not precedent. Biome is not a Python package; `golf-biome`
+(`tools/dev/biome.py`) downloads a pinned, hash-checked binary, so no Node tooling is involved.
+
 ### JSON inspection
 
 When inspecting JSON files in `courses/` and `data/`, prefer `jq` over `python -c` one-liners.

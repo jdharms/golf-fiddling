@@ -10,6 +10,9 @@ wheels/
 # Virtual environments
 .venv
 
+# Downloaded developer tool binaries (golf-biome)
+/.tools/
+
 # Sensitive files
 *.nes
 *.mlb
