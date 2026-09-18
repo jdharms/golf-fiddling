@@ -107,8 +107,12 @@ same record type.
 
 ## Syncing vanilla holes
 
-`golf-catalog-sync` walks the dumped course directories (NES Open under `courses/`, Mario
-Open under `courses/jp/`) and, for each hole:
+The hole data is not in the repository. `golf-rehydrate` dumps it from the vanilla ROMs
+into `courses/` (Mario Open under `courses/jp/`) and installs it only if every hole matches
+its entry here, so the index's content hashes are what make a rehydration trustworthy. The
+site runs the same check before it starts. See `golf/randomizer/rehydrate.py`.
+
+`golf-catalog-sync` walks the dumped course directories and, for each hole:
 
 - **Adds** a version 1 entry when the index lacks the id, and bumps the index version.
 - **Verifies** an existing entry against the data, and reports a mismatch without writing

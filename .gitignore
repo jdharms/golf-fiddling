@@ -29,11 +29,10 @@ wheels/
 # AI stuff lmao
 *.skill
 
-# Ensure only built-in courses get committed
-/courses/*
-!/courses/japan
-!/courses/japan/**
-!/courses/uk
-!/courses/uk/**
-!/courses/us
-!/courses/us/**
+# Vanilla course data and the renders made from it: golf-rehydrate rebuilds them from
+# the ROMs. Only the directory markers are committed.
+/courses/**
+!/courses/**/
+!/courses/**/.gitkeep
+/server/static/rangefinder/images/
+/server/static/rangefinder/metadata.json

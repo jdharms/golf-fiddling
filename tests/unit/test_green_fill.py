@@ -35,10 +35,9 @@ def replace_rough_with_placeholder(
     return result
 
 
-def load_hole_greens(country: str, hole_num: int) -> list[list[int]]:
+def load_hole_greens(courses: Path, country: str, hole_num: int) -> list[list[int]]:
     """Load greens data from a hole JSON file."""
-    base_path = Path(__file__).parent.parent.parent / "courses" / country
-    hole_file = base_path / f"hole_{hole_num:02d}.json"
+    hole_file = courses / country / f"hole_{hole_num:02d}.json"
     with open(hole_file) as f:
         data = json.load(f)
     return parse_greens_hex(data["greens"]["rows"])
@@ -579,7 +578,9 @@ class TestRoundTrip:
             ("uk", 15),
         ],
     )
-    def test_roundtrip_matches_original(self, filler, country, hole_num):
+    def test_roundtrip_matches_original(
+        self, filler, vanilla_courses, country, hole_num
+    ):
         """
         Round-trip test:
         1. Load real greens data
@@ -590,7 +591,7 @@ class TestRoundTrip:
         The algorithm should reproduce the original rough pattern.
         """
         # Load original greens
-        original = load_hole_greens(country, hole_num)
+        original = load_hole_greens(vanilla_courses, country, hole_num)
 
         # Replace rough with placeholders
         with_placeholders = replace_rough_with_placeholder(original)
@@ -625,7 +626,7 @@ class TestRoundTrip:
                 msg += f"  ... and {len(differences) - 5} more\n"
             pytest.fail(msg)
 
-    def test_roundtrip_us_hole_9_has_known_exceptions(self, filler):
+    def test_roundtrip_us_hole_9_has_known_exceptions(self, filler, vanilla_courses):
         """
         US hole 9 has known quirks in the original data where the rough
         doesn't follow strict checkerboard parity. This test documents
@@ -636,7 +637,7 @@ class TestRoundTrip:
         - Row 13, col 22-23: Has 29,2C but parity suggests 2C,29
         - Row 23, col 8: Has 29 but parity suggests 2C (sequence shows 29,29)
         """
-        original = load_hole_greens("us", 9)
+        original = load_hole_greens(vanilla_courses, "us", 9)
         with_placeholders = replace_rough_with_placeholder(original)
         filled = filler.fill(with_placeholders)
 

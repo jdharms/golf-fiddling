@@ -223,8 +223,8 @@ Everything is a form or a link. The only fetch from JavaScript is the IPS.
 
 **Configuration** from the environment (`server/config.py`): the database path
 `GOLF_DATABASE`, the server's vanilla ROM directory `GOLF_ROM_DIR` holding the ROMs under
-the file names in `golf/randomizer/roms.py` (`nes_open_us.nes`, `mario_open_jp.nes`), the rehydrated holes
-directory `GOLF_HOLES_DIR`, the public base URL `GOLF_BASE_URL` (also the OAuth redirect
+the file names in `golf/randomizer/roms.py` (`nes_open_us.nes`, `mario_open_jp.nes`), the holes directory
+`GOLF_HOLES_DIR` that `golf-rehydrate` fills from them, the public base URL `GOLF_BASE_URL` (also the OAuth redirect
 base; the QR URL prefix is assembled into the port and fixed before the first public seed
 ships), the Discord client id and secret `GOLF_DISCORD_CLIENT_ID` and
 `GOLF_DISCORD_CLIENT_SECRET`, the session secret `GOLF_SESSION_SECRET`, the admin users
@@ -362,17 +362,28 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
     mark flagged rounds. `tests/unit/test_server_admin.py` and the admin tests in
     `test_server_rounds.py`, `test_server_seeds.py`, `test_server_db.py` and
     `test_server_config.py` run without a ROM.
-14. **Vanilla data out of the repository.** The ROM rehydration script that regenerates
-    the course directories from the server's vanilla ROMs, verified against the index's
-    content hashes with `golf-catalog-sync --check`, then strip the course data from the
-    repository and point the tests at rehydrated data.
+14. **Vanilla data out of the repository.** Done: `golf-rehydrate` (`tools/rehydrate.py`,
+    logic in `golf/randomizer/rehydrate.py`) finds the ROMs by name in `GOLF_ROM_DIR`,
+    checks their SHA-1s, dumps them through `golf/core/course_dump.py` into a scratch
+    directory, verifies every live catalog entry sourced from them, and only then moves
+    the hole files into `GOLF_HOLES_DIR`; it then renders the rangefinder through
+    `golf/rendering/rangefinder.py`. The US ROM is required and the JP ROM optional.
+    `--check` verifies without writing. The course JSON and rangefinder renders are out of
+    the repository, with `.gitkeep` markers holding the course directories; `golf-site`
+    refuses to start until `check_site_data` passes. Tests read vanilla data through the
+    `vanilla_courses`, `vanilla_jp_courses` and `rangefinder_assets` fixtures in
+    `tests/conftest.py`, which skip without the ROM and fail with it if the data is
+    missing or stale. `tests/unit/test_rehydrate.py` runs without a ROM;
+    `tests/integration/test_rehydrate_rom.py` rehydrates from the real ROMs.
 15. **Deployment.** A systemd unit or container, reverse proxy configuration,
     Litestream, and a deployment note under `docs/`. Configuration reaches the service
     as environment variables from a root-owned, mode 0600 file the unit names with
     `EnvironmentFile=` (such as `/etc/golf-site/env`), so the service account never reads
     the secrets file. `GOLF_DEV_LOGIN` is never set there, and `GOLF_SESSION_SECRET` stays
     fixed, since changing it signs everyone out. Litestream's storage credentials get a
-    file of their own.
+    file of their own. The unit runs `golf-rehydrate` as `ExecStartPre=`, as a user that
+    can write `GOLF_HOLES_DIR` and the rangefinder's static directory, so every start
+    serves verified data.
 16. **Polish.** The guest menu marker once its wording is settled, difficulty filters,
     mirrored holes and the transforms column, hole thumbnails, multi-course generation.
     - **Player 2's account.** Both ROM slots carry the downloader's `player_id`, so a

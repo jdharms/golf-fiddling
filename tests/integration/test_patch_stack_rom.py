@@ -39,11 +39,11 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def load_holes(course_dir: str) -> list[HoleData]:
+def load_holes(course_dir: Path) -> list[HoleData]:
     holes = []
     for number in range(1, 19):
         hole = HoleData()
-        hole.load(f"{course_dir}/hole_{number:02d}.json")
+        hole.load(course_dir / f"hole_{number:02d}.json")
         holes.append(hole)
     return holes
 
@@ -54,8 +54,8 @@ def vanilla() -> bytes:
 
 
 @pytest.fixture(scope="module")
-def course() -> CoursePatch:
-    return CoursePatch(load_holes("courses/jp/jp_uk"))
+def course(vanilla_jp_courses) -> CoursePatch:
+    return CoursePatch(load_holes(vanilla_jp_courses / "jp" / "jp_uk"))
 
 
 @pytest.fixture(scope="module")

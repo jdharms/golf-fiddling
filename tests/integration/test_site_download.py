@@ -43,11 +43,14 @@ pytestmark = [
 ]
 
 
-def test_the_downloaded_rom_is_the_finished_rom(tmp_path):
+def test_the_downloaded_rom_is_the_finished_rom(
+    vanilla_courses, vanilla_jp_courses, tmp_path
+):
     from playwright.sync_api import sync_playwright
 
     app = create_app(
-        Config(database=":memory:", rom_dir=ROOT), rate_limiter=RateLimiter(100, 1)
+        Config(database=":memory:", rom_dir=ROOT, holes_dir=vanilla_courses),
+        rate_limiter=RateLimiter(100, 1),
     )
     errors: list[str] = []
     with LiveServer(app) as base, sync_playwright() as playwright:

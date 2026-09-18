@@ -2,16 +2,14 @@
 
 import copy
 import json
-import shutil
 import subprocess
 import sys
-from pathlib import Path
 
 import pytest
 
 from golf.randomizer.catalog import (
-    DEFAULT_COURSES,
     DEFAULT_INDEX,
+    JP_ROM,
     REPO_ROOT,
     US_ROM,
     Catalog,
@@ -23,6 +21,8 @@ from golf.randomizer.catalog import (
     content_hash,
     sync_vanilla,
 )
+from golf.randomizer.rehydrate import check_rehydrated
+from tests.synthetic_holes import synthetic_hole, write_courses
 
 
 def entry(text: str, withdrawn: bool = False) -> CatalogEntry:
@@ -115,9 +115,10 @@ class TestCatalog:
 
 
 class TestContentHash:
-    def test_ignores_what_never_reaches_the_rom(self, hole_01_data):
-        before = content_hash(hole_01_data)
-        hole = copy.deepcopy(hole_01_data)
+    def test_ignores_what_never_reaches_the_rom(self):
+        original = synthetic_hole()
+        before = content_hash(original)
+        hole = copy.deepcopy(original)
         hole.metadata["hole"] = 99
         hole.metadata["_debug"] = {"anything": 1}
         hole.terrain.append(
@@ -138,21 +139,16 @@ class TestContentHash:
             lambda h: setattr(h, "terrain_height", h.terrain_height - 2),
         ],
     )
-    def test_changes_with_rom_bound_content(self, hole_01_data, change):
-        hole = copy.deepcopy(hole_01_data)
+    def test_changes_with_rom_bound_content(self, change):
+        original = synthetic_hole()
+        hole = copy.deepcopy(original)
         change(hole)
-        assert content_hash(hole) != content_hash(hole_01_data)
-
-
-def copy_courses(root: Path, *courses: str) -> Path:
-    for course in courses:
-        shutil.copytree(DEFAULT_COURSES / course, root / course)
-    return root
+        assert content_hash(hole) != content_hash(original)
 
 
 class TestHoleStore:
     def test_loads_a_matching_hole_and_refuses_a_changed_one(self, tmp_path):
-        store = HoleStore(copy_courses(tmp_path, "us"))
+        store = HoleStore(write_courses(tmp_path, "us"))
         report = sync_vanilla(Catalog(0), store)
         hole_entry = report.catalog["nes_us/01"]
         assert store.load(hole_entry).metadata["par"] == hole_entry.par
@@ -165,7 +161,7 @@ class TestHoleStore:
             store.load(hole_entry)
 
     def test_refuses_withdrawn_entries(self, tmp_path):
-        store = HoleStore(copy_courses(tmp_path, "us"))
+        store = HoleStore(write_courses(tmp_path, "us"))
         withdrawn = CatalogEntry(
             **{
                 **vars(sync_vanilla(Catalog(0), store).catalog["nes_us/01"]),
@@ -178,7 +174,7 @@ class TestHoleStore:
 
 class TestSyncVanilla:
     def test_adds_then_verifies(self, tmp_path):
-        store = HoleStore(copy_courses(tmp_path, "us", "uk"))
+        store = HoleStore(write_courses(tmp_path, "us", "uk"))
         first = sync_vanilla(Catalog(0), store)
         assert len(first.added) == 36 and first.ok
         assert first.catalog.version == 1
@@ -192,7 +188,7 @@ class TestSyncVanilla:
         assert second.catalog is first.catalog
 
     def test_never_rewrites_a_changed_hole(self, tmp_path):
-        store = HoleStore(copy_courses(tmp_path, "us"))
+        store = HoleStore(write_courses(tmp_path, "us"))
         catalog = sync_vanilla(Catalog(0), store).catalog
         path = tmp_path / "us" / "hole_07.json"
         data = json.loads(path.read_text())
@@ -205,8 +201,10 @@ class TestSyncVanilla:
         assert report.catalog is catalog
 
     def test_entries_without_data_are_absent_not_errors(self, tmp_path):
-        store = HoleStore(copy_courses(tmp_path, "us"))
-        report = sync_vanilla(Catalog.load(), store)
+        both = HoleStore(write_courses(tmp_path / "both", "us", "uk"))
+        catalog = sync_vanilla(Catalog(0), both).catalog
+        store = HoleStore(write_courses(tmp_path / "us_only", "us"))
+        report = sync_vanilla(catalog, store)
         assert report.ok and not report.added
         assert len(report.verified) == 18
         assert "nes_uk/01" in {str(hole_id) for hole_id in report.absent}
@@ -223,7 +221,7 @@ def run_sync(*args: str) -> subprocess.CompletedProcess:
 
 class TestSyncCli:
     def test_check_exit_codes_and_write(self, tmp_path):
-        courses = copy_courses(tmp_path / "courses", "us")
+        courses = write_courses(tmp_path / "courses", "us")
         index = tmp_path / "holes.json"
 
         assert run_sync(str(courses), "--index", str(index), "--check").returncode == 1
@@ -250,14 +248,8 @@ class TestCheckedInIndex:
             == json.dumps(Catalog.load().to_json(), indent=2) + "\n"
         )
 
-    def test_every_vanilla_hole_matches_its_data(self):
-        catalog = Catalog.load()
-        store = HoleStore()
-        checked = 0
-        for hole_entry in catalog:
-            path = store.path_for(hole_entry)
-            if hole_entry.id.lineage.startswith("jp_") and not path.exists():
-                continue  # Mario Open dumps are not checked in
-            store.load(hole_entry)
-            checked += 1
-        assert checked >= 54
+    def test_every_nes_open_hole_matches_its_data(self, vanilla_courses):
+        assert check_rehydrated(Catalog.load(), vanilla_courses, [US_ROM]) == 54
+
+    def test_every_mario_open_hole_matches_its_data(self, vanilla_jp_courses):
+        assert check_rehydrated(Catalog.load(), vanilla_jp_courses, [JP_ROM]) == 90

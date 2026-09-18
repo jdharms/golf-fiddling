@@ -17,6 +17,7 @@ from golf.core.patches import (
     load_credentials,
     parse_step_arg,
 )
+from tests.synthetic_holes import write_courses
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -33,9 +34,12 @@ def credentials_file(tmp_path) -> Path:
 
 
 class TestRegistry:
-    def test_every_patch_type_builds_a_patch_of_its_own_name(self, credentials_file):
+    def test_every_patch_type_builds_a_patch_of_its_own_name(
+        self, credentials_file, tmp_path
+    ):
+        courses = write_courses(tmp_path / "courses", "japan")
         params = {
-            "course": {"course": "courses/japan"},
+            "course": {"course": str(courses / "japan")},
             "course_theme": {"music": 2},
             "menu_trim": {"words": "ABCD EFGH IJKL"},
             "mercy_tap_in": {"mercy_point": 9},

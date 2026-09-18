@@ -67,8 +67,8 @@ def catalog() -> Catalog:
 
 
 @pytest.fixture(scope="module")
-def store() -> HoleStore:
-    return HoleStore()
+def store(vanilla_courses) -> HoleStore:
+    return HoleStore(vanilla_courses)
 
 
 @pytest.fixture(scope="module")
@@ -77,7 +77,7 @@ def curation() -> CurationSnapshot:
 
 
 @pytest.fixture(scope="module")
-def jp_manifest(catalog, curation):
+def jp_manifest(catalog, curation, vanilla_jp_courses):
     return generate(
         catalog, curation, Settings(prng_seed="build-stages-jp", music="jp_france")
     )

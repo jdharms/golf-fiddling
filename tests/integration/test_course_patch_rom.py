@@ -19,12 +19,12 @@ from golf.formats.hole_data import HoleData
 ROM_PATH = "nes_open_us.nes"
 
 
-def load_course_holes(course_dir: str) -> list[HoleData]:
+def load_course_holes(course_dir: Path) -> list[HoleData]:
     """Load all 18 holes from a course directory."""
     holes = []
     for hole_num in range(1, rom_utils.HOLES_PER_COURSE + 1):
         hole_data = HoleData()
-        hole_data.load(str(Path(course_dir) / f"hole_{hole_num:02d}.json"))
+        hole_data.load(course_dir / f"hole_{hole_num:02d}.json")
         holes.append(hole_data)
     return holes
 
@@ -65,8 +65,8 @@ def assert_terrain_roundtrips(rom: RomReader, holes: list[HoleData]):
 
 
 @pytest.fixture(scope="module")
-def japan_holes():
-    return load_course_holes("courses/japan")
+def japan_holes(vanilla_courses):
+    return load_course_holes(vanilla_courses / "japan")
 
 
 def test_course_roundtrip(japan_holes, tmp_path):
@@ -91,8 +91,8 @@ def test_course_roundtrip(japan_holes, tmp_path):
     assert GreensDecompressor(rom, 3).decompress(compressed) == japan_holes[0].greens
 
 
-def test_tall_course_roundtrip_spills_into_bank_1(tmp_path):
-    holes = load_course_holes("courses/jp/jp_uk")
+def test_tall_course_roundtrip_spills_into_bank_1(vanilla_jp_courses, tmp_path):
+    holes = load_course_holes(vanilla_jp_courses / "jp" / "jp_uk")
     patch, rom = write_rom(holes, tmp_path / "tall.nes")
 
     assert set(patch.stats.bank_assignments) == {0, 1}
@@ -130,9 +130,9 @@ def test_metadata_roundtrip(japan_holes, tmp_path):
         assert rom.read_fixed_word(rom_utils.TABLE_TEE_Y + hole_idx * 2) == tee["y"]
 
 
-def test_scorecard_totals_follow_the_course(tmp_path):
+def test_scorecard_totals_follow_the_course(vanilla_courses, tmp_path):
     """A course that is not par 72 or 7,037 yards gets its own totals on both cards."""
-    holes = load_course_holes("courses/japan")
+    holes = load_course_holes(vanilla_courses / "japan")
     holes[0].metadata["par"] = holes[0].metadata["par"] + 1
     holes[0].metadata["distance"] = holes[0].metadata["distance"] + 111
     yards = sum(hole.metadata.get("distance", 400) for hole in holes)
@@ -164,10 +164,10 @@ def test_greens_sequential_in_bank3(japan_holes, tmp_path):
     assert pointers[-1] < BANK_TABLE_CPU_ADDR
 
 
-def test_leaves_bank_2_and_holes_18_to_53_alone(tmp_path):
+def test_leaves_bank_2_and_holes_18_to_53_alone(vanilla_jp_courses, tmp_path):
     """Bank 2's terrain region and the metadata for holes 18-53 stay free for
     other patches (the QR image, seeded wind's seed table)."""
-    holes = load_course_holes("courses/jp/jp_uk")
+    holes = load_course_holes(vanilla_jp_courses / "jp" / "jp_uk")
     _, rom = write_rom(holes, tmp_path / "course.nes")
     vanilla = RomReader(ROM_PATH)
 

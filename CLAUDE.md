@@ -43,7 +43,9 @@ A toolset for reverse engineering, editing and patching the NES Open Tournament 
 - `tools/` - CLI entry points: `data/` (regenerates checked-in `data/` files), `research/`,
   `art/`, `music/`, `qr/`; course and patch tools at the top level; `archive/` for retired
   one-off scripts (no entry points)
-- `docs/`, `data/`, `courses/`, `renders/` (render scripts and output)
+- `docs/`, `data/`, `renders/` (render scripts and output)
+- `courses/` - course JSON, not committed: `golf-rehydrate` dumps the vanilla courses here
+  from the ROMs (see **Vanilla data** below)
 - `tests/unit/`, `tests/integration/` - integration tests need `nes_open_us.nes` in the repo root
 
 ## Key Concepts
@@ -92,6 +94,14 @@ an address is dead.
 **Writing new 6502 code**: use `golf/core/asm6502.py` (two-pass, labels, local labels,
 `.org/.byte/.word/.res/.align`, branch-range checks) rather than hand-assembling byte
 arrays. Existing small patches in `golf/core/patches/` predate it and stay as they are.
+
+**Vanilla data**: nothing dumped from a ROM is committed: no course JSON, and none of the
+rangefinder's rendered images or metadata. `golf-rehydrate` (logic in
+`golf/randomizer/rehydrate.py`) dumps the US ROM and, if present, the JP ROM into
+`courses/`, checks every hole against the content hashes in `data/catalog/holes.json`
+before installing any, and renders the rangefinder. Run it once after cloning, and again
+whenever the dumpers or renderer change. `golf-site` refuses to start until the data
+matches. The checked-in `data/` tables, `renders/` images and the catalog's hashes stay.
 
 ## Development Notes
 
@@ -155,8 +165,15 @@ uv run pytest -n 0                              # serially, when a worker's outp
 ```
 
 Fixtures live in `tests/fixtures/` and `tests/conftest.py`: real compression tables from
-`data/tables/compression_tables.json`, minimal mock tables, real holes from `courses/japan/`,
-and hand-crafted terrain/greens.
+`data/tables/compression_tables.json`, minimal mock tables, and hand-crafted terrain/greens.
+
+A test that needs real holes asks for the `vanilla_courses` fixture (NES Open) or
+`vanilla_jp_courses` (Mario Open), and one that needs the rangefinder's renders for
+`rangefinder_assets`. They skip when the matching ROM is absent and fail when it is present
+but `golf-rehydrate` has not been run, so tests never read vanilla data from the repository
+and never pass silently on a machine that could run them. They also mark the test
+`vanilla_data`. A test that only needs *a* hole should use `tests/synthetic_holes.py` so it runs on a fresh
+clone.
 
 ## Claude Code Preferences
 

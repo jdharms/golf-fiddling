@@ -39,6 +39,20 @@ cd nes-open-tools
 uv sync
 ```
 
+### Vanilla data
+
+The repository holds no vanilla course data. Put your ROMs in the repository root as
+`nes_open_us.nes` and, optionally, `mario_open_jp.nes`, then run:
+
+```bash
+uv run golf-rehydrate
+```
+
+It dumps every course into `courses/`, checks each hole against the catalog's content
+hashes, and renders the site's rangefinder. The editor, the course tools, the site and
+the tests that need real holes all read what it writes. Without the Mario Open ROM, its
+courses are skipped.
+
 Run any command below with `uv run <command>`. Every command takes `--help`, which is the
 full reference for its options.
 
@@ -53,7 +67,8 @@ full reference for its options.
   level; `archive/` holds retired one-off scripts
 - **docs/** - design and reverse-engineering notes; start at `docs/README.md`
 - **data/** - checked-in tables, tilesets, sprites and exports the tools and editor load
-- **courses/** - extracted course JSON
+- **courses/** - course JSON: the vanilla courses `golf-rehydrate` dumps (not committed;
+  the directories are kept with `.gitkeep` markers) and any of your own
 
 ## Commands
 
@@ -69,11 +84,12 @@ Build a standalone editor executable with `uv run pyinstaller run_editor.spec`.
 
 | Command | Description |
 |---------|-------------|
-| `golf-dump <rom> <out_dir>` | Extract all courses from the US ROM to JSON, with compression statistics |
+| `golf-rehydrate [--us rom] [--jp rom] [--check]` | Dump every vanilla course from the ROMs into `courses/`, verified against the catalog, and render the rangefinder; run once after cloning |
+| `golf-dump <rom> [out_dir]` | Extract all courses from the US ROM to JSON, with compression statistics |
 | `golf-dump-jp <jp_rom> [out_dir]` | Extract the Mario Open Golf (JP) courses; see `docs/jp_extraction.md` |
 | `golf-write <rom> <course_dir>` | Write one course back into a ROM, packed across terrain banks 0 and 1; see `docs/multi_bank_terrain.md` |
 | `golf-visualize <tileset> <hole.json or course_dir> [out]` | Render holes to PNG |
-| `golf-render-web <tileset> <greens_tileset> <courses> <out_dir>` | Render every hole and its metadata for the site's rangefinder |
+| `golf-render-web <courses> <out_dir>` | Render every dumped hole and its metadata for the site's rangefinder |
 
 ### Regenerating data/ files
 
@@ -150,8 +166,8 @@ Build a standalone editor executable with `uv run pyinstaller run_editor.spec`.
 ## Example workflow
 
 ```bash
-# Extract all courses from ROM
-golf-dump nes_open_us.nes courses/
+# Dump all courses from the ROMs (golf-dump alone writes the US ROM's, with statistics)
+golf-rehydrate
 
 # Edit a hole using the course editor
 golf-editor courses/japan/hole_01.json
@@ -170,11 +186,12 @@ uv run golf-site --reload
 # then open http://127.0.0.1:8000/
 ```
 
-The course rangefinder is available at `/rangefinder`. Its checked-in maps and metadata
-can be regenerated after course data changes with:
+The site refuses to start until `golf-rehydrate` has dumped the holes of every ROM in
+`GOLF_ROM_DIR` into `GOLF_HOLES_DIR` and rendered the rangefinder from them. The course
+rangefinder is at `/rangefinder`; to re-render it without dumping again:
 
 ```bash
-uv run golf-render-web data/chr-ram.bin data/green-ram.bin courses/ server/static/rangefinder/
+uv run golf-render-web courses/ server/static/rangefinder/
 ```
 
 The ROM setup page hashes ROMs in the browser, which needs HTTPS or localhost. The site
@@ -184,7 +201,7 @@ reads its configuration from environment variables:
 |----------|---------|---------|
 | `GOLF_DATABASE` | `golf_site.db` | SQLite database path, created and migrated at startup |
 | `GOLF_ROM_DIR` | the repository root | Directory holding the server's vanilla ROMs as `nes_open_us.nes` and `mario_open_jp.nes`; generating a seed needs the first |
-| `GOLF_HOLES_DIR` | `courses/` | Hole store root |
+| `GOLF_HOLES_DIR` | `courses/` | Hole store root, which `golf-rehydrate` writes |
 | `GOLF_BASE_URL` | `http://127.0.0.1:8000` | Public base URL, also the OAuth redirect base |
 | `GOLF_DISCORD_CLIENT_ID`, `GOLF_DISCORD_CLIENT_SECRET` | unset | Discord sign-in |
 | `GOLF_SESSION_SECRET` | unset | Signs the session cookie |

@@ -23,7 +23,8 @@ dependencies = [
 # Course editor
 golf-editor = "editor.main:main"
 
-# Course data: dump, write, render
+# Course data: rehydrate, dump, write, render
+golf-rehydrate = "tools.rehydrate:main"
 golf-dump = "tools.dump:main"
 golf-dump-jp = "tools.dump_jp_courses:main"
 golf-write = "tools.write:main"
@@ -90,6 +91,9 @@ addopts = [
     "--cov=editor",
     "--cov=server",
     "--cov-report=term-missing",
+]
+markers = [
+    "vanilla_data: reads course data or renders golf-rehydrate makes from the ROMs (set by the fixtures in tests/conftest.py)",
 ]
 filterwarnings = [
     # pygame 2.6.1 imports pkg_resources at import time; pygame-ce doesn't

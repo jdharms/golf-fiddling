@@ -1,4 +1,11 @@
-"""Shared pytest fixtures for compression tests."""
+"""Shared pytest fixtures.
+
+Vanilla course data is not checked in: `golf-rehydrate` dumps it from the ROMs into
+`courses/` and renders the rangefinder from it. A test that reads it asks for
+`vanilla_courses` (NES Open), `vanilla_jp_courses` (Mario Open) or `rangefinder_assets`,
+each of which skips when its ROM is absent and fails, naming `golf-rehydrate`, when the ROM
+is present but the data is missing or stale. Such tests carry the `vanilla_data` marker.
+"""
 
 import json
 from pathlib import Path
@@ -7,6 +14,61 @@ import pytest
 
 from golf.core.decompressor import GreensDecompressor, TerrainDecompressor
 from golf.formats.hole_data import HoleData
+from golf.randomizer.catalog import DEFAULT_COURSES, JP_ROM, US_ROM, Catalog
+from golf.randomizer.rehydrate import (
+    RehydrateError,
+    check_rangefinder,
+    check_rehydrated,
+)
+from golf.randomizer.roms import vanilla_rom
+from golf.rendering.rangefinder import DEFAULT_OUTPUT
+
+ROOT = Path(__file__).resolve().parents[1]
+VANILLA_DATA_FIXTURES = frozenset(
+    {"vanilla_courses", "vanilla_jp_courses", "rangefinder_assets"}
+)
+
+
+def pytest_collection_modifyitems(items):
+    for item in items:
+        if VANILLA_DATA_FIXTURES & set(getattr(item, "fixturenames", ())):
+            item.add_marker(pytest.mark.vanilla_data)
+
+
+def _rehydrated(rom_id: str) -> Path:
+    rom = vanilla_rom(rom_id)
+    if not (ROOT / rom.filename).exists():
+        pytest.skip(f"{rom.filename} not present")
+    try:
+        check_rehydrated(Catalog.load(), DEFAULT_COURSES, [rom_id])
+    except RehydrateError as error:
+        pytest.fail(
+            f"{rom.filename} is present but its courses are not rehydrated; "
+            f"run `uv run golf-rehydrate`\n{error}"
+        )
+    return DEFAULT_COURSES
+
+
+@pytest.fixture(scope="session")
+def vanilla_courses() -> Path:
+    """The courses root, holding the NES Open courses verified against the catalog."""
+    return _rehydrated(US_ROM)
+
+
+@pytest.fixture(scope="session")
+def vanilla_jp_courses() -> Path:
+    """The courses root, holding the Mario Open courses under jp/, verified."""
+    return _rehydrated(JP_ROM)
+
+
+@pytest.fixture(scope="session")
+def rangefinder_assets(vanilla_courses) -> Path:
+    """The rangefinder's static directory, rendered from the rehydrated courses."""
+    try:
+        check_rangefinder(vanilla_courses, DEFAULT_OUTPUT)
+    except RehydrateError as error:
+        pytest.fail(f"run `uv run golf-rehydrate`\n{error}")
+    return DEFAULT_OUTPUT
 
 
 @pytest.fixture
@@ -55,18 +117,18 @@ def mock_minimal_greens_tables(mock_minimal_tables):
 
 
 @pytest.fixture
-def hole_04_data():
-    """Load hole 4 (simple 30-row hole)."""
+def hole_04_data(vanilla_courses):
+    """Load Japan hole 4 (simple 30-row hole)."""
     hole = HoleData()
-    hole.load(Path(__file__).parent.parent / "courses" / "japan" / "hole_04.json")
+    hole.load(vanilla_courses / "japan" / "hole_04.json")
     return hole
 
 
 @pytest.fixture
-def hole_01_data():
-    """Load hole 1 (complex 38-row hole)."""
+def hole_01_data(vanilla_courses):
+    """Load Japan hole 1 (complex 38-row hole)."""
     hole = HoleData()
-    hole.load(Path(__file__).parent.parent / "courses" / "japan" / "hole_01.json")
+    hole.load(vanilla_courses / "japan" / "hole_01.json")
     return hole
 
 

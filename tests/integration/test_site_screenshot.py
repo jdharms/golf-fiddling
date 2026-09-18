@@ -99,8 +99,9 @@ def test_rom_cards_verify_a_vanilla_rom_and_refuse_another_file(tmp_path):
     )
 
 
-@pytest.mark.skipif(not US_ROM_PATH.exists(), reason=f"{US_ROM_PATH.name} not present")
-def test_generate_submits_the_form_and_captures_the_seed_page(tmp_path):
+def test_generate_submits_the_form_and_captures_the_seed_page(
+    vanilla_courses, vanilla_jp_courses, tmp_path
+):
     completed = run(
         "/generate",
         "--generate",
@@ -119,11 +120,9 @@ def test_generate_submits_the_form_and_captures_the_seed_page(tmp_path):
         assert (tmp_path / name).read_bytes().startswith(PNG_SIGNATURE)
 
 
-@pytest.mark.skipif(
-    not US_ROM_PATH.exists() or not JP_ROM_PATH.exists(),
-    reason="the vanilla ROMs are not present",
-)
-def test_generate_with_roms_captures_the_download_form_ready(tmp_path):
+def test_generate_with_roms_captures_the_download_form_ready(
+    vanilla_courses, vanilla_jp_courses, tmp_path
+):
     completed = run(
         "/generate",
         "--generate",

@@ -1,5 +1,7 @@
 """Unit tests for the course patch."""
 
+from pathlib import Path
+
 import pytest
 
 from golf.core import rom_utils
@@ -81,25 +83,25 @@ def compressed_holes(count: int, terrain_size: int) -> list[HoleCompressedData]:
     ]
 
 
-def load_holes(course_dir: str) -> list[HoleData]:
+def load_holes(course_dir: Path) -> list[HoleData]:
     holes = []
     for number in range(1, 19):
         hole = HoleData()
-        hole.load(f"{course_dir}/hole_{number:02d}.json")
+        hole.load(course_dir / f"hole_{number:02d}.json")
         holes.append(hole)
     return holes
 
 
 @pytest.fixture(scope="module")
-def japan() -> list[HoleData]:
-    return load_holes("courses/japan")
+def japan(vanilla_courses) -> list[HoleData]:
+    return load_holes(vanilla_courses / "japan")
 
 
 @pytest.fixture(scope="module")
-def japan_with_tall_hole(japan) -> list[HoleData]:
+def japan_with_tall_hole(japan, vanilla_jp_courses) -> list[HoleData]:
     """Japan with its last hole swapped for a 30-attribute-row JP hole."""
     tall = HoleData()
-    tall.load("courses/jp/jp_uk/hole_14.json")
+    tall.load(vanilla_jp_courses / "jp" / "jp_uk" / "hole_14.json")
     assert len(tall.attributes) == 30
     return japan[:17] + [tall]
 
@@ -274,9 +276,9 @@ class TestCoursePatch:
             span = set(range(write.prg_offset, write.prg_offset + len(write.data)))
             assert not (span & required), write.name
 
-    @pytest.mark.parametrize("tall", [False, True])
-    def test_apply_then_is_applied(self, japan, japan_with_tall_hole, tall):
-        patch = CoursePatch(japan_with_tall_hole if tall else japan)
+    @pytest.mark.parametrize("holes", ["japan", "japan_with_tall_hole"])
+    def test_apply_then_is_applied(self, request, holes):
+        patch = CoursePatch(request.getfixturevalue(holes))
         rom = rom_with_requirements()
 
         assert patch.can_apply(rom)

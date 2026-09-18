@@ -1,11 +1,9 @@
 """
-Integration tests for forest fill algorithm using real hole data.
+Integration tests for the forest fill algorithm on real hole data.
 
-These tests use hole_18_with_placeholders.json which is UK hole 18
-with a large placeholder region (199 tiles) for testing the forest fill algorithm.
+The hole is UK hole 18 with the forest in its top-left corner, 199 tiles, replaced by
+placeholders: a large region with real terrain around it for the fill to match.
 """
-
-from pathlib import Path
 
 import pytest
 
@@ -17,6 +15,27 @@ from editor.algorithms.better_forest_fill import (
 )
 from golf.core.neighbor_validator import TerrainNeighborValidator
 from golf.formats.hole_data import HoleData
+
+#: the tiles of UK hole 18 replaced by placeholders, from the top row down
+PLACEHOLDER_MASK = [
+    "######################",
+    "######################",
+    "##################...#",
+    "#################.....",
+    "#############.........",
+    "############..........",
+    "###########...........",
+    "##########............",
+    "##########............",
+    "##########............",
+    "#########.............",
+    "#########.............",
+    "#########.............",
+    "#########.............",
+    "#########.............",
+    "..######..............",
+    ".....##...............",
+]
 
 
 @pytest.fixture
@@ -32,12 +51,15 @@ def forest_filler(neighbor_validator):
 
 
 @pytest.fixture
-def hole_18_with_placeholders():
-    """Load hole 18 with placeholder tiles."""
-    fixtures_dir = Path(__file__).parent / "fixtures"
-    hole_path = fixtures_dir / "hole_18_with_placeholders.json"
+def hole_18_with_placeholders(vanilla_courses):
+    """UK hole 18 with PLACEHOLDER_MASK's tiles replaced by placeholders."""
     hole_data = HoleData()
-    hole_data.load(str(hole_path))
+    hole_data.load(vanilla_courses / "uk" / "hole_18.json")
+    for row, line in enumerate(PLACEHOLDER_MASK):
+        for col, cell in enumerate(line):
+            if cell == "#":
+                hole_data.terrain[row][col] = PLACEHOLDER_TILE
+    assert sum(line.count("#") for line in PLACEHOLDER_MASK) == 199
     return hole_data
 
 
@@ -193,8 +215,3 @@ def test_neighbor_validation_after_fill(
     assert len(invalid_tiles) == 0, (
         f"All filled tiles should have valid neighbors, found {len(invalid_tiles)} invalid"
     )
-
-
-if __name__ == "__main__":
-    # Run tests with verbose output
-    pytest.main([__file__, "-v", "-s"])

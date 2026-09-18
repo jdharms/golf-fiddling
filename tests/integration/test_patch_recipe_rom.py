@@ -44,14 +44,14 @@ def credentials(tmp_path) -> Path:
     return path
 
 
-def full_recipe() -> dict:
+def full_recipe(courses: Path) -> dict:
     return {
         "steps": [
             {"patch": "wram_expansion"},
             {"patch": "multi_bank_lookup"},
             {"patch": "course_mirrors"},
             {"patch": "attr_streaming"},
-            {"patch": "course", "course": "courses/jp/jp_uk"},
+            {"patch": "course", "course": str(courses / "jp" / "jp_uk")},
             {"patch": "menu_trim", "words": ["RANDO", "GOLF", "0001"]},
             {"patch": "signpost_random_banner", "art": str(ART.relative_to(ROOT))},
             {"patch": "mercy_tap_in", "mercy_point": 9},
@@ -73,22 +73,24 @@ def run(*args: str | Path) -> subprocess.CompletedProcess:
 
 
 @pytest.mark.skipif(not ART.exists(), reason=f"{ART.name} not present")
-def test_a_recipe_of_every_compatible_patch_builds(vanilla):
-    recipe = Recipe.from_dict(full_recipe(), ROOT)
+def test_a_recipe_of_every_compatible_patch_builds(vanilla, vanilla_jp_courses):
+    recipe = Recipe.from_dict(full_recipe(vanilla_jp_courses), ROOT)
     result = recipe.stack(vanilla).build(vanilla)
     assert [name for name, regions in result.regions.items() if regions] == [
         step.patch for step in recipe.steps
     ]
 
 
-def test_a_recipe_builds_the_same_rom_as_the_stack_it_describes(vanilla):
+def test_a_recipe_builds_the_same_rom_as_the_stack_it_describes(
+    vanilla, vanilla_courses
+):
     recipe = Recipe.from_dict(
         {
             "steps": [
                 {"patch": "multi_bank_lookup"},
                 {"patch": "course_mirrors"},
                 {"patch": "attr_streaming"},
-                {"patch": "course", "course": "courses/japan"},
+                {"patch": "course", "course": str(vanilla_courses / "japan")},
                 {"patch": "seeded_wind", "seed": "same"},
             ]
         },
@@ -97,7 +99,7 @@ def test_a_recipe_builds_the_same_rom_as_the_stack_it_describes(vanilla):
     holes = []
     for number in range(1, 19):
         hole = HoleData()
-        hole.load(str(ROOT / f"courses/japan/hole_{number:02d}.json"))
+        hole.load(vanilla_courses / "japan" / f"hole_{number:02d}.json")
         holes.append(hole)
     direct = PatchStack(
         [
@@ -130,8 +132,10 @@ def test_banner_removal_and_new_banner_art_do_not_stack(vanilla):
         recipe.stack(vanilla).build(vanilla)
 
 
-def test_cli_builds_a_rom_and_its_ips_from_a_recipe(vanilla, tmp_path):
-    recipe = full_recipe()
+def test_cli_builds_a_rom_and_its_ips_from_a_recipe(
+    vanilla, vanilla_jp_courses, tmp_path
+):
+    recipe = full_recipe(vanilla_jp_courses)
     recipe["steps"] = [
         s for s in recipe["steps"] if s["patch"] != "signpost_random_banner"
     ]
@@ -148,7 +152,9 @@ def test_cli_builds_a_rom_and_its_ips_from_a_recipe(vanilla, tmp_path):
     assert "bank 0:" in completed.stdout  # the course report
 
 
-def test_cli_finishes_an_unfinished_rom_with_credentials(tmp_path, credentials):
+def test_cli_finishes_an_unfinished_rom_with_credentials(
+    vanilla_courses, tmp_path, credentials
+):
     unfinished, finished = tmp_path / "unfinished.nes", tmp_path / "finished.nes"
     built = run(
         "tools.patch",
@@ -160,7 +166,7 @@ def test_cli_finishes_an_unfinished_rom_with_credentials(tmp_path, credentials):
         "-p",
         "attr_streaming",
         "-p",
-        "course:course=courses/japan",
+        f"course:course={vanilla_courses / 'japan'}",
         "-p",
         "scorecard_qr",
         "-o",
@@ -184,7 +190,7 @@ def test_cli_finishes_an_unfinished_rom_with_credentials(tmp_path, credentials):
     assert finished.read_bytes() != unfinished.read_bytes()
 
 
-def test_cli_inline_steps_match_their_saved_recipe(tmp_path):
+def test_cli_inline_steps_match_their_saved_recipe(vanilla_courses, tmp_path):
     saved, first, second = (
         tmp_path / "saved.json",
         tmp_path / "first.nes",
@@ -200,7 +206,7 @@ def test_cli_inline_steps_match_their_saved_recipe(tmp_path):
         "-p",
         "attr_streaming",
         "-p",
-        "course:course=courses/japan",
+        f"course:course={vanilla_courses / 'japan'}",
         "-p",
         "mercy_tap_in:mercy_point=9",
         "--save-recipe",

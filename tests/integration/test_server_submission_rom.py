@@ -50,9 +50,16 @@ def rom_url(rom: bytes, slot: int) -> str:
     return machine.read(layout.URL, URL_LEN).decode("ascii")
 
 
-def test_a_downloaded_roms_codes_record_both_players_rounds():
+def test_a_downloaded_roms_codes_record_both_players_rounds(vanilla_courses):
     with TestClient(
-        create_app(Config(database=":memory:", rom_dir=ROOT, dev_login=True))
+        create_app(
+            Config(
+                database=":memory:",
+                rom_dir=ROOT,
+                holes_dir=vanilla_courses,
+                dev_login=True,
+            )
+        )
     ) as client:
         form = FormState.default()
         form.sources, form.music = {US_ROM}, "nes_us"

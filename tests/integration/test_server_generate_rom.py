@@ -39,10 +39,13 @@ def form_data() -> dict[str, list[str]]:
     return data
 
 
-def test_a_generated_seed_stores_the_unfinished_build_of_its_manifest():
+def test_a_generated_seed_stores_the_unfinished_build_of_its_manifest(
+    vanilla_courses, vanilla_jp_courses
+):
     vanilla = ROM_PATH.read_bytes()
     catalog = Catalog.load()
-    with TestClient(create_app(Config(database=":memory:", rom_dir=ROOT))) as client:
+    config = Config(database=":memory:", rom_dir=ROOT, holes_dir=vanilla_courses)
+    with TestClient(create_app(config)) as client:
         response = client.post("/generate", data=form_data(), follow_redirects=False)
         assert response.status_code == 303, response.text
         seed_id = seed_id_from(response)
@@ -55,7 +58,7 @@ def test_a_generated_seed_stores_the_unfinished_build_of_its_manifest():
         page = client.get(f"/h/{seed_id}").text
 
     stored = row["unfinished_ips"]
-    expected = build_unfinished(manifest, catalog, HoleStore(), vanilla)
+    expected = build_unfinished(manifest, catalog, HoleStore(vanilla_courses), vanilla)
     assert stored == expected.ips
     assert ips.apply(vanilla, stored) == expected.rom
 

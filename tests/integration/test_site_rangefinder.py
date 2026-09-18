@@ -34,7 +34,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def test_rangefinder_measures_zooms_switches_holes_and_opens_green():
+def test_rangefinder_measures_zooms_switches_holes_and_opens_green(rangefinder_assets):
     from playwright.sync_api import sync_playwright
 
     app = create_app(Config(database=":memory:"), strings=_unwritten())
@@ -97,7 +97,9 @@ def test_rangefinder_measures_zooms_switches_holes_and_opens_green():
     assert not errors
 
 
-def test_rangefinder_permalink_tracks_location_copies_and_does_not_add_history():
+def test_rangefinder_permalink_tracks_location_copies_and_does_not_add_history(
+    rangefinder_assets,
+):
     from playwright.sync_api import sync_playwright
 
     app = create_app(Config(database=":memory:"), strings=_unwritten())

@@ -9,7 +9,11 @@ the ROM, see `golf/core/compression.md` and the `nes-open-golf-rom-layout` skill
 - **3 courses**: Japan, US, UK (in that order - Japan was developed first)
 - **18 holes per course** (54 total holes)
 - **Course files**: `courses/{country}/hole_{01-18}.json` and `courses/{country}/course.json`
-- **JP courses** (Mario Open Golf): `courses/jp/jp_{course}/`, written by `golf-dump-jp`
+- **JP courses** (Mario Open Golf): `courses/jp/jp_{course}/`
+- **Where they come from**: the vanilla courses are not committed. `golf-rehydrate` dumps
+  both ROMs through `golf/core/course_dump.py` and checks them against the catalog;
+  `golf-dump` and `golf-dump-jp` dump one ROM each, with compression statistics in
+  `meta.json`
 - **Coordinates**: all positions use pixel coordinates (x, y)
 
 ## HoleData

@@ -157,7 +157,7 @@ def test_rangefinder_page_embeds_its_assets_and_script_strings(unwritten_client)
     assert '"rangefinder.script.distance": null' in response.text
 
 
-def test_rangefinder_generated_assets_are_served(client):
+def test_rangefinder_generated_assets_are_served(client, rangefinder_assets):
     metadata = client.get("/static/rangefinder/metadata.json")
     image = client.get("/static/rangefinder/images/japan/hole_01.png")
     assert metadata.status_code == 200

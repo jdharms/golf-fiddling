@@ -56,13 +56,13 @@ def catalog() -> Catalog:
 
 
 @pytest.fixture(scope="module")
-def manifest(catalog):
+def manifest(catalog, vanilla_courses, vanilla_jp_courses):
     return generate(catalog, CurationSnapshot.load(), Settings(prng_seed="cli-rom"))
 
 
 @pytest.fixture(scope="module")
-def unfinished(manifest, catalog, vanilla):
-    return build_unfinished(manifest, catalog, HoleStore(), vanilla)
+def unfinished(manifest, catalog, vanilla, vanilla_courses):
+    return build_unfinished(manifest, catalog, HoleStore(vanilla_courses), vanilla)
 
 
 @pytest.fixture
@@ -131,7 +131,9 @@ def test_build_applies_the_player_options(
     assert out.read_bytes() == finish(manifest, vanilla, unfinished.ips, options).rom
 
 
-def test_build_refuses_a_bag_the_seed_bans(catalog, tmp_path):
+def test_build_refuses_a_bag_the_seed_bans(
+    catalog, vanilla_courses, vanilla_jp_courses, tmp_path
+):
     strict = generate(
         catalog,
         CurationSnapshot.load(),

@@ -16,19 +16,19 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def load_holes(course_dir: str) -> list[HoleData]:
+def load_holes(course_dir: Path) -> list[HoleData]:
     holes = []
     for number in range(1, 19):
         hole = HoleData()
-        hole.load(f"{course_dir}/hole_{number:02d}.json")
+        hole.load(course_dir / f"hole_{number:02d}.json")
         holes.append(hole)
     return holes
 
 
-def test_patched_rom_roundtrips_through_ips(tmp_path):
+def test_patched_rom_roundtrips_through_ips(vanilla_jp_courses, tmp_path):
     vanilla = Path(ROM_PATH).read_bytes()
 
-    course = CoursePatch(load_holes("courses/jp/jp_uk"))
+    course = CoursePatch(load_holes(vanilla_jp_courses / "jp" / "jp_uk"))
     writer = RomWriter(ROM_PATH, str(tmp_path / "unused.nes"))
     for patch in [
         *course.requires,

@@ -28,10 +28,9 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture(scope="module")
-def client():
-    with TestClient(
-        create_app(Config(database=":memory:", rom_dir=ROOT))
-    ) as test_client:
+def client(vanilla_courses, vanilla_jp_courses):
+    config = Config(database=":memory:", rom_dir=ROOT, holes_dir=vanilla_courses)
+    with TestClient(create_app(config)) as test_client:
         yield test_client
 
 
@@ -77,9 +76,18 @@ def test_a_download_is_the_finished_build_of_the_stored_seed(client):
     )
 
 
-def test_a_signed_in_download_is_finished_with_the_players_credentials():
+def test_a_signed_in_download_is_finished_with_the_players_credentials(
+    vanilla_courses,
+):
     with TestClient(
-        create_app(Config(database=":memory:", rom_dir=ROOT, dev_login=True))
+        create_app(
+            Config(
+                database=":memory:",
+                rom_dir=ROOT,
+                holes_dir=vanilla_courses,
+                dev_login=True,
+            )
+        )
     ) as signed_in:
         seed_id = generate(signed_in, music="nes_us", sources={US_ROM})
         signed_in.get("/auth/login", params={"as": "alice"})
