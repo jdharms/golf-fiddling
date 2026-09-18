@@ -125,7 +125,8 @@ The indexes and pointers above only stay useful if changes keep them current:
 - `test_referenced_paths.py` - backticked paths in the CLAUDE.md files, `README.md`,
   `docs/README.md` and the skills exist
 - `test_tools_layering.py` - nothing imports from `tools/`, and `tools/archive/` has no entry points
-- `test_import_order.py` - every `golf` module imports cleanly in a fresh interpreter
+- `test_import_order.py` - every module in `golf/`, `server/`, `editor/` and `tools/`
+  imports cleanly in a fresh interpreter
 
 ### Linting, formatting and type checking
 

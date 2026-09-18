@@ -27,10 +27,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 def render(vram, pal, out_path):
     img = Image.new("RGB", (256, 240))
     px = img.load()
+    assert px is not None
     for y, row in enumerate(render_screen(vram, pal)):
         for x, value in enumerate(row):
             px[x, y] = NES_SYSTEM_PALETTE[value & 0x3F]
-    img.resize((512, 480), Image.NEAREST).save(out_path)
+    img.resize((512, 480), Image.Resampling.NEAREST).save(out_path)
     print("wrote", out_path)
 
 

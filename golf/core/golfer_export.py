@@ -102,13 +102,13 @@ def build_palette(body_nes, club_nes):
     return palette
 
 
-def nes_by_index() -> list:
+def nes_by_index() -> list[int | None]:
     """Palette index -> NES colour, with None for transparent and the guides.
 
     The authoritative map for an importer, since the collapsed blacks mean the
     relationship is no longer arithmetic.
     """
-    table = [None] * PALETTE_SIZE
+    table: list[int | None] = [None] * PALETTE_SIZE
     for value in NES_ENTRIES:
         table[nes_index(value)] = value
     return table
@@ -305,8 +305,9 @@ def export_golfer(rom, sprites, golfer, putt, bounds, out_dir, visible_club=0):
         "frames": [],
     }
 
-    seen_body: dict[int, int] = {}
-    seen_club: dict[tuple, int] = {}
+    # first frame to draw each metasprite, and where its cel went
+    seen_body: dict[int, tuple[int, tuple[int, int]]] = {}
+    seen_club: dict[tuple, tuple[int, tuple[int, int]]] = {}
     for frame in range(len(body)):
         cels = []
         b = body[frame]

@@ -60,11 +60,11 @@ class RowOperationsTool:
 
         # Check maximum constraint
         if hole_data.terrain_height >= 48:
-            return ToolResult(handled=True, message="Cannot exceed 48 rows")
+            return ToolResult(is_handled=True, message="Cannot exceed 48 rows")
 
         if hole_data.terrain_height + 2 > 48:
             return ToolResult(
-                handled=True,
+                is_handled=True,
                 message="Would exceed 48 row limit (can only add in pairs of 2)",
             )
 
@@ -104,7 +104,7 @@ class RowOperationsTool:
 
         # Check minimum constraint
         if hole_data.terrain_height <= 30:
-            return ToolResult(handled=True, message="Cannot have fewer than 30 rows")
+            return ToolResult(is_handled=True, message="Cannot have fewer than 30 rows")
 
         # Push undo state before modification
         context.state.undo_manager.push_state(hole_data)

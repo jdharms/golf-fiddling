@@ -75,14 +75,14 @@ class MusicLayout:
 W = None
 
 
-def _find(blk: bytes, pat) -> int:
+def _find(blk: bytes | bytearray, pat) -> int:
     for i in range(len(blk) - len(pat)):
         if all(p is None or blk[i + k] == p for k, p in enumerate(pat)):
             return i
     return -1
 
 
-def _operand(blk: bytes, pat, index: int, bank_base: int = 0x8000) -> int:
+def _operand(blk: bytes | bytearray, pat, index: int, bank_base: int = 0x8000) -> int:
     i = _find(blk, pat)
     if i < 0:
         raise ValueError(f"could not locate table for pattern at index {index}")
@@ -366,9 +366,12 @@ class _Bus:
         self.writes: list[tuple[int, int, int]] = []
         self.frame = 0
 
-    def __getitem__(self, a):
+    def __getitem__(self, a: int | slice) -> int | bytes:
         if isinstance(a, slice):
-            return bytes(self[i] for i in range(a.start, a.stop))
+            return bytes(self._read(i) for i in range(a.start, a.stop))
+        return self._read(a)
+
+    def _read(self, a: int) -> int:
         if a < 0x2000:
             return self.ram[a & 0x7FF]
         if a >= 0x8000:

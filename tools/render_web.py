@@ -122,10 +122,11 @@ def render_all_courses(
 
             # Render flag overlay images (4 transparent PNGs)
             flag_images = []
-            if sprites.get("green-flag"):
+            green_flag = sprites.get("green-flag") if sprites else None
+            if sprites and green_flag:
                 flag_overlays = render_all_flags_to_images(
                     hole_data,
-                    sprites["green-flag"],
+                    green_flag,
                     cup_sprite=sprites.get("green-cup"),
                 )
                 for i, flag_img in enumerate(flag_overlays):

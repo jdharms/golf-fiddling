@@ -7,10 +7,12 @@ from fastapi.testclient import TestClient
 
 from golf.randomizer.catalog import Catalog, CatalogError, HoleStore
 from golf.randomizer.curation import CurationSnapshot
+from golf.randomizer.manifest import Manifest
 from server.app import create_app
 from server.builder import BuilderUnavailableError
 from server.config import Config
 from server.seeds import load_unfinished_ips
+from tests.app_state import app_state
 from tests.unit.test_server_app import (
     IPS,
     UNWRITTEN,
@@ -132,7 +134,9 @@ def test_detail_pages_show_the_seed_the_round_and_the_player(fake_builder):
         seed_page = client.get(f"/admin/seeds/{seed_id}").text
         round_page = client.get(f"/admin/rounds/{round_id}").text
         users = client.get("/admin/users").text
-        alice_id = re.search(r'href="/admin/users/(\d+)">alice<', users).group(1)
+        alice_link = re.search(r'href="/admin/users/(\d+)">alice<', users)
+        assert alice_link is not None
+        alice_id = alice_link.group(1)
         user_page = client.get(f"/admin/users/{alice_id}").text
     assert f"{len(IPS)} bytes" in seed_page
     assert f'href="/admin/rounds/{round_id}"' in seed_page
@@ -163,7 +167,9 @@ def test_the_activity_page_and_histories_show_who_did_what(fake_builder):
         activity = client.get("/admin/activity").text
         seed_page = client.get(f"/admin/seeds/{seed_id}").text
         round_page = client.get(f"/admin/rounds/{round_id}").text
-        admin_id = re.search(r'href="/admin/users/(\d+)">admin<', activity).group(1)
+        admin_link = re.search(r'href="/admin/users/(\d+)">admin<', activity)
+        assert admin_link is not None
+        admin_id = admin_link.group(1)
         admin_page = client.get(f"/admin/users/{admin_id}").text
     # the rebuild made no change, so the seed says so and does not claim a rebuild date
     assert "rebuilt, no change" in activity
@@ -331,7 +337,7 @@ class Rebuilds(FakeBuilder):
     rebuild_ips = IPS
     problem: Exception | None = None
 
-    def build(self, manifest):
+    def build(self, manifest: Manifest) -> bytes:
         if getattr(self, "built", None) is None:
             self.built = manifest
             return IPS
@@ -365,7 +371,7 @@ def test_a_rebuild_that_changes_the_ips_stores_it_and_shows_the_date(rebuilds):
         seed_id = generate_seed(client)
         response = post(client, f"/admin/seeds/{seed_id}/rebuild")
         assert response.headers["location"] == f"/admin/seeds/{seed_id}?result=rebuilt"
-        assert load_unfinished_ips(client.app.state.db, seed_id) == REBUILT_IPS
+        assert load_unfinished_ips(app_state(client).db, seed_id) == REBUILT_IPS
         assert "seed.rebuilt rebuilt=" in client.get(f"/h/{seed_id}").text
         seed_page = client.get(f"/admin/seeds/{seed_id}").text
     assert "by <a" in seed_page
@@ -387,7 +393,7 @@ def test_a_failed_rebuild_keeps_the_ips_and_logs_nothing(
         sign_in(client, "admin")
         seed_id = generate_seed(client)
         response = post(client, f"/admin/seeds/{seed_id}/rebuild")
-        assert load_unfinished_ips(client.app.state.db, seed_id) == IPS
+        assert load_unfinished_ips(app_state(client).db, seed_id) == IPS
         assert (
             "No admin action on this seed."
             in client.get(f"/admin/seeds/{seed_id}").text

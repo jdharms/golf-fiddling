@@ -1,6 +1,7 @@
 """Unit tests for the manifest model and its JSON form."""
 
 import json
+from typing import Any
 
 import pytest
 
@@ -34,7 +35,7 @@ def slots(prefix: str = "nes_us") -> tuple[Slot, ...]:
 
 
 def course(**overrides) -> Course:
-    fields = dict(
+    fields: dict[str, Any] = dict(
         holes=slots(),
         music="nes_uk",
         mercy_point=9,
@@ -46,7 +47,7 @@ def course(**overrides) -> Course:
 
 
 def manifest(**overrides) -> Manifest:
-    fields = dict(
+    fields: dict[str, Any] = dict(
         schema=1,
         generator_version=1,
         catalog_version=1,
@@ -66,15 +67,20 @@ def test_round_trips_through_json():
         settings=Settings(
             prng_seed="abc",
             par=70,
-            sources={JP_ROM},
-            exclude_tags={"expert"},
+            sources=frozenset({JP_ROM}),
+            exclude_tags=frozenset({"expert"}),
             allow_family_repeats=True,
             music="jp_hawaii",
             mercy_point=None,
-            clubs=ClubRules(max=10, banned={Club.W1}, required_bag={Club.I7, Club.W3}),
+            clubs=ClubRules(
+                max=10,
+                banned=frozenset({Club.W1}),
+                required_bag=frozenset({Club.I7, Club.W3}),
+            ),
         ),
         course=course(
-            mercy_point=None, clubs=ClubRules(max=12, banned={Club.SW, Club.W2})
+            mercy_point=None,
+            clubs=ClubRules(max=12, banned=frozenset({Club.SW, Club.W2})),
         ),
     )
     assert round_trip(value) == value
@@ -126,12 +132,15 @@ def test_course_par_and_layout():
 
 
 def test_club_labels_are_written_in_club_order():
-    rules = ClubRules(banned={Club.SW, Club.W1, Club.I5})
+    rules = ClubRules(banned=frozenset({Club.SW, Club.W1, Club.I5}))
     assert rules.to_json()["banned"] == ["1W", "5I", "SW"]
 
 
 def test_required_bag_gains_the_putter():
-    assert ClubRules(required_bag={Club.W1}).required_bag == {Club.W1, Club.PT}
+    assert ClubRules(required_bag=frozenset({Club.W1})).required_bag == {
+        Club.W1,
+        Club.PT,
+    }
 
 
 @pytest.mark.parametrize(

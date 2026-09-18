@@ -5,6 +5,7 @@ Manages hole data including terrain, attributes, greens, and metadata.
 Handles loading from and saving to JSON files.
 """
 
+import os
 from typing import Any
 
 from ..core.palettes import GREENS_WIDTH, TERRAIN_WIDTH
@@ -26,7 +27,7 @@ class HoleData:
         self.filepath: str | None = None
         self.modified: bool = False
 
-    def load(self, path: str):
+    def load(self, path: str | os.PathLike[str]):
         """Load hole data from JSON file."""
         with open(path) as f:
             data = json.load(f)
@@ -65,7 +66,7 @@ class HoleData:
             "_debug": data.get("_debug", {}),
         }
 
-        self.filepath = path
+        self.filepath = os.fspath(path)
         self.modified = False
 
     def save(self, path: str | None = None):

@@ -47,7 +47,7 @@ def refusal(**changes) -> FormError:
 
 def test_the_default_form_submits_the_default_settings():
     settings = settings_from_state(
-        FormState.from_form(FormData(FormState.default().to_pairs()))
+        FormState.from_form(FormData([*FormState.default().to_pairs()]))
     )
     assert settings == Settings()
 
@@ -78,13 +78,13 @@ def test_every_field_reaches_the_settings():
     )
     assert settings == Settings(
         par=70,
-        sources={US_ROM},
+        sources=frozenset({US_ROM}),
         allow_family_repeats=True,
         music="jp_france",
         clubs=ClubRules(
             max=10,
-            banned={Club.W1, Club.SW},
-            required_bag={Club.W3, Club.I5, Club.PW},
+            banned=frozenset({Club.W1, Club.SW}),
+            required_bag=frozenset({Club.W3, Club.I5, Club.PW}),
         ),
     )
 
@@ -97,7 +97,7 @@ def test_a_submission_round_trips_through_its_pairs():
         banned={"2I"},
         required_bag={"1W"},
     )
-    assert FormState.from_form(FormData(submitted.to_pairs())) == submitted
+    assert FormState.from_form(FormData([*submitted.to_pairs()])) == submitted
 
 
 def test_unknown_fields_and_blank_space_are_ignored():
@@ -110,7 +110,9 @@ def test_unknown_fields_and_blank_space_are_ignored():
             ("prng_seed", "x"),
         ]
     )
-    assert settings_from_state(FormState.from_form(form)) == Settings(sources={US_ROM})
+    assert settings_from_state(FormState.from_form(form)) == Settings(
+        sources=frozenset({US_ROM})
+    )
 
 
 def test_no_required_bag_checked_means_players_choose():
@@ -194,7 +196,7 @@ def test_a_download_submission_reads_name_clubs_and_rom_hashes():
     assert state == DownloadState(
         "luigi", {"1W", "PW"}, {US_ROM: US_SHA1, JP_ROM: JP_SHA1}
     )
-    assert DownloadState.from_form(FormData(state.to_pairs())) == state
+    assert DownloadState.from_form(FormData([*state.to_pairs()])) == state
 
 
 def test_the_download_default_is_the_vanilla_name_and_bag_without_banned_clubs():

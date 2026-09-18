@@ -57,11 +57,14 @@ def grid_report(ase, ragged, path, margin=1, zoom=12):
     colours = [(entry[0], entry[1], entry[2]) for entry in ase.palette]
     image = Image.new("RGB", ((x1 - x0) * scale, (y1 - y0) * scale))
     pixels = image.load()
+    assert pixels is not None
     for j in range((y1 - y0) * scale):
         for i in range((x1 - x0) * scale):
             pixels[i, j] = colours[flat[(y0 * scale + j) * ase.width + x0 * scale + i]]
 
-    big = image.resize((image.width * zoom, image.height * zoom), Image.NEAREST)
+    big = image.resize(
+        (image.width * zoom, image.height * zoom), Image.Resampling.NEAREST
+    )
     draw = ImageDraw.Draw(big)
     step = scale * zoom
     for i in range(0, big.width + 1, step):
@@ -96,6 +99,7 @@ def preview(result, reference, palette, path, scale=2):
     rendered = render_screen(reference, palette)
     image = Image.new("RGB", (SCREEN_COLS * 8, SCREEN_ROWS * 8))
     pixels = image.load()
+    assert pixels is not None
     for y, line in enumerate(rendered):
         for x, value in enumerate(line):
             pixels[x, y] = NES_SYSTEM_PALETTE[value & 0x3F]
@@ -110,7 +114,9 @@ def preview(result, reference, palette, path, scale=2):
                     colour & 0x3F
                 ]
 
-    image.resize((image.width * scale, image.height * scale), Image.NEAREST).save(path)
+    image.resize(
+        (image.width * scale, image.height * scale), Image.Resampling.NEAREST
+    ).save(path)
     print(f"\nwrote {path}")
 
 
@@ -183,7 +189,9 @@ def describe(result, reference, scale, ragged, free, args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
+    parser = argparse.ArgumentParser(
+        description=(__doc__ or "").strip().splitlines()[0]
+    )
     parser.add_argument("aseprite", help="the edited screen")
     parser.add_argument("--rom", default="nes_open_us.nes")
     parser.add_argument(

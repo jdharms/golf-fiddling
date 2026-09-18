@@ -122,6 +122,8 @@ class TransformTool:
 
     def _update_transform_preview(self, pos, context):
         """Update transform preview based on drag movement."""
+        if self.state.drag_start_pos is None or self.state.origin_tile is None:
+            return
         dx = pos[0] - self.state.drag_start_pos[0]
         dy = pos[1] - self.state.drag_start_pos[1]
 

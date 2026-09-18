@@ -240,7 +240,7 @@ class SelectionTool:
         sel_rect = self.state.get_selection_rect()
 
         if not sel_rect:
-            return ToolResult(handled=True, message="No selection to copy")
+            return ToolResult(is_handled=True, message="No selection to copy")
 
         # Create clipboard if it doesn't exist
         if context.state.clipboard is None:
@@ -255,23 +255,23 @@ class SelectionTool:
             width = context.state.clipboard.width
             height = context.state.clipboard.height
             return ToolResult(
-                handled=True, message=f"Copied {width}x{height} region to clipboard"
+                is_handled=True, message=f"Copied {width}x{height} region to clipboard"
             )
         else:
-            return ToolResult(handled=True, message="Failed to copy region")
+            return ToolResult(is_handled=True, message="Failed to copy region")
 
     def _cut_selection(self, context: ToolContext) -> ToolResult:
         """Copy selected region to clipboard and fill with default tile."""
         # First, copy
         copy_result = self._copy_selection(context)
 
-        if not copy_result.handled or "Failed" in copy_result.message:
+        if not copy_result.is_handled or "Failed" in (copy_result.message or ""):
             return copy_result
 
         # Then, delete (fill with default tile)
         sel_rect = self.state.get_selection_rect()
         if not sel_rect:
-            return ToolResult(handled=True, message="No selection to cut")
+            return ToolResult(is_handled=True, message="No selection to cut")
 
         # Push undo state before modification
         context.state.undo_manager.push_state(context.hole_data)
@@ -303,7 +303,7 @@ class SelectionTool:
         sel_rect = self.state.get_selection_rect()
 
         if not sel_rect:
-            return ToolResult(handled=True, message="No selection to delete")
+            return ToolResult(is_handled=True, message="No selection to delete")
 
         # Push undo state before modification
         context.state.undo_manager.push_state(context.hole_data)
@@ -333,12 +333,12 @@ class SelectionTool:
     def _start_paste(self, context: ToolContext) -> ToolResult:
         """Enter paste preview mode."""
         if context.state.clipboard is None or context.state.clipboard.is_empty():
-            return ToolResult(handled=True, message="Clipboard is empty")
+            return ToolResult(is_handled=True, message="Clipboard is empty")
 
         # Check mode compatibility
         if context.state.clipboard.mode != context.state.mode:
             return ToolResult(
-                handled=True,
+                is_handled=True,
                 message=f"Cannot paste {context.state.clipboard.mode} clipboard into {context.state.mode} mode",
             )
 
@@ -348,12 +348,13 @@ class SelectionTool:
 
         # Clear selection
         self.state.clear_selection()
-        context.highlight_state.selection_rect = None
+        if context.highlight_state:
+            context.highlight_state.selection_rect = None
 
         width = context.state.clipboard.width
         height = context.state.clipboard.height
         return ToolResult(
-            handled=True,
+            is_handled=True,
             message=f"Paste {width}x{height} region (click to place, Esc to cancel)",
         )
 
@@ -364,7 +365,7 @@ class SelectionTool:
         if context.state.clipboard is None or context.state.clipboard.is_empty():
             self.state.paste_mode = False
             context.state.paste_preview_active = False
-            return ToolResult(handled=True, message="Clipboard is empty")
+            return ToolResult(is_handled=True, message="Clipboard is empty")
 
         tile = view_state.screen_to_tile(pos)
         if not tile:
@@ -420,15 +421,17 @@ class SelectionTool:
         """Cancel paste mode."""
         self.state.paste_mode = False
         context.state.paste_preview_active = False
-        context.highlight_state.paste_preview_pos = None
+        if context.highlight_state:
+            context.highlight_state.paste_preview_pos = None
 
     def _clear_selection_or_paste(self, context: ToolContext) -> ToolResult:
         """Clear selection or cancel paste mode."""
         if self.state.paste_mode:
             self._cancel_paste(context)
-            return ToolResult(handled=True, message="Paste cancelled")
+            return ToolResult(is_handled=True, message="Paste cancelled")
         else:
             self.state.clear_selection()
-            context.highlight_state.selection_rect = None
-            context.highlight_state.selection_mode = None
-            return ToolResult(handled=True, message="Selection cleared")
+            if context.highlight_state:
+                context.highlight_state.selection_rect = None
+                context.highlight_state.selection_mode = None
+            return ToolResult(is_handled=True, message="Selection cleared")

@@ -46,13 +46,15 @@ class Config:
             value = environ.get(PREFIX + name.upper())
             return value if value else None
 
+        def get_path(name: str, default: Path) -> Path:
+            value = get(name)
+            return Path(value) if value else default
+
         defaults = cls()
         return cls(
             database=get("database") or defaults.database,
-            rom_dir=Path(get("rom_dir")) if get("rom_dir") else defaults.rom_dir,
-            holes_dir=Path(get("holes_dir"))
-            if get("holes_dir")
-            else defaults.holes_dir,
+            rom_dir=get_path("rom_dir", defaults.rom_dir),
+            holes_dir=get_path("holes_dir", defaults.holes_dir),
             base_url=get("base_url") or defaults.base_url,
             discord_client_id=get("discord_client_id"),
             discord_client_secret=get("discord_client_secret"),

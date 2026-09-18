@@ -51,6 +51,7 @@ class CategoryTree:
         parts = category_path.split("/")
         current_dict = self.root
         current_path_parts = []
+        node: CategoryNode | None = None
 
         for part in parts:
             current_path_parts.append(part)
@@ -63,7 +64,8 @@ class CategoryTree:
             node = current_dict[part]
             current_dict = node.children
 
-        # Add stamp to leaf node
+        # Add stamp to leaf node (split() always yields at least one part)
+        assert node is not None
         node.stamp_ids.append(stamp_id)
 
     def get_node(self, category_path: str) -> CategoryNode | None:
@@ -73,6 +75,7 @@ class CategoryTree:
 
         parts = category_path.split("/")
         current_dict = self.root
+        node = None
 
         for part in parts:
             if part not in current_dict:

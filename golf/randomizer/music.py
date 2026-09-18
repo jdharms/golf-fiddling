@@ -9,12 +9,13 @@ between the two ROMs (both have a $03), so a theme is always a ROM and an id tog
 import random
 from collections.abc import Mapping
 from dataclasses import dataclass
+from pathlib import Path
 
 from .catalog import JP_ROM, REPO_ROOT, US_ROM
 
 RANDOM = "random"
 
-MUSIC_DUMPS: Mapping[str, object] = {
+MUSIC_DUMPS: Mapping[str, Path] = {
     US_ROM: REPO_ROOT / "data" / "music" / "music_us_courses.json",
     JP_ROM: REPO_ROOT / "data" / "music" / "music_jp_courses.json",
 }

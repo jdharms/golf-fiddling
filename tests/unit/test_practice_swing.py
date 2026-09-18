@@ -18,6 +18,7 @@ from golf.core.patches.practice_swing import (
     TOGGLE_PRACTICE_ADDR,
     _hold_practice_swing,
 )
+from tests.prg_writer import PrgImageWriter
 
 # Free-space budgets, from docs/practice_swing.md
 BANK8_FREE = (0xBFE5, 14)
@@ -25,15 +26,8 @@ BANK13_FREE = (0xBFBF, 52)
 FIXED_FREE = (0xCAE4, 28)
 
 
-class MockRomWriter:
-    def __init__(self, data: bytes):
-        self.data = bytearray(data)
-
-    def read_prg(self, prg_offset: int, length: int) -> bytes:
-        return bytes(self.data[prg_offset : prg_offset + length])
-
-    def write_prg(self, prg_offset: int, data: bytes):
-        self.data[prg_offset : prg_offset + len(data)] = data
+class MockRomWriter(PrgImageWriter):
+    pass
 
 
 def make_vanilla_like_rom() -> MockRomWriter:

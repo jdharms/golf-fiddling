@@ -3,6 +3,7 @@
 import pygame
 
 from .base_tool import ToolContext, ToolResult
+from .row_operations_tool import RowOperationsTool
 
 
 class AddRowTool:
@@ -26,8 +27,10 @@ class AddRowTool:
     def on_activated(self, context: ToolContext):
         """Execute add row operation when activated."""
         # Get the row operations tool
-        row_ops = context.tool_manager.get_tool("row_operations")
-        if row_ops:
+        row_ops = context.tool_manager and context.tool_manager.get_tool(
+            "row_operations"
+        )
+        if isinstance(row_ops, RowOperationsTool):
             # This will push undo and modify terrain
             row_ops.add_row(context, at_top=False)
 

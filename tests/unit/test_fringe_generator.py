@@ -383,6 +383,12 @@ class TestFringeGeneratorOutput:
 # =============================================================================
 
 
+class RecordingGenerator(FringeGenerator):
+    """Keeps the raw neighbor data it was built from, for verification."""
+
+    _raw_neighbors: dict
+
+
 class TestFringeGeneratorCompatibility:
     """Tests verifying neighbor compatibility in generated output."""
 
@@ -394,7 +400,7 @@ class TestFringeGeneratorCompatibility:
         with open(data_file, "w") as f:
             json.dump(data, f)
 
-        gen = FringeGenerator()
+        gen = RecordingGenerator()
         gen.load_data(data_file)
         gen._raw_neighbors = data["neighbors"]  # Save for verification
         return gen

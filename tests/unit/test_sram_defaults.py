@@ -13,25 +13,20 @@ from golf.core.patches.sram_defaults import (
     parse_club,
     player_name_bytes,
 )
+from tests.prg_writer import PrgImageWriter
 
 
 def prg(cpu_addr: int) -> int:
     return rom_utils.cpu_to_prg_switched(cpu_addr, 9)
 
 
-class MockRomWriter:
+class MockRomWriter(PrgImageWriter):
     """A bare PRG image with every sub-patch's original bytes."""
 
     def __init__(self, patch):
-        self.data = bytearray(0x40000)
+        super().__init__()
         for leaf in patch.patches:
             self.write_prg(leaf.prg_offset, leaf.original)
-
-    def read_prg(self, prg_offset: int, length: int) -> bytes:
-        return bytes(self.data[prg_offset : prg_offset + length])
-
-    def write_prg(self, prg_offset: int, data: bytes):
-        self.data[prg_offset : prg_offset + len(data)] = data
 
 
 class TestClubs:

@@ -6,8 +6,13 @@ Cross-platform file dialog utilities using plyer with tkinter fallback.
 
 import os
 import sys
+from typing import cast
 
-from plyer import filechooser
+from plyer import filechooser as _filechooser
+from plyer.facades import FileChooser
+
+# plyer's proxy forwards to the platform's FileChooser but is untyped
+filechooser = cast(FileChooser, _filechooser)
 
 
 def get_app_directory() -> str:

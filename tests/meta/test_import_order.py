@@ -1,10 +1,12 @@
-"""Every golf and server module imports cleanly as the first thing a fresh interpreter loads.
+"""Every module in the repo's packages imports cleanly as the first thing a fresh
+interpreter loads.
 
 Within one pytest process, modules are already imported by the time most tests
 run, so a circular import that only bites when one particular module is imported
 *first* goes unnoticed (golf.formats.hole_data -> golf.core -> course_validation
 -> hole_data did, for the neighbor analyzers). Each module gets its own
-subprocess here.
+subprocess here. Running it also catches modules nothing else imports, such as
+editor.application, which no other test loads.
 """
 
 import subprocess
@@ -13,13 +15,14 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+PACKAGES = ("golf", "server", "editor", "tools")
 
 
-def _golf_modules() -> list[str]:
+def _modules() -> list[str]:
     modules = []
-    paths = sorted((ROOT / "golf").rglob("*.py")) + sorted(
-        (ROOT / "server").rglob("*.py")
-    )
+    paths = [
+        path for package in PACKAGES for path in sorted((ROOT / package).rglob("*.py"))
+    ]
     for path in paths:
         parts = path.relative_to(ROOT).with_suffix("").parts
         if parts[-1] == "__init__":
@@ -40,9 +43,9 @@ def _import_alone(module: str) -> tuple[str, str | None]:
     return module, result.stderr.strip().splitlines()[-1]
 
 
-def test_every_golf_module_imports_first():
-    modules = _golf_modules()
-    assert modules, "found no modules under golf/ or server/"
+def test_every_module_imports_first():
+    modules = _modules()
+    assert modules, f"found no modules under {', '.join(PACKAGES)}"
     with ThreadPoolExecutor(max_workers=8) as pool:
         failures = [(m, err) for m, err in pool.map(_import_alone, modules) if err]
     assert not failures, "\n".join(f"{m}: {err}" for m, err in failures)

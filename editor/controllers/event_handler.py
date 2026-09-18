@@ -131,7 +131,7 @@ class EventHandler:
                         event.key, modifiers, self.tool_context
                     )
                     self._process_tool_result(result)
-                    tool_handled = result.handled
+                    tool_handled = result.is_handled
 
                 # Only process global keys if tool didn't handle it
                 if not tool_handled:

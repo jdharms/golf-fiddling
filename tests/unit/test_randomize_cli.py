@@ -75,12 +75,16 @@ def test_every_generate_flag_lands_in_the_settings(tmp_path):
     assert settings == Settings(
         prng_seed="flags",
         par=70,
-        sources={US_ROM},
-        exclude_tags={"long", "scenic"},
+        sources=frozenset({US_ROM}),
+        exclude_tags=frozenset({"long", "scenic"}),
         allow_family_repeats=True,
         music="nes_uk",
         mercy_point=None,
-        clubs=ClubRules(max=10, banned={Club.W1}, required_bag={Club.W3, Club.PW}),
+        clubs=ClubRules(
+            max=10,
+            banned=frozenset({Club.W1}),
+            required_bag=frozenset({Club.W3, Club.PW}),
+        ),
     )
     assert load(path).course.par == 70
 

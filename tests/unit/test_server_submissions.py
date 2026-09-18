@@ -14,7 +14,7 @@ from golf.randomizer.manifest import Settings
 from server.db import Database
 from server.entries import load_entry, upsert_entry
 from server.rounds import RoundHole
-from server.seeds import MAX_QR_SEED_ID, insert_seed, load_seed
+from server.seeds import MAX_QR_SEED_ID, insert_seed
 from server.submissions import (
     MALFORMED,
     UNFINISHED,
@@ -23,6 +23,7 @@ from server.submissions import (
     submit_scan,
 )
 from server.users import sign_in
+from tests.unit.test_server_seeds import seed_row
 
 LUIGI = PlayerOptions("LUIGI", frozenset({Club.W1, Club.PW}))
 TOAD = PlayerOptions("TOAD", frozenset({Club.W3, Club.SW}))
@@ -54,7 +55,7 @@ class Player:
     ):
         self.user = sign_in(db, f"dev:{name}", name, global_name, None)
         self.entry = upsert_entry(db, seed_id, self.user.id, LUIGI)
-        self.qr_seed_id = load_seed(db, seed_id).qr_seed_id
+        self.qr_seed_id = seed_row(db, seed_id).qr_seed_id
 
     def payload(
         self, slot: int = 0, holes=HOLES, key: bytes | None = None, **changes
@@ -198,7 +199,7 @@ def test_a_payload_matching_no_entry_is_not_recognized(db, manifest, seed_id, al
             player_id=bob.player_id.to_bytes(4, "big")
         ),
         "entry on another seed": alice.scan(
-            seed_id=load_seed(db, other_seed).qr_seed_id.to_bytes(8, "big")
+            seed_id=seed_row(db, other_seed).qr_seed_id.to_bytes(8, "big")
         ),
         "wrong key": alice.scan(key=b"\x00" * 8),
     }

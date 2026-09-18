@@ -15,6 +15,7 @@ import json
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from golf.core.rom_reader import RomReader
 from golf.formats.hole_data import HoleData
@@ -70,19 +71,19 @@ class BuildContext:
         return self._reader
 
 
-def _no_report(params, patch) -> list[str]:
+def _no_report(params: object, patch: ROMPatch) -> list[str]:
     return []
 
 
 @dataclass(frozen=True)
-class PatchSpec:
+class PatchSpec[P, R: ROMPatch]:
     """One patch type: its id, parameters, factory and report."""
 
     id: str
     summary: str
-    params: type
-    build: Callable[[BuildContext, object], ROMPatch]
-    report: Callable[[object, ROMPatch], list[str]] = _no_report
+    params: type[P]
+    build: Callable[[BuildContext, P], R]
+    report: Callable[[P, R], list[str]] = _no_report
 
 
 # --- Parameters ---------------------------------------------------------------
@@ -179,7 +180,7 @@ class SramDefaultsParams:
 # --- Factories and reports ------------------------------------------------------
 
 
-def _build_course(ctx: BuildContext, params: CourseParams) -> ROMPatch:
+def _build_course(ctx: BuildContext, params: CourseParams) -> CoursePatch:
     if (params.course is None) == (params.holes is None):
         raise ValueError(
             "course takes exactly one of 'course' (a directory) or 'holes' (18 files)"
@@ -187,6 +188,7 @@ def _build_course(ctx: BuildContext, params: CourseParams) -> ROMPatch:
     if params.holes is not None:
         files = params.holes
     else:
+        assert params.course is not None
         files = [params.course / f"hole_{number:02d}.json" for number in range(1, 19)]
     holes = []
     for path in files:
@@ -308,11 +310,11 @@ def _report_sram_defaults(params: SramDefaultsParams, patch) -> list[str]:
     ]
 
 
-def _fixed(patch: ROMPatch) -> Callable[[BuildContext, object], ROMPatch]:
+def _fixed[R: ROMPatch](patch: R) -> Callable[[BuildContext, NoParams], R]:
     return lambda ctx, params: patch
 
 
-PATCH_SPECS: dict[str, PatchSpec] = {
+PATCH_SPECS: dict[str, PatchSpec[Any, Any]] = {
     spec.id: spec
     for spec in [
         PatchSpec(

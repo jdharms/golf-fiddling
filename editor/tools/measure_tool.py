@@ -64,7 +64,7 @@ class MeasureTool:
             self.points.clear()
             self.preview_point = None
             message = self._get_status_message()
-            return ToolResult(handled=True, message=message)
+            return ToolResult(is_handled=True, message=message)
 
         # Only handle left click
         if button != 1:
@@ -94,7 +94,7 @@ class MeasureTool:
 
         # Return status message with cumulative distance
         message = self._get_status_message()
-        return ToolResult(handled=True, message=message)
+        return ToolResult(is_handled=True, message=message)
 
     def handle_mouse_up(self, pos, button, context):
         """Handle mouse release - not used by measure tool."""

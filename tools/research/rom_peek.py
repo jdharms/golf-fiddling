@@ -136,7 +136,11 @@ def cmd_find(reader: RomReader, args, labels: LabelStore | None) -> None:
             if args.follow == 2:
                 ptr = follow_bytes[0] | (follow_bytes[1] << 8)
                 line += f"  follow=${ptr:04X}"
-                if flag_low is not None and flag_low <= ptr <= flag_high:
+                if (
+                    flag_low is not None
+                    and flag_high is not None
+                    and flag_low <= ptr <= flag_high
+                ):
                     line += "  <-- in flagged range"
             else:
                 line += f"  follow={follow_bytes.hex(' ').upper()}"

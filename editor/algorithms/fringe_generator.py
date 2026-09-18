@@ -178,9 +178,11 @@ def compute_interior_side(
         is_right_turn = cross > 0
 
         # Build edge sets
-        path_edges = tuple(sorted([to_prev, to_next]))
-        all_dirs = set(DIRECTIONS)
-        non_path_edges = tuple(sorted(all_dirs - set(path_edges)))
+        first, second = sorted([to_prev, to_next])
+        path_edges = (first, second)
+        all_dirs: set[str] = set(DIRECTIONS)
+        third, fourth = sorted(all_dirs - set(path_edges))
+        non_path_edges = (third, fourth)
 
         # Determine if corner is convex or concave from interior's perspective
         # Convex: interior bulges into this corner (like rectangle corner)

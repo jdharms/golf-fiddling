@@ -127,7 +127,7 @@ def placeholder_offset(symbol: str) -> int:
     return _prg_offset(port.build().symbol(symbol), QR_BANK)
 
 
-def qr_credentials_patch(credentials: QrCredentials) -> CompositePatch:
+def qr_credentials_patch(credentials: QrCredentials) -> CompositePatch[BytePatch]:
     """Write `credentials` over the fill `scorecard_qr` left in its placeholders."""
     values = {
         "seed_id": credentials.seed_id,

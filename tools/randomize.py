@@ -181,6 +181,7 @@ def cmd_build(args: argparse.Namespace) -> int:
     if args.unfinished:
         stage, rom, patch = "unfinished", unfinished.rom, unfinished.ips
     else:
+        assert options is not None
         finished = finish(manifest, vanilla, unfinished.ips, options, credentials)
         stage = "finished, signed in" if credentials is not None else "finished, guest"
         rom, patch = finished.rom, finished.ips
@@ -219,7 +220,7 @@ def cmd_show(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description=__doc__.strip().splitlines()[2],
+        description=(__doc__ or "").strip().splitlines()[2],
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=EXAMPLES,
     )

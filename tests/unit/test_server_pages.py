@@ -76,7 +76,9 @@ def test_listed_pages_are_enabled_and_sorted_for_display(tmp_path):
     )
     catalog = PageCatalog.load(tmp_path)
     assert [page.slug for page in catalog.listed] == ["alpha", "zulu", "later"]
-    assert catalog.get("unlisted").slug == "unlisted"
+    unlisted = catalog.get("unlisted")
+    assert unlisted is not None
+    assert unlisted.slug == "unlisted"
     assert catalog.get("disabled") is None
     assert catalog.get("missing") is None
 

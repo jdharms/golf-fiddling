@@ -301,7 +301,7 @@ def scorecard_course_name_patches(
 
 def scorecard_course_name_patch(
     name: str = DEFAULT_NAME, title: str | None = None
-) -> CompositePatch:
+) -> CompositePatch[BytePatch]:
     description = (
         f"Show {course_name_text(name)!r} on the scorecard for every course slot"
     )

@@ -85,11 +85,8 @@ class ToolManager:
 
         # Check if this is an action tool (has an is_action_tool attribute)
         # We check for the method dynamically to avoid protocol changes
-        is_action = (
-            hasattr(tool, "is_action_tool")
-            and callable(tool.is_action_tool)
-            and tool.is_action_tool()
-        )
+        is_action_tool = getattr(tool, "is_action_tool", None)
+        is_action = callable(is_action_tool) and is_action_tool()
 
         if is_action:
             # Execute action tool without changing active tool

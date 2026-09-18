@@ -63,7 +63,7 @@ def rect_list(rom, bank, cpu_addr, vram, fill=0x02):
         o += 4
 
 
-def build(rom, chr_table, nt_table):
+def build(rom, chr_table: tuple[int, int], nt_table: tuple[int, int]):
     vram = VideoMemory()
     load_graphics_table(rom, *FONT_CHR, vram)
     load_graphics_table(rom, *chr_table, vram)
@@ -86,6 +86,7 @@ def render(rom, vram, out_path):
     pal = rom.read_switched(PALETTE[1], PALETTE[0], 32)
     img = Image.new("RGB", (256, 240))
     px = img.load()
+    assert px is not None
     for ty in range(30):
         base = 0x0000 if ty < SPLIT_ROW else 0x1000
         for tx in range(32):
@@ -99,7 +100,7 @@ def render(rom, vram, out_path):
                     value = rows[y][x]
                     nes = pal[0] if value == 0 else pal[palette_index * 4 + value]
                     px[tx * 8 + x, ty * 8 + y] = NES_SYSTEM_PALETTE[nes & 0x3F]
-    img.resize((512, 480), Image.NEAREST).save(out_path)
+    img.resize((512, 480), Image.Resampling.NEAREST).save(out_path)
     print("wrote", out_path)
 
 

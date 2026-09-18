@@ -7,8 +7,11 @@ from golf.core.patches import (
     ATTR_STREAMING_PATCH,
     COURSE_MIRRORS_PATCH,
     MULTI_BANK_CODE_PATCH,
+    BytePatch,
+    CompositePatch,
     CoursePatch,
     PatchError,
+    ROMPatch,
 )
 from golf.core.patches.course import (
     BANK_TABLE_CPU_ADDR,
@@ -24,32 +27,25 @@ from golf.core.patches.course import (
 )
 from golf.core.rom_writer import BankOverflowError
 from golf.formats.hole_data import HoleData
+from tests.prg_writer import PrgImageWriter
 
 
-def leaf_patches(patch):
+def leaf_patches(patch: ROMPatch) -> list[BytePatch]:
     """A patch's BytePatches, flattening composites."""
-    if hasattr(patch, "patches"):
+    if isinstance(patch, CompositePatch):
         return [leaf for sub in patch.patches for leaf in leaf_patches(sub)]
+    assert isinstance(patch, BytePatch)
     return [patch]
 
 
-class MockRomWriter:
+class MockRomWriter(PrgImageWriter):
     """A bare PRG image with every required patch's sites holding original bytes."""
 
     def __init__(self, size: int = 0x40000):
-        self.data = bytearray(size)
+        super().__init__(bytes(size))
         for required in CoursePatch.requires:
             for leaf in leaf_patches(required):
                 self.write_prg(leaf.prg_offset, leaf.original)
-
-    def read_prg(self, prg_offset: int, length: int) -> bytes:
-        return bytes(self.data[prg_offset : prg_offset + length])
-
-    def write_prg(self, prg_offset: int, data: bytes):
-        self.data[prg_offset : prg_offset + len(data)] = data
-
-    def annotate(self, description: str) -> "MockRomWriter":
-        return self
 
 
 def rom_with_requirements() -> MockRomWriter:
@@ -59,7 +55,7 @@ def rom_with_requirements() -> MockRomWriter:
     return rom
 
 
-class MockHoleData:
+class MockHoleData(HoleData):
     """A hole of a single terrain tile and a single greens tile."""
 
     def __init__(self, terrain_height: int = 32):

@@ -100,13 +100,13 @@ class TestPositionToolCycling:
 
         # Tab to position 1 (green)
         result = position_tool.handle_key_down(pygame.K_TAB, 0, mock_context)
-        assert result.handled
+        assert result.is_handled
         assert position_tool.selected_position_index == 1
         assert mock_context.highlight_state.position_tool_selected == "green"
 
         # Tab wraps to position 0 (tee)
         result = position_tool.handle_key_down(pygame.K_TAB, 0, mock_context)
-        assert result.handled
+        assert result.is_handled
         assert position_tool.selected_position_index == 0
         assert mock_context.highlight_state.position_tool_selected == "tee"
 
@@ -119,7 +119,7 @@ class TestPositionToolCycling:
         expected_positions = ["flag1", "flag2", "flag3", "flag4", "flag1"]
         for i, expected in enumerate(expected_positions[1:], 1):
             result = position_tool.handle_key_down(pygame.K_TAB, 0, mock_context)
-            assert result.handled
+            assert result.is_handled
             assert position_tool.selected_position_index == i % 4
             assert mock_context.highlight_state.position_tool_selected == expected
 
@@ -133,13 +133,13 @@ class TestPositionToolCycling:
 
         # [ wraps to position 1 (green)
         result = position_tool.handle_key_down(pygame.K_LEFTBRACKET, 0, mock_context)
-        assert result.handled
+        assert result.is_handled
         assert position_tool.selected_position_index == 1
         assert mock_context.highlight_state.position_tool_selected == "green"
 
         # [ cycles to position 0 (tee)
         result = position_tool.handle_key_down(pygame.K_LEFTBRACKET, 0, mock_context)
-        assert result.handled
+        assert result.is_handled
         assert position_tool.selected_position_index == 0
         assert mock_context.highlight_state.position_tool_selected == "tee"
 
@@ -152,7 +152,7 @@ class TestPositionToolCycling:
         result = position_tool.handle_key_down(
             pygame.K_TAB, pygame.KMOD_SHIFT, mock_context
         )
-        assert result.handled
+        assert result.is_handled
         assert position_tool.selected_position_index == 1
         assert mock_context.highlight_state.position_tool_selected == "green"
 
@@ -163,7 +163,7 @@ class TestPositionToolCycling:
 
         # ] cycles forward
         result = position_tool.handle_key_down(pygame.K_RIGHTBRACKET, 0, mock_context)
-        assert result.handled
+        assert result.is_handled
         assert position_tool.selected_position_index == 1
         assert mock_context.highlight_state.position_tool_selected == "green"
 
@@ -248,7 +248,7 @@ class TestPositionToolModeChange:
         assert mock_context.highlight_state.position_tool_selected == "flag2"
         # Should sync to flag2 (index 1)
         mock_context.select_flag.assert_called_once_with(1)
-        assert result.handled
+        assert result.is_handled
 
     def test_mode_change_from_greens_to_terrain_out_of_bounds(
         self, position_tool, mock_context
@@ -272,7 +272,7 @@ class TestPositionToolModeChange:
         # Position 2 is out of bounds in terrain (only 0,1 valid)
         assert position_tool.selected_position_index == 0
         assert mock_context.highlight_state.position_tool_selected == "tee"
-        assert result.handled
+        assert result.is_handled
 
     def test_mode_change_from_terrain_to_greens_at_position_zero(
         self, position_tool, mock_context
@@ -305,7 +305,7 @@ class TestPositionToolModeChange:
         result = position_tool.update(mock_context)
 
         # Should return not_handled (fast path)
-        assert not result.handled
+        assert not result.is_handled
         mock_context.select_flag.assert_not_called()
 
     def test_mode_tracker_updated_after_correction(self, position_tool, mock_context):
@@ -468,7 +468,7 @@ class TestPositionToolHandleKeyDown:
         result = position_tool.handle_key_down(pygame.K_TAB, 0, mock_context)
 
         # After validation and Tab, should be at position 1 (green)
-        assert result.handled
+        assert result.is_handled
         assert position_tool.selected_position_index == 1
         assert mock_context.highlight_state.position_tool_selected == "green"
 
