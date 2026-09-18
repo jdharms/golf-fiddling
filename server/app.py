@@ -96,9 +96,13 @@ SIGN_IN_EXPIRED = "expired"
 SIGN_IN_UNAVAILABLE = "unavailable"
 
 
-def json_refusal(status_code: int, reason: str, values: dict | None = None) -> JSONResponse:
+def json_refusal(
+    status_code: int, reason: str, values: dict | None = None
+) -> JSONResponse:
     """A download refusal: download.js shows the notice for `error`, filled from `values`."""
-    return JSONResponse({"error": reason, "values": values or {}}, status_code=status_code)
+    return JSONResponse(
+        {"error": reason, "values": values or {}}, status_code=status_code
+    )
 
 
 def create_app(
@@ -120,7 +124,9 @@ def create_app(
     config = config if config is not None else Config.from_env()
     config.validate()
     if discord is None and config.discord_enabled:
-        discord = DiscordClient(config.discord_client_id or "", config.discord_client_secret or "")
+        discord = DiscordClient(
+            config.discord_client_id or "", config.discord_client_secret or ""
+        )
     strings = strings if strings is not None else Strings.load()
     pages = pages if pages is not None else PageCatalog.load()
 
@@ -130,17 +136,27 @@ def create_app(
         try:
             db.migrate()
             app.state.db = db
-            app.state.builder = builder if builder is not None else SeedBuilder.from_config(config)
+            app.state.builder = (
+                builder if builder is not None else SeedBuilder.from_config(config)
+            )
             yield
         finally:
             db.close()
 
-    app = FastAPI(title="NES Open Randomizer", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+    app = FastAPI(
+        title="NES Open Randomizer",
+        lifespan=lifespan,
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
+    )
     app.state.config = config
     app.state.strings = strings
     app.state.pages = pages
     app.state.rate_limiter = (
-        rate_limiter if rate_limiter is not None else RateLimiter(GENERATE_CAPACITY, GENERATE_REFILL_SECONDS)
+        rate_limiter
+        if rate_limiter is not None
+        else RateLimiter(GENERATE_CAPACITY, GENERATE_REFILL_SECONDS)
     )
     app.state.discord = discord
     # Without a configured secret (development and tests; validate() insists on one for
@@ -165,7 +181,9 @@ def create_app(
             "content_pages": pages.listed,
         }
 
-    templates = Jinja2Templates(directory=TEMPLATES_DIR, context_processors=[sign_in_context])
+    templates = Jinja2Templates(
+        directory=TEMPLATES_DIR, context_processors=[sign_in_context]
+    )
     templates.env.globals["t"] = strings.html
     templates.env.globals["t_plain"] = strings.plain
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -178,10 +196,7 @@ def create_app(
     async def http_error(request: Request, exc: StarletteHTTPException) -> Response:
         if exc.status_code == 404 and not request.url.path.endswith(MACHINE_SUFFIXES):
             return templates.TemplateResponse(
-                request,
-                "not_found.html",
-                {"page": None},
-                status_code=404
+                request, "not_found.html", {"page": None}, status_code=404
             )
         return await http_exception_handler(request, exc)
 
@@ -205,7 +220,11 @@ def create_app(
         return templates.TemplateResponse(
             request,
             "rom.html",
-            {"page": "rom", "roms": VANILLA_ROMS, "rom_strings": strings.for_script(ROM_SCRIPT_STRINGS)},
+            {
+                "page": "rom",
+                "roms": VANILLA_ROMS,
+                "rom_strings": strings.for_script(ROM_SCRIPT_STRINGS),
+            },
         )
 
     @app.get("/rangefinder", response_class=HTMLResponse)
@@ -249,7 +268,9 @@ def create_app(
         try:
             settings = settings_from_state(state)
         except FormError as problem:
-            return generate_page(request, state, problem.reason, problem.values, status_code=400)
+            return generate_page(
+                request, state, problem.reason, problem.values, status_code=400
+            )
 
         user = current_user(request)
         user_id = user.id if user is not None else None
@@ -328,13 +349,17 @@ def create_app(
             entry = upsert_entry(db, row.id, user.id, options)
             credentials = credentials_for(row.qr_seed_id, user.player_id, entry.keys)
         try:
-            patch = await run_in_threadpool(seed_builder.finish, manifest, unfinished_ips, options, credentials)
+            patch = await run_in_threadpool(
+                seed_builder.finish, manifest, unfinished_ips, options, credentials
+            )
         except BuilderUnavailableError:
             return json_refusal(503, UNAVAILABLE)
         return Response(
             patch,
             media_type="application/octet-stream",
-            headers={"Content-Disposition": f'attachment; filename="{download_stem(row)}.ips"'},
+            headers={
+                "Content-Disposition": f'attachment; filename="{download_stem(row)}.ips"'
+            },
         )
 
     @app.get("/s/{scan}", response_class=HTMLResponse)
@@ -369,20 +394,28 @@ def create_app(
             raise not_found()
         row = load_seed(db, found.seed_id)
         player = load_user(db, found.user_id)
-        if row is None or player is None:  # pragma: no cover - seeds and users are never deleted
+        if (
+            row is None or player is None
+        ):  # pragma: no cover - seeds and users are never deleted
             raise not_found()
         if isinstance(found, VoidedRound):
             return templates.TemplateResponse(
                 request,
                 "round_voided.html",
-                {"page": None, "voided": voided_round_view(row, found, player.display_name)},
+                {
+                    "page": None,
+                    "voided": voided_round_view(row, found, player.display_name),
+                },
                 status_code=410,
             )
         recorded = RECORDED in request.query_params
         return templates.TemplateResponse(
             request,
             "round.html",
-            {"page": None, "round": round_view(row, found, player.display_name, recorded)},
+            {
+                "page": None,
+                "round": round_view(row, found, player.display_name, recorded),
+            },
         )
 
     @app.get("/me", response_class=HTMLResponse)
@@ -396,19 +429,30 @@ def create_app(
         return templates.TemplateResponse(
             request,
             "me.html",
-            {"page": "me", "entries": entries_for_user(db, user.id), "rounds": rounds_for_user(db, user.id)},
+            {
+                "page": "me",
+                "entries": entries_for_user(db, user.id),
+                "rounds": rounds_for_user(db, user.id),
+            },
         )
 
     def sign_in_failed(request: Request, reason: str, status_code: int):
         return templates.TemplateResponse(
-            request, "sign_in_failed.html", {"page": None, "reason": reason}, status_code=status_code
+            request,
+            "sign_in_failed.html",
+            {"page": None, "reason": reason},
+            status_code=status_code,
         )
 
     def redirect_uri() -> str:
         return config.base_url.rstrip("/") + "/auth/callback"
 
     @app.get("/auth/login")
-    def auth_login(request: Request, next: str | None = None, as_: str | None = Query(None, alias="as")):
+    def auth_login(
+        request: Request,
+        next: str | None = None,
+        as_: str | None = Query(None, alias="as"),
+    ):
         if not config.sign_in_enabled:
             raise not_found()
         return_to = safe_next(next)
@@ -416,18 +460,25 @@ def create_app(
             name = as_ if as_ is not None else DEFAULT_DEV_NAME
             if not DEV_NAME.fullmatch(name):
                 raise HTTPException(status_code=400)
-            user = sign_in(request.app.state.db, DEV_DISCORD_PREFIX + name, name, None, None)
+            user = sign_in(
+                request.app.state.db, DEV_DISCORD_PREFIX + name, name, None, None
+            )
             start_session(request, user)
             return RedirectResponse(return_to, status_code=303)
         state = secrets.token_urlsafe(32)
         request.session[SESSION_STATE] = state
         request.session[SESSION_NEXT] = return_to
         discord_client: DiscordClient = request.app.state.discord
-        return RedirectResponse(discord_client.authorize_url(state, redirect_uri()), status_code=303)
+        return RedirectResponse(
+            discord_client.authorize_url(state, redirect_uri()), status_code=303
+        )
 
     @app.get("/auth/callback")
     async def auth_callback(
-        request: Request, code: str | None = None, state: str | None = None, error: str | None = None
+        request: Request,
+        code: str | None = None,
+        state: str | None = None,
+        error: str | None = None,
     ):
         discord_client: DiscordClient | None = request.app.state.discord
         if config.dev_login or discord_client is None:
@@ -443,7 +494,13 @@ def create_app(
             identity = await discord_client.identify(code, redirect_uri())
         except DiscordError:
             return sign_in_failed(request, SIGN_IN_UNAVAILABLE, 502)
-        user = sign_in(request.app.state.db, identity.id, identity.username, identity.global_name, identity.avatar)
+        user = sign_in(
+            request.app.state.db,
+            identity.id,
+            identity.username,
+            identity.global_name,
+            identity.avatar,
+        )
         start_session(request, user)
         return RedirectResponse(return_to, status_code=303)
 
@@ -452,7 +509,10 @@ def create_app(
         form = await request.form()
         next_value = form.get("next")
         request.session.clear()
-        return RedirectResponse(safe_next(next_value if isinstance(next_value, str) else None), status_code=303)
+        return RedirectResponse(
+            safe_next(next_value if isinstance(next_value, str) else None),
+            status_code=303,
+        )
 
     @app.get("/healthz")
     def healthz(request: Request) -> dict[str, str]:

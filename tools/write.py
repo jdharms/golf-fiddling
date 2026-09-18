@@ -63,8 +63,12 @@ def print_stats(stats: CourseWriteStats) -> None:
         print(f"  Bank {bank}: {used:,} / {capacity:,} bytes ({pct:.1f}%)")
 
     total_capacity = sum(stats.bank_capacity.values())
-    total_pct = (stats.total_terrain_bytes / total_capacity * 100) if total_capacity > 0 else 0
-    print(f"  Total:  {stats.total_terrain_bytes:,} / {total_capacity:,} bytes ({total_pct:.1f}%)")
+    total_pct = (
+        (stats.total_terrain_bytes / total_capacity * 100) if total_capacity > 0 else 0
+    )
+    print(
+        f"  Total:  {stats.total_terrain_bytes:,} / {total_capacity:,} bytes ({total_pct:.1f}%)"
+    )
     print()
     print(f"Greens: {stats.total_greens_bytes:,} bytes")
 
@@ -99,7 +103,9 @@ Examples:
     )
 
     parser.add_argument("rom_file", help="Source ROM file (read-only)")
-    parser.add_argument("course_dir", help="Course directory (hole_01.json-hole_18.json)")
+    parser.add_argument(
+        "course_dir", help="Course directory (hole_01.json-hole_18.json)"
+    )
     parser.add_argument(
         "-o",
         "--output",
@@ -159,7 +165,9 @@ Examples:
 
         if args.validate_only:
             if not requirements_ok:
-                print("Validation FAILED: a required patch cannot be applied to this ROM")
+                print(
+                    "Validation FAILED: a required patch cannot be applied to this ROM"
+                )
                 sys.exit(1)
             print("Validation PASSED - course will fit in ROM")
             sys.exit(0)

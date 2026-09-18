@@ -29,8 +29,12 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    parser.add_argument("-o", "--output", type=Path, required=True, help="credentials file to write")
-    parser.add_argument("--seed-id", help=f"{payload.SEED_ID_LEN}-byte seed ID as hex (default: random)")
+    parser.add_argument(
+        "-o", "--output", type=Path, required=True, help="credentials file to write"
+    )
+    parser.add_argument(
+        "--seed-id", help=f"{payload.SEED_ID_LEN}-byte seed ID as hex (default: random)"
+    )
     parser.add_argument(
         "--player-id",
         action="append",
@@ -45,7 +49,9 @@ def main() -> int:
         metavar="HEX",
         help=f"{payload.KEY_LEN}-byte MAC key, once per slot (default: random)",
     )
-    parser.add_argument("--rng-seed", type=int, help="seed the RNG, for reproducible credentials")
+    parser.add_argument(
+        "--rng-seed", type=int, help="seed the RNG, for reproducible credentials"
+    )
     args = parser.parse_args()
 
     def hex_bytes(text: str, length: int, label: str) -> bytes:
@@ -66,7 +72,9 @@ def main() -> int:
     for slot, value in enumerate(args.key[:2]):
         keys[slot] = hex_bytes(value, payload.KEY_LEN, "--key")
     credentials = QrCredentials(
-        seed_id=hex_bytes(args.seed_id, payload.SEED_ID_LEN, "--seed-id") if args.seed_id else drawn.seed_id,
+        seed_id=hex_bytes(args.seed_id, payload.SEED_ID_LEN, "--seed-id")
+        if args.seed_id
+        else drawn.seed_id,
         player_ids=(player_ids[0], player_ids[1]),
         keys=(keys[0], keys[1]),
     )

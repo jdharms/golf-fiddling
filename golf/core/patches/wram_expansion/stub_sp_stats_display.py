@@ -61,12 +61,18 @@ STUB_SP_STATS_DISPLAY_PATCH = BytePatch(
     ),
     patched=bytes(
         [
-            0xA9, 0x93,  # LDA #$93
-            0x85, 0x22,  # STA $22       ; SramPtr lo
-            0xA9, 0xCA,  # LDA #$CA
-            0x85, 0x23,  # STA $23       ; SramPtr hi
-            0x60,        # RTS
-            0xEA, 0xEA, 0xEA,  # NOP x3  ; padding, keeps the 12-byte slot intact
+            0xA9,
+            0x93,  # LDA #$93
+            0x85,
+            0x22,  # STA $22       ; SramPtr lo
+            0xA9,
+            0xCA,  # LDA #$CA
+            0x85,
+            0x23,  # STA $23       ; SramPtr hi
+            0x60,  # RTS
+            0xEA,
+            0xEA,
+            0xEA,  # NOP x3  ; padding, keeps the 12-byte slot intact
         ]
     ),
 )

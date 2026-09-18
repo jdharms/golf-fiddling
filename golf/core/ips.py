@@ -46,7 +46,9 @@ def diff(base: bytes, patched: bytes) -> bytes:
             "diff only supports same-size files"
         )
     if len(patched) > MAX_OFFSET + 1:
-        raise ValueError(f"files over {MAX_OFFSET + 1} bytes cannot be addressed by IPS")
+        raise ValueError(
+            f"files over {MAX_OFFSET + 1} bytes cannot be addressed by IPS"
+        )
 
     out = bytearray(HEADER)
     for start, end in _changed_spans(base, patched):
@@ -170,4 +172,8 @@ def _records(data: bytes, offset: int, value: int | None, length: int) -> bytes:
 
 
 def _literal(data: bytes, offset: int, count: int) -> bytes:
-    return offset.to_bytes(3, "big") + count.to_bytes(2, "big") + data[offset : offset + count]
+    return (
+        offset.to_bytes(3, "big")
+        + count.to_bytes(2, "big")
+        + data[offset : offset + count]
+    )

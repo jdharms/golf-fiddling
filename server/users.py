@@ -19,7 +19,9 @@ INSERT_ATTEMPTS = 10
 #: the largest player_id, and the bound migration 2's CHECK holds the column to
 MAX_PLAYER_ID = 2**32 - 1
 
-COLUMNS = "id, discord_id, username, global_name, avatar, player_id, created_at, last_login"
+COLUMNS = (
+    "id, discord_id, username, global_name, avatar, player_id, created_at, last_login"
+)
 
 
 class PlayerIdExhaustedError(RuntimeError):
@@ -95,7 +97,15 @@ def sign_in(
                         VALUES (?, ?, ?, ?, ?, ?, ?)
                         RETURNING """
                         + COLUMNS,
-                        (discord_id, username, global_name, avatar, draw(), signed_in_at, signed_in_at),
+                        (
+                            discord_id,
+                            username,
+                            global_name,
+                            avatar,
+                            draw(),
+                            signed_in_at,
+                            signed_in_at,
+                        ),
                     ).fetchall()
         except sqlite3.IntegrityError as problem:
             if _is_player_id_collision(problem):
@@ -108,5 +118,7 @@ def sign_in(
 
 def load_user(db: Database, user_id: int) -> User | None:
     with db.transaction() as conn:
-        row = conn.execute(f"SELECT {COLUMNS} FROM users WHERE id = ?", (user_id,)).fetchone()
+        row = conn.execute(
+            f"SELECT {COLUMNS} FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
     return None if row is None else _user(row)

@@ -160,7 +160,9 @@ class TestToolHotkeys:
                 # Verify forest fill is active
                 active_tool = tool_manager.get_active_tool()
                 forest_fill_tool = tool_manager.get_tool("forest_fill")
-                assert active_tool is forest_fill_tool, f"Forest fill should be active in {mode} mode"
+                assert active_tool is forest_fill_tool, (
+                    f"Forest fill should be active in {mode} mode"
+                )
 
     def test_unknown_hotkey_not_handled(self, mock_pygame, event_handler):
         """Unknown hotkey should not be handled by global handler."""

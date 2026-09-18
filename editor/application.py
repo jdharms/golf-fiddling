@@ -102,7 +102,9 @@ class EditorApplication:
         try:
             from golf.core.neighbor_validator import TerrainNeighborValidator
 
-            neighbors_path = str(get_resource_path("data/tables/terrain_neighbors.json"))
+            neighbors_path = str(
+                get_resource_path("data/tables/terrain_neighbors.json")
+            )
             self.terrain_neighbor_validator = TerrainNeighborValidator(neighbors_path)
         except FileNotFoundError:
             print(
@@ -112,7 +114,6 @@ class EditorApplication:
         except Exception as e:
             print(f"Warning: Failed to load neighbor validator: {e}")
             self.terrain_neighbor_validator = None
-
 
         # Load Forest Filler algorithm
         self.forest_filler = BetterForestFiller()
@@ -235,7 +236,9 @@ class EditorApplication:
         self.event_handler.tool_context.tool_manager = self.tool_manager
         self.event_handler.tool_context.highlight_state = self.highlight_state
         self.event_handler.tool_context.stamp_library = self.stamp_library
-        self.event_handler.tool_context._on_revert_to_previous_tool = self._revert_to_previous_tool
+        self.event_handler.tool_context._on_revert_to_previous_tool = (
+            self._revert_to_previous_tool
+        )
         self.event_handler.tool_context._on_select_flag = self._select_flag
 
         # Activate paint tool now that we have context
@@ -268,7 +271,10 @@ class EditorApplication:
         self.state.set_mode(mode)
 
         # If switching to terrain mode with carpet_paint active, switch to paint tool
-        if mode == "terrain" and self.tool_manager.get_active_tool_name() == "carpet_paint":
+        if (
+            mode == "terrain"
+            and self.tool_manager.get_active_tool_name() == "carpet_paint"
+        ):
             self.tool_manager.set_active_tool("paint", self.event_handler.tool_context)
             self.tool_picker.selected_tool = "paint"
 
@@ -284,7 +290,9 @@ class EditorApplication:
         else:
             # Called from picker or hotkey - activate tool
             current_tool = self.tool_manager.active_tool_name
-            self.tool_manager.set_active_tool(tool_name, self.event_handler.tool_context)
+            self.tool_manager.set_active_tool(
+                tool_name, self.event_handler.tool_context
+            )
 
             # Check if this was an action tool (active tool didn't change)
             if self.tool_manager.active_tool_name == current_tool:
@@ -342,7 +350,6 @@ class EditorApplication:
         for i, btn in enumerate(palette_buttons, start=1):
             btn.active = i == self.state.selected_palette
 
-
     def _process_tool_result(self, result):
         """Process a tool result (same logic as EventHandler._process_tool_result)."""
         if result.terrain_modified:
@@ -384,7 +391,7 @@ class EditorApplication:
 
     def _on_load_file(self, path: str):
         """Load a hole file from a specific path (e.g., drag-and-drop)."""
-        if not path.lower().endswith('.json'):
+        if not path.lower().endswith(".json"):
             return
         self.load_hole(path)
         # Invalidate cache when loading new hole
@@ -413,12 +420,14 @@ class EditorApplication:
         self.toolbar.resize(width)
 
         # Resize tool picker (right sidebar)
-        self.tool_picker.resize(Rect(
-            width - TOOL_PICKER_WIDTH,
-            TOOLBAR_HEIGHT,
-            TOOL_PICKER_WIDTH,
-            height - TOOLBAR_HEIGHT - STATUS_HEIGHT,
-        ))
+        self.tool_picker.resize(
+            Rect(
+                width - TOOL_PICKER_WIDTH,
+                TOOLBAR_HEIGHT,
+                TOOL_PICKER_WIDTH,
+                height - TOOLBAR_HEIGHT - STATUS_HEIGHT,
+            )
+        )
 
         self.event_handler.update_screen_size(width, height)
 
@@ -475,7 +484,10 @@ class EditorApplication:
 
         # Check for active selection first (preferred)
         clipboard_data = None
-        if self.highlight_state.selection_rect and self.highlight_state.selection_mode == self.state.mode:
+        if (
+            self.highlight_state.selection_rect
+            and self.highlight_state.selection_mode == self.state.mode
+        ):
             # Create ClipboardData from active selection
             # Convert from (row, col, width, height) to (start_row, start_col, end_row, end_col)
             row, col, width, height = self.highlight_state.selection_rect
@@ -491,11 +503,15 @@ class EditorApplication:
             # Fall back to clipboard if no active selection
             clipboard_data = self.state.clipboard
         else:
-            print("No selection to create stamp from - use Selection tool to select a region first")
+            print(
+                "No selection to create stamp from - use Selection tool to select a region first"
+            )
             return
 
         # Get appropriate tileset based on mode
-        tileset = self.greens_tileset if self.state.mode == "greens" else self.terrain_tileset
+        tileset = (
+            self.greens_tileset if self.state.mode == "greens" else self.terrain_tileset
+        )
 
         # Create and show dialog
         dialog = StampCreationDialog(
@@ -548,7 +564,7 @@ class EditorApplication:
 
             # Update active tool (for time-based behavior like key repeat)
             active_tool = self.tool_manager.get_active_tool()
-            if active_tool and hasattr(active_tool, 'update'):
+            if active_tool and hasattr(active_tool, "update"):
                 result = active_tool.update(self.event_handler.tool_context)
                 self._process_tool_result(result)
 
@@ -572,7 +588,9 @@ class EditorApplication:
                 self.greens_picker.render(self.screen)
             else:
                 palette_for_picker = (
-                    self.state.selected_palette if self.state.selected_palette > 0 else 1
+                    self.state.selected_palette
+                    if self.state.selected_palette > 0
+                    else 1
                 )
                 self.terrain_picker.render(self.screen, palette_for_picker)
 
@@ -643,11 +661,17 @@ class EditorApplication:
         if measure_tool:
             # Always pass points for persistent rendering (terrain mode only)
             self.highlight_state.measure_points = (
-                measure_tool.points if measure_tool.points and self.state.mode == "terrain" else None
+                measure_tool.points
+                if measure_tool.points and self.state.mode == "terrain"
+                else None
             )
 
             # Preview only when tool is active and has points
-            if is_measure_active and measure_tool.points and self.state.mode == "terrain":
+            if (
+                is_measure_active
+                and measure_tool.points
+                and self.state.mode == "terrain"
+            ):
                 self.highlight_state.measure_preview_point = measure_tool.preview_point
             else:
                 self.highlight_state.measure_preview_point = None

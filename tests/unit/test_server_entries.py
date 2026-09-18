@@ -18,7 +18,9 @@ from server.users import sign_in
 
 @pytest.fixture(scope="module")
 def manifest():
-    return generate(Catalog.load(), CurationSnapshot.load(), Settings(prng_seed="entries"))
+    return generate(
+        Catalog.load(), CurationSnapshot.load(), Settings(prng_seed="entries")
+    )
 
 
 @pytest.fixture
@@ -46,7 +48,9 @@ TOAD = PlayerOptions("TOAD", frozenset({Club.W3, Club.SW}))
 def test_a_first_download_creates_the_entry_with_drawn_keys(db, manifest):
     seed_id = insert_seed(db, manifest, b"PATCHEOF")
     alice = user(db, "alice")
-    entry = upsert_entry(db, seed_id, alice, LUIGI, now="2026-09-16T00:00:00Z", draw_key=keys())
+    entry = upsert_entry(
+        db, seed_id, alice, LUIGI, now="2026-09-16T00:00:00Z", draw_key=keys()
+    )
     assert entry == Entry(
         id=entry.id,
         seed_id=seed_id,
@@ -68,7 +72,10 @@ def test_downloading_again_updates_the_choices_and_keeps_the_keys(db, manifest):
     assert second.id == first.id
     assert second.keys == first.keys
     assert (second.player_name, second.clubs) == ("TOAD", ("3W", "SW", "PT"))
-    assert (second.created_at, second.updated_at) == ("2026-09-16T00:00:00Z", "2026-09-17T00:00:00Z")
+    assert (second.created_at, second.updated_at) == (
+        "2026-09-16T00:00:00Z",
+        "2026-09-17T00:00:00Z",
+    )
 
 
 def test_each_player_gets_their_own_entry_and_keys(db, manifest):
@@ -86,7 +93,9 @@ def test_no_entry_loads_as_none(db, manifest):
 
 def test_keys_stay_out_of_repr(db, manifest):
     seed_id = insert_seed(db, manifest, b"PATCHEOF")
-    entry = upsert_entry(db, seed_id, user(db, "alice"), LUIGI, draw_key=lambda: b"\xab" * 8)
+    entry = upsert_entry(
+        db, seed_id, user(db, "alice"), LUIGI, draw_key=lambda: b"\xab" * 8
+    )
     assert "keys" not in repr(entry)
     assert "\\xab" not in repr(entry)
 

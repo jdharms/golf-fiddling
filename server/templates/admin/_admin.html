@@ -1,44 +1,54 @@
 {# Shared pieces of the admin pages. Admin pages are exempt from the strings catalog. #}
 
 {% macro nav() %}
-<nav class="admin-nav" aria-label="Admin">
-  <ul>
-    <li><a href="/admin">Admin</a></li>
-    <li><a href="/admin/seeds">Seeds</a></li>
-    <li><a href="/admin/rounds">Rounds</a></li>
-    <li><a href="/admin/rounds?flagged=true">Flagged</a></li>
-    <li><a href="/admin/users">Users</a></li>
-    <li><a href="/admin/voided">Voided</a></li>
-    <li><a href="/admin/activity">Activity</a></li>
-  </ul>
-</nav>
+  <nav class="admin-nav" aria-label="Admin">
+    <ul>
+      <li><a href="/admin">Admin</a></li>
+      <li><a href="/admin/seeds">Seeds</a></li>
+      <li><a href="/admin/rounds">Rounds</a></li>
+      <li><a href="/admin/rounds?flagged=true">Flagged</a></li>
+      <li><a href="/admin/users">Users</a></li>
+      <li><a href="/admin/voided">Voided</a></li>
+      <li><a href="/admin/activity">Activity</a></li>
+    </ul>
+  </nav>
 {% endmacro %}
 
 {# the outcome of the action that redirected here #}
 {% macro result_notice(result) %}
-{% if result == "rebuilt" %}<p class="admin-result"><ins>Rebuilt: the stored IPS changed.</ins></p>
-{% elif result == "unchanged" %}<p class="admin-result">Rebuilt: the IPS is identical, so nothing was stored.</p>
-{% elif result == "flagged" %}<p class="admin-result"><ins>Round flagged.</ins></p>
-{% elif result == "unflagged" %}<p class="admin-result"><ins>Flag cleared.</ins></p>
-{% elif result == "voided" %}<p class="admin-result"><ins>Round voided.</ins></p>
-{% elif result == "restored" %}<p class="admin-result"><ins>Round restored.</ins></p>
-{% elif result == "slot_taken" %}<p class="admin-result"><del>Not restored: that entry's slot already has a round. Void it first.</del></p>
-{% endif %}
+  {% if result == "rebuilt" %}
+    <p class="admin-result"><ins>Rebuilt: the stored IPS changed.</ins></p>
+  {% elif result == "unchanged" %}
+    <p class="admin-result">Rebuilt: the IPS is identical, so nothing was stored.</p>
+  {% elif result == "flagged" %}
+    <p class="admin-result"><ins>Round flagged.</ins></p>
+  {% elif result == "unflagged" %}
+    <p class="admin-result"><ins>Flag cleared.</ins></p>
+  {% elif result == "voided" %}
+    <p class="admin-result"><ins>Round voided.</ins></p>
+  {% elif result == "restored" %}
+    <p class="admin-result"><ins>Round restored.</ins></p>
+  {% elif result == "slot_taken" %}
+    <p class="admin-result"><del>Not restored: that entry's slot already has a round. Void it first.</del></p>
+  {% endif %}
 {% endmacro %}
 
 {% macro pager(listing, path, extra="") %}
-{% if listing.number > 1 or listing.has_next %}
-<nav class="admin-pager" aria-label="Pages">
-  <ul>
-    {% if listing.number > 1 %}<li><a href="{{ path }}?page={{ listing.number - 1 }}{{ extra }}">Newer</a></li>{% endif %}
-    <li>Page {{ listing.number }}</li>
-    {% if listing.has_next %}<li><a href="{{ path }}?page={{ listing.number + 1 }}{{ extra }}">Older</a></li>{% endif %}
-  </ul>
-</nav>
-{% endif %}
+  {% if listing.number > 1 or listing.has_next %}
+    <nav class="admin-pager" aria-label="Pages">
+      <ul>
+        {% if listing.number > 1 %}<li><a href="{{ path }}?page={{ listing.number - 1 }}{{ extra }}">Newer</a></li>{% endif %}
+        <li>Page {{ listing.number }}</li>
+        {% if listing.has_next %}<li><a href="{{ path }}?page={{ listing.number + 1 }}{{ extra }}">Older</a></li>{% endif %}
+      </ul>
+    </nav>
+  {% endif %}
 {% endmacro %}
 
-{% macro words(seed_id, magic_words) %}<a href="/admin/seeds/{{ seed_id }}" class="magic-words">{{ magic_words|join(" ") }}</a>{% endmacro %}
+{% macro words(seed_id, magic_words) -%}
+  <a href="/admin/seeds/{{ seed_id }}"
+     class="magic-words">{{ magic_words|join(" ") }}</a>
+{%- endmacro %}
 
 {% macro slot_label(slot) %}{% if slot == 1 %}P2{% else %}P1{% endif %}{% endmacro %}
 
@@ -46,103 +56,103 @@
 
 {# rounds, with the columns a page asks for #}
 {% macro rounds_table(rounds, show_seed=true, show_player=true) %}
-<div class="overflow-auto">
-  <table class="striped">
-    <thead>
-      <tr>
-        <th scope="col">Round</th>
-        {% if show_seed %}<th scope="col">Seed</th>{% endif %}
-        {% if show_player %}<th scope="col">Player</th>{% endif %}
-        <th scope="col">Slot</th>
-        <th scope="col" class="num">Strokes</th>
-        <th scope="col" class="num">Putts</th>
-        <th scope="col">Received</th>
-        <th scope="col">Flag</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for round in rounds %}
-      <tr>
-        <td><a href="/admin/rounds/{{ round.public_id }}">{{ round.public_id }}</a></td>
-        {% if show_seed %}<td>{{ words(round.seed_id, round.magic_words) }}</td>{% endif %}
-        {% if show_player %}<td><a href="/admin/users/{{ round.user_id }}">{{ round.user_name }}</a></td>{% endif %}
-        <td>{{ slot_label(round.slot) }}</td>
-        <td class="num">{{ round.total_strokes }}</td>
-        <td class="num">{{ round.total_putts }}</td>
-        <td>{{ round.received_at }}</td>
-        <td>{{ flag_cell(round) }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+  <div class="overflow-auto">
+    <table class="striped">
+      <thead>
+        <tr>
+          <th scope="col">Round</th>
+          {% if show_seed %}<th scope="col">Seed</th>{% endif %}
+          {% if show_player %}<th scope="col">Player</th>{% endif %}
+          <th scope="col">Slot</th>
+          <th scope="col" class="num">Strokes</th>
+          <th scope="col" class="num">Putts</th>
+          <th scope="col">Received</th>
+          <th scope="col">Flag</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for round in rounds %}
+          <tr>
+            <td><a href="/admin/rounds/{{ round.public_id }}">{{ round.public_id }}</a></td>
+            {% if show_seed %}<td>{{ words(round.seed_id, round.magic_words) }}</td>{% endif %}
+            {% if show_player %}<td><a href="/admin/users/{{ round.user_id }}">{{ round.user_name }}</a></td>{% endif %}
+            <td>{{ slot_label(round.slot) }}</td>
+            <td class="num">{{ round.total_strokes }}</td>
+            <td class="num">{{ round.total_putts }}</td>
+            <td>{{ round.received_at }}</td>
+            <td>{{ flag_cell(round) }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endmacro %}
 
 {% macro seeds_table(seeds, show_creator=true) %}
-<div class="overflow-auto">
-  <table class="striped">
-    <thead>
-      <tr>
-        <th scope="col">Seed</th>
-        <th scope="col">Id</th>
-        <th scope="col" class="num">Par</th>
-        {% if show_creator %}<th scope="col">Creator</th>{% endif %}
-        <th scope="col" class="num">Entries</th>
-        <th scope="col" class="num">Rounds</th>
-        <th scope="col">Created</th>
-        <th scope="col">Rebuilt</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for seed in seeds %}
-      <tr>
-        <td>{{ words(seed.id, seed.magic_words) }}</td>
-        <td><code>{{ seed.id }}</code></td>
-        <td class="num">{{ seed.par }}</td>
-        {% if show_creator %}<td>{% if seed.creator_id is not none %}<a href="/admin/users/{{ seed.creator_id }}">{{ seed.creator_name }}</a>{% endif %}</td>{% endif %}
-        <td class="num">{{ seed.entries }}</td>
-        <td class="num">{{ seed.rounds }}</td>
-        <td>{{ seed.created_at }}</td>
-        <td>{{ seed.rebuilt_at or "" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+  <div class="overflow-auto">
+    <table class="striped">
+      <thead>
+        <tr>
+          <th scope="col">Seed</th>
+          <th scope="col">Id</th>
+          <th scope="col" class="num">Par</th>
+          {% if show_creator %}<th scope="col">Creator</th>{% endif %}
+          <th scope="col" class="num">Entries</th>
+          <th scope="col" class="num">Rounds</th>
+          <th scope="col">Created</th>
+          <th scope="col">Rebuilt</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for seed in seeds %}
+          <tr>
+            <td>{{ words(seed.id, seed.magic_words) }}</td>
+            <td><code>{{ seed.id }}</code></td>
+            <td class="num">{{ seed.par }}</td>
+            {% if show_creator %}<td>{% if seed.creator_id is not none %}<a href="/admin/users/{{ seed.creator_id }}">{{ seed.creator_name }}</a>{% endif %}</td>{% endif %}
+            <td class="num">{{ seed.entries }}</td>
+            <td class="num">{{ seed.rounds }}</td>
+            <td>{{ seed.created_at }}</td>
+            <td>{{ seed.rebuilt_at or "" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endmacro %}
 
 {% macro entries_table(entries, show_seed=true, show_player=true) %}
-<div class="overflow-auto">
-  <table class="striped">
-    <thead>
-      <tr>
-        {% if show_seed %}<th scope="col">Seed</th>{% endif %}
-        {% if show_player %}<th scope="col">Player</th>{% endif %}
-        <th scope="col">ROM name</th>
-        <th scope="col">Clubs</th>
-        <th scope="col">Entered</th>
-        <th scope="col">Updated</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for entry in entries %}
-      <tr>
-        {% if show_seed %}<td>{{ words(entry.seed_id, entry.magic_words) }}</td>{% endif %}
-        {% if show_player %}<td><a href="/admin/users/{{ entry.user_id }}">{{ entry.user_name }}</a></td>{% endif %}
-        <td>{{ entry.player_name }}</td>
-        <td>{{ entry.clubs|join(" ") }}</td>
-        <td>{{ entry.created_at }}</td>
-        <td>{{ entry.updated_at }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+  <div class="overflow-auto">
+    <table class="striped">
+      <thead>
+        <tr>
+          {% if show_seed %}<th scope="col">Seed</th>{% endif %}
+          {% if show_player %}<th scope="col">Player</th>{% endif %}
+          <th scope="col">ROM name</th>
+          <th scope="col">Clubs</th>
+          <th scope="col">Entered</th>
+          <th scope="col">Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in entries %}
+          <tr>
+            {% if show_seed %}<td>{{ words(entry.seed_id, entry.magic_words) }}</td>{% endif %}
+            {% if show_player %}<td><a href="/admin/users/{{ entry.user_id }}">{{ entry.user_name }}</a></td>{% endif %}
+            <td>{{ entry.player_name }}</td>
+            <td>{{ entry.clubs|join(" ") }}</td>
+            <td>{{ entry.created_at }}</td>
+            <td>{{ entry.updated_at }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endmacro %}
 
 {# what an action did, in one phrase; detail carries whatever the action needed remembered #}
 {% macro action_label(entry) %}
-{%- if entry.action == "rebuild" %}{% if entry.detail.changed %}rebuilt{% else %}rebuilt, no change{% endif %}
+  {%- if entry.action == "rebuild" %}{% if entry.detail.changed %}rebuilt{% else %}rebuilt, no change{% endif %}
 {%- elif entry.action == "flag" %}flagged
 {%- elif entry.action == "unflag" %}flag cleared
 {%- elif entry.action == "void" %}voided
@@ -152,53 +162,58 @@
 
 {# a target's audit log, oldest first #}
 {% macro history_table(history) %}
-<div class="overflow-auto">
-  <table class="striped">
-    <thead>
-      <tr><th scope="col">When</th><th scope="col">Action</th><th scope="col">Admin</th><th scope="col">Note</th></tr>
-    </thead>
-    <tbody>
-      {% for entry in history %}
-      <tr>
-        <td>{{ entry.created_at }}</td>
-        <td>{{ action_label(entry) }}</td>
-        <td><a href="/admin/users/{{ entry.admin_id }}">{{ entry.admin_name }}</a></td>
-        <td>{{ entry.note or "" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+  <div class="overflow-auto">
+    <table class="striped">
+      <thead>
+        <tr>
+          <th scope="col">When</th>
+          <th scope="col">Action</th>
+          <th scope="col">Admin</th>
+          <th scope="col">Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in history %}
+          <tr>
+            <td>{{ entry.created_at }}</td>
+            <td>{{ action_label(entry) }}</td>
+            <td><a href="/admin/users/{{ entry.admin_id }}">{{ entry.admin_name }}</a></td>
+            <td>{{ entry.note or "" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endmacro %}
 
 {# the audit log across targets, newest first, each row linking to where its target is now #}
 {% macro activity_table(listings) %}
-<div class="overflow-auto">
-  <table class="striped">
-    <thead>
-      <tr>
-        <th scope="col">When</th>
-        <th scope="col">Action</th>
-        <th scope="col">Target</th>
-        <th scope="col">Admin</th>
-        <th scope="col">Note</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for listing in listings %}
-      {% set entry = listing.action %}
-      <tr>
-        <td>{{ entry.created_at }}</td>
-        <td>{{ action_label(entry) }}</td>
-        <td>
-          {% if listing.target.path %}<a href="{{ listing.target.path }}">{{ listing.target.label }}</a>
-          {% else %}<code>{{ listing.target.label }}</code>{% endif %}
-        </td>
-        <td><a href="/admin/users/{{ entry.admin_id }}">{{ entry.admin_name }}</a></td>
-        <td>{{ entry.note or "" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="overflow-auto">
+    <table class="striped">
+      <thead>
+        <tr>
+          <th scope="col">When</th>
+          <th scope="col">Action</th>
+          <th scope="col">Target</th>
+          <th scope="col">Admin</th>
+          <th scope="col">Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for listing in listings %}
+          {% set entry = listing.action %}
+          <tr>
+            <td>{{ entry.created_at }}</td>
+            <td>{{ action_label(entry) }}</td>
+            <td>
+              {% if listing.target.path %}<a href="{{ listing.target.path }}">{{ listing.target.label }}</a>
+{% else %}<code>{{ listing.target.label }}</code>{% endif %}
+  </td>
+  <td><a href="/admin/users/{{ entry.admin_id }}">{{ entry.admin_name }}</a></td>
+  <td>{{ entry.note or "" }}</td>
+  </tr>
+{% endfor %}
+</tbody>
+</table>
 </div>
 {% endmacro %}

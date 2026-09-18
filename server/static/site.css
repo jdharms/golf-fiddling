@@ -39,7 +39,8 @@ header nav ul.account form {
 
 header nav ul.account button {
   margin: 0;
-  padding: calc(var(--pico-nav-link-spacing-vertical) * 0.5) var(--pico-nav-link-spacing-horizontal);
+  padding: calc(var(--pico-nav-link-spacing-vertical) * 0.5)
+    var(--pico-nav-link-spacing-horizontal);
   font-size: inherit;
 }
 
@@ -89,13 +90,23 @@ article.rom > footer button {
 }
 
 article.rom[data-state="stored"] {
-  background-color: color-mix(in srgb, var(--pico-primary-background) 10%, var(--pico-card-background-color));
-  box-shadow: var(--pico-card-box-shadow), 0 0 0 2px var(--pico-primary-background);
+  background-color: color-mix(
+    in srgb,
+    var(--pico-primary-background) 10%,
+    var(--pico-card-background-color)
+  );
+  box-shadow:
+    var(--pico-card-box-shadow),
+    0 0 0 2px var(--pico-primary-background);
 }
 
 article.rom[data-state="stored"] > header,
 article.rom[data-state="stored"] > footer {
-  background-color: color-mix(in srgb, var(--pico-primary-background) 20%, var(--pico-card-sectioning-background-color));
+  background-color: color-mix(
+    in srgb,
+    var(--pico-primary-background) 20%,
+    var(--pico-card-sectioning-background-color)
+  );
 }
 
 article.rom[data-state="stored"] .rom-check {
@@ -156,7 +167,9 @@ article.rom:not([data-state="stored"]) > footer {
 /* Generate form. A refused submission's notice sits above the form. */
 .form-error {
   color: var(--pico-del-color);
-  box-shadow: var(--pico-card-box-shadow), 0 0 0 2px var(--pico-del-color);
+  box-shadow:
+    var(--pico-card-box-shadow),
+    0 0 0 2px var(--pico-del-color);
 }
 
 /* Club rules: a card inside the form, set apart from the everyday settings because they
@@ -271,5 +284,6 @@ form.admin-inline button {
 }
 
 form.admin-inline button {
-  padding: calc(var(--pico-form-element-spacing-vertical) * 0.5) var(--pico-form-element-spacing-horizontal);
+  padding: calc(var(--pico-form-element-spacing-vertical) * 0.5)
+    var(--pico-form-element-spacing-horizontal);
 }

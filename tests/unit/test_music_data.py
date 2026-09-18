@@ -31,6 +31,7 @@ def jp():
 
 # ------------------------------------------------------------------- discovery
 
+
 def test_layout_matches_known_us_addresses(us):
     """The US addresses were derived by hand in docs/music_format.md."""
     L = discover_layout(us)
@@ -51,11 +52,11 @@ def test_layout_matches_known_us_addresses(us):
 def test_layout_differs_for_the_japanese_rom(jp, us):
     """Mario Open Golf runs the same engine assembled at shifted addresses."""
     j, u = discover_layout(jp), discover_layout(us)
-    assert j.order_table == u.order_table == 0x8E9E     # this one did not move
+    assert j.order_table == u.order_table == 0x8E9E  # this one did not move
     assert j.duration_table != u.duration_table
     assert j.transpose_table != u.transpose_table
     assert j.header_base(1) != u.header_base(1)
-    assert len(j.header_bases) == 4                     # JP has one more than the US
+    assert len(j.header_bases) == 4  # JP has one more than the US
     for f in ("duration_table", "period_table", "envelope_table", "transpose_table"):
         assert 0x8000 <= getattr(j, f) < 0xC000
 
@@ -64,8 +65,9 @@ def test_duration_table_is_identical_across_regions(jp, us):
     """Tempos and note lengths port unchanged; pitch does not."""
     j, u = discover_layout(jp), discover_layout(us)
     jb, ub = md._bank14(jp), md._bank14(us)
-    assert [jb(j.duration_table + i) for i in range(131)] == \
-           [ub(u.duration_table + i) for i in range(131)]
+    assert [jb(j.duration_table + i) for i in range(131)] == [
+        ub(u.duration_table + i) for i in range(131)
+    ]
 
 
 def test_japanese_rom_is_two_semitones_sharp(jp, us):
@@ -75,6 +77,7 @@ def test_japanese_rom_is_two_semitones_sharp(jp, us):
 
 
 # ---------------------------------------------------------------- course lookup
+
 
 def test_us_course_bgm_table(us):
     u = md.discover_course_bgm(us)
@@ -108,12 +111,15 @@ def test_course_table_stops_before_code(us, jp):
 
 def test_jp_course_themes_are_distinct(jp):
     ids = md.discover_course_bgm(jp)["unique_music_ids"]
-    sigs = {tuple(sorted(p["stream"] for p in md.extract_track(jp, i)["patterns"]))
-            for i in ids}
+    sigs = {
+        tuple(sorted(p["stream"] for p in md.extract_track(jp, i)["patterns"]))
+        for i in ids
+    }
     assert len(sigs) == len(ids) == 5
 
 
 # ------------------------------------------------------------------- extraction
+
 
 @pytest.mark.parametrize("path", [US, JP])
 def test_every_pattern_block_is_valid(path):
@@ -193,16 +199,20 @@ def test_exported_envelope_rows_are_the_bytes_the_engine_reads(path):
     b = md._bank14(rom)
     for mid in sorted(set(md.discover_course_bgm(rom)["music_ids"].values())):
         for base, row in md.extract_track(rom, mid, L)["envelope_rows"].items():
-            expected = [f"{b(L.envelope_table + int(base, 16) + i):02X}" for i in range(16)]
+            expected = [
+                f"{b(L.envelope_table + int(base, 16) + i):02X}" for i in range(16)
+            ]
             assert row.split() == expected
 
 
 def test_japanese_course_themes_need_envelope_rows_the_us_rom_lacks(jp, us):
     """Why the rows have to travel with the track: the US table stops at $60."""
     jl, ul = discover_layout(jp), discover_layout(us)
-    used = {int(k, 16)
-            for mid in md.discover_course_bgm(jp)["unique_music_ids"]
-            for k in md.extract_track(jp, mid, jl)["envelope_rows"]}
+    used = {
+        int(k, 16)
+        for mid in md.discover_course_bgm(jp)["unique_music_ids"]
+        for k in md.extract_track(jp, mid, jl)["envelope_rows"]
+    }
     assert max(used) > ul.noise_drum_table - ul.envelope_table - 16
 
 
@@ -213,6 +223,7 @@ def test_export_records_tuning_against_a_reference(jp, us):
 
 # --------------------------------------------------------------------- JP NSF
 
+
 def test_japanese_rom_exports_a_working_nsf(jp):
     """The stub is ROM-agnostic: same RAM map, same AudioEngineMain entry."""
     from py65.devices.mpu6502 import MPU
@@ -222,7 +233,7 @@ def test_japanese_rom_exports_a_working_nsf(jp):
     nsf = build_nsf(jp)
     init, play = struct_unpack(nsf)
     body = nsf[0x80:]
-    pages = [body[i * 0x1000:(i + 1) * 0x1000] for i in range(len(body) // 0x1000)]
+    pages = [body[i * 0x1000 : (i + 1) * 0x1000] for i in range(len(body) // 0x1000)]
     prg = bytearray(b"".join(pages[b] for b in nsf[112:120]))
 
     bus = audio._Bus(prg)
@@ -239,4 +250,5 @@ def test_japanese_rom_exports_a_working_nsf(jp):
 
 def struct_unpack(nsf):
     import struct
+
     return struct.unpack_from("<HH", nsf, 10)

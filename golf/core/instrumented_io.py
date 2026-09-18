@@ -61,9 +61,7 @@ class InstrumentedRomReader(RomReader):
         """Log a read operation to the trace."""
         annotation = self._pending_annotation or "[no annotation]"
         if self._pending_annotation is None and self._require_annotations:
-            raise RuntimeError(
-                f"Read at PRG ${prg_offset:05X} without annotation"
-            )
+            raise RuntimeError(f"Read at PRG ${prg_offset:05X} without annotation")
 
         # Calculate bank and cpu_addr from PRG offset if not provided
         if bank is None or cpu_addr is None:
@@ -73,15 +71,19 @@ class InstrumentedRomReader(RomReader):
             if cpu_addr is None:
                 cpu_addr = calc_cpu
 
-        self._trace.append({
-            "type": "read",
-            "annotation": annotation,
-            "prg_offset": prg_offset,
-            "cpu_addr": f"${cpu_addr:04X}",
-            "bank": bank,
-            "length": length,
-            "value_hex": data.hex(" ").upper() if len(data) <= 32 else f"{data[:32].hex(' ').upper()}... ({length} bytes)",
-        })
+        self._trace.append(
+            {
+                "type": "read",
+                "annotation": annotation,
+                "prg_offset": prg_offset,
+                "cpu_addr": f"${cpu_addr:04X}",
+                "bank": bank,
+                "length": length,
+                "value_hex": data.hex(" ").upper()
+                if len(data) <= 32
+                else f"{data[:32].hex(' ').upper()}... ({length} bytes)",
+            }
+        )
         self._pending_annotation = None
 
     # Override all read methods to log
@@ -107,7 +109,11 @@ class InstrumentedRomReader(RomReader):
     def read_fixed(self, cpu_addr: int, length: int = 1) -> bytes:
         """Read from fixed bank with logging."""
         prg_offset = cpu_to_prg_fixed(cpu_addr)
-        data = bytes(self.data[self.prg_start + prg_offset : self.prg_start + prg_offset + length])
+        data = bytes(
+            self.data[
+                self.prg_start + prg_offset : self.prg_start + prg_offset + length
+            ]
+        )
         self._log_read(prg_offset, length, data, cpu_addr=cpu_addr)
         return data
 
@@ -121,14 +127,20 @@ class InstrumentedRomReader(RomReader):
     def read_fixed_word(self, cpu_addr: int) -> int:
         """Read 16-bit word from fixed bank with logging."""
         prg_offset = cpu_to_prg_fixed(cpu_addr)
-        data = bytes(self.data[self.prg_start + prg_offset : self.prg_start + prg_offset + 2])
+        data = bytes(
+            self.data[self.prg_start + prg_offset : self.prg_start + prg_offset + 2]
+        )
         self._log_read(prg_offset, 2, data, cpu_addr=cpu_addr)
         return data[0] | (data[1] << 8)
 
     def read_switched(self, cpu_addr: int, bank: int, length: int = 1) -> bytes:
         """Read from switched bank with logging."""
         prg_offset = cpu_to_prg_switched(cpu_addr, bank)
-        data = bytes(self.data[self.prg_start + prg_offset : self.prg_start + prg_offset + length])
+        data = bytes(
+            self.data[
+                self.prg_start + prg_offset : self.prg_start + prg_offset + length
+            ]
+        )
         self._log_read(prg_offset, length, data, cpu_addr=cpu_addr, bank=bank)
         return data
 
@@ -190,6 +202,7 @@ class InstrumentedRomWriter(RomWriter):
 
     def _suppress_nested_logging(self):
         """Context manager to suppress logging from nested operations."""
+
         class SuppressContext:
             def __init__(ctx, writer):
                 ctx.writer = writer
@@ -232,15 +245,19 @@ class InstrumentedRomWriter(RomWriter):
             if cpu_addr is None:
                 cpu_addr = calc_cpu
 
-        self._trace.append({
-            "type": op_type,
-            "annotation": annotation,
-            "prg_offset": prg_offset,
-            "cpu_addr": f"${cpu_addr:04X}",
-            "bank": bank,
-            "length": length,
-            "value_hex": data.hex(" ").upper() if len(data) <= 32 else f"{data[:32].hex(' ').upper()}... ({length} bytes)",
-        })
+        self._trace.append(
+            {
+                "type": op_type,
+                "annotation": annotation,
+                "prg_offset": prg_offset,
+                "cpu_addr": f"${cpu_addr:04X}",
+                "bank": bank,
+                "length": length,
+                "value_hex": data.hex(" ").upper()
+                if len(data) <= 32
+                else f"{data[:32].hex(' ').upper()}... ({length} bytes)",
+            }
+        )
         self._pending_annotation = None
 
     # Override write methods to log
@@ -290,7 +307,9 @@ class InstrumentedRomWriter(RomWriter):
     def write_switched(self, cpu_addr: int, bank: int, data: bytes):
         """Write bytes to switched bank with logging."""
         prg_offset = cpu_to_prg_switched(cpu_addr, bank)
-        self._log_operation("write", prg_offset, len(data), data, cpu_addr=cpu_addr, bank=bank)
+        self._log_operation(
+            "write", prg_offset, len(data), data, cpu_addr=cpu_addr, bank=bank
+        )
         with self._suppress_nested_logging():
             super().write_switched(cpu_addr, bank, data)
 

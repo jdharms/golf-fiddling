@@ -36,7 +36,9 @@ def _flatten(table: Mapping, prefix: str, out: dict[str, Entry]) -> None:
     for name, value in table.items():
         key = prefix + name
         if not isinstance(value, dict):
-            raise StringsError(f"{key}: expected a table with a note and text, got {type(value).__name__}")
+            raise StringsError(
+                f"{key}: expected a table with a note and text, got {type(value).__name__}"
+            )
         if not value:
             raise StringsError(f"{key}: empty table")
         if not FIELDS & value.keys():
@@ -44,7 +46,9 @@ def _flatten(table: Mapping, prefix: str, out: dict[str, Entry]) -> None:
             continue
         extra = value.keys() - FIELDS
         if extra:
-            raise StringsError(f"{key}: an entry holds only note and text, got {sorted(extra)}")
+            raise StringsError(
+                f"{key}: an entry holds only note and text, got {sorted(extra)}"
+            )
         note, text = value.get("note"), value.get("text", "")
         if not isinstance(note, str) or not note.strip():
             raise StringsError(f"{key}: missing note")
@@ -54,7 +58,11 @@ def _flatten(table: Mapping, prefix: str, out: dict[str, Entry]) -> None:
 
 
 def _placeholder(key: str, values: Mapping[str, object]) -> str:
-    return "⟦" + " ".join([key, *(f"{name}={value}" for name, value in values.items())]) + "⟧"
+    return (
+        "⟦"
+        + " ".join([key, *(f"{name}={value}" for name, value in values.items())])
+        + "⟧"
+    )
 
 
 class Strings:
@@ -87,7 +95,9 @@ class Strings:
         for file, strings in cls.load_files(directory).items():
             for key in strings.keys():  # noqa: SIM118 (Strings, not a dict)
                 if key in source:
-                    raise StringsError(f"{key}: defined in both {source[key].name} and {file.name}")
+                    raise StringsError(
+                        f"{key}: defined in both {source[key].name} and {file.name}"
+                    )
                 source[key], entries[key] = file, strings.entry(key)
         if not entries:
             raise StringsError(f"no strings in {directory}")
@@ -115,7 +125,9 @@ class Strings:
         """The string for an HTML body: its text may hold inline HTML, and values are escaped."""
         entry = self.entry(key)
         if not entry.text:
-            return Markup('<span class="unwritten" title="{}">{}</span>').format(entry.note, _placeholder(key, values))
+            return Markup('<span class="unwritten" title="{}">{}</span>').format(
+                entry.note, _placeholder(key, values)
+            )
         return self._format(key, Markup(entry.text), values)
 
     def plain(self, key: str, **values: object) -> str:
@@ -128,7 +140,11 @@ class Strings:
     def for_script(self, prefix: str) -> dict[str, str | None]:
         """Every entry under `prefix`, for a page to embed as JSON: text, or None while unwritten."""
         start = prefix + "."
-        return {key: self._entries[key].text or None for key in self.keys() if key.startswith(start)}
+        return {
+            key: self._entries[key].text or None
+            for key in self.keys()
+            if key.startswith(start)
+        }
 
     @overload
     @staticmethod
@@ -148,6 +164,10 @@ class Strings:
         try:
             return text.format(**values)
         except KeyError as problem:
-            raise StringsError(f"{key}: the text uses {{{problem.args[0]}}}, but the page passes {sorted(values)}") from None
+            raise StringsError(
+                f"{key}: the text uses {{{problem.args[0]}}}, but the page passes {sorted(values)}"
+            ) from None
         except (IndexError, ValueError) as problem:
-            raise StringsError(f"{key}: bad braces in the text ({problem}); write {{{{ and }}}} for literal braces") from None
+            raise StringsError(
+                f"{key}: bad braces in the text ({problem}); write {{{{ and }}}} for literal braces"
+            ) from None

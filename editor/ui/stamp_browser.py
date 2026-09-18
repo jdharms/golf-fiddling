@@ -227,7 +227,9 @@ class StampBrowser:
                     self._draw_checkered_tile(stamp_surf, tile_x, tile_y, tile_size)
                 else:
                     # Regular tile: render with selected palette
-                    tile_surf = self.tileset.render_tile(tile_value, palette_idx, tile_scale)
+                    tile_surf = self.tileset.render_tile(
+                        tile_value, palette_idx, tile_scale
+                    )
                     stamp_surf.blit(tile_surf, (tile_x, tile_y))
 
         # Cache the preview with palette
@@ -282,7 +284,11 @@ class StampBrowser:
         else:
             # Render each stamp item
             for i, stamp in enumerate(stamps):
-                item_y = list_y_start + i * (self.item_height + self.item_padding) - self.scroll_y
+                item_y = (
+                    list_y_start
+                    + i * (self.item_height + self.item_padding)
+                    - self.scroll_y
+                )
                 item_rect = Rect(
                     list_rect.x,
                     item_y,

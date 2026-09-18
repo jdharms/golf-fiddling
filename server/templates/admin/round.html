@@ -3,27 +3,39 @@
 {% set round = detail.round %}
 {% block title %}Round {{ round.public_id }} - Admin{% endblock %}
 {% block content %}
-{{ admin.nav() }}
-<hgroup>
-  <h1>Round {{ round.public_id }}</h1>
-  <p>
-    <a href="/admin/users/{{ detail.player.id }}">{{ detail.player.display_name }}</a>
-    ({{ admin.slot_label(round.slot) }}) on {{ admin.words(detail.seed.id, detail.seed.manifest.course.magic_words) }}
-  </p>
-</hgroup>
-{{ admin.result_notice(result) }}
+  {{ admin.nav() }}
+  <hgroup>
+    <h1>Round {{ round.public_id }}</h1>
+    <p>
+      <a href="/admin/users/{{ detail.player.id }}">{{ detail.player.display_name }}</a>
+      ({{ admin.slot_label(round.slot) }}) on {{ admin.words(detail.seed.id, detail.seed.manifest.course.magic_words) }}
+    </p>
+  </hgroup>
+  {{ admin.result_notice(result) }}
 
-<section>
-  <div class="overflow-auto">
-    <table>
-      <tbody>
-        <tr><th scope="row">Permalink</th><td><a href="/r/{{ round.public_id }}">/r/{{ round.public_id }}</a></td></tr>
-        <tr><th scope="row">Received</th><td>{{ round.received_at }}</td></tr>
-        <tr><th scope="row">Total</th><td>{{ round.total_strokes }} strokes, {{ round.total_putts }} putts, par {{ detail.total_par }}</td></tr>
-        <tr><th scope="row">Flag</th><td>
-          {% if round.flagged %}<mark>flagged</mark>{% if detail.flagged_by %} by <a href="/admin/users/{{ detail.flagged_by.admin_id }}">{{ detail.flagged_by.admin_name }}</a>{% endif %}{% if round.flag_note %}: {{ round.flag_note }}{% endif %}
-          {% else %}not flagged{% endif %}
-        </td></tr>
+  <section>
+    <div class="overflow-auto">
+      <table>
+        <tbody>
+          <tr>
+            <th scope="row">Permalink</th>
+            <td><a href="/r/{{ round.public_id }}">/r/{{ round.public_id }}</a></td>
+          </tr>
+          <tr>
+            <th scope="row">Received</th>
+            <td>{{ round.received_at }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Total</th>
+            <td>{{ round.total_strokes }} strokes, {{ round.total_putts }} putts, par {{ detail.total_par }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Flag</th>
+            <td>
+              {% if round.flagged %}<mark>flagged</mark>{% if detail.flagged_by %} by <a href="/admin/users/{{ detail.flagged_by.admin_id }}">{{ detail.flagged_by.admin_name }}</a>{% endif %}{% if round.flag_note %}: {{ round.flag_note }}{% endif %}
+            {% else %}not flagged{% endif %}
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -34,16 +46,21 @@
   <div class="overflow-auto">
     <table class="striped">
       <thead>
-        <tr><th scope="col" class="num">#</th><th scope="col" class="num">Par</th><th scope="col" class="num">Strokes</th><th scope="col" class="num">Putts</th></tr>
+        <tr>
+          <th scope="col" class="num">#</th>
+          <th scope="col" class="num">Par</th>
+          <th scope="col" class="num">Strokes</th>
+          <th scope="col" class="num">Putts</th>
+        </tr>
       </thead>
       <tbody>
         {% for hole in detail.holes %}
-        <tr>
-          <td class="num">{{ hole.number }}</td>
-          <td class="num">{{ hole.par }}</td>
-          <td class="num{% if hole.strokes > hole.par %} over-par{% elif hole.strokes < hole.par %} under-par{% endif %}">{{ hole.strokes }}</td>
-          <td class="num">{{ hole.putts }}</td>
-        </tr>
+          <tr>
+            <td class="num">{{ hole.number }}</td>
+            <td class="num">{{ hole.par }}</td>
+            <td class="num{% if hole.strokes > hole.par %} over-par{% elif hole.strokes < hole.par %} under-par{% endif %}">{{ hole.strokes }}</td>
+            <td class="num">{{ hole.putts }}</td>
+          </tr>
         {% endfor %}
       </tbody>
     </table>
@@ -61,21 +78,27 @@
   <p>A flagged round still counts and is marked on the seed page and the player's page. The note is only shown here.</p>
   <form method="post" action="/admin/rounds/{{ round.public_id }}/flag">
     <label for="flag-note">Note</label>
-    <input type="text" id="flag-note" name="note" value="{{ round.flag_note or '' }}" autocomplete="off">
+    <input type="text"
+           id="flag-note"
+           name="note"
+           value="{{ round.flag_note or '' }}"
+           autocomplete="off">
     <button type="submit">{% if round.flagged %}Update flag{% else %}Flag this round{% endif %}</button>
   </form>
   {% if round.flagged %}
-  <form method="post" action="/admin/rounds/{{ round.public_id }}/unflag">
-    <button type="submit" class="secondary">Clear flag</button>
-  </form>
+    <form method="post" action="/admin/rounds/{{ round.public_id }}/unflag">
+      <button type="submit" class="secondary">Clear flag</button>
+    </form>
   {% endif %}
 </section>
 
 <section>
   <h2>Void</h2>
-  <p>Removes the round from the site and frees the slot for a different round. Scanning this
+  <p>
+    Removes the round from the site and frees the slot for a different round. Scanning this
     round again is refused. It can be restored from <a href="/admin/voided">voided rounds</a>
-    while the slot is empty.</p>
+    while the slot is empty.
+  </p>
   <form method="post" action="/admin/rounds/{{ round.public_id }}/void">
     <label for="void-note">Note</label>
     <input type="text" id="void-note" name="note" autocomplete="off">

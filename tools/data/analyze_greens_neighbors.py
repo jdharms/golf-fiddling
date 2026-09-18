@@ -180,9 +180,10 @@ def analyze_greens_neighbors() -> dict:
                             #     < 0x30 (out of range)
                             #     or in range (0x70, 0x74)
                             #     or in range (0x84, 0x88)
-                            elif (neighbor < 0x30 or
-                                  neighbor in range(0x70, 0x74) or
-                                  neighbor in range(0x84, 0x88)
+                            elif (
+                                neighbor < 0x30
+                                or neighbor in range(0x70, 0x74)
+                                or neighbor in range(0x84, 0x88)
                             ):
                                 neighbors[tile]["up"][0x00] = (
                                     neighbors[tile]["up"].get(0x00, 0) + 1
@@ -202,9 +203,10 @@ def analyze_greens_neighbors() -> dict:
                                     neighbors[tile]["down"].get(neighbor, 0) + 1
                                 )
                             # Or record as 0x00 if neighbor is < 0x30 (out of range)
-                            elif (neighbor < 0x30 or
-                                  neighbor in range(0x70, 0x74) or
-                                  neighbor in range(0x84, 0x88)
+                            elif (
+                                neighbor < 0x30
+                                or neighbor in range(0x70, 0x74)
+                                or neighbor in range(0x84, 0x88)
                             ):
                                 neighbors[tile]["down"][0x00] = (
                                     neighbors[tile]["down"].get(0x00, 0) + 1
@@ -224,9 +226,10 @@ def analyze_greens_neighbors() -> dict:
                                     neighbors[tile]["left"].get(neighbor, 0) + 1
                                 )
                             # Or record as 0x00 if neighbor is < 0x30 (out of range)
-                            elif (neighbor < 0x30 or
-                                  neighbor in range(0x70, 0x74) or
-                                  neighbor in range(0x84, 0x88)
+                            elif (
+                                neighbor < 0x30
+                                or neighbor in range(0x70, 0x74)
+                                or neighbor in range(0x84, 0x88)
                             ):
                                 neighbors[tile]["left"][0x00] = (
                                     neighbors[tile]["left"].get(0x00, 0) + 1
@@ -246,9 +249,10 @@ def analyze_greens_neighbors() -> dict:
                                     neighbors[tile]["right"].get(neighbor, 0) + 1
                                 )
                             # Or record as 0x00 if neighbor is < 0x30 (out of range)
-                            elif (neighbor < 0x30 or
-                                  neighbor in range(0x70, 0x74) or
-                                  neighbor in range(0x84, 0x88)
+                            elif (
+                                neighbor < 0x30
+                                or neighbor in range(0x70, 0x74)
+                                or neighbor in range(0x84, 0x88)
                             ):
                                 neighbors[tile]["right"][0x00] = (
                                     neighbors[tile]["right"].get(0x00, 0) + 1

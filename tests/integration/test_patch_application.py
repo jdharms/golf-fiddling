@@ -36,7 +36,9 @@ def create_test_rom_with_original_bytes() -> bytearray:
     prg_rom = bytearray(prg_size)
 
     for patch in [MULTI_BANK_CODE_PATCH, COURSE2_MIRROR_PATCH, COURSE3_MIRROR_PATCH]:
-        prg_rom[patch.prg_offset : patch.prg_offset + len(patch.original)] = patch.original
+        prg_rom[patch.prg_offset : patch.prg_offset + len(patch.original)] = (
+            patch.original
+        )
 
     return header + prg_rom
 
@@ -74,7 +76,9 @@ class TestAttrStreamingPatchApplication:
         assert ATTR_STREAMING_BANK_SWITCH_PATCH in ATTR_STREAMING_PATCHES
 
     @pytest.mark.parametrize("multi_bank_first", [True, False])
-    def test_composes_with_multi_bank_in_either_order(self, rom_writer, multi_bank_first):
+    def test_composes_with_multi_bank_in_either_order(
+        self, rom_writer, multi_bank_first
+    ):
         """The multi-bank splice ends where the bank-switch redirect begins, so
         the two apply independently, in either order."""
         ordered = [MULTI_BANK_CODE_PATCH, *ATTR_STREAMING_PATCHES]

@@ -1,75 +1,74 @@
 {% extends "base.html" %}
 {% block title %}{{ t_plain("me.page_title", name=user.display_name) }}{% endblock %}
 {% block content %}
-<hgroup>
-  <h1>{{ t("me.heading", name=user.display_name) }}</h1>
-</hgroup>
+  <hgroup>
+    <h1>{{ t("me.heading", name=user.display_name) }}</h1>
+  </hgroup>
 
-<section>
-  <h2>{{ t("me.rounds.heading") }}</h2>
-  {% if rounds %}
-  <div class="overflow-auto">
-    <table class="rounds striped">
-      <thead>
-        <tr>
-          <th scope="col">{{ t("me.rounds.seed") }}</th>
-          <th scope="col" class="num">{{ t("me.rounds.par") }}</th>
-          <th scope="col" class="num">{{ t("me.rounds.strokes") }}</th>
-          <th scope="col" class="num">{{ t("me.rounds.putts") }}</th>
-          <th scope="col">{{ t("me.rounds.received") }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for round in rounds %}
-        <tr>
-          {# a round played as player 2 is marked with an asterisk #}
-          <td><a href="/h/{{ round.seed_id }}" class="magic-words">{{ round.magic_words|join(" ") }}</a>{% if round.slot
-            == 1 %}*{% endif %}</td>
-          <td class="num">{{ round.par }}</td>
-          <td class="num"><a href="/r/{{ round.public_id }}">{{ round.total_strokes }}</a>{% if round.flagged %} {{
-            t("me.rounds.flagged") }}{% endif %}</td>
-          <td class="num">{{ round.total_putts }}</td>
-          <td>{{ round.received_at }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <p>{{ t("me.rounds.none") }}</p>
-  {% endif %}
-</section>
+  <section>
+    <h2>{{ t("me.rounds.heading") }}</h2>
+    {% if rounds %}
+      <div class="overflow-auto">
+        <table class="rounds striped">
+          <thead>
+            <tr>
+              <th scope="col">{{ t("me.rounds.seed") }}</th>
+              <th scope="col" class="num">{{ t("me.rounds.par") }}</th>
+              <th scope="col" class="num">{{ t("me.rounds.strokes") }}</th>
+              <th scope="col" class="num">{{ t("me.rounds.putts") }}</th>
+              <th scope="col">{{ t("me.rounds.received") }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for round in rounds %}
+              <tr>
+                {# a round played as player 2 is marked with an asterisk #}
+                <td><a href="/h/{{ round.seed_id }}" class="magic-words">{{ round.magic_words|join(" ") }}</a>{{ "*" if round.slot == 1 }}</td>
+                <td class="num">{{ round.par }}</td>
+                <td class="num"><a href="/r/{{ round.public_id }}">{{ round.total_strokes }}</a>{% if round.flagged %} {{ t("me.rounds.flagged") }}{% endif %}</td>
+                <td class="num">{{ round.total_putts }}</td>
+                <td>{{ round.received_at }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p>{{ t("me.rounds.none") }}</p>
+    {% endif %}
+  </section>
 
-<section>
-  <h2>{{ t("me.entries.heading") }}</h2>
-  {% if entries %}
-  <div class="overflow-auto">
-    <table class="entries striped">
-      <thead>
-        <tr>
-          <th scope="col">{{ t("me.entries.seed") }}</th>
-          <th scope="col" class="num">{{ t("me.entries.par") }}</th>
-          <th scope="col">{{ t("me.entries.name") }}</th>
-          <th scope="col">{{ t("me.entries.clubs") }}</th>
-          <th scope="col">{{ t("me.entries.entered") }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for entry in entries %}
-        <tr>
-          <td><a href="/h/{{ entry.seed_id }}" class="magic-words">{{ entry.magic_words|join(" ") }}</a></td>
-          <td class="num">{{ entry.par }}</td>
-          <td>{{ entry.player_name }}</td>
-          <td>{{ entry.clubs|join(" ") }}</td>
-          <td>{{ entry.created_at }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <p>{{ t("me.entries.none") }}</p>
-  {% endif %}
-</section>
+  <section>
+    <h2>{{ t("me.entries.heading") }}</h2>
+    {% if entries %}
+      <div class="overflow-auto">
+        <table class="entries striped">
+          <thead>
+            <tr>
+              <th scope="col">{{ t("me.entries.seed") }}</th>
+              <th scope="col" class="num">{{ t("me.entries.par") }}</th>
+              <th scope="col">{{ t("me.entries.name") }}</th>
+              <th scope="col">{{ t("me.entries.clubs") }}</th>
+              <th scope="col">{{ t("me.entries.entered") }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entry in entries %}
+              <tr>
+                <td><a href="/h/{{ entry.seed_id }}"
+   class="magic-words">{{ entry.magic_words|join(" ") }}</a></td>
+                <td class="num">{{ entry.par }}</td>
+                <td>{{ entry.player_name }}</td>
+                <td>{{ entry.clubs|join(" ") }}</td>
+                <td>{{ entry.created_at }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p>{{ t("me.entries.none") }}</p>
+    {% endif %}
+  </section>
 
 {% endblock %}

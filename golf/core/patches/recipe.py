@@ -66,7 +66,9 @@ def _type_name(hint) -> str:
         return f"{_type_name(inner)} or null"
     if typing.get_origin(hint) is list:
         return f"list of {_type_name(typing.get_args(hint)[0])}"
-    return {int: "integer", str: "string", bool: "boolean", Path: "path"}.get(hint, str(hint))
+    return {int: "integer", str: "string", bool: "boolean", Path: "path"}.get(
+        hint, str(hint)
+    )
 
 
 def _convert(value, hint, base_dir: Path, where: str):
@@ -100,7 +102,10 @@ def _convert(value, hint, base_dir: Path, where: str):
             # `golf-patch -p` has no list syntax, and splits steps on commas
             value = value.split()
         if isinstance(value, list):
-            return [_convert(v, item, base_dir, f"{where}[{i}]") for i, v in enumerate(value)]
+            return [
+                _convert(v, item, base_dir, f"{where}[{i}]")
+                for i, v in enumerate(value)
+            ]
     raise RecipeError(f"{where}: expected {_type_name(hint)}, got {value!r}")
 
 
@@ -111,7 +116,9 @@ def _to_json(value, hint, base_dir: Path):
     if inner is not None:
         return _to_json(value, inner, base_dir)
     if hint is Path:
-        return Path(os.path.relpath(Path(value).absolute(), Path(base_dir).absolute())).as_posix()
+        return Path(
+            os.path.relpath(Path(value).absolute(), Path(base_dir).absolute())
+        ).as_posix()
     if typing.get_origin(hint) is list:
         item = typing.get_args(hint)[0]
         return [_to_json(v, item, base_dir) for v in value]
@@ -139,7 +146,9 @@ def parse_params(spec: PatchSpec, raw: dict, base_dir: Path, where: str):
     unknown = sorted(set(raw) - set(known))
     if unknown:
         takes = describe_params(spec) or "no parameters"
-        raise RecipeError(f"{where}: unknown parameter(s) {', '.join(unknown)}; {spec.id} takes {takes}")
+        raise RecipeError(
+            f"{where}: unknown parameter(s) {', '.join(unknown)}; {spec.id} takes {takes}"
+        )
     values = {}
     for name, f in known.items():
         if name in raw:
@@ -166,7 +175,9 @@ class RecipeStep:
         raw = dict(data)
         patch_id = raw.pop("patch")
         spec = get_spec(patch_id)
-        return cls(patch_id, parse_params(spec, raw, Path(base_dir), f"{where} ({patch_id})"))
+        return cls(
+            patch_id, parse_params(spec, raw, Path(base_dir), f"{where} ({patch_id})")
+        )
 
     def to_dict(self, base_dir: Path) -> dict:
         hints = typing.get_type_hints(type(self.params))
@@ -212,7 +223,10 @@ class Recipe:
         if base_sha1 is not None and not isinstance(base_sha1, str):
             raise RecipeError("base_sha1 must be a SHA-1 hex string or null")
         return cls(
-            [RecipeStep.from_dict(step, base_dir, f"steps[{i}]") for i, step in enumerate(steps)],
+            [
+                RecipeStep.from_dict(step, base_dir, f"steps[{i}]")
+                for i, step in enumerate(steps)
+            ],
             base_sha1,
         )
 
@@ -261,7 +275,9 @@ class Recipe:
 
     def stack(self, base: bytes) -> PatchStack:
         """The PatchStack of this recipe's patches."""
-        return PatchStack([b.patch for b in self.build_steps(base)], base_sha1=self.base_sha1)
+        return PatchStack(
+            [b.patch for b in self.build_steps(base)], base_sha1=self.base_sha1
+        )
 
 
 def parse_step_arg(text: str, base_dir: Path) -> RecipeStep:
@@ -276,4 +292,6 @@ def parse_step_arg(text: str, base_dir: Path) -> RecipeStep:
                     f"-p {text!r}: parameters are key=value pairs separated by commas"
                 )
             raw[key.strip()] = value
-    return RecipeStep.from_dict({"patch": patch_id.strip(), **raw}, base_dir, where=f"-p {patch_id}")
+    return RecipeStep.from_dict(
+        {"patch": patch_id.strip(), **raw}, base_dir, where=f"-p {patch_id}"
+    )

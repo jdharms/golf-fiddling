@@ -19,20 +19,24 @@ from golf.core.graphics_codec import VideoMemory, load_graphics_table
 from golf.core.palettes import NES_SYSTEM_PALETTE
 
 BANK = 12
-BANNER_TABLE = 0xAD86        # 5 x 6-byte WriteNametableTiles descriptors
-PALETTE_ADDR = 0xADC4        # JapanSignpostData - shared by all 5 banners
-DIGIT_PTR_TABLE = 0xB01C     # 11 entries (digits 0-9, then the narrow "1" prefix)
+BANNER_TABLE = 0xAD86  # 5 x 6-byte WriteNametableTiles descriptors
+PALETTE_ADDR = 0xADC4  # JapanSignpostData - shared by all 5 banners
+DIGIT_PTR_TABLE = 0xB01C  # 11 entries (digits 0-9, then the narrow "1" prefix)
 DIGIT_COUNT = 11
 
 CHR_BANK = 5
-CHR_TABLES = (0xA69F, 0xA6DD, 0xB3B3)   # -> $0000, $1000 (font/texture), $2000 (blank card+attrs)
+CHR_TABLES = (
+    0xA69F,
+    0xA6DD,
+    0xB3B3,
+)  # -> $0000, $1000 (font/texture), $2000 (blank card+attrs)
 
 # The background pattern table the card's tiles come from.
 PATTERN_BASE = 0x1000
 
 COURSE_HOLE_OFFSET = 0xDBBB
 PAR = 0xDD05
-DISTANCE = (0xDD3B, 0xDD71, 0xDDA7)      # hundreds, tens, ones
+DISTANCE = (0xDD3B, 0xDD71, 0xDDA7)  # hundreds, tens, ones
 
 BANNER_JAPAN, BANNER_US, BANNER_UK, BANNER_LONG_DRIVE, BANNER_NEAREST_PIN = range(5)
 
@@ -50,6 +54,7 @@ def parse_banner(text: str) -> int:
     if text in BANNER_NAMES:
         return BANNER_NAMES[text]
     return int(text, 0)
+
 
 NAMETABLE = 0x2000
 ATTRIBUTES = 0x23C0
@@ -118,14 +123,15 @@ def freeable_patterns(rom, reference: VideoMemory, target: BannerDescriptor) -> 
         if (col, row) not in target_cells
     }
     on_screen = rest_of_screen | {
-        reference.data[NAMETABLE + row * SCREEN_COLS + col]
-        for col, row in target_cells
+        reference.data[NAMETABLE + row * SCREEN_COLS + col] for col, row in target_cells
     }
 
     other_banners = set()
     for index in range(len(BANNER_NAMES)):
         if index != target.index:
-            other_banners.update(read_banner_body(rom, read_banner_descriptor(rom, index)))
+            other_banners.update(
+                read_banner_body(rom, read_banner_descriptor(rom, index))
+            )
 
     return {
         "blank": sorted(blank),
@@ -293,7 +299,7 @@ def tile_to_chr(values) -> bytes:
 
 def pattern_tiles(vram: VideoMemory, base: int = PATTERN_BASE) -> list:
     """The 256 raw 16-byte patterns of one table."""
-    return [bytes(vram.data[base + i * 16: base + i * 16 + 16]) for i in range(256)]
+    return [bytes(vram.data[base + i * 16 : base + i * 16 + 16]) for i in range(256)]
 
 
 # ---------------------------------------------------------------------------
@@ -305,7 +311,7 @@ def pattern_tiles(vram: VideoMemory, base: int = PATTERN_BASE) -> list:
 class TileImport:
     """One 8x8 cell of an edited banner."""
 
-    col: int                 # screen coordinates
+    col: int  # screen coordinates
     row: int
     chr_bytes: bytes
     subpalette: int
@@ -322,7 +328,7 @@ class BannerImport:
     descriptor: BannerDescriptor
     tiles: list = field(default_factory=list)
     errors: list = field(default_factory=list)
-    outside: list = field(default_factory=list)   # changed tiles beyond the banner
+    outside: list = field(default_factory=list)  # changed tiles beyond the banner
 
     @property
     def new_patterns(self) -> dict:
@@ -459,7 +465,9 @@ def free_pattern_slots(rom, reference: VideoMemory, kept_tiles) -> list:
         for col in range(SCREEN_COLS)
         if (col, row) not in banner_cells
     }
-    needed.update(tile for digit in range(DIGIT_COUNT) for tile in digit_tiles(rom, digit))
+    needed.update(
+        tile for digit in range(DIGIT_COUNT) for tile in digit_tiles(rom, digit)
+    )
     needed.update(tile for tile in kept_tiles if tile is not None)
     return sorted(set(range(256)) - needed)
 
@@ -482,7 +490,7 @@ def allocate_patterns(free: list, count: int) -> list:
 
     usable = []
     for start, length in runs:
-        if start % 2:                 # an odd start wastes its first slot
+        if start % 2:  # an odd start wastes its first slot
             start, length = start + 1, length - 1
         length -= length % 2
         while length > 0:
@@ -510,9 +518,9 @@ def allocate_patterns(free: list, count: int) -> list:
 class EditedScreen:
     """An artist's export, reduced to what the NES can actually hold."""
 
-    pixels: list          # 240 rows of 256 RGB triples
-    scale: int            # the canvas zoom the artist worked at
-    ragged: list          # NES pixels whose zoom x zoom block was not one colour
+    pixels: list  # 240 rows of 256 RGB triples
+    scale: int  # the canvas zoom the artist worked at
+    ragged: list  # NES pixels whose zoom x zoom block was not one colour
     source: AsepriteFile
 
 
@@ -570,7 +578,9 @@ def changed_tiles(screen, reference: VideoMemory, palette) -> list:
         for col in range(SCREEN_COLS):
             for y in range(8):
                 for x in range(8):
-                    expected = NES_SYSTEM_PALETTE[rendered[row * 8 + y][col * 8 + x] & 0x3F]
+                    expected = NES_SYSTEM_PALETTE[
+                        rendered[row * 8 + y][col * 8 + x] & 0x3F
+                    ]
                     if screen[row * 8 + y][col * 8 + x] != expected:
                         changed.append((col, row))
                         break

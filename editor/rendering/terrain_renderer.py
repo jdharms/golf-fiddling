@@ -4,7 +4,6 @@ NES Open Tournament Golf - Terrain Renderer
 Renders terrain canvas view with tiles, sprites, and overlays.
 """
 
-
 import math
 
 import pygame
@@ -65,9 +64,13 @@ class TerrainRenderer:
 
         # Calculate visible tile range
         start_col = max(0, int(canvas_offset_x // tile_size))
-        end_col = min(TERRAIN_WIDTH, int((canvas_offset_x + canvas_rect.width) // tile_size) + 2)
+        end_col = min(
+            TERRAIN_WIDTH, int((canvas_offset_x + canvas_rect.width) // tile_size) + 2
+        )
         start_row = max(0, int(canvas_offset_y // tile_size))
-        end_row = min(visible_height, int((canvas_offset_y + canvas_rect.height) // tile_size) + 2)
+        end_row = min(
+            visible_height, int((canvas_offset_y + canvas_rect.height) // tile_size) + 2
+        )
 
         for row_idx in range(start_row, end_row):
             row = hole_data.terrain[row_idx]
@@ -151,7 +154,10 @@ class TerrainRenderer:
             )
 
         # Render selection rectangle
-        if highlight_state.selection_rect and highlight_state.selection_mode == "terrain":
+        if (
+            highlight_state.selection_rect
+            and highlight_state.selection_mode == "terrain"
+        ):
             SelectionRenderer.render_selection_rect(
                 screen,
                 highlight_state,
@@ -161,8 +167,11 @@ class TerrainRenderer:
             )
 
         # Render paste preview
-        if (highlight_state.paste_preview_pos and render_ctx.state and
-            render_ctx.state.paste_preview_active):
+        if (
+            highlight_state.paste_preview_pos
+            and render_ctx.state
+            and render_ctx.state.paste_preview_active
+        ):
             SelectionRenderer.render_paste_preview(
                 screen,
                 highlight_state,
@@ -178,6 +187,7 @@ class TerrainRenderer:
         # Render stamp preview
         if highlight_state.stamp_preview_pos and highlight_state.current_stamp:
             from editor.rendering.stamp_renderer import StampRenderer
+
             StampRenderer.render_stamp_preview(
                 screen,
                 highlight_state,
@@ -329,7 +339,9 @@ class TerrainRenderer:
         point_color = (255, 255, 0)  # Yellow
 
         # Create ViewState for coordinate conversion
-        view_state = ViewState(canvas_rect, canvas_offset_x, canvas_offset_y, canvas_scale)
+        view_state = ViewState(
+            canvas_rect, canvas_offset_x, canvas_offset_y, canvas_scale
+        )
 
         # Convert game pixel positions to screen positions
         screen_points = []
@@ -400,7 +412,9 @@ class TerrainRenderer:
 
             if last_visible or preview_visible:
                 # Draw dashed preview line
-                draw_dashed_line(screen, preview_color, last_screen, preview_screen, 2, 8)
+                draw_dashed_line(
+                    screen, preview_color, last_screen, preview_screen, 2, 8
+                )
 
                 # Calculate preview distance
                 dx = preview_point[0] - last_game[0]

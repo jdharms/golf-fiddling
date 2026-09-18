@@ -19,12 +19,29 @@ from pathlib import Path
 
 from golf.core.patches import PatchError, load_credentials
 from golf.core.patches.sram_defaults import VANILLA_CLUBS, VANILLA_NAME
-from golf.randomizer.build import PlayerOptions, build_unfinished, clubs_from_labels, finish
-from golf.randomizer.catalog import DEFAULT_COURSES, DEFAULT_INDEX, Catalog, CatalogError, HoleStore
+from golf.randomizer.build import (
+    PlayerOptions,
+    build_unfinished,
+    clubs_from_labels,
+    finish,
+)
+from golf.randomizer.catalog import (
+    DEFAULT_COURSES,
+    DEFAULT_INDEX,
+    Catalog,
+    CatalogError,
+    HoleStore,
+)
 from golf.randomizer.curation import DEFAULT_CURATION, CurationSnapshot
 from golf.randomizer.generate import GenerationError, generate
 from golf.randomizer.layout import COUNTS
-from golf.randomizer.manifest import SOURCES, ClubRules, Manifest, Settings, required_roms
+from golf.randomizer.manifest import (
+    SOURCES,
+    ClubRules,
+    Manifest,
+    Settings,
+    required_roms,
+)
 from golf.randomizer.music import RANDOM, TRACKS
 
 EXAMPLES = """
@@ -49,21 +66,31 @@ def mercy_point(text: str) -> int | None:
     try:
         return int(text, 0)
     except ValueError:
-        raise argparse.ArgumentTypeError(f"expected a stroke number or 'none', got {text!r}") from None
+        raise argparse.ArgumentTypeError(
+            f"expected a stroke number or 'none', got {text!r}"
+        ) from None
 
 
 def settings_from_args(args: argparse.Namespace) -> Settings:
     defaults = Settings()
     rules = ClubRules(
         max=args.clubs_max if args.clubs_max is not None else defaults.clubs.max,
-        banned=clubs_from_labels(comma_list(args.banned)) if args.banned else frozenset(),
-        required_bag=clubs_from_labels(comma_list(args.required_bag)) if args.required_bag else None,
+        banned=clubs_from_labels(comma_list(args.banned))
+        if args.banned
+        else frozenset(),
+        required_bag=clubs_from_labels(comma_list(args.required_bag))
+        if args.required_bag
+        else None,
     )
     return Settings(
         prng_seed=args.seed,
         par=args.par,
-        sources=frozenset(comma_list(args.sources)) if args.sources else defaults.sources,
-        exclude_tags=frozenset(comma_list(args.exclude_tags)) if args.exclude_tags else frozenset(),
+        sources=frozenset(comma_list(args.sources))
+        if args.sources
+        else defaults.sources,
+        exclude_tags=frozenset(comma_list(args.exclude_tags))
+        if args.exclude_tags
+        else frozenset(),
         allow_family_repeats=args.allow_family_repeats,
         music=args.music,
         mercy_point=args.mercy_point,
@@ -76,20 +103,29 @@ def describe_clubs(rules: ClubRules) -> str:
     if rules.banned:
         parts.append("banned " + " ".join(club.label for club in sorted(rules.banned)))
     if rules.required_bag is not None:
-        parts.append("required bag " + " ".join(club.label for club in sorted(rules.required_bag)))
+        parts.append(
+            "required bag "
+            + " ".join(club.label for club in sorted(rules.required_bag))
+        )
     return ", ".join(parts)
 
 
-def summary(manifest: Manifest, catalog: Catalog, curation: CurationSnapshot | None) -> list[str]:
+def summary(
+    manifest: Manifest, catalog: Catalog, curation: CurationSnapshot | None
+) -> list[str]:
     course = manifest.course
-    lines = [f"seed {manifest.settings.prng_seed}  (par {manifest.settings.par} target)"]
+    lines = [
+        f"seed {manifest.settings.prng_seed}  (par {manifest.settings.par} target)"
+    ]
     total_yards = 0
     for number, slot in enumerate(course.holes, start=1):
         entry = catalog[slot.id]
         total_yards += entry.distance
         name = curation.for_hole(slot.id).display_name if curation is not None else None
         suffix = f"  {name}" if name else ""
-        lines.append(f"  {number:>2}  par {slot.par}  {entry.distance:>3} yd  {slot.id}{suffix}")
+        lines.append(
+            f"  {number:>2}  par {slot.par}  {entry.distance:>3} yd  {slot.id}{suffix}"
+        )
     mercy = "off" if course.mercy_point is None else f"stroke {course.mercy_point}"
     lines += [
         f"total: par {course.par}, {total_yards:,} yards",
@@ -132,7 +168,11 @@ def cmd_build(args: argparse.Namespace) -> int:
     options = None
     credentials = None
     if not args.unfinished:
-        clubs = clubs_from_labels(comma_list(args.clubs)) if args.clubs else frozenset(VANILLA_CLUBS)
+        clubs = (
+            clubs_from_labels(comma_list(args.clubs))
+            if args.clubs
+            else frozenset(VANILLA_CLUBS)
+        )
         options = PlayerOptions(args.name, clubs, bgm=not args.no_bgm)
         if args.credentials:
             credentials = load_credentials(args.credentials)
@@ -186,13 +226,33 @@ def build_parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
 
     gen = commands.add_parser("generate", help="settings in, manifest out")
-    gen.add_argument("-o", "--output", type=Path, default=Path("manifest.json"), help="manifest to write")
-    gen.add_argument("--seed", help="the PRNG seed every random choice comes from (default: drawn)")
-    gen.add_argument("--par", type=int, choices=sorted(COUNTS, reverse=True), default=Settings().par)
-    gen.add_argument("--sources", help=f"comma-separated source ROMs (default: {','.join(SOURCES)})")
-    gen.add_argument("--exclude-tags", help="comma-separated curation tags to keep out of the pool")
-    gen.add_argument("--allow-family-repeats", action="store_true", help="let two holes of one family share the course")
-    gen.add_argument("--music", default=RANDOM, help=f"{RANDOM} or one of {', '.join(TRACKS)}")
+    gen.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        default=Path("manifest.json"),
+        help="manifest to write",
+    )
+    gen.add_argument(
+        "--seed", help="the PRNG seed every random choice comes from (default: drawn)"
+    )
+    gen.add_argument(
+        "--par", type=int, choices=sorted(COUNTS, reverse=True), default=Settings().par
+    )
+    gen.add_argument(
+        "--sources", help=f"comma-separated source ROMs (default: {','.join(SOURCES)})"
+    )
+    gen.add_argument(
+        "--exclude-tags", help="comma-separated curation tags to keep out of the pool"
+    )
+    gen.add_argument(
+        "--allow-family-repeats",
+        action="store_true",
+        help="let two holes of one family share the course",
+    )
+    gen.add_argument(
+        "--music", default=RANDOM, help=f"{RANDOM} or one of {', '.join(TRACKS)}"
+    )
     gen.add_argument(
         "--mercy-point",
         type=mercy_point,
@@ -200,32 +260,86 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="N|none",
         help="the stroke a hole ends on with a tap-in; none leaves the patch out (default: %(default)s)",
     )
-    gen.add_argument("--clubs-max", type=int, help="the most clubs a bag may hold, putter included (default: 14)")
-    gen.add_argument("--banned", metavar="CLUBS", help="comma-separated clubs no bag may hold, e.g. 1W,SW")
-    gen.add_argument("--required-bag", metavar="CLUBS", help="comma-separated clubs every player carries")
-    gen.add_argument("--catalog", type=Path, default=DEFAULT_INDEX, help="catalog index")
-    gen.add_argument("--curation", type=Path, default=DEFAULT_CURATION, help="curation file")
+    gen.add_argument(
+        "--clubs-max",
+        type=int,
+        help="the most clubs a bag may hold, putter included (default: 14)",
+    )
+    gen.add_argument(
+        "--banned",
+        metavar="CLUBS",
+        help="comma-separated clubs no bag may hold, e.g. 1W,SW",
+    )
+    gen.add_argument(
+        "--required-bag",
+        metavar="CLUBS",
+        help="comma-separated clubs every player carries",
+    )
+    gen.add_argument(
+        "--catalog", type=Path, default=DEFAULT_INDEX, help="catalog index"
+    )
+    gen.add_argument(
+        "--curation", type=Path, default=DEFAULT_CURATION, help="curation file"
+    )
     gen.set_defaults(func=cmd_generate)
 
     build = commands.add_parser("build", help="manifest in, ROM or IPS out")
     build.add_argument("rom", type=Path, help="vanilla US ROM")
     build.add_argument("manifest", type=Path, help="manifest from generate or the site")
-    build.add_argument("-o", "--output", type=Path, help="write the ROM (default: <manifest>.nes unless --ips)")
-    build.add_argument("--ips", type=Path, help="write an IPS patch from the vanilla ROM to the build")
+    build.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        help="write the ROM (default: <manifest>.nes unless --ips)",
+    )
+    build.add_argument(
+        "--ips", type=Path, help="write an IPS patch from the vanilla ROM to the build"
+    )
     stage = build.add_mutually_exclusive_group()
-    stage.add_argument("--unfinished", action="store_true", help="stop after the unfinished stage")
-    stage.add_argument("--credentials", type=Path, metavar="KEYS", help="finish signed in with a golf-qr-credentials file")
-    build.add_argument("--name", default=VANILLA_NAME, help="the new-save player name (default: %(default)s)")
-    build.add_argument("--clubs", metavar="CLUBS", help="comma-separated new-save bag (default: the vanilla bag)")
-    build.add_argument("--no-bgm", action="store_true", help="new saves start with music off")
-    build.add_argument("--catalog", type=Path, default=DEFAULT_INDEX, help="catalog index")
-    build.add_argument("--holes", type=Path, default=DEFAULT_COURSES, help="hole store root (default: courses/)")
+    stage.add_argument(
+        "--unfinished", action="store_true", help="stop after the unfinished stage"
+    )
+    stage.add_argument(
+        "--credentials",
+        type=Path,
+        metavar="KEYS",
+        help="finish signed in with a golf-qr-credentials file",
+    )
+    build.add_argument(
+        "--name",
+        default=VANILLA_NAME,
+        help="the new-save player name (default: %(default)s)",
+    )
+    build.add_argument(
+        "--clubs",
+        metavar="CLUBS",
+        help="comma-separated new-save bag (default: the vanilla bag)",
+    )
+    build.add_argument(
+        "--no-bgm", action="store_true", help="new saves start with music off"
+    )
+    build.add_argument(
+        "--catalog", type=Path, default=DEFAULT_INDEX, help="catalog index"
+    )
+    build.add_argument(
+        "--holes",
+        type=Path,
+        default=DEFAULT_COURSES,
+        help="hole store root (default: courses/)",
+    )
     build.set_defaults(func=cmd_build)
 
     show = commands.add_parser("show", help="print a manifest's course")
     show.add_argument("manifest", type=Path, help="manifest file")
-    show.add_argument("--catalog", type=Path, default=DEFAULT_INDEX, help="catalog index")
-    show.add_argument("--curation", type=Path, default=DEFAULT_CURATION, help="curation file, for display names")
+    show.add_argument(
+        "--catalog", type=Path, default=DEFAULT_INDEX, help="catalog index"
+    )
+    show.add_argument(
+        "--curation",
+        type=Path,
+        default=DEFAULT_CURATION,
+        help="curation file, for display names",
+    )
     show.set_defaults(func=cmd_show)
     return parser
 
@@ -233,8 +347,14 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
-    if args.command == "build" and args.unfinished and (args.clubs or args.no_bgm or args.name != VANILLA_NAME):
-        parser.error("--name, --clubs and --no-bgm are finishing options; drop them with --unfinished")
+    if (
+        args.command == "build"
+        and args.unfinished
+        and (args.clubs or args.no_bgm or args.name != VANILLA_NAME)
+    ):
+        parser.error(
+            "--name, --clubs and --no-bgm are finishing options; drop them with --unfinished"
+        )
     try:
         return args.func(args)
     except (ValueError, CatalogError, GenerationError, PatchError, OSError) as problem:

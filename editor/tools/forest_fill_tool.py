@@ -73,7 +73,7 @@ class ForestFillTool:
         if not clicked_region:
             return ToolResult(
                 handled=True,
-                message="Forest Fill: Click inside a forest placeholder region"
+                message="Forest Fill: Click inside a forest placeholder region",
             )
 
         # Fill only this region
@@ -83,7 +83,8 @@ class ForestFillTool:
 
         if not changes:
             return ToolResult(
-                handled=True, message="Forest Fill: No fillable cells found in this region"
+                handled=True,
+                message="Forest Fill: No fillable cells found in this region",
             )
 
         # Push undo state before applying

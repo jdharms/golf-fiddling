@@ -12,7 +12,12 @@ from collections.abc import Sequence
 from functools import cache
 from pathlib import Path
 
-from golf.core.patches.menu_trim import MAX_WORD_LENGTH, MIN_WORD_LENGTH, RENDERABLE_CHARS, normalize_words
+from golf.core.patches.menu_trim import (
+    MAX_WORD_LENGTH,
+    MIN_WORD_LENGTH,
+    RENDERABLE_CHARS,
+    normalize_words,
+)
 from golf.core.patches.scorecard_course_name import TITLE_FONT_CHARS, title_text
 
 WORD_BANK = Path(__file__).resolve().parent / "data" / "word_bank.txt"
@@ -36,7 +41,9 @@ def check_word(word: str) -> str:
         )
     bad = sorted(set(text) - _DRAWABLE)
     if bad:
-        raise MagicWordsError(f"{word!r} has characters the fonts cannot draw: {''.join(bad)!r}")
+        raise MagicWordsError(
+            f"{word!r} has characters the fonts cannot draw: {''.join(bad)!r}"
+        )
     return text
 
 
@@ -74,10 +81,16 @@ def load_word_bank(path: Path = WORD_BANK) -> tuple[str, ...]:
             raise MagicWordsError(f"{path}:{number}: {word} is already in the bank")
         words.append(word)
     if len(words) < WORD_COUNT:
-        raise MagicWordsError(f"{path} needs at least {WORD_COUNT} words, has {len(words)}")
+        raise MagicWordsError(
+            f"{path} needs at least {WORD_COUNT} words, has {len(words)}"
+        )
     return tuple(words)
 
 
-def draw_magic_words(rng: random.Random, bank: Sequence[str] | None = None) -> tuple[str, ...]:
+def draw_magic_words(
+    rng: random.Random, bank: Sequence[str] | None = None
+) -> tuple[str, ...]:
     """Three distinct words, in drawn order."""
-    return tuple(rng.sample(list(load_word_bank() if bank is None else bank), WORD_COUNT))
+    return tuple(
+        rng.sample(list(load_word_bank() if bank is None else bank), WORD_COUNT)
+    )

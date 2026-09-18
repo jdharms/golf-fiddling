@@ -4,7 +4,6 @@ NES Open Tournament Golf - Greens Renderer
 Renders greens editing canvas view.
 """
 
-
 import math
 
 import pygame
@@ -133,7 +132,10 @@ class GreensRenderer:
             )
 
         # Render selection rectangle
-        if highlight_state.selection_rect and highlight_state.selection_mode == "greens":
+        if (
+            highlight_state.selection_rect
+            and highlight_state.selection_mode == "greens"
+        ):
             SelectionRenderer.render_selection_rect(
                 screen,
                 highlight_state,
@@ -159,6 +161,7 @@ class GreensRenderer:
         # Render stamp preview
         if highlight_state.stamp_preview_pos and highlight_state.current_stamp:
             from editor.rendering.stamp_renderer import StampRenderer
+
             StampRenderer.render_stamp_preview(
                 screen,
                 highlight_state,
@@ -285,7 +288,9 @@ class GreensRenderer:
         point_color = (255, 255, 0)  # Yellow
 
         # Create ViewState for coordinate conversion
-        view_state = ViewState(canvas_rect, canvas_offset_x, canvas_offset_y, canvas_scale)
+        view_state = ViewState(
+            canvas_rect, canvas_offset_x, canvas_offset_y, canvas_scale
+        )
 
         # Convert game pixel positions to screen positions
         screen_points = []
@@ -356,7 +361,9 @@ class GreensRenderer:
 
             if last_visible or preview_visible:
                 # Draw dashed preview line
-                draw_dashed_line(screen, preview_color, last_screen, preview_screen, 2, 8)
+                draw_dashed_line(
+                    screen, preview_color, last_screen, preview_screen, 2, 8
+                )
 
                 # Calculate preview distance
                 dx = preview_point[0] - last_game[0]
@@ -417,7 +424,9 @@ class GreensRenderer:
             screen_pos = view_state.tile_to_screen((row, col))
             if screen_pos is not None:
                 rect = pygame.Rect(screen_pos[0], screen_pos[1], tile_size, tile_size)
-                pygame.draw.rect(screen, (0, 255, 128), rect, 4)  # Bright green, 4px border
+                pygame.draw.rect(
+                    screen, (0, 255, 128), rect, 4
+                )  # Bright green, 4px border
 
         # Render current position with yellow border
         if highlight_state.fringe_current_pos:

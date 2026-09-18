@@ -1,7 +1,6 @@
 """Integration tests for terrain compression round-trip validation."""
 
 
-
 def test_simple_terrain_roundtrip(simple_terrain_fixture, terrain_decompressor):
     """Compress and decompress simple fixture - should match original."""
     from golf.core.compressor import TerrainCompressor

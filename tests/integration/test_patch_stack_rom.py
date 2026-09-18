@@ -34,7 +34,9 @@ from golf.formats.hole_data import HoleData
 
 ROM_PATH = "nes_open_us.nes"
 
-pytestmark = pytest.mark.skipif(not Path(ROM_PATH).exists(), reason=f"{ROM_PATH} not present")
+pytestmark = pytest.mark.skipif(
+    not Path(ROM_PATH).exists(), reason=f"{ROM_PATH} not present"
+)
 
 
 def load_holes(course_dir: str) -> list[HoleData]:
@@ -71,8 +73,12 @@ def full_steps(course) -> list[ROMPatch]:
         seeded_wind_patch("stack"),
         practice_swing_patch(),
         SCORECARD_QR_PATCH,
-        sram_defaults_patch("RANDO", ["1W", "3W", "5I", "PW", "SW"], bgm=False, sram_magic=0x5244),
-        music_import_patch(json.loads(Path("data/music/music_jp_courses.json").read_text()), track=0x0C),
+        sram_defaults_patch(
+            "RANDO", ["1W", "3W", "5I", "PW", "SW"], bgm=False, sram_magic=0x5244
+        ),
+        music_import_patch(
+            json.loads(Path("data/music/music_jp_courses.json").read_text()), track=0x0C
+        ),
     ]
 
 
@@ -112,9 +118,13 @@ def unfinished(vanilla, full_steps) -> bytes:
 
 def test_finishing_with_credentials_builds_on_the_unfinished_rom(vanilla, unfinished):
     credentials = QrCredentials.random(random.Random(1))
-    finished = PatchStack([qr_credentials_patch(credentials)], base_sha1=None).build(unfinished)
+    finished = PatchStack([qr_credentials_patch(credentials)], base_sha1=None).build(
+        unfinished
+    )
     written = {
-        0x10 + i for start, end in finished.regions["qr_credentials"] for i in range(start, end)
+        0x10 + i
+        for start, end in finished.regions["qr_credentials"]
+        for i in range(start, end)
     }
     changed = {i for i in range(len(unfinished)) if unfinished[i] != finished.rom[i]}
     assert changed and changed <= written
@@ -130,7 +140,9 @@ def test_finishing_as_a_guest_restores_the_vanilla_wait(vanilla, unfinished):
 
 
 @pytest.mark.parametrize("finishing", ["qr_credentials", "qr_disable"])
-def test_finishing_patches_overlap_scorecard_qr_in_one_stack(vanilla, full_steps, finishing):
+def test_finishing_patches_overlap_scorecard_qr_in_one_stack(
+    vanilla, full_steps, finishing
+):
     """By design: both rewrite bytes scorecard_qr wrote, so they belong in the
     finishing stack on top of the unfinished ROM."""
     patch = (
@@ -138,7 +150,10 @@ def test_finishing_patches_overlap_scorecard_qr_in_one_stack(vanilla, full_steps
         if finishing == "qr_credentials"
         else QR_DISABLE_PATCH
     )
-    with pytest.raises(StackError, match=f"step '{finishing}' writes .* step 'scorecard_qr' already wrote"):
+    with pytest.raises(
+        StackError,
+        match=f"step '{finishing}' writes .* step 'scorecard_qr' already wrote",
+    ):
         PatchStack([*full_steps, patch]).build(vanilla)
 
 
@@ -150,13 +165,17 @@ def test_the_build_is_deterministic_and_its_ips_reproduces_it(vanilla, full_step
 
 
 def test_a_missing_requirement_is_reported(vanilla, course):
-    with pytest.raises(StackError, match=r"'course' requires course_mirrors \(not in the stack\)"):
+    with pytest.raises(
+        StackError, match=r"'course' requires course_mirrors \(not in the stack\)"
+    ):
         PatchStack([MULTI_BANK_CODE_PATCH, ATTR_STREAMING_PATCH, course]).build(vanilla)
 
 
 def test_a_requirement_listed_too_late_is_reported(vanilla, course):
     steps = [MULTI_BANK_CODE_PATCH, ATTR_STREAMING_PATCH, course, COURSE_MIRRORS_PATCH]
-    with pytest.raises(StackError, match=r"'course' requires course_mirrors \(listed after it\)"):
+    with pytest.raises(
+        StackError, match=r"'course' requires course_mirrors \(listed after it\)"
+    ):
         PatchStack(steps).build(vanilla)
 
 
@@ -169,7 +188,10 @@ def test_an_unchecked_write_over_course_data_is_refused(vanilla, course):
         course,
         RawWrite("stomp", first_write.prg_offset, b"\xff"),
     ]
-    with pytest.raises(StackError, match="step 'stomp' writes bank 0 \\$8000 .* step 'course' already wrote"):
+    with pytest.raises(
+        StackError,
+        match="step 'stomp' writes bank 0 \\$8000 .* step 'course' already wrote",
+    ):
         PatchStack(steps).build(vanilla)
 
 
@@ -181,6 +203,10 @@ def test_a_modified_base_is_refused(vanilla):
 
 
 def test_a_prepatched_base_satisfies_requirements(vanilla, course):
-    base = PatchStack([MULTI_BANK_CODE_PATCH, COURSE_MIRRORS_PATCH, ATTR_STREAMING_PATCH]).build(vanilla).rom
+    base = (
+        PatchStack([MULTI_BANK_CODE_PATCH, COURSE_MIRRORS_PATCH, ATTR_STREAMING_PATCH])
+        .build(vanilla)
+        .rom
+    )
     result = PatchStack([course], base_sha1=None).build(base)
     assert result.regions["course"]

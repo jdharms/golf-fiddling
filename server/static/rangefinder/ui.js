@@ -38,11 +38,21 @@ export class UIController {
       parent.appendChild(option);
     }
 
-    this.courseSelect.addEventListener("change", () => this.loadHole(this.courseSelect.value, 1));
-    this.holeSelect.addEventListener("change", () => this.loadHole(this.state.courseId, Number(this.holeSelect.value)));
-    document.getElementById("zoom-in").addEventListener("click", () => this.setZoom(this.zoomLevel + 1));
-    document.getElementById("zoom-out").addEventListener("click", () => this.setZoom(this.zoomLevel - 1));
-    document.getElementById("zoom-reset").addEventListener("click", () => this.setZoom(2));
+    this.courseSelect.addEventListener("change", () =>
+      this.loadHole(this.courseSelect.value, 1),
+    );
+    this.holeSelect.addEventListener("change", () =>
+      this.loadHole(this.state.courseId, Number(this.holeSelect.value)),
+    );
+    document
+      .getElementById("zoom-in")
+      .addEventListener("click", () => this.setZoom(this.zoomLevel + 1));
+    document
+      .getElementById("zoom-out")
+      .addEventListener("click", () => this.setZoom(this.zoomLevel - 1));
+    document
+      .getElementById("zoom-reset")
+      .addEventListener("click", () => this.setZoom(2));
     document.getElementById("clear-waypoints").addEventListener("click", () => {
       this.state.clearPoints();
       this.updateDisplay();
@@ -67,7 +77,10 @@ export class UIController {
     this.holeSelect.value = String(holeNumber);
     this.currentHole = hole;
     this.holeImage.src = this.currentHole.image;
-    this.holeInfo.textContent = this.text.holeInfo(this.currentHole.par, this.currentHole.distance);
+    this.holeInfo.textContent = this.text.holeInfo(
+      this.currentHole.par,
+      this.currentHole.distance,
+    );
     this.updateDisplay();
     this.locationChanged(courseId, holeNumber);
     return true;
@@ -85,10 +98,12 @@ export class UIController {
 
   updateDisplay() {
     const distance = this.state.calculateTotalDistance();
-    this.distanceDisplay.textContent = this.state.getPointCount() < 2
-      ? this.text.distanceEmpty()
-      : this.text.distance(distance);
-    if (this.currentHole) this.renderer.render(this.state, this.currentHole.width, this.currentHole.height);
+    this.distanceDisplay.textContent =
+      this.state.getPointCount() < 2
+        ? this.text.distanceEmpty()
+        : this.text.distance(distance);
+    if (this.currentHole)
+      this.renderer.render(this.state, this.currentHole.width, this.currentHole.height);
   }
 
   resizeCanvas() {
@@ -110,18 +125,22 @@ export class UIController {
   }
 
   updateZoomDisplay() {
-    document.getElementById("zoom-display").textContent = this.text.zoom(this.zoomLevel);
+    document.getElementById("zoom-display").textContent = this.text.zoom(
+      this.zoomLevel,
+    );
     document.getElementById("zoom-in").disabled = this.zoomLevel >= this.maxZoom;
     document.getElementById("zoom-out").disabled = this.zoomLevel <= this.minZoom;
   }
 
   previousHole() {
-    if (this.state.holeNumber > 1) this.loadHole(this.state.courseId, this.state.holeNumber - 1);
+    if (this.state.holeNumber > 1)
+      this.loadHole(this.state.courseId, this.state.holeNumber - 1);
   }
 
   nextHole() {
     const holes = this.metadata.courses[this.state.courseId].holes;
-    if (this.state.holeNumber < holes.length) this.loadHole(this.state.courseId, this.state.holeNumber + 1);
+    if (this.state.holeNumber < holes.length)
+      this.loadHole(this.state.courseId, this.state.holeNumber + 1);
   }
 
   updatePreview(x, y) {
@@ -131,6 +150,7 @@ export class UIController {
 
   clearPreview() {
     this.state.clearPreviewPoint();
-    if (this.currentHole) this.renderer.render(this.state, this.currentHole.width, this.currentHole.height);
+    if (this.currentHole)
+      this.renderer.render(this.state, this.currentHole.width, this.currentHole.height);
   }
 }

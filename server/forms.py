@@ -109,8 +109,14 @@ class FormState:
         if self.allow_family_repeats:
             pairs.append(("allow_family_repeats", "on"))
         pairs += [("music", self.music), ("clubs_max", self.clubs_max)]
-        pairs += [("banned", club.label) for club in RULE_CLUBS if club.label in self.banned]
-        pairs += [("required_bag", club.label) for club in RULE_CLUBS if club.label in self.required_bag]
+        pairs += [
+            ("banned", club.label) for club in RULE_CLUBS if club.label in self.banned
+        ]
+        pairs += [
+            ("required_bag", club.label)
+            for club in RULE_CLUBS
+            if club.label in self.required_bag
+        ]
         return pairs
 
 
@@ -157,9 +163,13 @@ def settings_from_state(state: FormState) -> Settings:
             sources=frozenset(state.sources),
             allow_family_repeats=state.allow_family_repeats,
             music=state.music,
-            clubs=ClubRules(max=clubs_max, banned=banned, required_bag=required or None),
+            clubs=ClubRules(
+                max=clubs_max, banned=banned, required_bag=required or None
+            ),
         )
-    except ManifestError:  # pragma: no cover - every rule Settings checks is checked above
+    except (
+        ManifestError
+    ):  # pragma: no cover - every rule Settings checks is checked above
         raise FormError(INVALID, field="settings") from None
 
 
@@ -178,8 +188,15 @@ class DownloadState:
     @classmethod
     def default(cls, rules: ClubRules) -> "DownloadState":
         """What the form shows first: the vanilla name, and the required bag or the vanilla bag less banned clubs."""
-        bag = rules.required_bag if rules.required_bag is not None else frozenset(VANILLA_CLUBS) - rules.banned
-        return cls(player_name=VANILLA_NAME, clubs={club.label for club in bag if club != Club.PT})
+        bag = (
+            rules.required_bag
+            if rules.required_bag is not None
+            else frozenset(VANILLA_CLUBS) - rules.banned
+        )
+        return cls(
+            player_name=VANILLA_NAME,
+            clubs={club.label for club in bag if club != Club.PT},
+        )
 
     @classmethod
     def from_form(cls, form) -> "DownloadState":
@@ -200,15 +217,24 @@ class DownloadState:
         """The state as the fields a browser would submit for it, hashes included."""
         pairs = [("player_name", self.player_name)]
         pairs += [("clubs", club.label) for club in Club if club.label in self.clubs]
-        pairs += [(ROM_HASH_PREFIX + rom_id, sha1) for rom_id, sha1 in self.rom_hashes.items()]
+        pairs += [
+            (ROM_HASH_PREFIX + rom_id, sha1) for rom_id, sha1 in self.rom_hashes.items()
+        ]
         return pairs
 
 
 def check_rom_hashes(state: DownloadState, required: Iterable[str]) -> None:
     """Raise FormError naming every required ROM the submission has no vanilla hash for."""
-    missing = [rom_id for rom_id in required if state.rom_hashes.get(rom_id) != vanilla_rom(rom_id).sha1]
+    missing = [
+        rom_id
+        for rom_id in required
+        if state.rom_hashes.get(rom_id) != vanilla_rom(rom_id).sha1
+    ]
     if missing:
-        raise FormError(ROMS_MISSING, roms=", ".join(vanilla_rom(rom_id).title for rom_id in missing))
+        raise FormError(
+            ROMS_MISSING,
+            roms=", ".join(vanilla_rom(rom_id).title for rom_id in missing),
+        )
 
 
 def player_options_from_state(state: DownloadState, rules: ClubRules) -> PlayerOptions:
@@ -238,5 +264,7 @@ def player_options_from_state(state: DownloadState, rules: ClubRules) -> PlayerO
 
     try:
         return PlayerOptions(player_name=name, clubs=bag)
-    except BuildError:  # pragma: no cover - every rule PlayerOptions checks is checked above
+    except (
+        BuildError
+    ):  # pragma: no cover - every rule PlayerOptions checks is checked above
         raise FormError(INVALID, field="player") from None

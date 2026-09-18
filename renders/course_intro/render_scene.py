@@ -10,7 +10,9 @@ import sys
 
 from PIL import Image
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 from golf.core.graphics_codec import VideoMemory, load_graphics_table
 from golf.core.palettes import NES_SYSTEM_PALETTE
@@ -19,10 +21,10 @@ from golf.core.rom_reader import RomReader
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-FONT_CHR = (6, 0xA781)          # landscape tiles + dialogue font -> PPU $1000
-PORTRAIT_CHR = (8, 0xA945)      # $071D = 0
+FONT_CHR = (6, 0xA781)  # landscape tiles + dialogue font -> PPU $1000
+PORTRAIT_CHR = (8, 0xA945)  # $071D = 0
 PALETTE = (12, 0x9777)
-SPLIT_ROW = 8                   # sprite-0 split: rows 0-7 use CHR $0000
+SPLIT_ROW = 8  # sprite-0 split: rows 0-7 use CHR $0000
 
 COURSES = [
     ("japan", (8, 0x9BDB), (8, 0xB723)),
@@ -44,7 +46,9 @@ def nametable_write(rom, bank, cpu_addr, vram, fill_mode):
     repeat = fill_mode or bool(width_byte & 0x40)
     for row in range(height):
         for col in range(width):
-            vram.write(dest + row * 0x20 + col, data[o if repeat else o + row * width + col])
+            vram.write(
+                dest + row * 0x20 + col, data[o if repeat else o + row * width + col]
+            )
 
 
 def rect_list(rom, bank, cpu_addr, vram, fill=0x02):
@@ -66,14 +70,14 @@ def build(rom, chr_table, nt_table):
     load_graphics_table(rom, *PORTRAIT_CHR, vram)
     load_graphics_table(rom, *nt_table, vram)
 
-    nametable_write(rom, 12, 0x9847, vram, False)   # $94CC
-    nametable_write(rom, 12, 0x9610, vram, True)    # phase 0/1
+    nametable_write(rom, 12, 0x9847, vram, False)  # $94CC
+    nametable_write(rom, 12, 0x9610, vram, True)  # phase 0/1
     steps = rom.read_switched(0x96E3, 12, 24)
-    for i in range(12):                             # phase 2, the box opening
+    for i in range(12):  # phase 2, the box opening
         rect_list(rom, 12, steps[2 * i] | (steps[2 * i + 1] << 8), vram)
-    nametable_write(rom, 12, 0x98CB, vram, False)   # phase 3
+    nametable_write(rom, 12, 0x98CB, vram, False)  # phase 3
     nametable_write(rom, 12, 0x98DA, vram, False)
-    nametable_write(rom, 12, 0x98E9, vram, True)    # phase 4
+    nametable_write(rom, 12, 0x98E9, vram, True)  # phase 4
     nametable_write(rom, 12, 0x98EE, vram, True)
     return vram
 
@@ -102,7 +106,11 @@ def render(rom, vram, out_path):
 def main():
     rom = RomReader(os.path.join(ROOT, "nes_open_us.nes"))
     for name, chr_table, nt_table in COURSES:
-        render(rom, build(rom, chr_table, nt_table), os.path.join(HERE, f"scene_{name}.png"))
+        render(
+            rom,
+            build(rom, chr_table, nt_table),
+            os.path.join(HERE, f"scene_{name}.png"),
+        )
 
 
 if __name__ == "__main__":

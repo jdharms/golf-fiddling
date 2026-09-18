@@ -16,7 +16,9 @@ class LiveServer:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.bind(("127.0.0.1", 0))
         self.server = uvicorn.Server(uvicorn.Config(app, log_level="warning"))
-        self.thread = threading.Thread(target=self.server.run, kwargs={"sockets": [self.sock]}, daemon=True)
+        self.thread = threading.Thread(
+            target=self.server.run, kwargs={"sockets": [self.sock]}, daemon=True
+        )
 
     def __enter__(self) -> str:
         self.thread.start()

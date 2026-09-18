@@ -60,13 +60,17 @@ def _record_from_json(lineage: str, data: dict) -> HoleCuration:
     if unknown:
         raise CurationError(f"{lineage}: unknown fields {sorted(unknown)}")
     tags = data.get("tags", [])
-    if not isinstance(tags, list) or not all(isinstance(tag, str) and tag for tag in tags):
+    if not isinstance(tags, list) or not all(
+        isinstance(tag, str) and tag for tag in tags
+    ):
         raise CurationError(f"{lineage}: tags must be a list of non-empty strings")
     drawable = data.get("drawable", True)
     if not isinstance(drawable, bool):
         raise CurationError(f"{lineage}: drawable must be true or false")
     family = data.get("family")
-    if family is not None and not (isinstance(family, str) and FAMILY_PATTERN.fullmatch(family)):
+    if family is not None and not (
+        isinstance(family, str) and FAMILY_PATTERN.fullmatch(family)
+    ):
         raise CurationError(f"{lineage}: family must match {FAMILY_PATTERN.pattern}")
     display_name = data.get("display_name")
     if display_name is not None and not isinstance(display_name, str):
@@ -98,7 +102,9 @@ class CurationSnapshot:
         return cls(holes)
 
     def to_json(self) -> dict:
-        return {lineage: self.holes[lineage].to_json() for lineage in sorted(self.holes)}
+        return {
+            lineage: self.holes[lineage].to_json() for lineage in sorted(self.holes)
+        }
 
     @property
     def stamp(self) -> str:

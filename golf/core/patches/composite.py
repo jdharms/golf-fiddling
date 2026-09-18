@@ -40,8 +40,7 @@ class CompositePatch(ROMPatch):
 
     def can_apply(self, rom_writer: "RomWriter") -> bool:
         return all(
-            p.can_apply(rom_writer) or p.is_applied(rom_writer)
-            for p in self.patches
+            p.can_apply(rom_writer) or p.is_applied(rom_writer) for p in self.patches
         )
 
     def is_applied(self, rom_writer: "RomWriter") -> bool:

@@ -88,12 +88,22 @@ def upsert_entry(
                 WHERE NOT EXISTS (SELECT 1 FROM rounds WHERE rounds.entry_id = entries.id)
             RETURNING {COLUMNS}
             """,
-            (seed_id, user_id, options.player_name, clubs_text(options.clubs), draw_key(), draw_key(), at, at),
+            (
+                seed_id,
+                user_id,
+                options.player_name,
+                clubs_text(options.clubs),
+                draw_key(),
+                draw_key(),
+                at,
+                at,
+            ),
         ).fetchall()
         # RETURNING rows are read in full inside the transaction, or COMMIT finds the statement open
         if not rows:  # the entry has a round, so the update was skipped
             rows = conn.execute(
-                f"SELECT {COLUMNS} FROM entries WHERE seed_id = ? AND user_id = ?", (seed_id, user_id)
+                f"SELECT {COLUMNS} FROM entries WHERE seed_id = ? AND user_id = ?",
+                (seed_id, user_id),
             ).fetchall()
     return _entry(rows[0])
 
@@ -101,7 +111,8 @@ def upsert_entry(
 def load_entry(db: Database, seed_id: str, user_id: int) -> Entry | None:
     with db.transaction() as conn:
         row = conn.execute(
-            f"SELECT {COLUMNS} FROM entries WHERE seed_id = ? AND user_id = ?", (seed_id, user_id)
+            f"SELECT {COLUMNS} FROM entries WHERE seed_id = ? AND user_id = ?",
+            (seed_id, user_id),
         ).fetchone()
     return None if row is None else _entry(row)
 

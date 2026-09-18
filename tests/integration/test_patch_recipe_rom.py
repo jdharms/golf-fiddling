@@ -27,7 +27,9 @@ ROOT = Path(__file__).resolve().parents[2]
 ROM_PATH = ROOT / "nes_open_us.nes"
 ART = ROOT / "renders/prehole_signpost/signpost_us_hole01_course_only.aseprite"
 
-pytestmark = pytest.mark.skipif(not ROM_PATH.exists(), reason=f"{ROM_PATH.name} not present")
+pytestmark = pytest.mark.skipif(
+    not ROM_PATH.exists(), reason=f"{ROM_PATH.name} not present"
+)
 
 
 @pytest.fixture(scope="module")
@@ -63,7 +65,10 @@ def full_recipe() -> dict:
 
 def run(*args: str | Path) -> subprocess.CompletedProcess:
     return subprocess.run(
-        [sys.executable, "-m", *map(str, args)], cwd=ROOT, capture_output=True, text=True
+        [sys.executable, "-m", *map(str, args)],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
     )
 
 
@@ -95,7 +100,13 @@ def test_a_recipe_builds_the_same_rom_as_the_stack_it_describes(vanilla):
         hole.load(str(ROOT / f"courses/japan/hole_{number:02d}.json"))
         holes.append(hole)
     direct = PatchStack(
-        [MULTI_BANK_CODE_PATCH, COURSE_MIRRORS_PATCH, ATTR_STREAMING_PATCH, CoursePatch(holes), seeded_wind_patch("same")]
+        [
+            MULTI_BANK_CODE_PATCH,
+            COURSE_MIRRORS_PATCH,
+            ATTR_STREAMING_PATCH,
+            CoursePatch(holes),
+            seeded_wind_patch("same"),
+        ]
     )
     assert recipe.stack(vanilla).build(vanilla).rom == direct.build(vanilla).rom
 
@@ -105,21 +116,32 @@ def test_banner_removal_and_new_banner_art_do_not_stack(vanilla):
     """Both rewrite the banner selection at $AC5D; whichever comes second finds
     the other's bytes where it expects vanilla ones."""
     recipe = Recipe.from_dict(
-        {"steps": [{"patch": "signpost_random_banner", "art": str(ART)}, {"patch": "remove_course_banner"}]},
+        {
+            "steps": [
+                {"patch": "signpost_random_banner", "art": str(ART)},
+                {"patch": "remove_course_banner"},
+            ]
+        },
         ROOT,
     )
-    with pytest.raises(StackError, match="step 'remove_course_banner'.*unexpected state"):
+    with pytest.raises(
+        StackError, match="step 'remove_course_banner'.*unexpected state"
+    ):
         recipe.stack(vanilla).build(vanilla)
 
 
 def test_cli_builds_a_rom_and_its_ips_from_a_recipe(vanilla, tmp_path):
     recipe = full_recipe()
-    recipe["steps"] = [s for s in recipe["steps"] if s["patch"] != "signpost_random_banner"]
+    recipe["steps"] = [
+        s for s in recipe["steps"] if s["patch"] != "signpost_random_banner"
+    ]
     recipe_path = tmp_path / "recipe.json"
     Recipe.from_dict(recipe, ROOT).save(recipe_path)
 
     out, patch = tmp_path / "out.nes", tmp_path / "out.ips"
-    completed = run("tools.patch", ROM_PATH, recipe_path, "-o", out, "--ips", patch, "-v")
+    completed = run(
+        "tools.patch", ROM_PATH, recipe_path, "-o", out, "--ips", patch, "-v"
+    )
 
     assert completed.returncode == 0, completed.stderr
     assert ips.apply(vanilla, patch.read_bytes()) == out.read_bytes()
@@ -129,15 +151,32 @@ def test_cli_builds_a_rom_and_its_ips_from_a_recipe(vanilla, tmp_path):
 def test_cli_finishes_an_unfinished_rom_with_credentials(tmp_path, credentials):
     unfinished, finished = tmp_path / "unfinished.nes", tmp_path / "finished.nes"
     built = run(
-        "tools.patch", ROM_PATH,
-        "-p", "multi_bank_lookup", "-p", "course_mirrors", "-p", "attr_streaming",
-        "-p", "course:course=courses/japan", "-p", "scorecard_qr", "-o", unfinished,
+        "tools.patch",
+        ROM_PATH,
+        "-p",
+        "multi_bank_lookup",
+        "-p",
+        "course_mirrors",
+        "-p",
+        "attr_streaming",
+        "-p",
+        "course:course=courses/japan",
+        "-p",
+        "scorecard_qr",
+        "-o",
+        unfinished,
     )
     assert built.returncode == 0, built.stderr
 
     completed = run(
-        "tools.patch", unfinished, "--any-base",
-        "-p", f"qr_credentials:credentials={credentials}", "-o", finished, "-v",
+        "tools.patch",
+        unfinished,
+        "--any-base",
+        "-p",
+        f"qr_credentials:credentials={credentials}",
+        "-o",
+        finished,
+        "-v",
     )
     assert completed.returncode == 0, completed.stderr
     assert "(key withheld)" in completed.stdout
@@ -146,12 +185,28 @@ def test_cli_finishes_an_unfinished_rom_with_credentials(tmp_path, credentials):
 
 
 def test_cli_inline_steps_match_their_saved_recipe(tmp_path):
-    saved, first, second = tmp_path / "saved.json", tmp_path / "first.nes", tmp_path / "second.nes"
+    saved, first, second = (
+        tmp_path / "saved.json",
+        tmp_path / "first.nes",
+        tmp_path / "second.nes",
+    )
     inline = run(
-        "tools.patch", ROM_PATH,
-        "-p", "multi_bank_lookup", "-p", "course_mirrors", "-p", "attr_streaming",
-        "-p", "course:course=courses/japan", "-p", "mercy_tap_in:mercy_point=9",
-        "--save-recipe", saved, "-o", first,
+        "tools.patch",
+        ROM_PATH,
+        "-p",
+        "multi_bank_lookup",
+        "-p",
+        "course_mirrors",
+        "-p",
+        "attr_streaming",
+        "-p",
+        "course:course=courses/japan",
+        "-p",
+        "mercy_tap_in:mercy_point=9",
+        "--save-recipe",
+        saved,
+        "-o",
+        first,
     )
     assert inline.returncode == 0, inline.stderr
     from_recipe = run("tools.patch", ROM_PATH, saved, "-o", second)
@@ -160,15 +215,26 @@ def test_cli_inline_steps_match_their_saved_recipe(tmp_path):
 
 
 def test_cli_reports_a_missing_requirement(tmp_path):
-    completed = run("tools.patch", ROM_PATH, "-p", "seeded_wind:seed=abc", "--validate-only")
+    completed = run(
+        "tools.patch", ROM_PATH, "-p", "seeded_wind:seed=abc", "--validate-only"
+    )
     assert completed.returncode == 1
-    assert "'seeded_wind' requires course_mirrors (not in the stack)" in completed.stderr
+    assert (
+        "'seeded_wind' requires course_mirrors (not in the stack)" in completed.stderr
+    )
 
 
 def test_cli_lists_every_patch_type():
     completed = run("tools.patch", "--list")
     assert completed.returncode == 0
-    for spec_id in ("course", "seeded_wind", "scorecard_qr", "qr_credentials", "qr_disable", "signpost_random_banner"):
+    for spec_id in (
+        "course",
+        "seeded_wind",
+        "scorecard_qr",
+        "qr_credentials",
+        "qr_disable",
+        "signpost_random_banner",
+    ):
         assert f"\n{spec_id}\n" in f"\n{completed.stdout}"
 
 

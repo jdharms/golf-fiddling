@@ -10,9 +10,11 @@ const text = {
   holeOption: (number) => t("rangefinder.script.hole_option", { number }),
   holeInfo: (par, distance) => t("rangefinder.script.hole_info", { par, distance }),
   distanceEmpty: () => t("rangefinder.script.distance_empty"),
-  distance: (distance) => t("rangefinder.script.distance", { distance: distance.toFixed(1) }),
+  distance: (distance) =>
+    t("rangefinder.script.distance", { distance: distance.toFixed(1) }),
   zoom: (level) => t("rangefinder.script.zoom", { level }),
-  segment: (distance) => t("rangefinder.script.segment", { distance: distance.toFixed(1) }),
+  segment: (distance) =>
+    t("rangefinder.script.segment", { distance: distance.toFixed(1) }),
   flag: (current, total) => t("rangefinder.script.flag", { current, total }),
   permalinkCopied: () => t("rangefinder.script.permalink_copied"),
   permalinkFailed: () => t("rangefinder.script.permalink_failed"),
@@ -23,7 +25,9 @@ function resolveAssetPaths(metadata, metadataUrl) {
     for (const hole of course.holes) {
       hole.image = new URL(hole.image, metadataUrl).href;
       hole.green_image = new URL(hole.green_image, metadataUrl).href;
-      hole.flag_images = hole.flag_images.map((path) => new URL(path, metadataUrl).href);
+      hole.flag_images = hole.flag_images.map(
+        (path) => new URL(path, metadataUrl).href,
+      );
     }
   }
   return metadata;
@@ -67,7 +71,10 @@ async function initialize() {
     const metadata = resolveAssetPaths(await response.json(), metadataUrl);
     const initialLocation = locationFromUrl(metadata);
     const state = new MeasurementState();
-    const renderer = new OverlayRenderer(document.getElementById("overlay-canvas"), text.segment);
+    const renderer = new OverlayRenderer(
+      document.getElementById("overlay-canvas"),
+      text.segment,
+    );
     const ui = new UIController(metadata, state, renderer, text, updatePermalink);
     const greenModal = new GreenModal(text.flag);
     const container = document.querySelector(".rangefinder-image-container");
@@ -105,15 +112,23 @@ async function initialize() {
     });
     document.addEventListener("keydown", (event) => {
       if (greenModal.isOpen) {
-        if (event.key === "ArrowLeft" || event.key === "ArrowRight") event.preventDefault();
+        if (event.key === "ArrowLeft" || event.key === "ArrowRight")
+          event.preventDefault();
         if (event.key === "ArrowLeft") greenModal.previousFlag();
         if (event.key === "ArrowRight") greenModal.nextFlag();
         return;
       }
-      if (event.target.closest("input, select, textarea, button") || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (
+        event.target.closest("input, select, textarea, button") ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey
+      )
+        return;
       if (event.key === "ArrowLeft") ui.previousHole();
       if (event.key === "ArrowRight") ui.nextHole();
-      if (event.key.toLowerCase() === "g" && ui.currentHole) greenModal.open(ui.currentHole, ui.zoomLevel);
+      if (event.key.toLowerCase() === "g" && ui.currentHole)
+        greenModal.open(ui.currentHole, ui.zoomLevel);
     });
 
     ui.loadHole(initialLocation.courseId, initialLocation.holeNumber);

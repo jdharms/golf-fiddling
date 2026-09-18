@@ -46,9 +46,7 @@ def pack_attributes(attr_rows: list[list[int]]) -> bytes:
     # Validate palette values are in range 0-3
     for row_idx, row in enumerate(attr_rows):
         if len(row) != 11:
-            raise ValueError(
-                f"Row {row_idx} has {len(row)} columns, expected 11"
-            )
+            raise ValueError(f"Row {row_idx} has {len(row)} columns, expected 11")
         for col_idx, val in enumerate(row):
             if not 0 <= val <= 3:
                 raise ValueError(

@@ -21,9 +21,16 @@ FORWARDED_HEADER = "x-forwarded-for"
 
 
 class RateLimiter:
-    def __init__(self, capacity: int, refill_seconds: float, clock: Callable[[], float] = time.monotonic):
+    def __init__(
+        self,
+        capacity: int,
+        refill_seconds: float,
+        clock: Callable[[], float] = time.monotonic,
+    ):
         if capacity < 1 or refill_seconds <= 0:
-            raise ValueError("a rate limiter needs a capacity of at least 1 and a positive refill time")
+            raise ValueError(
+                "a rate limiter needs a capacity of at least 1 and a positive refill time"
+            )
         self.capacity = capacity
         self.refill_seconds = refill_seconds
         self._clock = clock

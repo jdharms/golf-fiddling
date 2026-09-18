@@ -226,7 +226,9 @@ def scorecard_total_writes(holes: Sequence[HoleData]) -> list[DataWrite]:
 
     def write(what: str, cpu_addr: int, data: bytes) -> DataWrite:
         return DataWrite(
-            f"scorecard {what}", rom_utils.cpu_to_prg_switched(cpu_addr, SCORECARD_BANK), data
+            f"scorecard {what}",
+            rom_utils.cpu_to_prg_switched(cpu_addr, SCORECARD_BANK),
+            data,
         )
 
     thousands, *digits = (int(digit) for digit in f"{yards:04d}")
@@ -237,11 +239,23 @@ def scorecard_total_writes(holes: Sequence[HoleData]) -> list[DataWrite]:
             bytes([DIGIT_TILES + thousands]),
         )
     ]
-    for place, table, digit in zip(("hundreds", "tens", "ones"), YARDAGE_DIGIT_TABLES, digits, strict=True):
-        writes.append(write(f"total yardage {yards} ({place})", table, bytes([digit] * COURSE_SLOTS)))
-    for card, cell in zip(("main card", "36-hole match play card"), PAR_TOTAL_CELLS, strict=True):
+    for place, table, digit in zip(
+        ("hundreds", "tens", "ones"), YARDAGE_DIGIT_TABLES, digits, strict=True
+    ):
         writes.append(
-            write(f"total par {par} ({card})", cell, bytes([DIGIT_TILES + par // 10, DIGIT_TILES + par % 10]))
+            write(
+                f"total yardage {yards} ({place})", table, bytes([digit] * COURSE_SLOTS)
+            )
+        )
+    for card, cell in zip(
+        ("main card", "36-hole match play card"), PAR_TOTAL_CELLS, strict=True
+    ):
+        writes.append(
+            write(
+                f"total par {par} ({card})",
+                cell,
+                bytes([DIGIT_TILES + par // 10, DIGIT_TILES + par % 10]),
+            )
         )
     return writes
 
@@ -258,8 +272,12 @@ def _metadata_writes(hole_idx: int, hole: HoleData) -> list[DataWrite]:
     metadata = hole.metadata
     tee = metadata.get("tee", {"x": 0, "y": 0})
     flags = metadata.get("flag_positions", [])
-    flag_y = bytes(flags[i].get("y_offset", 0) if i < len(flags) else 0 for i in range(4))
-    flag_x = bytes(flags[i].get("x_offset", 0) if i < len(flags) else 0 for i in range(4))
+    flag_y = bytes(
+        flags[i].get("y_offset", 0) if i < len(flags) else 0 for i in range(4)
+    )
+    flag_x = bytes(
+        flags[i].get("x_offset", 0) if i < len(flags) else 0 for i in range(4)
+    )
     dist_100, dist_10, dist_1 = int_to_bcd(hole_distance(hole))
 
     def write(what: str, cpu_addr: int, data: bytes) -> DataWrite:
@@ -272,8 +290,14 @@ def _metadata_writes(hole_idx: int, hole: HoleData) -> list[DataWrite]:
             rom_utils.TABLE_HANDICAP + hole_idx,
             bytes([metadata.get("handicap", 1)]),
         ),
-        write("distance (100s)", rom_utils.TABLE_DISTANCE_100 + hole_idx, bytes([dist_100])),
-        write("distance (10s)", rom_utils.TABLE_DISTANCE_10 + hole_idx, bytes([dist_10])),
+        write(
+            "distance (100s)",
+            rom_utils.TABLE_DISTANCE_100 + hole_idx,
+            bytes([dist_100]),
+        ),
+        write(
+            "distance (10s)", rom_utils.TABLE_DISTANCE_10 + hole_idx, bytes([dist_10])
+        ),
         write("distance (1s)", rom_utils.TABLE_DISTANCE_1 + hole_idx, bytes([dist_1])),
         write(
             "scroll limit",
@@ -414,7 +438,8 @@ class CoursePatch(ROMPatch):
 
     def is_applied(self, rom_writer) -> bool:
         return all(
-            rom_writer.read_prg(w.prg_offset, len(w.data)) == w.data for w in self.writes
+            rom_writer.read_prg(w.prg_offset, len(w.data)) == w.data
+            for w in self.writes
         )
 
     def apply(self, rom_writer) -> None:

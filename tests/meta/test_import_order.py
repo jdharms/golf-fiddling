@@ -17,7 +17,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def _golf_modules() -> list[str]:
     modules = []
-    paths = sorted((ROOT / "golf").rglob("*.py")) + sorted((ROOT / "server").rglob("*.py"))
+    paths = sorted((ROOT / "golf").rglob("*.py")) + sorted(
+        (ROOT / "server").rglob("*.py")
+    )
     for path in paths:
         parts = path.relative_to(ROOT).with_suffix("").parts
         if parts[-1] == "__init__":

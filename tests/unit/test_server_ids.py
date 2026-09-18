@@ -22,7 +22,13 @@ def test_the_alphabet_is_base62_in_ascending_order():
 
 @pytest.mark.parametrize(
     "value, text",
-    [(0, "0000000000"), (1, "0000000001"), (61, "000000000z"), (62, "0000000010"), (MAX_VALUE, "zzzzzzzzzz")],
+    [
+        (0, "0000000000"),
+        (1, "0000000001"),
+        (61, "000000000z"),
+        (62, "0000000010"),
+        (MAX_VALUE, "zzzzzzzzzz"),
+    ],
 )
 def test_integers_round_trip_through_base62(value, text):
     assert encode_base62(value) == text
@@ -34,7 +40,9 @@ def test_ids_are_ten_characters_of_the_alphabet(text):
     assert is_id(text)
 
 
-@pytest.mark.parametrize("text", ["", "123", "0" * 11, "0" * 9 + "-", "0" * 9 + " ", None, 1234567890])
+@pytest.mark.parametrize(
+    "text", ["", "123", "0" * 11, "0" * 9 + "-", "0" * 9 + " ", None, 1234567890]
+)
 def test_anything_else_is_not_an_id(text):
     assert not is_id(text)
 

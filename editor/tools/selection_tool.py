@@ -282,11 +282,13 @@ class SelectionTool:
         # Fill selection with default tile
         start_row, start_col, end_row, end_col = sel_rect
 
-
         for row in range(start_row, end_row + 1):
             for col in range(start_col, end_col + 1):
                 if context.state.mode == "terrain":
-                    if 0 <= row < len(context.hole_data.terrain) and 0 <= col < TERRAIN_WIDTH:
+                    if (
+                        0 <= row < len(context.hole_data.terrain)
+                        and 0 <= col < TERRAIN_WIDTH
+                    ):
                         context.hole_data.set_terrain_tile(row, col, DEFAULT_TILE)
                 else:  # greens
                     if 0 <= row < GREENS_HEIGHT and 0 <= col < GREENS_WIDTH:
@@ -315,7 +317,10 @@ class SelectionTool:
         for row in range(start_row, end_row + 1):
             for col in range(start_col, end_col + 1):
                 if context.state.mode == "terrain":
-                    if 0 <= row < len(context.hole_data.terrain) and 0 <= col < TERRAIN_WIDTH:
+                    if (
+                        0 <= row < len(context.hole_data.terrain)
+                        and 0 <= col < TERRAIN_WIDTH
+                    ):
                         context.hole_data.set_terrain_tile(row, col, DEFAULT_TILE)
                 else:  # greens
                     if 0 <= row < GREENS_HEIGHT and 0 <= col < GREENS_WIDTH:
@@ -351,7 +356,8 @@ class SelectionTool:
         width = context.state.clipboard.width
         height = context.state.clipboard.height
         return ToolResult(
-            handled=True, message=f"Paste {width}x{height} region (click to place, Esc to cancel)"
+            handled=True,
+            message=f"Paste {width}x{height} region (click to place, Esc to cancel)",
         )
 
     def _commit_paste(
@@ -387,13 +393,19 @@ class SelectionTool:
 
                 # Paste based on mode
                 if context.state.mode == "terrain":
-                    if 0 <= target_row < len(context.hole_data.terrain) and 0 <= target_col < TERRAIN_WIDTH:
+                    if (
+                        0 <= target_row < len(context.hole_data.terrain)
+                        and 0 <= target_col < TERRAIN_WIDTH
+                    ):
                         context.hole_data.set_terrain_tile(
                             target_row, target_col, tile_value
                         )
                         tiles_pasted += 1
                 else:  # greens
-                    if 0 <= target_row < GREENS_HEIGHT and 0 <= target_col < GREENS_WIDTH:
+                    if (
+                        0 <= target_row < GREENS_HEIGHT
+                        and 0 <= target_col < GREENS_WIDTH
+                    ):
                         context.hole_data.set_greens_tile(
                             target_row, target_col, tile_value
                         )

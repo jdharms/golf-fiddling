@@ -64,8 +64,14 @@ def admin_router(templates: Jinja2Templates) -> APIRouter:
     router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin)])
 
     def render(request: Request, template: str, context: dict, status_code: int = 200):
-        context = {"page": None, "result": request.query_params.get("result"), **context}
-        return templates.TemplateResponse(request, f"admin/{template}", context, status_code=status_code)
+        context = {
+            "page": None,
+            "result": request.query_params.get("result"),
+            **context,
+        }
+        return templates.TemplateResponse(
+            request, f"admin/{template}", context, status_code=status_code
+        )
 
     def db_of(request: Request) -> Database:
         return request.app.state.db
@@ -79,14 +85,23 @@ def admin_router(templates: Jinja2Templates) -> APIRouter:
 
     @router.get("/seeds", response_class=HTMLResponse)
     def seeds(request: Request, page: PageNumber = 1):
-        return render(request, "seeds.html", {"listing": seeds_page(db_of(request), page)})
+        return render(
+            request, "seeds.html", {"listing": seeds_page(db_of(request), page)}
+        )
 
-    def seed_page(request: Request, seed_id: str, error: str | None = None, status_code: int = 200):
+    def seed_page(
+        request: Request, seed_id: str, error: str | None = None, status_code: int = 200
+    ):
         seed_builder: SeedBuilder = request.app.state.builder
         detail = seed_detail(db_of(request), seed_id, seed_builder.catalog)
         if detail is None:
             raise not_found()
-        return render(request, "seed.html", {"detail": detail, "error": error}, status_code=status_code)
+        return render(
+            request,
+            "seed.html",
+            {"detail": detail, "error": error},
+            status_code=status_code,
+        )
 
     @router.get("/seeds/{seed_id}", response_class=HTMLResponse)
     def seed(request: Request, seed_id: str):
@@ -102,11 +117,17 @@ def admin_router(templates: Jinja2Templates) -> APIRouter:
         try:
             ips = await run_in_threadpool(seed_builder.build, detail.seed.manifest)
         except (BuildError, CatalogError) as problem:
-            return seed_page(request, seed_id, f"The rebuild failed: {problem}", status_code=409)
+            return seed_page(
+                request, seed_id, f"The rebuild failed: {problem}", status_code=409
+            )
         except BuilderUnavailableError as problem:
-            return seed_page(request, seed_id, f"The server cannot build: {problem}", status_code=503)
+            return seed_page(
+                request, seed_id, f"The server cannot build: {problem}", status_code=503
+            )
         changed = rebuild_seed(db, seed_id, ips, admin.id)
-        return _redirect(f"/admin/seeds/{seed_id}", "rebuilt" if changed else "unchanged")
+        return _redirect(
+            f"/admin/seeds/{seed_id}", "rebuilt" if changed else "unchanged"
+        )
 
     @router.get("/rounds", response_class=HTMLResponse)
     def rounds(request: Request, page: PageNumber = 1, flagged: bool = False):
@@ -156,7 +177,9 @@ def admin_router(templates: Jinja2Templates) -> APIRouter:
 
     @router.get("/users", response_class=HTMLResponse)
     def users(request: Request, page: PageNumber = 1):
-        return render(request, "users.html", {"listing": users_page(db_of(request), page)})
+        return render(
+            request, "users.html", {"listing": users_page(db_of(request), page)}
+        )
 
     @router.get("/users/{user_id}", response_class=HTMLResponse)
     def user(request: Request, user_id: int):
@@ -167,10 +190,14 @@ def admin_router(templates: Jinja2Templates) -> APIRouter:
 
     @router.get("/activity", response_class=HTMLResponse)
     def activity(request: Request, page: PageNumber = 1):
-        return render(request, "activity.html", {"listing": actions_page(db_of(request), page)})
+        return render(
+            request, "activity.html", {"listing": actions_page(db_of(request), page)}
+        )
 
     @router.get("/voided", response_class=HTMLResponse)
     def voided(request: Request, page: PageNumber = 1):
-        return render(request, "voided.html", {"listing": voided_page(db_of(request), page)})
+        return render(
+            request, "voided.html", {"listing": voided_page(db_of(request), page)}
+        )
 
     return router

@@ -140,9 +140,27 @@ _HEADER_LINE2_CHARS_ADDR = _HEADER_LINE2_ADDR + 2
 # entry record plus the first 8 bytes of the TOURNAMENT one.
 _HEADER_LIST_ORIGINAL = bytes(
     [
-        0x0C, 0x10, 0x4D, 0x41, 0x54, 0x43, 0x48, 0x2C,  # $8BB7 "MATCH,"
-        0x50, 0x4C, 0x41, 0x59, 0xFF,                    #       "PLAY" $FF
-        0x0C, 0x12, 0x54, 0x4F, 0x55, 0x52, 0x4E, 0x41,  # $8BC4 "TOURNA"...
+        0x0C,
+        0x10,
+        0x4D,
+        0x41,
+        0x54,
+        0x43,
+        0x48,
+        0x2C,  # $8BB7 "MATCH,"
+        0x50,
+        0x4C,
+        0x41,
+        0x59,
+        0xFF,  #       "PLAY" $FF
+        0x0C,
+        0x12,
+        0x54,
+        0x4F,
+        0x55,
+        0x52,
+        0x4E,
+        0x41,  # $8BC4 "TOURNA"...
     ]
 )
 
@@ -152,9 +170,22 @@ _COURSE_OPTION_ADDR = 0x8C6C
 # US COURSE's entry record plus the first 4 bytes of JAPAN COURSE's.
 _COURSE_OPTION_ORIGINAL = bytes(
     [
-        0x0C, 0x0E, 0x55, 0x53, 0x20, 0x43, 0x4F, 0x55,  # $8C6C "US COU"
-        0x52, 0x53, 0x45, 0xFF,                          #       "RSE" $FF
-        0x0C, 0x10, 0x4A, 0x41,                          # $8C78 "JA"...
+        0x0C,
+        0x0E,
+        0x55,
+        0x53,
+        0x20,
+        0x43,
+        0x4F,
+        0x55,  # $8C6C "US COU"
+        0x52,
+        0x53,
+        0x45,
+        0xFF,  #       "RSE" $FF
+        0x0C,
+        0x10,
+        0x4A,
+        0x41,  # $8C78 "JA"...
     ]
 )
 
@@ -175,7 +206,9 @@ def normalize_words(words: str | Sequence[str] | None = None) -> tuple[str, str,
     words = [word.upper() for word in words]
 
     if len(words) != len(DEFAULT_WORDS):
-        raise ValueError(f"words must be exactly {len(DEFAULT_WORDS)} words, got {len(words)}: {words!r}")
+        raise ValueError(
+            f"words must be exactly {len(DEFAULT_WORDS)} words, got {len(words)}: {words!r}"
+        )
     for word in words:
         if not MIN_WORD_LENGTH <= len(word) <= MAX_WORD_LENGTH:
             raise ValueError(
@@ -321,8 +354,12 @@ def menu_trim_patches(words: str | Sequence[str] | None = None) -> list[BytePatc
             name="menu_trim_club_house_options",
             description="Club house options: 5 entries (REGISTER NAME, CHOOSE CLUBS, OPTIONS, TRAINING, CLEAR SAVED DATA) instead of 9",
             prg_offset=_prg(0x8D64),
-            original=bytes([0x09, 0x77, 0x8D, 0x87, 0x8D, 0x96, 0x8D, 0xA0, 0x8D, 0xAF, 0x8D]),
-            patched=bytes([0x05, 0x77, 0x8D, 0x87, 0x8D, 0x96, 0x8D, 0xD1, 0x8D, 0xF1, 0x8D]),
+            original=bytes(
+                [0x09, 0x77, 0x8D, 0x87, 0x8D, 0x96, 0x8D, 0xA0, 0x8D, 0xAF, 0x8D]
+            ),
+            patched=bytes(
+                [0x05, 0x77, 0x8D, 0x87, 0x8D, 0x96, 0x8D, 0xD1, 0x8D, 0xF1, 0x8D]
+            ),
         ),
         BytePatch(
             name="menu_trim_club_house_destinations",

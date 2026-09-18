@@ -137,7 +137,9 @@ class ScorecardQrPatch(ROMPatch):
                 f"${layout.REGION_END:04X}"
             )
         if TRAMPOLINE_CPU_ADDR + len(self.trampoline) > TRAMPOLINE_LIMIT:
-            raise PatchError("the trampoline does not fit the dead greens pointer slots")
+            raise PatchError(
+                "the trampoline does not fit the dead greens pointer slots"
+            )
         if len(self.trampoline) != len(TRAMPOLINE_VANILLA):
             raise PatchError(
                 f"the trampoline is {len(self.trampoline)} bytes; update "

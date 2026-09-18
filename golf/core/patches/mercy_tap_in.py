@@ -138,7 +138,9 @@ _ANIM_DISPATCH_PRG_OFFSET = 0x36CA1  # CPU $ACA1, bank 13 (LD_AC92's $05B9 check
 _ANIM_DISPATCH_ORIGINAL = bytes([0xAD, 0xB9, 0x05, 0xF0, 0x06])
 _ANIM_DISPATCH_PATCHED = bytes([0x4C, 0xA0, 0xBF, 0xEA, 0xEA])
 
-_ANIM_FREE_SPACE_PRG_OFFSET = 0x37FA0  # CPU $BFA0, bank 13 (right after the first routine)
+_ANIM_FREE_SPACE_PRG_OFFSET = (
+    0x37FA0  # CPU $BFA0, bank 13 (right after the first routine)
+)
 _ANIM_FREE_SPACE_LEN = 15
 
 _ANIM_SKIP = 0xBFAC  # $BFA0 + 12
@@ -146,7 +148,9 @@ _REAL_FAR_CALL = 0xACA6  # original JSR ExecuteFarCall (+ its 3 inline params)
 _LD_ACAC = 0xACAC  # original CLC/RTS
 
 
-def mercy_tap_in_patches(mercy_point: int, mercy_result: int | None = None) -> list[BytePatch]:
+def mercy_tap_in_patches(
+    mercy_point: int, mercy_result: int | None = None
+) -> list[BytePatch]:
     """
     Build the mercy tap-in patch set.
 
@@ -211,7 +215,12 @@ def mercy_tap_in_patches(mercy_point: int, mercy_result: int | None = None) -> l
         patched=_ANIM_DISPATCH_PATCHED,
     )
 
-    return [stop_free_space_patch, stop_dispatch_patch, anim_free_space_patch, anim_dispatch_patch]
+    return [
+        stop_free_space_patch,
+        stop_dispatch_patch,
+        anim_free_space_patch,
+        anim_dispatch_patch,
+    ]
 
 
 def _build_stop_routine(mercy_point: int, mercy_result: int) -> bytes:
@@ -220,18 +229,35 @@ def _build_stop_routine(mercy_point: int, mercy_result: int) -> bytes:
 
     return bytes(
         [
-            0xA9, 0x02,  # $BF83 LDA #$02
-            0x8D, 0xB0, 0x05,  # $BF85 STA BounceState
-            0x85, 0xD2,  # $BF88 STA ShotPhaseState
-            0xA6, 0x99,  # $BF8A LDX CurrentPlayerIndex
-            0xBD, 0x1F, 0x01,  # $BF8C LDA CurrentHoleStrokes,X
-            0xC9, mercy_point,  # $BF8F CMP #mercy_point
-            0x90, bcc_operand,  # $BF91 BCC Skip ($BF9D)
-            0xA9, mercy_result,  # $BF93 LDA #mercy_result
-            0x9D, 0x1F, 0x01,  # $BF95 STA CurrentHoleStrokes,X
-            0xA9, _MERCY_SENTINEL,  # $BF98 LDA #$FF
-            0x8D, 0xB9, 0x05,  # $BF9A STA $05B9
-            0x4C, _CLEAR_VELOCITY_BYTES & 0xFF, _CLEAR_VELOCITY_BYTES >> 8,  # $BF9D Skip: JMP ClearVelocityBytes
+            0xA9,
+            0x02,  # $BF83 LDA #$02
+            0x8D,
+            0xB0,
+            0x05,  # $BF85 STA BounceState
+            0x85,
+            0xD2,  # $BF88 STA ShotPhaseState
+            0xA6,
+            0x99,  # $BF8A LDX CurrentPlayerIndex
+            0xBD,
+            0x1F,
+            0x01,  # $BF8C LDA CurrentHoleStrokes,X
+            0xC9,
+            mercy_point,  # $BF8F CMP #mercy_point
+            0x90,
+            bcc_operand,  # $BF91 BCC Skip ($BF9D)
+            0xA9,
+            mercy_result,  # $BF93 LDA #mercy_result
+            0x9D,
+            0x1F,
+            0x01,  # $BF95 STA CurrentHoleStrokes,X
+            0xA9,
+            _MERCY_SENTINEL,  # $BF98 LDA #$FF
+            0x8D,
+            0xB9,
+            0x05,  # $BF9A STA $05B9
+            0x4C,
+            _CLEAR_VELOCITY_BYTES & 0xFF,
+            _CLEAR_VELOCITY_BYTES >> 8,  # $BF9D Skip: JMP ClearVelocityBytes
         ]
     )
 
@@ -244,11 +270,20 @@ def _build_anim_suppress_routine() -> bytes:
 
     return bytes(
         [
-            0xAD, 0xB9, 0x05,  # $BFA0 LDA $05B9
-            0xF0, beq1_operand,  # $BFA3 BEQ SkipAnimation (zero: no completion yet)
-            0xC9, _MERCY_SENTINEL,  # $BFA5 CMP #$FF
-            0xF0, beq2_operand,  # $BFA7 BEQ SkipAnimation (mercy sentinel)
-            0x4C, _REAL_FAR_CALL & 0xFF, _REAL_FAR_CALL >> 8,  # $BFA9 JMP $ACA6 (genuine)
-            0x4C, _LD_ACAC & 0xFF, _LD_ACAC >> 8,  # $BFAC SkipAnimation: JMP LD_ACAC
+            0xAD,
+            0xB9,
+            0x05,  # $BFA0 LDA $05B9
+            0xF0,
+            beq1_operand,  # $BFA3 BEQ SkipAnimation (zero: no completion yet)
+            0xC9,
+            _MERCY_SENTINEL,  # $BFA5 CMP #$FF
+            0xF0,
+            beq2_operand,  # $BFA7 BEQ SkipAnimation (mercy sentinel)
+            0x4C,
+            _REAL_FAR_CALL & 0xFF,
+            _REAL_FAR_CALL >> 8,  # $BFA9 JMP $ACA6 (genuine)
+            0x4C,
+            _LD_ACAC & 0xFF,
+            _LD_ACAC >> 8,  # $BFAC SkipAnimation: JMP LD_ACAC
         ]
     )

@@ -64,7 +64,8 @@ class RowOperationsTool:
 
         if hole_data.terrain_height + 2 > 48:
             return ToolResult(
-                handled=True, message="Would exceed 48 row limit (can only add in pairs of 2)"
+                handled=True,
+                message="Would exceed 48 row limit (can only add in pairs of 2)",
             )
 
         # Push undo state before modification

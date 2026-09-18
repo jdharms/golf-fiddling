@@ -4,12 +4,15 @@ NES Open Tournament Golf - Sprite Renderer
 Renders sprite overlays including green overlay, terrain sprites, and greens sprites.
 """
 
-
 import pygame
 from pygame import Surface
 
 from editor.controllers.view_state import ViewState
-from editor.core.constants import COLOR_SELECTION, GREEN_OVERLAY_COLOR, HIGHLIGHT_PADDING
+from editor.core.constants import (
+    COLOR_SELECTION,
+    GREEN_OVERLAY_COLOR,
+    HIGHLIGHT_PADDING,
+)
 from editor.core.pygame_rendering import Sprite
 from golf.formats.hole_data import HoleData
 
@@ -45,10 +48,10 @@ class SpriteRenderer:
         green_y = hole_data.green_y
 
         # Track bounding box for highlighting
-        min_gx = float('inf')
-        min_gy = float('inf')
-        max_gx = float('-inf')
-        max_gy = float('-inf')
+        min_gx = float("inf")
+        min_gy = float("inf")
+        max_gx = float("-inf")
+        max_gy = float("-inf")
         has_green_tiles = False
 
         for gy, grow in enumerate(hole_data.greens):
@@ -95,7 +98,7 @@ class SpriteRenderer:
                 screen_min_x,
                 screen_min_y,
                 screen_max_x - screen_min_x,
-                screen_max_y - screen_min_y
+                screen_max_y - screen_min_y,
             )
             pygame.draw.rect(screen, COLOR_SELECTION, highlight_rect, 2)
 
@@ -164,7 +167,7 @@ class SpriteRenderer:
                     screen_min_x,
                     screen_min_y,
                     screen_max_x - screen_min_x,
-                    screen_max_y - screen_min_y
+                    screen_max_y - screen_min_y,
                 )
                 pygame.draw.rect(screen, COLOR_SELECTION, highlight_rect, 2)
 
@@ -204,17 +207,25 @@ class SpriteRenderer:
                     max_y += HIGHLIGHT_PADDING
 
                     # Convert to screen coords
-                    screen_min_x = canvas_rect.x + min_x * canvas_scale - canvas_offset_x
-                    screen_min_y = canvas_rect.y + min_y * canvas_scale - canvas_offset_y
-                    screen_max_x = canvas_rect.x + max_x * canvas_scale - canvas_offset_x
-                    screen_max_y = canvas_rect.y + max_y * canvas_scale - canvas_offset_y
+                    screen_min_x = (
+                        canvas_rect.x + min_x * canvas_scale - canvas_offset_x
+                    )
+                    screen_min_y = (
+                        canvas_rect.y + min_y * canvas_scale - canvas_offset_y
+                    )
+                    screen_max_x = (
+                        canvas_rect.x + max_x * canvas_scale - canvas_offset_x
+                    )
+                    screen_max_y = (
+                        canvas_rect.y + max_y * canvas_scale - canvas_offset_y
+                    )
 
                     # Draw yellow border around sprite with padding
                     highlight_rect = pygame.Rect(
                         screen_min_x,
                         screen_min_y,
                         screen_max_x - screen_min_x,
-                        screen_max_y - screen_min_y
+                        screen_max_y - screen_min_y,
                     )
                     pygame.draw.rect(screen, COLOR_SELECTION, highlight_rect, 2)
 
@@ -291,6 +302,6 @@ class SpriteRenderer:
                 screen_min_x,
                 screen_min_y,
                 screen_max_x - screen_min_x,
-                screen_max_y - screen_min_y
+                screen_max_y - screen_min_y,
             )
             pygame.draw.rect(screen, COLOR_SELECTION, highlight_rect, 2)

@@ -247,9 +247,9 @@ def render_greens_to_image(
                     # Apply scaling
                     for sy in range(scale):
                         for sx in range(scale):
-                            pixels[base_x + px * scale + sx, base_y + py * scale + sy] = (
-                                color
-                            )
+                            pixels[
+                                base_x + px * scale + sx, base_y + py * scale + sy
+                            ] = color
 
     return img
 

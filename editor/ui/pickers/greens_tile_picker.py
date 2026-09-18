@@ -16,7 +16,9 @@ from .tile_picker import TilePicker
 class GreensTilePicker(TilePicker):
     """Tile picker for greens editing."""
 
-    def __init__(self, tileset, rect: Rect, on_hover_change=None, on_tile_selected=None):
+    def __init__(
+        self, tileset, rect: Rect, on_hover_change=None, on_tile_selected=None
+    ):
         super().__init__(tileset, rect, on_hover_change, on_tile_selected)
 
         # Override banks with greens-specific tiles organized by type
@@ -48,7 +50,7 @@ class GreensTilePicker(TilePicker):
                 "Rough",
                 [
                     TileSubBankGreens("Family $29", [0x29, 0x70, 0x71, 0x72, 0x73]),
-                    TileSubBankGreens("Family $2C", [0x2C, 0x84, 0x85, 0x86, 0x87])
+                    TileSubBankGreens("Family $2C", [0x2C, 0x84, 0x85, 0x86, 0x87]),
                 ],
                 self.tiles_per_row,
                 self.tile_scale,
@@ -65,10 +67,16 @@ class GreensTilePicker(TilePicker):
                 "Slopes",
                 [
                     TileSubBankGreens("Gentle Dark", range_to_list(0x30, 0x38)),
-                    TileSubBankGreens("Moderate Dark", [0x38, 0x39, 0x3B, 0x3A, 0x3C, 0x3D, 0x3E, 0x3F]),
+                    TileSubBankGreens(
+                        "Moderate Dark",
+                        [0x38, 0x39, 0x3B, 0x3A, 0x3C, 0x3D, 0x3E, 0x3F],
+                    ),
                     TileSubBankGreens("Steep Dark", range_to_list(0x40, 0x48)),
                     TileSubBankGreens("Gentle Light", range_to_list(0x90, 0x98)),
-                    TileSubBankGreens("Moderate Light", [0x98, 0x99, 0x9B, 0x9A, 0x9C, 0x9D, 0x9E, 0x9F]),
+                    TileSubBankGreens(
+                        "Moderate Light",
+                        [0x98, 0x99, 0x9B, 0x9A, 0x9C, 0x9D, 0x9E, 0x9F],
+                    ),
                     TileSubBankGreens("Steep Light", range_to_list(0x88, 0x90)),
                 ],
                 self.tiles_per_row,
@@ -83,7 +91,9 @@ class GreensTilePicker(TilePicker):
 
         self.selected_tile = 0x30
 
-    def find_tile_position(self, tile_value: int) -> tuple[int, int] | tuple[int, int, int] | None:  # type: ignore[override]
+    def find_tile_position(
+        self, tile_value: int
+    ) -> tuple[int, int] | tuple[int, int, int] | None:  # type: ignore[override]
         """Find position of tile in bank hierarchy.
 
         Returns:

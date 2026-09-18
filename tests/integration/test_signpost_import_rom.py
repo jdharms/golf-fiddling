@@ -34,7 +34,7 @@ pytestmark = pytest.mark.skipif(
 
 # The country name sits on the banner's first two rows, columns 6-9.
 NAME_CELLS = {(col, row) for row in (5, 6) for col in range(14, 18)}
-FILLER = 0x5F   # the sign's own "blank plank" tile
+FILLER = 0x5F  # the sign's own "blank plank" tile
 
 
 @pytest.fixture(scope="module")
@@ -90,7 +90,9 @@ def test_edits_outside_the_banner_are_detected(imported):
         for row in range(descriptor.rows)
         for col in range(descriptor.width)
     }
-    outside = [c for c in changed_tiles(edited.pixels, reference, palette) if c not in inside]
+    outside = [
+        c for c in changed_tiles(edited.pixels, reference, palette) if c not in inside
+    ]
     assert outside, "the placeholder distance digits should be reported"
     assert all(row in (17, 18) for _, row in outside)
 

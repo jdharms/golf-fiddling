@@ -93,7 +93,9 @@ class TestRoutineEncoding:
         exit_addr = TOGGLE_PRACTICE_ADDR + 0x19
         select_addr = TOGGLE_PRACTICE_ADDR + 0x11
         assert TOGGLE_PRACTICE_ADDR + 0x04 + 2 + _TOGGLE_PRACTICE_SWING[5] == exit_addr
-        assert TOGGLE_PRACTICE_ADDR + 0x08 + 2 + _TOGGLE_PRACTICE_SWING[9] == select_addr
+        assert (
+            TOGGLE_PRACTICE_ADDR + 0x08 + 2 + _TOGGLE_PRACTICE_SWING[9] == select_addr
+        )
         assert _TOGGLE_PRACTICE_SWING[0x19] == 0x4C  # JMP LD_AA2A
 
     def test_toggle_flips_by_the_pixel_shift(self):
@@ -128,7 +130,12 @@ class TestRoutineEncoding:
     def test_all_routines_reference_the_same_flag(self):
         flag = bytes([PRACTICE_SWING_OFFSET & 0xFF, PRACTICE_SWING_OFFSET >> 8])
         hold = _hold_practice_swing(DEFAULT_HOLD_FRAMES)
-        for routine in (_APPLY_GOLFER_OFFSET, _COMMIT_SHOT_OR_PRACTICE, hold, _TOGGLE_PRACTICE_SWING):
+        for routine in (
+            _APPLY_GOLFER_OFFSET,
+            _COMMIT_SHOT_OR_PRACTICE,
+            hold,
+            _TOGGLE_PRACTICE_SWING,
+        ):
             assert flag in routine
 
 
@@ -155,7 +162,10 @@ class TestSplices:
                 assert set(p.original) == {0xFF}, p.name
 
     def test_no_two_patches_overlap(self):
-        spans = sorted((p.prg_offset, p.prg_offset + len(p.patched)) for p in practice_swing_patches())
+        spans = sorted(
+            (p.prg_offset, p.prg_offset + len(p.patched))
+            for p in practice_swing_patches()
+        )
         for (_, end), (start, _) in zip(spans, spans[1:]):
             assert end <= start
 

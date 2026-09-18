@@ -215,7 +215,10 @@ class StampCreationDialog:
         col = local_x // tile_size
         row = local_y // tile_size
 
-        if 0 <= row < self.clipboard_data.height and 0 <= col < self.clipboard_data.width:
+        if (
+            0 <= row < self.clipboard_data.height
+            and 0 <= col < self.clipboard_data.width
+        ):
             self.transparency_mask[row][col] = not self.transparency_mask[row][col]
 
     def _save_stamp(self):
@@ -260,7 +263,9 @@ class StampCreationDialog:
 
         # Title
         title_surf = self.font.render("Create Stamp", True, COLOR_TEXT)
-        title_rect = title_surf.get_rect(centerx=self.dialog_rect.centerx, y=self.title_y)
+        title_rect = title_surf.get_rect(
+            centerx=self.dialog_rect.centerx, y=self.title_y
+        )
         screen.blit(title_surf, title_rect)
 
         # Instructions
@@ -284,7 +289,9 @@ class StampCreationDialog:
         pygame.draw.rect(screen, COLOR_BUTTON, self.name_input_rect)
         pygame.draw.rect(screen, input_color, self.name_input_rect, 2)
 
-        name_surf = self.font.render(self.stamp_name or "auto-generated", True, COLOR_TEXT)
+        name_surf = self.font.render(
+            self.stamp_name or "auto-generated", True, COLOR_TEXT
+        )
         name_rect = name_surf.get_rect(
             left=self.name_input_rect.left + 5,
             centery=self.name_input_rect.centery,

@@ -2,7 +2,6 @@
 Main tile picker panel for terrain tile selection.
 """
 
-
 import pygame
 from pygame import Rect, Surface
 
@@ -18,7 +17,9 @@ from .tile_banks import GroupedTileBank, TileSubBank, range_to_list
 class TilePicker:
     """Tile selection panel."""
 
-    def __init__(self, tileset: Tileset, rect: Rect, on_hover_change=None, on_tile_selected=None):
+    def __init__(
+        self, tileset: Tileset, rect: Rect, on_hover_change=None, on_tile_selected=None
+    ):
         self.tileset = tileset
         self.rect = rect
         self.scroll_y = 0
@@ -73,14 +74,22 @@ class TilePicker:
                 [
                     # TileSubBank("Border With Depth", range_to_list(0x40, 0x56)),
                     # TileSubBank("Borders, Flat", range_to_list(0x56, 0x80)),
-                    TileSubBank("Lip, Top", range_to_list(0x42, 0x46) + [0x4A, 0x4B, 0x50, 0x53]),
+                    TileSubBank(
+                        "Lip, Top", range_to_list(0x42, 0x46) + [0x4A, 0x4B, 0x50, 0x53]
+                    ),
                     TileSubBank("Lip, Right", [0x47, 0x49, 0x4D, 0x4F, 0x51]),
                     TileSubBank("Lip, Bottom", [0x54, 0x55]),
                     TileSubBank("Lip, Left", [0x46, 0x48, 0x4C, 0x4E, 0x52]),
                     TileSubBank("Border, Top", [0x5B] + range_to_list(0x60, 0x68)),
-                    TileSubBank("Border, Right", [0x5D, 0x5F, 0x69, 0x6B, 0x6D, 0x6F, 0x79, 0x7B, 0x7D, 0x7F]),
+                    TileSubBank(
+                        "Border, Right",
+                        [0x5D, 0x5F, 0x69, 0x6B, 0x6D, 0x6F, 0x79, 0x7B, 0x7D, 0x7F],
+                    ),
                     TileSubBank("Border, Bottom", [0x5A] + range_to_list(0x70, 0x78)),
-                    TileSubBank("Border, Left", [0x5C, 0x5E, 0x68, 0x6A, 0x6C, 0x6E, 0x78, 0x7A, 0x7C, 0x7E]),
+                    TileSubBank(
+                        "Border, Left",
+                        [0x5C, 0x5E, 0x68, 0x6A, 0x6C, 0x6E, 0x78, 0x7A, 0x7C, 0x7E],
+                    ),
                     TileSubBank("Corner", range_to_list(0x56, 0x5A) + [0x40, 0x41]),
                     TileSubBank("w/ TreeTop", [0xBC, 0xBE]),
                     TileSubBank("w/ TreeBase", [0xBD, 0xBF]),
@@ -93,9 +102,13 @@ class TilePicker:
                 "Out of bounds",
                 [
                     # TileSubBank("Border", range_to_list(0x80, 0x9C)),
-                    TileSubBank("Border, Top", range_to_list(0x8C, 0x90) + [0x95, 0x99]),
+                    TileSubBank(
+                        "Border, Top", range_to_list(0x8C, 0x90) + [0x95, 0x99]
+                    ),
                     TileSubBank("Border, Right", [0x88, 0x89, 0x90, 0x91, 0x97, 0x9A]),
-                    TileSubBank("Border, Bottom", range_to_list(0x84, 0x88) + [0x94, 0x98]),
+                    TileSubBank(
+                        "Border, Bottom", range_to_list(0x84, 0x88) + [0x94, 0x98]
+                    ),
                     TileSubBank("Border, Left", [0x8A, 0x8B, 0x92, 0x93, 0x96, 0x9B]),
                     TileSubBank("Corner", range_to_list(0x80, 0x84)),
                     TileSubBank("Inner Border", [0x3F]),
@@ -167,7 +180,6 @@ class TilePicker:
                 if not self.shift_held and self.on_hover_change:
                     self.shift_held = True
                     self.on_hover_change(self.hovered_tile)
-
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.rect.collidepoint(event.pos):

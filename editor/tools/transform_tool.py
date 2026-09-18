@@ -2,7 +2,6 @@
 Transform tool for applying compression table transformations via shift+drag.
 """
 
-
 import pygame
 from pygame import Rect
 

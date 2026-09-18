@@ -107,7 +107,9 @@ class RomWriter:
 
     def write_fixed_word(self, cpu_addr: int, value: int):
         """Write 16-bit little-endian word to fixed bank."""
-        self.write_prg(cpu_to_prg_fixed(cpu_addr), bytes([value & 0xFF, (value >> 8) & 0xFF]))
+        self.write_prg(
+            cpu_to_prg_fixed(cpu_addr), bytes([value & 0xFF, (value >> 8) & 0xFF])
+        )
 
     def write_switched(self, cpu_addr: int, bank: int, data: bytes):
         """

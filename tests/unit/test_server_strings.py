@@ -34,7 +34,9 @@ ADMIN_TEMPLATES = SERVER / "templates" / "admin"
 def template_keys() -> set[str]:
     """The keys the player-facing templates use: every template outside `ADMIN_TEMPLATES`."""
     paths = (SERVER / "templates").rglob("*.html")
-    return used(TEMPLATE_USE, (path for path in paths if ADMIN_TEMPLATES not in path.parents))
+    return used(
+        TEMPLATE_USE, (path for path in paths if ADMIN_TEMPLATES not in path.parents)
+    )
 
 
 def script_keys() -> set[str]:
@@ -102,10 +104,14 @@ def test_every_script_is_listed_with_its_prefix():
 def test_script_keys_are_embedded_for_the_script(script, prefix):
     keys = used(SCRIPT_USE, [page_scripts()[script]])
     if prefix is None:
-        assert not keys, f"{script} is shared and uses no strings of its own: {sorted(keys)}"
+        assert not keys, (
+            f"{script} is shared and uses no strings of its own: {sorted(keys)}"
+        )
         return
     missing = keys - Strings.load().for_script(prefix).keys()
-    assert keys and not missing, f"{script} uses keys outside {prefix!r}: {sorted(missing)}"
+    assert keys and not missing, (
+        f"{script} uses keys outside {prefix!r}: {sorted(missing)}"
+    )
 
 
 def test_each_namespace_lives_in_exactly_one_file():
@@ -114,7 +120,9 @@ def test_each_namespace_lives_in_exactly_one_file():
     for file in sorted(CATALOG_DIR.rglob("*.toml")):
         keys = Strings.from_toml(tomllib.loads(file.read_text())).keys()
         for namespace in sorted({key.split(".")[0] for key in keys}):
-            assert namespace not in seen, f"{namespace}.* is in both {seen[namespace]} and {file.name}"
+            assert namespace not in seen, (
+                f"{namespace}.* is in both {seen[namespace]} and {file.name}"
+            )
             seen[namespace] = file.name
 
 
@@ -140,7 +148,9 @@ def test_files_in_subdirectories_are_merged_too(tmp_path):
 
 def test_each_file_loads_as_a_catalog_of_its_own(tmp_path):
     (tmp_path / "pages").mkdir()
-    write(tmp_path, "b.toml", '[b.two]\nnote = "n"\n[b.three]\nnote = "n"\ntext = "t"\n')
+    write(
+        tmp_path, "b.toml", '[b.two]\nnote = "n"\n[b.three]\nnote = "n"\ntext = "t"\n'
+    )
     write(tmp_path / "pages", "a.toml", '[a.one]\nnote = "n"\n')
     catalogs = Strings.load_files(tmp_path)
     assert list(catalogs) == [tmp_path / "b.toml", tmp_path / "pages" / "a.toml"]
@@ -251,7 +261,7 @@ def test_written_plain_text_is_formatted_unescaped():
 def test_unwritten_html_is_a_placeholder_carrying_its_note():
     rendered = WRITTEN.html("empty", file="<f>")
     assert rendered == Markup(
-        f'<span class="unwritten" title="{escape("a note with <angle> & \'quotes\'")}">⟦empty file=&lt;f&gt;⟧</span>'
+        f'<span class="unwritten" title="{escape("a note with <angle> & 'quotes'")}">⟦empty file=&lt;f&gt;⟧</span>'
     )
 
 

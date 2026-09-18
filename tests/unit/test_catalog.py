@@ -26,7 +26,15 @@ from golf.randomizer.catalog import (
 
 
 def entry(text: str, withdrawn: bool = False) -> CatalogEntry:
-    return CatalogEntry(HoleId.parse(text), RomSource(US_ROM, "us", 1), "0" * 64, 4, 400, "someone", withdrawn)
+    return CatalogEntry(
+        HoleId.parse(text),
+        RomSource(US_ROM, "us", 1),
+        "0" * 64,
+        4,
+        400,
+        "someone",
+        withdrawn,
+    )
 
 
 def catalog_of(*entries: CatalogEntry) -> Catalog:
@@ -35,14 +43,28 @@ def catalog_of(*entries: CatalogEntry) -> Catalog:
 
 class TestHoleId:
     def test_version_one_spellings_are_the_same_id(self):
-        assert HoleId.parse("nes_uk/01") == HoleId.parse("nes_uk/01@1") == HoleId("nes_uk/01", 1)
+        assert (
+            HoleId.parse("nes_uk/01")
+            == HoleId.parse("nes_uk/01@1")
+            == HoleId("nes_uk/01", 1)
+        )
 
     def test_canonical_form_omits_version_one(self):
         assert str(HoleId.parse("nes_uk/01@1")) == "nes_uk/01"
         assert str(HoleId.parse("dharms/cliffside@2")) == "dharms/cliffside@2"
 
     @pytest.mark.parametrize(
-        "text", ["nes_uk", "nes_uk/01/02", "NES_UK/01", "nes-uk/01", "nes_uk/01@0", "nes_uk/01@", "nes_uk/01@02", ""]
+        "text",
+        [
+            "nes_uk",
+            "nes_uk/01/02",
+            "NES_UK/01",
+            "nes-uk/01",
+            "nes_uk/01@0",
+            "nes_uk/01@",
+            "nes_uk/01@02",
+            "",
+        ],
     )
     def test_rejects_malformed_ids(self, text):
         with pytest.raises(CatalogError):
@@ -54,12 +76,19 @@ class TestHoleId:
 
 class TestCatalog:
     def test_newest_picks_the_highest_version_of_each_lineage(self):
-        catalog = catalog_of(entry("a/b"), entry("a/b@2"), entry("a/b@10"), entry("c/d"))
+        catalog = catalog_of(
+            entry("a/b"), entry("a/b@2"), entry("a/b@10"), entry("c/d")
+        )
         newest = catalog.newest()
-        assert {lineage: str(e.id) for lineage, e in newest.items()} == {"a/b": "a/b@10", "c/d": "c/d"}
+        assert {lineage: str(e.id) for lineage, e in newest.items()} == {
+            "a/b": "a/b@10",
+            "c/d": "c/d",
+        }
 
     def test_a_withdrawn_newest_version_does_not_roll_back(self):
-        catalog = catalog_of(entry("a/b"), entry("a/b@2", withdrawn=True), entry("c/d", withdrawn=True))
+        catalog = catalog_of(
+            entry("a/b"), entry("a/b@2", withdrawn=True), entry("c/d", withdrawn=True)
+        )
         assert catalog.newest() == {}
 
     def test_json_round_trip(self):
@@ -91,7 +120,9 @@ class TestContentHash:
         hole = copy.deepcopy(hole_01_data)
         hole.metadata["hole"] = 99
         hole.metadata["_debug"] = {"anything": 1}
-        hole.terrain.append([0xDF] * len(hole.terrain[0]))  # a hidden row past terrain_height
+        hole.terrain.append(
+            [0xDF] * len(hole.terrain[0])
+        )  # a hidden row past terrain_height
         assert content_hash(hole) == before
 
     @pytest.mark.parametrize(
@@ -101,7 +132,9 @@ class TestContentHash:
             lambda h: h.greens[5].__setitem__(5, h.greens[5][5] ^ 1),
             lambda h: h.metadata["flag_positions"][0].__setitem__("x_offset", 0),
             lambda h: h.metadata.__setitem__("distance", h.metadata["distance"] + 1),
-            lambda h: h.metadata.__setitem__("scroll_limit", h.metadata["scroll_limit"] + 1),
+            lambda h: h.metadata.__setitem__(
+                "scroll_limit", h.metadata["scroll_limit"] + 1
+            ),
             lambda h: setattr(h, "terrain_height", h.terrain_height - 2),
         ],
     )
@@ -133,7 +166,12 @@ class TestHoleStore:
 
     def test_refuses_withdrawn_entries(self, tmp_path):
         store = HoleStore(copy_courses(tmp_path, "us"))
-        withdrawn = CatalogEntry(**{**vars(sync_vanilla(Catalog(0), store).catalog["nes_us/01"]), "withdrawn": True})
+        withdrawn = CatalogEntry(
+            **{
+                **vars(sync_vanilla(Catalog(0), store).catalog["nes_us/01"]),
+                "withdrawn": True,
+            }
+        )
         with pytest.raises(CatalogError, match="withdrawn"):
             store.load(withdrawn)
 
@@ -144,7 +182,10 @@ class TestSyncVanilla:
         first = sync_vanilla(Catalog(0), store)
         assert len(first.added) == 36 and first.ok
         assert first.catalog.version == 1
-        assert {e.id.lineage.split("/")[0] for e in first.catalog} == {"nes_us", "nes_uk"}
+        assert {e.id.lineage.split("/")[0] for e in first.catalog} == {
+            "nes_us",
+            "nes_uk",
+        }
 
         second = sync_vanilla(first.catalog, store)
         assert len(second.verified) == 36 and not second.added
@@ -204,7 +245,10 @@ class TestSyncCli:
 
 class TestCheckedInIndex:
     def test_is_in_canonical_form(self):
-        assert DEFAULT_INDEX.read_text() == json.dumps(Catalog.load().to_json(), indent=2) + "\n"
+        assert (
+            DEFAULT_INDEX.read_text()
+            == json.dumps(Catalog.load().to_json(), indent=2) + "\n"
+        )
 
     def test_every_vanilla_hole_matches_its_data(self):
         catalog = Catalog.load()
