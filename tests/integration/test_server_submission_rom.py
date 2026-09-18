@@ -68,11 +68,16 @@ def test_a_downloaded_roms_codes_record_both_players_rounds():
         for slot in ROUNDS:
             url = rom_url(rom, slot)
             assert url.startswith(URL_PREFIX)
-            response = client.get("/s/" + url.removeprefix(URL_PREFIX))
+            # the ROM's own URL submits and hands the phone the round's permalink
+            submitted = client.get("/s/" + url.removeprefix(URL_PREFIX), follow_redirects=False)
+            assert submitted.status_code == 303, submitted.text
+            permalink = submitted.headers["location"]
+            assert permalink.endswith("?recorded")
+            response = client.get(permalink)
             assert response.status_code == 200, response.text
 
         with client.app.state.db.transaction() as conn:
-            recorded = conn.execute("SELECT slot, total_strokes, total_putts FROM submissions ORDER BY slot").fetchall()
+            recorded = conn.execute("SELECT slot, total_strokes, total_putts FROM rounds ORDER BY slot").fetchall()
     assert [tuple(row) for row in recorded] == [
         (slot, sum(s for s, _ in holes), sum(p for _, p in holes)) for slot, holes in ROUNDS.items()
     ]

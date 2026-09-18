@@ -611,11 +611,14 @@ arrays at `$0158` (strokes) and `$018E` (putts), with `PlayerCount` `$9A` = 1.
 
 - `GET /s/<48 chars>` decodes the payload, recomputes the MAC with the key stored for
   the entry that (seed, player) resolves to and the payload's slot, and records the round
-  (`server/submissions.py`).
+  (`server/submissions.py`, which hands it to `server/rounds.py`). It answers 303 to the
+  round's own permalink, `/r/<id>`, which is where the round is shown and what a player
+  shares. A rejection has no round to point at, so it renders at `/s/` itself, and nothing
+  of it is stored.
 - A seed ID or player ID of all zeros is the placeholder fill of an unfinished ROM and is
   rejected.
 - **First submission per (entry, slot) is authoritative.** A later scan that verifies
-  records nothing and shows the round already recorded. An admin can void a round, which
+  records nothing and redirects to the round already recorded. An admin can void a round, which
   frees the slot for a different round; a scan of the voided payload itself is rejected as
   unrecognized until an admin restores it.
 - Every rejection logs its exact cause (which check or lookup failed) with the decoded ids
@@ -717,8 +720,9 @@ goes up.
    simulated video memory. See The display layer above.
 6. **Patch integration** — *done*, the `scorecard_qr` patch and its finishing patches
    `qr_credentials` and `qr_disable`. See Installing it above.
-7. **Server endpoint** — *done*, `server/submissions.py` and `GET /s/<48 chars>`; see
-   Server contract above.
+7. **Server endpoint** — *done*, `server/submissions.py`, `server/rounds.py`,
+   `GET /s/<48 chars>` and the `/r/<id>` permalink it redirects to; see Server contract
+   above.
 
 Phases 1-5 touch no ROM: the port is assembled and tested entirely in the repo, and
 nothing is spliced into a cartridge until phase 6.

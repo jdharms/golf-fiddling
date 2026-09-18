@@ -1,14 +1,13 @@
 """Seed identity and the seed tables: the only code that writes `seeds` and `seed_holes`.
 
 A seed's `qr_seed_id` is drawn uniformly from 1 to 62**10 - 1, and its URL id is that
-integer in base62 (`0-9A-Za-z`, most significant digit first) padded to 10 characters, so
-either converts to the other. See docs/randomizer_devplan.md, "Generating seed ids".
+integer in base62 (`server/ids.py`), so either converts to the other. See
+docs/randomizer_devplan.md, "Generating seed ids".
 """
 
 import json
 import secrets
 import sqlite3
-import string
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -18,15 +17,14 @@ from golf.randomizer.manifest import Manifest
 
 from . import audit
 from .db import Database
+from .ids import ALPHABET, ID_LENGTH, MAX_VALUE, decode_base62, encode_base62, is_id
 
-ALPHABET = string.digits + string.ascii_uppercase + string.ascii_lowercase
-ID_LENGTH = 10
+__all__ = ["ALPHABET", "ID_LENGTH"]  # re-exported: a seed id is a base62 id
+
 #: the largest qr_seed_id, and the bound migration 1's CHECK holds the column to
-MAX_QR_SEED_ID = len(ALPHABET) ** ID_LENGTH - 1
+MAX_QR_SEED_ID = MAX_VALUE
 #: draws before an insert gives up on finding an unused id
 INSERT_ATTEMPTS = 10
-
-_DIGITS = {char: value for value, char in enumerate(ALPHABET)}
 
 
 class SeedIdError(ValueError):
@@ -41,20 +39,14 @@ def encode_seed_id(value: int) -> str:
     """A qr_seed_id as its 10-character base62 URL id."""
     if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= MAX_QR_SEED_ID:
         raise SeedIdError(f"a qr_seed_id is 1-{MAX_QR_SEED_ID}, got {value!r}")
-    digits = []
-    for _ in range(ID_LENGTH):
-        value, digit = divmod(value, len(ALPHABET))
-        digits.append(ALPHABET[digit])
-    return "".join(reversed(digits))
+    return encode_base62(value)
 
 
 def decode_seed_id(text: str) -> int:
     """A URL id as its qr_seed_id. Raises SeedIdError for anything else."""
-    if not isinstance(text, str) or len(text) != ID_LENGTH or not all(char in _DIGITS for char in text):
+    if not is_id(text):
         raise SeedIdError(f"a seed id is {ID_LENGTH} characters of 0-9, A-Z and a-z, got {text!r}")
-    value = 0
-    for char in text:
-        value = value * len(ALPHABET) + _DIGITS[char]
+    value = decode_base62(text)
     if value == 0:
         raise SeedIdError("no seed has the id 0000000000")
     return value

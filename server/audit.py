@@ -12,8 +12,6 @@ A new admin action adds its name below and records a row; the table needs no mig
 import json
 import sqlite3
 
-from golf.qr import payload
-
 #: actions
 REBUILD = "rebuild"
 FLAG = "flag"
@@ -24,15 +22,9 @@ RESTORE = "restore"
 #: target types, and what target_id holds for each
 #: a seed's URL id
 SEED = "seed"
-#: a round's payload as base64url, the text of its `/s/` URL (`round_target`). Not its
-#: `submissions.id`, which changes when a round is voided and restored and can be reused by a
-#: later round; the payload names one round for good, recorded or voided.
+#: a round's public id, which a void and a restore carry, so a round's history is one list
+#: whether it is recorded or voided
 ROUND = "round"
-
-
-def round_target(data: bytes) -> str:
-    """The target_id naming the round with this 36-byte payload."""
-    return payload.base64url_encode(bytes(data))
 
 
 def record(

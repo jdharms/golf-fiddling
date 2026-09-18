@@ -1,0 +1,28 @@
+# Voided round strings (round_voided.html): what a round's `/r/<id>` permalink shows once an
+# admin has voided the round, answered with HTTP 410 so a shared link explains itself rather
+# than looking broken. Nothing of the round's scores, and never the admin's void note.
+# Format: see common.toml, and server/CLAUDE.md "Player-facing text".
+
+[round_voided.page_title]
+note = "plain: browser tab title, the permalink of a round that was voided"
+text = "Voided Round"
+
+[round_voided.heading]
+note = "h1, this round is no longer recorded"
+text = "Voided Round"
+
+[round_voided.player_one]
+note = "line under the h1, the voided round was played as player 1; {name} the player's Discord display name, {received} when the round was originally recorded, UTC ISO 8601"
+text = "{name} | {received}"
+
+[round_voided.player_two]
+note = "line under the h1, the voided round was played as player 2 on the player's ROM; {name} the ROM owner's Discord display name, {received} when the round was originally recorded, UTC ISO 8601"
+text = "teammate | {received}"
+
+[round_voided.explanation]
+note = "what being voided means: an admin removed the round, it counts for nothing, and the player may submit a different round for the slot; {voided} when it was voided, UTC ISO 8601. Says nothing about why, which is admin-only"
+text = "This round has been voided."
+
+[round_voided.seed]
+note = "label before the link to the seed page, which shows the seed's magic words"
+text = "Seed"

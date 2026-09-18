@@ -11,25 +11,16 @@ from golf.randomizer.catalog import Catalog
 from golf.randomizer.curation import CurationSnapshot
 from golf.randomizer.generate import generate
 from golf.randomizer.manifest import Settings
-from server.audit import FLAG, RESTORE, ROUND, UNFLAG, VOID, round_target
 from server.db import Database
 from server.entries import load_entry, upsert_entry
+from server.rounds import RoundHole
 from server.seeds import MAX_QR_SEED_ID, insert_seed, load_seed
 from server.submissions import (
     MALFORMED,
     UNFINISHED,
     UNRECOGNIZED,
-    HoleResult,
     ScanError,
-    SlotTakenError,
-    flag_round,
-    load_round,
-    restore_round,
-    rounds_for_seed,
-    rounds_for_user,
     submit_scan,
-    unflag_round,
-    void_round,
 )
 from server.users import sign_in
 
@@ -85,9 +76,9 @@ def alice(db, seed_id):
     return Player(db, seed_id, "alice", "Alice")
 
 
-def submission_rows(db: Database) -> list[dict]:
+def round_rows(db: Database) -> list[dict]:
     with db.transaction() as conn:
-        return [dict(row) for row in conn.execute("SELECT * FROM submissions ORDER BY id")]
+        return [dict(row) for row in conn.execute("SELECT * FROM rounds ORDER BY id")]
 
 
 def test_a_verified_scan_records_the_round(db, seed_id, alice):
@@ -103,10 +94,10 @@ def test_a_verified_scan_records_the_round(db, seed_id, alice):
     assert (recorded.total_strokes, recorded.total_putts) == (4 * 17 + 6, 2 * 17 + 3)
     assert recorded.received_at == "2026-09-17T12:00:00Z"
     assert not recorded.flagged
-    assert recorded.holes[0] == HoleResult(1, 4, 2)
-    assert recorded.holes[-1] == HoleResult(18, 6, 3)
+    assert recorded.holes[0] == RoundHole(1, 4, 2)
+    assert recorded.holes[-1] == RoundHole(18, 6, 3)
     assert len(recorded.holes) == 18
-    [row] = submission_rows(db)
+    [row] = round_rows(db)
     assert row["payload"] == alice.payload()
 
 
@@ -115,7 +106,7 @@ def test_scanning_the_same_round_again_finds_it_recorded(db, alice):
     again = submit_scan(db, alice.scan(), now="2026-09-17T13:00:00Z")
     assert not again.new
     assert again.round == first.round
-    assert len(submission_rows(db)) == 1
+    assert len(round_rows(db)) == 1
 
 
 def test_a_different_round_for_a_recorded_slot_keeps_the_first(db, alice):
@@ -123,7 +114,7 @@ def test_a_different_round_for_a_recorded_slot_keeps_the_first(db, alice):
     later = submit_scan(db, alice.scan(holes=(HoleRecord(3, 1),) * 18))
     assert not later.new
     assert later.round == first.round
-    [row] = submission_rows(db)
+    [row] = round_rows(db)
     assert row["payload"] == alice.payload()
 
 
@@ -134,7 +125,7 @@ def test_player_two_records_against_the_same_entry_under_its_own_key(db, alice):
     assert player_two.round.entry_id == player_one.round.entry_id
     assert player_two.round.slot == 1
     assert player_two.round.total_strokes == 90
-    assert len(submission_rows(db)) == 2
+    assert len(round_rows(db)) == 2
 
 
 def test_a_slot_signed_with_the_other_slots_key_is_not_recognized(db, alice):
@@ -199,7 +190,7 @@ def test_a_payload_matching_no_entry_is_not_recognized(db, manifest, seed_id, al
         with pytest.raises(ScanError) as rejected:
             submit_scan(db, text)
         assert rejected.value.reason == UNRECOGNIZED, case
-    assert submission_rows(db) == []
+    assert round_rows(db) == []
 
 
 def test_a_rejected_different_round_does_not_reveal_the_recorded_one(db, alice):
@@ -216,37 +207,6 @@ def test_a_recorded_round_locks_the_entrys_choices(db, seed_id, alice):
     assert (after.player_name, after.clubs, after.updated_at) == ("TOAD", ("3W", "SW", "PT"), "2026-09-17T10:00:00Z")
     assert after.keys == alice.entry.keys
     assert load_entry(db, seed_id, alice.user.id) == after
-
-
-def test_a_seeds_rounds_list_fewest_strokes_first_under_display_names(db, seed_id, alice):
-    bob = Player(db, seed_id, "bob")
-    submit_scan(db, alice.scan(holes=(HoleRecord(5, 2),) * 18), now="2026-09-17T10:00:00Z")
-    submit_scan(db, bob.scan(holes=(HoleRecord(4, 2),) * 18), now="2026-09-17T11:00:00Z")
-    submit_scan(db, alice.scan(slot=1, holes=(HoleRecord(5, 2),) * 18), now="2026-09-17T12:00:00Z")
-    rounds = rounds_for_seed(db, seed_id)
-    assert [(r.player_name, r.slot, r.total_strokes) for r in rounds] == [
-        ("bob", 0, 72),
-        ("Alice", 0, 90),
-        ("Alice", 1, 90),
-    ]
-    assert rounds[0].total_putts == 36
-    assert rounds[0].received_at == "2026-09-17T11:00:00Z"
-
-
-def test_a_players_rounds_list_newest_first_with_their_seeds(db, manifest, seed_id, alice):
-    other_seed = insert_seed(db, manifest, b"PATCHEOF")
-    alice_elsewhere = Player(db, other_seed, "alice", "Alice")
-    bob = Player(db, seed_id, "bob")
-    submit_scan(db, alice.scan(), now="2026-09-17T10:00:00Z")
-    submit_scan(db, alice_elsewhere.scan(slot=1), now="2026-09-17T11:00:00Z")
-    submit_scan(db, bob.scan(), now="2026-09-17T12:00:00Z")
-    listings = rounds_for_user(db, alice.user.id)
-    assert [(listing.seed_id, listing.slot) for listing in listings] == [(other_seed, 1), (seed_id, 0)]
-    assert listings[1].magic_words == manifest.course.magic_words
-    assert listings[1].par == manifest.course.par
-    assert listings[1].total_strokes == 74
-    assert rounds_for_user(db, sign_in(db, "dev:carol", "carol", None, None).id) == []
-
 
 
 # -- Rejection logging --------------------------------------------------------------------
@@ -281,119 +241,3 @@ def test_a_rejection_logs_its_exact_cause(db, manifest, seed_id, alice, caplog):
         assert rejection_log(caplog, text, db).startswith(f"scan rejected as {cause}"), cause
     message = rejection_log(caplog, alice.scan(key=b"\x00" * 8), db)
     assert f"seed={seed_id} player_id={alice.user.player_id} slot=0" in message
-
-
-# -- Admin actions ------------------------------------------------------------------------
-
-
-def audit_rows(db: Database) -> list[dict]:
-    with db.transaction() as conn:
-        return [dict(row) for row in conn.execute("SELECT * FROM admin_actions ORDER BY id")]
-
-
-def test_flagging_marks_the_round_everywhere_it_is_listed(db, seed_id, alice):
-    recorded = submit_scan(db, alice.scan()).round
-    flag_round(db, recorded.id, admin_id=alice.user.id, note="  six on 18?  ")
-    flagged = load_round(db, recorded.id)
-    assert (flagged.flagged, flagged.flag_note) == (True, "six on 18?")
-    assert rounds_for_seed(db, seed_id)[0].flagged
-    assert rounds_for_user(db, alice.user.id)[0].flagged
-    unflag_round(db, recorded.id, admin_id=alice.user.id)
-    unflagged = load_round(db, recorded.id)
-    assert (unflagged.flagged, unflagged.flag_note) == (False, None)
-    assert not rounds_for_seed(db, seed_id)[0].flagged
-
-
-def test_every_action_logs_itself_against_the_round(db, seed_id, alice):
-    recorded = submit_scan(db, alice.scan()).round
-    target = round_target(alice.payload())
-    flag_round(db, recorded.id, admin_id=alice.user.id, note="why 6?", now="2026-09-18T00:00:00Z")
-    unflag_round(db, recorded.id, admin_id=alice.user.id, now="2026-09-18T01:00:00Z")
-    voided_id = void_round(db, recorded.id, admin_id=alice.user.id, note="warm-up", now="2026-09-18T02:00:00Z")
-    restored_id = restore_round(db, voided_id, admin_id=alice.user.id, now="2026-09-18T03:00:00Z")
-    rows = audit_rows(db)
-    assert [(row["action"], row["target_type"], row["target_id"], row["note"], row["created_at"]) for row in rows] == [
-        (FLAG, ROUND, target, "why 6?", "2026-09-18T00:00:00Z"),
-        (UNFLAG, ROUND, target, None, "2026-09-18T01:00:00Z"),
-        (VOID, ROUND, target, "warm-up", "2026-09-18T02:00:00Z"),
-        (RESTORE, ROUND, target, None, "2026-09-18T03:00:00Z"),
-    ]
-    assert {row["admin_id"] for row in rows} == {alice.user.id}
-    assert {row["detail"] for row in rows} == {"{}"}
-    # a restored round can even take the voided round's id back, so the payload, not the id,
-    # is what keeps one history across a void
-    assert round_target(alice.payload()) == target
-    assert load_round(db, restored_id).flagged is False
-
-
-def test_a_failed_action_logs_nothing(db, alice):
-    recorded = submit_scan(db, alice.scan()).round
-    voided_id = void_round(db, recorded.id, admin_id=alice.user.id)
-    submit_scan(db, alice.scan(holes=(HoleRecord(3, 1),) * 18))
-    with pytest.raises(SlotTakenError):
-        restore_round(db, voided_id, admin_id=alice.user.id)
-    with pytest.raises(KeyError):
-        flag_round(db, 99, admin_id=alice.user.id)
-    assert [row["action"] for row in audit_rows(db)] == [VOID]
-
-
-def test_a_blank_flag_note_is_no_note(db, alice):
-    recorded = submit_scan(db, alice.scan()).round
-    flag_round(db, recorded.id, admin_id=alice.user.id, note="   ")
-    assert load_round(db, recorded.id).flag_note is None
-
-
-@pytest.mark.parametrize(
-    "action", [lambda db: flag_round(db, 99, admin_id=1), lambda db: unflag_round(db, 99, admin_id=1)]
-)
-def test_flagging_a_missing_round_is_an_error(db, action):
-    with pytest.raises(KeyError):
-        action(db)
-
-
-def test_voiding_frees_the_slot_and_refuses_the_same_round(db, seed_id, alice):
-    recorded = submit_scan(db, alice.scan()).round
-    void_round(db, recorded.id, admin_id=alice.user.id, note="warm-up round")
-    assert submission_rows(db) == []
-    assert load_round(db, recorded.id) is None
-    assert rounds_for_seed(db, seed_id) == []
-    with pytest.raises(ScanError) as rejected:
-        submit_scan(db, alice.scan())
-    assert rejected.value.reason == UNRECOGNIZED
-    replacement = submit_scan(db, alice.scan(holes=(HoleRecord(3, 1),) * 18))
-    assert replacement.new
-    assert replacement.round.total_strokes == 54
-
-
-def test_voiding_a_missing_round_is_an_error(db):
-    with pytest.raises(KeyError):
-        void_round(db, 99, admin_id=1)
-
-
-def test_restoring_puts_the_round_back_as_it_was(db, seed_id, alice):
-    recorded = submit_scan(db, alice.scan(), now="2026-09-17T12:00:00Z").round
-    flag_round(db, recorded.id, admin_id=alice.user.id, note="check")
-    voided_id = void_round(db, recorded.id, admin_id=alice.user.id)
-    restored_id = restore_round(db, voided_id, admin_id=alice.user.id)
-    restored = load_round(db, restored_id)
-    assert restored.holes == recorded.holes
-    assert (restored.total_strokes, restored.total_putts, restored.received_at) == (
-        recorded.total_strokes,
-        recorded.total_putts,
-        "2026-09-17T12:00:00Z",
-    )
-    assert (restored.flagged, restored.flag_note) == (True, "check")
-    again = submit_scan(db, alice.scan())
-    assert not again.new
-    assert again.round.id == restored_id
-    with pytest.raises(KeyError):
-        restore_round(db, voided_id, admin_id=alice.user.id)
-
-
-def test_restoring_into_a_taken_slot_is_refused(db, alice):
-    recorded = submit_scan(db, alice.scan()).round
-    voided_id = void_round(db, recorded.id, admin_id=alice.user.id)
-    replacement = submit_scan(db, alice.scan(holes=(HoleRecord(3, 1),) * 18)).round
-    with pytest.raises(SlotTakenError):
-        restore_round(db, voided_id, admin_id=alice.user.id)
-    assert [row["id"] for row in submission_rows(db)] == [replacement.id]

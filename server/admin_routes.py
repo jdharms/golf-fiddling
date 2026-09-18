@@ -21,10 +21,10 @@ from golf.randomizer.catalog import CatalogError
 from .admin import (
     actions_page,
     counts,
+    round_detail,
+    rounds_page,
     seed_detail,
     seeds_page,
-    submission_detail,
-    submissions_page,
     user_detail,
     users_page,
     voided_page,
@@ -32,14 +32,14 @@ from .admin import (
 from .auth import current_user
 from .builder import BuilderUnavailableError, SeedBuilder
 from .db import Database
-from .seeds import rebuild_seed
-from .submissions import (
+from .rounds import (
     SlotTakenError,
     flag_round,
     restore_round,
     unflag_round,
     void_round,
 )
+from .seeds import rebuild_seed
 from .users import User
 
 
@@ -108,41 +108,51 @@ def admin_router(templates: Jinja2Templates) -> APIRouter:
         changed = rebuild_seed(db, seed_id, ips, admin.id)
         return _redirect(f"/admin/seeds/{seed_id}", "rebuilt" if changed else "unchanged")
 
-    @router.get("/submissions", response_class=HTMLResponse)
-    def submissions(request: Request, page: PageNumber = 1, flagged: bool = False):
-        listing = submissions_page(db_of(request), page, flagged_only=flagged)
-        return render(request, "submissions.html", {"listing": listing, "flagged": flagged})
+    @router.get("/rounds", response_class=HTMLResponse)
+    def rounds(request: Request, page: PageNumber = 1, flagged: bool = False):
+        listing = rounds_page(db_of(request), page, flagged_only=flagged)
+        return render(request, "rounds.html", {"listing": listing, "flagged": flagged})
 
-    @router.get("/submissions/{submission_id}", response_class=HTMLResponse)
-    def submission(request: Request, submission_id: int):
-        detail = submission_detail(db_of(request), submission_id)
+    @router.get("/rounds/{public_id}", response_class=HTMLResponse)
+    def round_page(request: Request, public_id: str):
+        detail = round_detail(db_of(request), public_id)
         if detail is None:
             raise not_found()
-        return render(request, "submission.html", {"detail": detail})
+        return render(request, "round.html", {"detail": detail})
 
-    @router.post("/submissions/{submission_id}/flag")
-    def flag(request: Request, submission_id: int, admin: Admin, note: Note = ""):
+    @router.post("/rounds/{public_id}/flag")
+    def flag(request: Request, public_id: str, admin: Admin, note: Note = ""):
         try:
-            flag_round(db_of(request), submission_id, admin.id, note)
+            flag_round(db_of(request), public_id, admin.id, note)
         except KeyError:
             raise not_found() from None
-        return _redirect(f"/admin/submissions/{submission_id}", "flagged")
+        return _redirect(f"/admin/rounds/{public_id}", "flagged")
 
-    @router.post("/submissions/{submission_id}/unflag")
-    def unflag(request: Request, submission_id: int, admin: Admin):
+    @router.post("/rounds/{public_id}/unflag")
+    def unflag(request: Request, public_id: str, admin: Admin):
         try:
-            unflag_round(db_of(request), submission_id, admin.id)
+            unflag_round(db_of(request), public_id, admin.id)
         except KeyError:
             raise not_found() from None
-        return _redirect(f"/admin/submissions/{submission_id}", "unflagged")
+        return _redirect(f"/admin/rounds/{public_id}", "unflagged")
 
-    @router.post("/submissions/{submission_id}/void")
-    def void(request: Request, submission_id: int, admin: Admin, note: Note = ""):
+    @router.post("/rounds/{public_id}/void")
+    def void(request: Request, public_id: str, admin: Admin, note: Note = ""):
         try:
-            void_round(db_of(request), submission_id, admin.id, note)
+            void_round(db_of(request), public_id, admin.id, note)
         except KeyError:
             raise not_found() from None
         return _redirect("/admin/voided", "voided")
+
+    @router.post("/rounds/{public_id}/restore")
+    def restore(request: Request, public_id: str, admin: Admin):
+        try:
+            restore_round(db_of(request), public_id, admin.id)
+        except KeyError:
+            raise not_found() from None
+        except SlotTakenError:
+            return _redirect("/admin/voided", "slot_taken")
+        return _redirect(f"/admin/rounds/{public_id}", "restored")
 
     @router.get("/users", response_class=HTMLResponse)
     def users(request: Request, page: PageNumber = 1):
@@ -162,15 +172,5 @@ def admin_router(templates: Jinja2Templates) -> APIRouter:
     @router.get("/voided", response_class=HTMLResponse)
     def voided(request: Request, page: PageNumber = 1):
         return render(request, "voided.html", {"listing": voided_page(db_of(request), page)})
-
-    @router.post("/voided/{voided_id}/restore")
-    def restore(request: Request, voided_id: int, admin: Admin):
-        try:
-            submission_id = restore_round(db_of(request), voided_id, admin.id)
-        except KeyError:
-            raise not_found() from None
-        except SlotTakenError:
-            return _redirect("/admin/voided", "slot_taken")
-        return _redirect(f"/admin/submissions/{submission_id}", "restored")
 
     return router

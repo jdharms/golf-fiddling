@@ -7,8 +7,15 @@ import pytest
 from server.app import create_app
 from server.config import Config
 from server.live import LiveServer
+from server.strings import Entry, Strings
 
 TIMEOUT_MS = 15_000
+
+
+def _unwritten() -> Strings:
+    """The real catalog with no text, so every string renders as the placeholder naming its key."""
+    real = Strings.load()
+    return Strings({key: Entry(real.entry(key).note, "") for key in real.keys()})  # noqa: SIM118 (Strings, not a dict)
 
 
 def _chromium_launches() -> bool:
@@ -28,7 +35,7 @@ pytestmark = pytest.mark.skipif(not _chromium_launches(), reason="no Playwright 
 def test_rangefinder_measures_zooms_switches_holes_and_opens_green():
     from playwright.sync_api import sync_playwright
 
-    app = create_app(Config(database=":memory:"))
+    app = create_app(Config(database=":memory:"), strings=_unwritten())
     errors: list[str] = []
     with LiveServer(app) as base, sync_playwright() as playwright:
         browser = playwright.chromium.launch()
@@ -45,7 +52,7 @@ def test_rangefinder_measures_zooms_switches_holes_and_opens_green():
             assert image.evaluate("image => image.clientWidth") == 352
             image.click(position={"x": 40, "y": 40})
             image.click(position={"x": 40, "y": 140})
-            assert page.locator("#distance-display").inner_text() == "100.0y"
+            assert page.locator("#distance-display").inner_text() == "⟦rangefinder.script.distance distance=100.0⟧"
 
             page.click("#zoom-in")
             assert image.evaluate("image => image.clientWidth") == 528
@@ -61,13 +68,13 @@ def test_rangefinder_measures_zooms_switches_holes_and_opens_green():
             page.select_option("#hole-select", "2")
             assert "/images/japan/hole_02.png" in image.get_attribute("src")
             assert viewer.evaluate("element => element.clientHeight") == viewer_height
-            assert page.locator("#distance-display").inner_text() == "--"
+            assert page.locator("#distance-display").inner_text() == "⟦rangefinder.script.distance_empty⟧"
 
             page.click("#green-view")
             page.wait_for_selector("#green-modal[open]")
-            assert page.locator("#flag-indicator").inner_text() == "Flag 1/4"
+            assert page.locator("#flag-indicator").inner_text() == "⟦rangefinder.script.flag current=1 total=4⟧"
             page.keyboard.press("ArrowRight")
-            assert page.locator("#flag-indicator").inner_text() == "Flag 2/4"
+            assert page.locator("#flag-indicator").inner_text() == "⟦rangefinder.script.flag current=2 total=4⟧"
             page.keyboard.press("Escape")
             assert not page.locator("#green-modal").evaluate("dialog => dialog.open")
         finally:
@@ -79,7 +86,7 @@ def test_rangefinder_measures_zooms_switches_holes_and_opens_green():
 def test_rangefinder_permalink_tracks_location_copies_and_does_not_add_history():
     from playwright.sync_api import sync_playwright
 
-    app = create_app(Config(database=":memory:"))
+    app = create_app(Config(database=":memory:"), strings=_unwritten())
     errors: list[str] = []
     with LiveServer(app) as base, sync_playwright() as playwright:
         browser = playwright.chromium.launch()
@@ -102,7 +109,7 @@ def test_rangefinder_permalink_tracks_location_copies_and_does_not_add_history()
 
             page.click("#copy-permalink")
             assert await_text(page, "navigator.clipboard.readText()") == page.url
-            assert "permalink_copied" in page.locator("#permalink-status").inner_text()
+            assert page.locator("#permalink-status").inner_text() == "⟦rangefinder.script.permalink_copied⟧"
 
             page.go_back()
             assert page.url == base + "/"

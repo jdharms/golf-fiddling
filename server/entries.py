@@ -85,7 +85,7 @@ def upsert_entry(
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (seed_id, user_id) DO UPDATE
                 SET player_name = excluded.player_name, clubs = excluded.clubs, updated_at = excluded.updated_at
-                WHERE NOT EXISTS (SELECT 1 FROM submissions WHERE submissions.entry_id = entries.id)
+                WHERE NOT EXISTS (SELECT 1 FROM rounds WHERE rounds.entry_id = entries.id)
             RETURNING {COLUMNS}
             """,
             (seed_id, user_id, options.player_name, clubs_text(options.clubs), draw_key(), draw_key(), at, at),

@@ -5,8 +5,8 @@
   <ul>
     <li><a href="/admin">Admin</a></li>
     <li><a href="/admin/seeds">Seeds</a></li>
-    <li><a href="/admin/submissions">Rounds</a></li>
-    <li><a href="/admin/submissions?flagged=true">Flagged</a></li>
+    <li><a href="/admin/rounds">Rounds</a></li>
+    <li><a href="/admin/rounds?flagged=true">Flagged</a></li>
     <li><a href="/admin/users">Users</a></li>
     <li><a href="/admin/voided">Voided</a></li>
     <li><a href="/admin/activity">Activity</a></li>
@@ -63,7 +63,7 @@
     <tbody>
       {% for round in rounds %}
       <tr>
-        <td><a href="/admin/submissions/{{ round.id }}">#{{ round.id }}</a></td>
+        <td><a href="/admin/rounds/{{ round.public_id }}">{{ round.public_id }}</a></td>
         {% if show_seed %}<td>{{ words(round.seed_id, round.magic_words) }}</td>{% endif %}
         {% if show_player %}<td><a href="/admin/users/{{ round.user_id }}">{{ round.user_name }}</a></td>{% endif %}
         <td>{{ slot_label(round.slot) }}</td>

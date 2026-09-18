@@ -9,5 +9,5 @@
 {% else %}
 <p>No {% if flagged %}flagged {% endif %}rounds{% if listing.number > 1 %} on this page{% endif %}.</p>
 {% endif %}
-{{ admin.pager(listing, "/admin/submissions", "&flagged=true" if flagged else "") }}
+{{ admin.pager(listing, "/admin/rounds", "&flagged=true" if flagged else "") }}
 {% endblock %}
