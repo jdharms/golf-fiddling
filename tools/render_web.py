@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-NES Open Tournament Golf - Web App Renderer
+NES Open Tournament Golf - Rangefinder Renderer
 
-Batch renders all course holes as PNG images for the web-based measurement tool.
+Batch renders all course holes as PNG images for the randomizer site's rangefinder.
 Generates metadata.json with course and hole information.
 """
 
@@ -20,7 +20,7 @@ from golf.rendering.pil_renderer import (
 from golf.rendering.pil_sprite import load_sprites
 
 # Courses to process, in dropdown order: (course id, path under courses/, group label).
-# The group label becomes an <optgroup> in the web app's course selector, so the two
+# The group label becomes an <optgroup> in the rangefinder's course selector, so the two
 # games' courses stay visually separated even though both have a course named "Japan".
 NES_OPEN_GROUP = "NES Open Tournament Golf"
 MARIO_OPEN_GROUP = "Mario Open Golf (JP)"
@@ -44,7 +44,7 @@ def render_all_courses(
     output_dir: str,
     flag_index: int = 0,
 ):
-    """Render all holes from all courses for the web app."""
+    """Render all holes from all courses for the rangefinder."""
     tileset = TilesetData(tileset_path)
     greens_tileset = TilesetData(greens_tileset_path)
     sprites = load_sprites()
@@ -164,7 +164,7 @@ def render_all_courses(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Batch render all golf course holes for web app",
+        description="Batch render all golf course holes for the rangefinder",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Example:
@@ -182,7 +182,7 @@ This will create:
     parser.add_argument("tileset", help="Path to terrain CHR tileset binary file")
     parser.add_argument("greens_tileset", help="Path to greens CHR tileset binary file")
     parser.add_argument("courses", help="Path to courses directory")
-    parser.add_argument("output", help="Output directory for web app")
+    parser.add_argument("output", help="Output directory for the rangefinder's static files")
     parser.add_argument(
         "-f",
         "--flag-pos",
