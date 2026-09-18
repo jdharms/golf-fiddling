@@ -13,8 +13,8 @@ mode, with a small migrations file and no ORM. Litestream replicates the databas
 object storage and sits outside the app.
 
 **Code layout.** Generation logic lives in a new `golf/randomizer/` package with no web
-dependencies. The FastAPI app lives in the top-level `server/` package (`web/` is the
-rangefinder; `site` would shadow the standard library module) and imports from `golf/`
+dependencies. The FastAPI app lives in the top-level `server/` package (`web/` held the
+rangefinder at the time; `site` would shadow the standard library module) and imports from `golf/`
 only. `golf-site` (`tools/site.py`) runs it under uvicorn. A `golf-randomize` CLI drives the same code
 so ROMs can be built and playtested from a manifest file offline; it lives at
 `tools/randomize.py`.

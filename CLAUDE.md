@@ -43,7 +43,7 @@ A toolset for reverse engineering, editing and patching the NES Open Tournament 
 - `tools/` - CLI entry points: `data/` (regenerates checked-in `data/` files), `research/`,
   `art/`, `music/`, `qr/`; course and patch tools at the top level; `archive/` for retired
   one-off scripts (no entry points)
-- `docs/`, `data/`, `courses/`, `web/` (course measurement app), `renders/` (render scripts and output)
+- `docs/`, `data/`, `courses/`, `renders/` (render scripts and output)
 - `tests/unit/`, `tests/integration/` - integration tests need `nes_open_us.nes` in the repo root
 
 ## Key Concepts

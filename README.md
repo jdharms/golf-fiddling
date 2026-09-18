@@ -54,7 +54,6 @@ full reference for its options.
 - **docs/** - design and reverse-engineering notes; start at `docs/README.md`
 - **data/** - checked-in tables, tilesets, sprites and exports the tools and editor load
 - **courses/** - extracted course JSON
-- **web/** - the course measurement web app
 
 ## Commands
 
@@ -74,7 +73,7 @@ Build a standalone editor executable with `uv run pyinstaller run_editor.spec`.
 | `golf-dump-jp <jp_rom> [out_dir]` | Extract the Mario Open Golf (JP) courses; see `docs/jp_extraction.md` |
 | `golf-write <rom> <course_dir>` | Write one course back into a ROM, packed across terrain banks 0 and 1; see `docs/multi_bank_terrain.md` |
 | `golf-visualize <tileset> <hole.json or course_dir> [out]` | Render holes to PNG |
-| `golf-render-web <tileset> <greens_tileset> <courses> <web_dir>` | Render every hole for the web app |
+| `golf-render-web <tileset> <greens_tileset> <courses> <out_dir>` | Render every hole and its metadata for the site's rangefinder |
 
 ### Regenerating data/ files
 
