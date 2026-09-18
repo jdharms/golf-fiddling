@@ -91,6 +91,10 @@ addopts = [
     "--cov=server",
     "--cov-report=term-missing",
 ]
+filterwarnings = [
+    # pygame 2.6.1 imports pkg_resources at import time; pygame-ce doesn't
+    "ignore:pkg_resources is deprecated as an API:UserWarning:pygame.pkgdata",
+]
 
 [tool.coverage.run]
 # sys.monitoring instead of the C tracer: same numbers, ~2.4x faster
