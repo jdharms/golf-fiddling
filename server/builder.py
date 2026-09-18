@@ -58,10 +58,14 @@ class SeedBuilder:
                 try:
                     data = self.rom_path.read_bytes()
                 except OSError as problem:
-                    raise BuilderUnavailableError(f"cannot read the vanilla ROM at {self.rom_path}: {problem}") from None
+                    raise BuilderUnavailableError(
+                        f"cannot read the vanilla ROM at {self.rom_path}: {problem}"
+                    ) from None
                 expected = vanilla_rom(US_ROM).sha1
                 if hashlib.sha1(data).hexdigest() != expected:
-                    raise BuilderUnavailableError(f"{self.rom_path} is not the vanilla US ROM (SHA-1 {expected})")
+                    raise BuilderUnavailableError(
+                        f"{self.rom_path} is not the vanilla US ROM (SHA-1 {expected})"
+                    )
                 self._vanilla = data
             return self._vanilla
 
@@ -85,4 +89,6 @@ class SeedBuilder:
 
         Finishing takes milliseconds, so it skips the semaphore.
         """
-        return finish(manifest, self.vanilla(), unfinished_ips, options, credentials).ips
+        return finish(
+            manifest, self.vanilla(), unfinished_ips, options, credentials
+        ).ips

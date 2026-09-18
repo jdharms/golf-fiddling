@@ -40,7 +40,9 @@ from golf.core.mlb_labels import TYPE_ALIASES, Label, LabelStore
 from golf.core.rom_utils import parse_cpu_or_prg_address
 
 
-def _parse_prg_address_or_range(address: str, bank: int | None) -> tuple[int, int | None]:
+def _parse_prg_address_or_range(
+    address: str, bank: int | None
+) -> tuple[int, int | None]:
     if "-" in address:
         lo, hi = address.split("-", 1)
         return parse_cpu_or_prg_address(lo, bank), parse_cpu_or_prg_address(hi, bank)
@@ -116,10 +118,15 @@ def cmd_edit(store: LabelStore, args) -> None:
         hint = ""
         if store.index_for(other).find_exact(type_, start) is not None:
             hint = f" (found in {other} instead - pass --target {other} if that's the one to edit)"
-        print(f"Error: no label found at {type_}:{start:04X} in {args.target}{hint}", file=sys.stderr)
+        print(
+            f"Error: no label found at {type_}:{start:04X} in {args.target}{hint}",
+            file=sys.stderr,
+        )
         sys.exit(1)
     if not args.name and args.comment is None:
-        print("Error: nothing to change (pass --name and/or --comment)", file=sys.stderr)
+        print(
+            "Error: nothing to change (pass --name and/or --comment)", file=sys.stderr
+        )
         sys.exit(1)
     if args.name:
         label.name = args.name
@@ -138,7 +145,10 @@ def cmd_remove(store: LabelStore, args) -> None:
         hint = ""
         if store.index_for(other).find_exact(type_, start) is not None:
             hint = f" (found in {other} instead - pass --target {other} if that's the one to remove)"
-        print(f"Error: no label found at {type_}:{start:04X} in {args.target}{hint}", file=sys.stderr)
+        print(
+            f"Error: no label found at {type_}:{start:04X} in {args.target}{hint}",
+            file=sys.stderr,
+        )
         sys.exit(1)
     store.save(args.target)
     print(f"Removed from {args.target}: {removed.to_line()}")
@@ -155,50 +165,86 @@ def main():
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    list_parser = subparsers.add_parser("list", help="List labels (merged base + sidecar view)")
-    list_parser.add_argument("--type", choices=list(TYPE_ALIASES), help="Restrict to one type")
-    list_parser.add_argument("--filter", help="Case-insensitive substring to match name/comment")
+    list_parser = subparsers.add_parser(
+        "list", help="List labels (merged base + sidecar view)"
+    )
     list_parser.add_argument(
-        "--source", choices=["all", "base", "sidecar"], default="all", help="Restrict to one source"
+        "--type", choices=list(TYPE_ALIASES), help="Restrict to one type"
+    )
+    list_parser.add_argument(
+        "--filter", help="Case-insensitive substring to match name/comment"
+    )
+    list_parser.add_argument(
+        "--source",
+        choices=["all", "base", "sidecar"],
+        default="all",
+        help="Restrict to one source",
     )
 
-    add_parser = subparsers.add_parser("add", help="Add a new label (sidecar by default)")
+    add_parser = subparsers.add_parser(
+        "add", help="Add a new label (sidecar by default)"
+    )
     add_parser.add_argument("type", choices=list(TYPE_ALIASES))
     add_parser.add_argument(
-        "address", help="'$XXXX' (prg, needs --bank for switchable) or raw hex; 'START-END' for a range"
+        "address",
+        help="'$XXXX' (prg, needs --bank for switchable) or raw hex; 'START-END' for a range",
     )
     add_parser.add_argument("name")
     add_parser.add_argument("--comment")
-    add_parser.add_argument("--bank", type=int, help="Switchable bank number (0-14), for type=prg")
     add_parser.add_argument(
-        "--target", choices=["sidecar", "base"], default="sidecar", help="Which file to write to"
+        "--bank", type=int, help="Switchable bank number (0-14), for type=prg"
     )
     add_parser.add_argument(
-        "--force", action="store_true", help="Overwrite an existing label at this address"
+        "--target",
+        choices=["sidecar", "base"],
+        default="sidecar",
+        help="Which file to write to",
+    )
+    add_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite an existing label at this address",
     )
 
-    edit_parser = subparsers.add_parser("edit", help="Rename/re-comment an existing label")
+    edit_parser = subparsers.add_parser(
+        "edit", help="Rename/re-comment an existing label"
+    )
     edit_parser.add_argument("type", choices=list(TYPE_ALIASES))
     edit_parser.add_argument("address")
     edit_parser.add_argument("--name")
     edit_parser.add_argument("--comment")
-    edit_parser.add_argument("--bank", type=int, help="Switchable bank number (0-14), for type=prg")
     edit_parser.add_argument(
-        "--target", choices=["sidecar", "base"], default="sidecar", help="Which file to edit"
+        "--bank", type=int, help="Switchable bank number (0-14), for type=prg"
+    )
+    edit_parser.add_argument(
+        "--target",
+        choices=["sidecar", "base"],
+        default="sidecar",
+        help="Which file to edit",
     )
 
     remove_parser = subparsers.add_parser("remove", help="Remove a label")
     remove_parser.add_argument("type", choices=list(TYPE_ALIASES))
     remove_parser.add_argument("address")
-    remove_parser.add_argument("--bank", type=int, help="Switchable bank number (0-14), for type=prg")
     remove_parser.add_argument(
-        "--target", choices=["sidecar", "base"], default="sidecar", help="Which file to remove from"
+        "--bank", type=int, help="Switchable bank number (0-14), for type=prg"
+    )
+    remove_parser.add_argument(
+        "--target",
+        choices=["sidecar", "base"],
+        default="sidecar",
+        help="Which file to remove from",
     )
 
     args = parser.parse_args()
     store = LabelStore.load(args.mlb_file, args.sidecar)
 
-    commands = {"list": cmd_list, "add": cmd_add, "edit": cmd_edit, "remove": cmd_remove}
+    commands = {
+        "list": cmd_list,
+        "add": cmd_add,
+        "edit": cmd_edit,
+        "remove": cmd_remove,
+    }
     try:
         commands[args.command](store, args)
     except ValueError as e:

@@ -43,7 +43,9 @@ def comma_choices(choices):
         items = [item.strip() for item in text.split(",") if item.strip()]
         unknown = [item for item in items if item not in choices]
         if not items or unknown:
-            raise argparse.ArgumentTypeError(f"expected a comma-separated selection of {', '.join(choices)}")
+            raise argparse.ArgumentTypeError(
+                f"expected a comma-separated selection of {', '.join(choices)}"
+            )
         return items
 
     return parse
@@ -65,10 +67,14 @@ def slug(path: str) -> str:
 
 def settle(page) -> None:
     """Wait until no ROM card or download form is still checking."""
-    page.wait_for_function("() => !document.querySelector('[data-state=checking]')", timeout=SETTLE_MS)
+    page.wait_for_function(
+        "() => !document.querySelector('[data-state=checking]')", timeout=SETTLE_MS
+    )
 
 
-def load_roms(page, roms: list[tuple[str, Path]], label: str, problems: list[str]) -> None:
+def load_roms(
+    page, roms: list[tuple[str, Path]], label: str, problems: list[str]
+) -> None:
     """Load each file into its card on the ROM setup page, which the page must already show."""
     for rom_id, file in roms:
         card = f'article.rom[data-rom-id="{rom_id}"]'
@@ -80,7 +86,10 @@ def load_roms(page, roms: list[tuple[str, Path]], label: str, problems: list[str
 
 
 def card_states(page) -> str:
-    states = page.eval_on_selector_all("article.rom", "cards => cards.map(c => `${c.dataset.romId}=${c.dataset.state}`)")
+    states = page.eval_on_selector_all(
+        "article.rom",
+        "cards => cards.map(c => `${c.dataset.romId}=${c.dataset.state}`)",
+    )
     return " ".join(states)
 
 
@@ -99,27 +108,54 @@ def capture(base: str, args: argparse.Namespace) -> tuple[list[Path], list[str]]
                     for scheme in args.schemes:
                         width, height = VIEWPORTS[viewport]
                         label = f"{path} {viewport} {scheme}"
-                        context = browser.new_context(viewport={"width": width, "height": height}, color_scheme=scheme)
+                        context = browser.new_context(
+                            viewport={"width": width, "height": height},
+                            color_scheme=scheme,
+                        )
                         page = context.new_page()
                         page.on(
                             "console",
-                            lambda message, label=label: problems.append(f"{label}: console {message.type}: {message.text}")
+                            lambda message, label=label: problems.append(
+                                f"{label}: console {message.type}: {message.text}"
+                            )
                             if message.type == "error"
                             else None,
                         )
-                        page.on("pageerror", lambda error, label=label: problems.append(f"{label}: page error: {error}"))
+                        page.on(
+                            "pageerror",
+                            lambda error, label=label: problems.append(
+                                f"{label}: page error: {error}"
+                            ),
+                        )
                         try:
                             if args.login:
                                 # The session cookie is per browser context: sign each one in.
-                                response = page.goto(f"{base}/auth/login?as={args.login}", wait_until="networkidle")
+                                response = page.goto(
+                                    f"{base}/auth/login?as={args.login}",
+                                    wait_until="networkidle",
+                                )
                                 if response is None or not response.ok:
-                                    status = response.status if response is not None else "no response"
-                                    problems.append(f"{label}: signing in as {args.login}: HTTP {status}")
-                                elif not page.locator("form[action='/auth/logout']").count():
-                                    problems.append(f"{label}: signing in as {args.login} left the header signed out")
+                                    status = (
+                                        response.status
+                                        if response is not None
+                                        else "no response"
+                                    )
+                                    problems.append(
+                                        f"{label}: signing in as {args.login}: HTTP {status}"
+                                    )
+                                elif not page.locator(
+                                    "form[action='/auth/logout']"
+                                ).count():
+                                    problems.append(
+                                        f"{label}: signing in as {args.login} left the header signed out"
+                                    )
                             response = page.goto(base + path, wait_until="networkidle")
                             if response is None or not response.ok:
-                                status = response.status if response is not None else "no response"
+                                status = (
+                                    response.status
+                                    if response is not None
+                                    else "no response"
+                                )
                                 problems.append(f"{label}: HTTP {status}")
                             settle(page)
                             name = f"{slug(path)}-{viewport}-{scheme}"
@@ -141,18 +177,34 @@ def capture(base: str, args: argparse.Namespace) -> tuple[list[Path], list[str]]
                                     settle(page)
                                     load_roms(page, args.rom, label, problems)
                                     page.goto(base + path, wait_until="networkidle")
-                                with page.expect_navigation(timeout=GENERATE_MS) as navigation:
+                                with page.expect_navigation(
+                                    timeout=GENERATE_MS
+                                ) as navigation:
                                     page.click("#generate-form button[type=submit]")
                                 response = navigation.value
-                                if response is None or not response.ok or "/h/" not in page.url:
-                                    status = response.status if response is not None else "no response"
-                                    problems.append(f"{label}: generating landed on {page.url} (HTTP {status})")
+                                if (
+                                    response is None
+                                    or not response.ok
+                                    or "/h/" not in page.url
+                                ):
+                                    status = (
+                                        response.status
+                                        if response is not None
+                                        else "no response"
+                                    )
+                                    problems.append(
+                                        f"{label}: generating landed on {page.url} (HTTP {status})"
+                                    )
                                 settle(page)
                                 shot = args.out_dir / f"{name}-seed.png"
                                 page.screenshot(path=shot, full_page=True)
                                 written.append(shot)
-                                download = page.get_attribute("article.download", "data-state")
-                                print(f"{label}: seed {page.url.removeprefix(base)} download {download}")
+                                download = page.get_attribute(
+                                    "article.download", "data-state"
+                                )
+                                print(
+                                    f"{label}: seed {page.url.removeprefix(base)} download {download}"
+                                )
                         finally:
                             context.close()
         finally:
@@ -166,15 +218,31 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=EXAMPLES,
     )
-    parser.add_argument("pages", nargs="*", default=["/", "/rom"], help="paths to capture (default: / /rom)")
-    parser.add_argument("-o", "--out-dir", type=Path, default=Path("site-screenshots"), help="where PNGs go (default: %(default)s)")
+    parser.add_argument(
+        "pages",
+        nargs="*",
+        default=["/", "/rom"],
+        help="paths to capture (default: / /rom)",
+    )
+    parser.add_argument(
+        "-o",
+        "--out-dir",
+        type=Path,
+        default=Path("site-screenshots"),
+        help="where PNGs go (default: %(default)s)",
+    )
     parser.add_argument(
         "--viewports",
         type=comma_choices(VIEWPORTS),
         default=list(VIEWPORTS),
         help=f"comma-separated: {', '.join(f'{name} {w}x{h}' for name, (w, h) in VIEWPORTS.items())} (default: all)",
     )
-    parser.add_argument("--schemes", type=comma_choices(SCHEMES), default=list(SCHEMES), help="comma-separated: light, dark (default: both)")
+    parser.add_argument(
+        "--schemes",
+        type=comma_choices(SCHEMES),
+        default=list(SCHEMES),
+        help="comma-separated: light, dark (default: both)",
+    )
     parser.add_argument(
         "--rom",
         type=rom_file,
@@ -199,7 +267,10 @@ def main() -> int:
     try:
         from playwright.sync_api import Error as PlaywrightError
     except ImportError:
-        print("error: playwright is not installed; run uv sync to install the dev dependencies", file=sys.stderr)
+        print(
+            "error: playwright is not installed; run uv sync to install the dev dependencies",
+            file=sys.stderr,
+        )
         return 1
 
     from server.app import create_app
@@ -212,7 +283,10 @@ def main() -> int:
     if args.login:
         # The bypass only runs on a localhost base URL, which the served app is.
         config = replace(
-            config, dev_login=True, base_url="http://127.0.0.1:8000", admin_users=frozenset({f"dev:{args.login}"})
+            config,
+            dev_login=True,
+            base_url="http://127.0.0.1:8000",
+            admin_users=frozenset({f"dev:{args.login}"}),
         )
     # Every viewport and scheme may generate a seed, more than a player's bucket holds.
     limiter = RateLimiter(capacity=1000, refill_seconds=1)
@@ -221,7 +295,10 @@ def main() -> int:
             written, problems = capture(base, args)
     except PlaywrightError as problem:
         print(f"error: {problem}", file=sys.stderr)
-        print("if the browser is missing: uv run playwright install chromium", file=sys.stderr)
+        print(
+            "if the browser is missing: uv run playwright install chromium",
+            file=sys.stderr,
+        )
         return 1
 
     for shot in written:

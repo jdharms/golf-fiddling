@@ -22,9 +22,7 @@ DEEP_ROUGH = 0xDF
 
 def load_neighbor_data() -> dict:
     """Load terrain_neighbors.json."""
-    data_file = (
-        Path(__file__).parents[2] / "data" / "tables" / "terrain_neighbors.json"
-    )
+    data_file = Path(__file__).parents[2] / "data" / "tables" / "terrain_neighbors.json"
     with open(data_file) as f:
         return json.load(f)
 

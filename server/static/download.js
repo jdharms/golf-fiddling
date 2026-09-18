@@ -105,26 +105,42 @@ async function storedRoms(ids, roms) {
 }
 
 function missingTitles(ids, roms, stored) {
-  return ids.filter((id) => !(id in stored)).map((id) => roms[id].title).join(", ");
+  return ids
+    .filter((id) => !(id in stored))
+    .map((id) => roms[id].title)
+    .join(", ");
 }
 
 // The notice for a refusal the server answered with {error, values}.
 function refusal(body, status) {
   const reason = body && body.error;
   const values = (body && body.values) || {};
-  if (reason === "invalid_name") return t("seed.download.status.refused.invalid_name", { chars: values.chars ?? "" });
-  if (reason === "invalid") return t("seed.download.status.refused.invalid", { field: values.field ?? "" });
-  if (reason === "clubs_banned") return t("seed.download.status.refused.clubs_banned", { clubs: values.clubs ?? "" });
+  if (reason === "invalid_name")
+    return t("seed.download.status.refused.invalid_name", {
+      chars: values.chars ?? "",
+    });
+  if (reason === "invalid")
+    return t("seed.download.status.refused.invalid", { field: values.field ?? "" });
+  if (reason === "clubs_banned")
+    return t("seed.download.status.refused.clubs_banned", {
+      clubs: values.clubs ?? "",
+    });
   if (reason === "clubs_over_max") {
-    return t("seed.download.status.refused.clubs_over_max", { count: values.count ?? "", max: values.max ?? "" });
+    return t("seed.download.status.refused.clubs_over_max", {
+      count: values.count ?? "",
+      max: values.max ?? "",
+    });
   }
-  if (reason === "roms_missing") return t("seed.download.status.refused.roms_missing", { roms: values.roms ?? "" });
+  if (reason === "roms_missing")
+    return t("seed.download.status.refused.roms_missing", { roms: values.roms ?? "" });
   if (reason === "unavailable") return t("seed.download.status.refused.unavailable");
   return t("seed.download.status.failed", { status });
 }
 
 function download(bytes, filename) {
-  const url = URL.createObjectURL(new Blob([bytes], { type: "application/octet-stream" }));
+  const url = URL.createObjectURL(
+    new Blob([bytes], { type: "application/octet-stream" }),
+  );
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;
@@ -144,7 +160,11 @@ function setupDownload(article) {
     const stored = await storedRoms(ids, roms);
     const missing = missingTitles(ids, roms, stored);
     if (missing) {
-      setState(article, "missing", t("seed.download.status.missing", { roms: missing }));
+      setState(
+        article,
+        "missing",
+        t("seed.download.status.missing", { roms: missing }),
+      );
     } else {
       setState(article, "ready", t("seed.download.status.ready"));
     }
@@ -164,7 +184,8 @@ function setupDownload(article) {
 
     setState(article, "building", t("seed.download.status.building"));
     const data = new FormData(form);
-    for (const [id, record] of Object.entries(stored)) data.append(`rom_${id}`, record.sha1);
+    for (const [id, record] of Object.entries(stored))
+      data.append(`rom_${id}`, record.sha1);
 
     let response;
     try {

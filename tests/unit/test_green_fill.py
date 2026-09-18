@@ -14,6 +14,7 @@ from editor.algorithms.green_fill import GreenFill
 # Helper Functions
 # =============================================================================
 
+
 def parse_greens_hex(hex_rows: list[str]) -> list[list[int]]:
     """Parse greens hex string rows into integer grid."""
     result = []
@@ -23,7 +24,9 @@ def parse_greens_hex(hex_rows: list[str]) -> list[list[int]]:
     return result
 
 
-def replace_rough_with_placeholder(greens: list[list[int]], placeholder: int = 0x100) -> list[list[int]]:
+def replace_rough_with_placeholder(
+    greens: list[list[int]], placeholder: int = 0x100
+) -> list[list[int]]:
     """Replace all rough tiles with placeholder value."""
     rough_tiles = GreenFill.ROUGH_TILES
     result = []
@@ -45,6 +48,7 @@ def load_hole_greens(country: str, hole_num: int) -> list[list[int]]:
 # =============================================================================
 # Active Set Detection Tests
 # =============================================================================
+
 
 class TestActiveSetDetection:
     """Tests for BFS-based active set detection."""
@@ -140,6 +144,7 @@ class TestActiveSetDetection:
 # Parity Calculation Tests
 # =============================================================================
 
+
 class TestParityCalculation:
     """Tests for parity calculation."""
 
@@ -177,6 +182,7 @@ class TestParityCalculation:
 # =============================================================================
 # Edge Filling Tests
 # =============================================================================
+
 
 class TestEdgeFilling:
     """Tests for edge rough tile selection based on fringe adjacency."""
@@ -288,6 +294,7 @@ class TestEdgeFilling:
 # Base Rough Filling Tests
 # =============================================================================
 
+
 class TestBaseFilling:
     """Tests for base rough tile filling (checkerboard pattern)."""
 
@@ -355,6 +362,7 @@ class TestBaseFilling:
 # =============================================================================
 # Interior Filling Tests
 # =============================================================================
+
 
 class TestInteriorFilling:
     """Tests for interior placeholder filling with flat tiles."""
@@ -481,6 +489,7 @@ class TestInteriorFilling:
 # Priority Order Tests
 # =============================================================================
 
+
 class TestPriorityOrder:
     """Tests for adjacency rule priority ordering."""
 
@@ -557,6 +566,7 @@ class TestPriorityOrder:
 # Round-Trip Tests
 # =============================================================================
 
+
 class TestRoundTrip:
     """Tests comparing algorithm output to real greens data."""
 
@@ -564,10 +574,13 @@ class TestRoundTrip:
     def filler(self):
         return GreenFill()
 
-    @pytest.mark.parametrize("country,hole_num", [
-        ("japan", 1),
-        ("uk", 15),
-    ])
+    @pytest.mark.parametrize(
+        "country,hole_num",
+        [
+            ("japan", 1),
+            ("uk", 15),
+        ],
+    )
     def test_roundtrip_matches_original(self, filler, country, hole_num):
         """
         Round-trip test:
@@ -590,14 +603,18 @@ class TestRoundTrip:
         # Compare to original
         differences = []
         for row_idx, (orig_row, filled_row) in enumerate(zip(original, filled)):
-            for col_idx, (orig_tile, filled_tile) in enumerate(zip(orig_row, filled_row)):
+            for col_idx, (orig_tile, filled_tile) in enumerate(
+                zip(orig_row, filled_row)
+            ):
                 if orig_tile != filled_tile:
-                    differences.append({
-                        "row": row_idx,
-                        "col": col_idx,
-                        "original": f"0x{orig_tile:02X}",
-                        "filled": f"0x{filled_tile:02X}",
-                    })
+                    differences.append(
+                        {
+                            "row": row_idx,
+                            "col": col_idx,
+                            "original": f"0x{orig_tile:02X}",
+                            "filled": f"0x{filled_tile:02X}",
+                        }
+                    )
 
         if differences:
             # Show first few differences for debugging
@@ -628,7 +645,7 @@ class TestRoundTrip:
         expected_parity = {
             (13, 22): 1,  # 13+22=35 (odd) -> 0x2C
             (13, 23): 0,  # 13+23=36 (even) -> 0x29
-            (23, 8): 1,   # 23+8=31 (odd) -> 0x2C
+            (23, 8): 1,  # 23+8=31 (odd) -> 0x2C
         }
 
         for (row, col), parity in expected_parity.items():
@@ -641,7 +658,9 @@ class TestRoundTrip:
         # Verify we only have the 3 known differences
         differences = []
         for row_idx, (orig_row, filled_row) in enumerate(zip(original, filled)):
-            for col_idx, (orig_tile, filled_tile) in enumerate(zip(orig_row, filled_row)):
+            for col_idx, (orig_tile, filled_tile) in enumerate(
+                zip(orig_row, filled_row)
+            ):
                 if orig_tile != filled_tile:
                     differences.append((row_idx, col_idx))
 
@@ -653,6 +672,7 @@ class TestRoundTrip:
 # =============================================================================
 # Input Validation Tests
 # =============================================================================
+
 
 class TestInputValidation:
     """Tests for input handling edge cases."""
@@ -701,6 +721,7 @@ class TestInputValidation:
 # Constant Value Tests
 # =============================================================================
 
+
 class TestConstants:
     """Tests verifying constant values match expected tile IDs."""
 
@@ -728,8 +749,15 @@ class TestConstants:
     def test_rough_tiles_set_contains_all(self):
         """ROUGH_TILES should contain all rough tile values."""
         expected = {
-            0x29, 0x2C,              # base
-            0x70, 0x71, 0x72, 0x73,  # edge even
-            0x84, 0x85, 0x86, 0x87,  # edge odd
+            0x29,
+            0x2C,  # base
+            0x70,
+            0x71,
+            0x72,
+            0x73,  # edge even
+            0x84,
+            0x85,
+            0x86,
+            0x87,  # edge odd
         }
         assert GreenFill.ROUGH_TILES == expected

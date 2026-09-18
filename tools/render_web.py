@@ -81,7 +81,7 @@ def render_all_courses(
         metadata["courses"][course_id] = {
             "name": course_data.get("name", course_id.capitalize()),
             "group": group,
-            "holes": []
+            "holes": [],
         }
 
         # Render all holes for this course
@@ -151,7 +151,7 @@ def render_all_courses(
 
     # Write metadata.json
     metadata_path = output_path / "metadata.json"
-    with open(metadata_path, 'w') as f:
+    with open(metadata_path, "w") as f:
         json.dump(metadata, f, indent=2)
 
     print(f"\n✓ Metadata written to: {metadata_path}")
@@ -159,7 +159,9 @@ def render_all_courses(
 
     # Print summary
     total_holes = sum(len(course["holes"]) for course in metadata["courses"].values())
-    print(f"\nSummary: Rendered {total_holes} holes across {len(metadata['courses'])} courses")
+    print(
+        f"\nSummary: Rendered {total_holes} holes across {len(metadata['courses'])} courses"
+    )
 
 
 def main():
@@ -182,7 +184,9 @@ This will create:
     parser.add_argument("tileset", help="Path to terrain CHR tileset binary file")
     parser.add_argument("greens_tileset", help="Path to greens CHR tileset binary file")
     parser.add_argument("courses", help="Path to courses directory")
-    parser.add_argument("output", help="Output directory for the rangefinder's static files")
+    parser.add_argument(
+        "output", help="Output directory for the rangefinder's static files"
+    )
     parser.add_argument(
         "-f",
         "--flag-pos",

@@ -21,6 +21,7 @@ from .constants import (
 
 _placeholder_cache: dict[int, Surface] = {}
 
+
 def render_placeholder_tile(size: int) -> Surface:
     """Render the placeholder tile (0x100) with a distinctive pattern."""
     if size in _placeholder_cache:
@@ -100,7 +101,9 @@ class Tileset:
                     if scale == 1:
                         surf.set_at((x, y), color)
                     else:
-                        pygame.draw.rect(surf, color, (x * scale, y * scale, scale, scale))
+                        pygame.draw.rect(
+                            surf, color, (x * scale, y * scale, scale, scale)
+                        )
 
         surf = surf.convert()
         self._cache[cache_key] = surf
@@ -189,7 +192,9 @@ class Sprite:
             tile_surf = self.render_tile(tile_idx, scale)
             screen.blit(tile_surf, (sx, sy))
 
-    def get_bounding_box(self, anchor_x: int, anchor_y: int) -> tuple[int, int, int, int]:
+    def get_bounding_box(
+        self, anchor_x: int, anchor_y: int
+    ) -> tuple[int, int, int, int]:
         """
         Calculate bounding box of all sprite tiles in game pixel space.
 
@@ -203,10 +208,10 @@ class Sprite:
         if not self.sprites:
             return (anchor_x, anchor_y, anchor_x, anchor_y)
 
-        min_x = float('inf')
-        min_y = float('inf')
-        max_x = float('-inf')
-        max_y = float('-inf')
+        min_x = float("inf")
+        min_y = float("inf")
+        max_x = float("-inf")
+        max_y = float("-inf")
 
         for entry in self.sprites:
             offset_x = entry.get("x", 0)

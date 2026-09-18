@@ -24,8 +24,8 @@ from golf.core.signpost import (
 # Four colours on subpalette 0, and a second subpalette that shares none of
 # them, so a mix-up between the two cannot pass unnoticed.
 PALETTE = bytes(
-    [0x0F, 0x30, 0x21, 0x15]      # 0: black bg, white, blue, magenta
-    + [0x0F, 0x37, 0x1C, 0x2A]    # 1: tan, teal, green
+    [0x0F, 0x30, 0x21, 0x15]  # 0: black bg, white, blue, magenta
+    + [0x0F, 0x37, 0x1C, 0x2A]  # 1: tan, teal, green
     + [0x0F, 0x00, 0x00, 0x00]
     + [0x0F, 0x00, 0x00, 0x00]
 )
@@ -37,10 +37,10 @@ def rgb(value):
 
 def test_tile_to_chr_packs_planes_the_way_the_ppu_reads_them():
     values = [[0] * 8 for _ in range(8)]
-    values[0] = [1, 0, 0, 0, 0, 0, 0, 0]      # low plane bit 7
-    values[1] = [2, 0, 0, 0, 0, 0, 0, 0]      # high plane bit 7
-    values[2] = [3, 0, 0, 0, 0, 0, 0, 0]      # both
-    values[3] = [0, 0, 0, 0, 0, 0, 0, 1]      # low plane bit 0
+    values[0] = [1, 0, 0, 0, 0, 0, 0, 0]  # low plane bit 7
+    values[1] = [2, 0, 0, 0, 0, 0, 0, 0]  # high plane bit 7
+    values[2] = [3, 0, 0, 0, 0, 0, 0, 0]  # both
+    values[3] = [0, 0, 0, 0, 0, 0, 0, 1]  # low plane bit 0
 
     chr_bytes = tile_to_chr(values)
     assert chr_bytes[0] == 0x80 and chr_bytes[8] == 0x00
@@ -98,7 +98,9 @@ def make_reference(patterns, tiles, attribute=0x00):
     return vram
 
 
-DESCRIPTOR = BannerDescriptor(index=0, dest=NAMETABLE, header=0x82, rows=1, pointer=0x1234)
+DESCRIPTOR = BannerDescriptor(
+    index=0, dest=NAMETABLE, header=0x82, rows=1, pointer=0x1234
+)
 
 
 def test_unchanged_art_keeps_the_rom_s_own_tile_bytes():
@@ -125,7 +127,7 @@ def test_redrawn_cell_resolves_to_an_existing_pattern():
     vram = make_reference(patterns, {(0, 0): 0x00, (1, 0): 0x00})
 
     screen = screen_from_tiles(vram, PALETTE)
-    for y in range(8):                    # paint cell 0 solid: that is tile $01
+    for y in range(8):  # paint cell 0 solid: that is tile $01
         for x in range(8):
             screen[y][x] = rgb(PALETTE[1])
 
@@ -140,7 +142,7 @@ def test_art_with_no_matching_pattern_is_reported_as_new():
     vram = make_reference([blank] * 256, {(0, 0): 0x00, (1, 0): 0x00})
 
     screen = screen_from_tiles(vram, PALETTE)
-    screen[0][0] = rgb(PALETTE[2])        # one pixel nothing in CHR has
+    screen[0][0] = rgb(PALETTE[2])  # one pixel nothing in CHR has
 
     result = convert_banner(screen, vram, PALETTE, DESCRIPTOR)
     assert result.tiles[0].is_new
@@ -157,7 +159,7 @@ def test_a_colour_outside_the_cell_s_subpalette_is_an_error():
     vram = make_reference([blank] * 256, {(0, 0): 0x00, (1, 0): 0x00})
 
     screen = screen_from_tiles(vram, PALETTE)
-    screen[0][0] = rgb(0x2A)              # legal on subpalette 1, not on 0
+    screen[0][0] = rgb(0x2A)  # legal on subpalette 1, not on 0
 
     result = convert_banner(screen, vram, PALETTE, DESCRIPTOR)
     assert len(result.errors) == 1
@@ -172,7 +174,7 @@ def test_the_attribute_table_decides_which_colours_a_cell_may_use():
     assert subpalette_at(vram, 0, 0) == 1
 
     screen = screen_from_tiles(vram, PALETTE)
-    screen[0][0] = rgb(0x2A)              # now legal
+    screen[0][0] = rgb(0x2A)  # now legal
 
     result = convert_banner(screen, vram, PALETTE, DESCRIPTOR)
     assert result.errors == []

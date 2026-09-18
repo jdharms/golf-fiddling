@@ -2,12 +2,12 @@
 {% import "admin/_admin.html" as admin %}
 {% block title %}Activity - Admin{% endblock %}
 {% block content %}
-{{ admin.nav() }}
-<h1>Admin activity</h1>
-{% if listing.items %}
-{{ admin.activity_table(listing.items) }}
-{% else %}
-<p>No admin action recorded{% if listing.number > 1 %} on this page{% endif %}.</p>
-{% endif %}
-{{ admin.pager(listing, "/admin/activity") }}
+  {{ admin.nav() }}
+  <h1>Admin activity</h1>
+  {% if listing.items %}
+    {{ admin.activity_table(listing.items) }}
+  {% else %}
+    <p>No admin action recorded{% if listing.number > 1 %} on this page{% endif %}.</p>
+  {% endif %}
+  {{ admin.pager(listing, "/admin/activity") }}
 {% endblock %}

@@ -232,7 +232,9 @@ def _print_refs(refs, indent="  ") -> None:
         if r.detail:
             line += f"  {r.detail}"
         if r.in_data_range:
-            line += f"   <-- inside data range {r.in_data_range}, probably a coincidence"
+            line += (
+                f"   <-- inside data range {r.in_data_range}, probably a coincidence"
+            )
         elif r.aligned is False:
             line += "   <-- lands mid-instruction, byte coincidence"
         elif r.aligned is None:
@@ -289,7 +291,9 @@ def cmd_find_refs(reader: RomReader, args, labels: LabelStore | None) -> None:
     else:
         print("\n  references: NONE FOUND")
     if suspect:
-        print(f"\n  discarded as coincidence ({len(suspect)}) - byte matches inside data ranges:")
+        print(
+            f"\n  discarded as coincidence ({len(suspect)}) - byte matches inside data ranges:"
+        )
         _print_refs(suspect)
 
     print("\n  searched:")
@@ -303,16 +307,24 @@ def cmd_find_refs(reader: RomReader, args, labels: LabelStore | None) -> None:
 def _print_null_warning(reader, addr, labels, args, code: bool, report=None) -> None:
     print("\n  NOT COVERED by this search - a null result is NOT evidence that this")
     print("  address is unused:")
-    items = report.not_covered if report is not None else [
-        "any access that computes the address at run time",
-        "DMA, the decompressor, and anything the PPU reads directly",
-    ]
+    items = (
+        report.not_covered
+        if report is not None
+        else [
+            "any access that computes the address at run time",
+            "DMA, the decompressor, and anything the PPU reads directly",
+        ]
+    )
     for item in items:
         print(f"    - {item}")
 
     hits = find_pointer_references(reader, addr, labels)
-    print(f"\n  escalating: {len(hits)} raw byte-pair(s) matching ${addr:04X} in the ROM.")
-    print("  For a pointer search the usual reading is inverted - a hit inside a labelled")
+    print(
+        f"\n  escalating: {len(hits)} raw byte-pair(s) matching ${addr:04X} in the ROM."
+    )
+    print(
+        "  For a pointer search the usual reading is inverted - a hit inside a labelled"
+    )
     print("  table is a LIKELY indirect reference, not a coincidence:")
     for hit in hits[:25]:
         where = (
@@ -324,7 +336,9 @@ def _print_null_warning(reader, addr, labels, args, code: bool, report=None) -> 
     if len(hits) > 25:
         print(f"    ... and {len(hits) - 25} more")
     print("\n  [confirm with a Mesen breakpoint before treating this address as dead,")
-    print("   then record the result in the .mlb comment or a doc so it isn't re-derived]")
+    print(
+        "   then record the result in the .mlb comment or a doc so it isn't re-derived]"
+    )
 
 
 def cmd_label(_reader: RomReader, args, labels: LabelStore | None) -> None:
@@ -373,9 +387,13 @@ def main():
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     read_parser = subparsers.add_parser("read", help="Read bytes at an address")
-    read_parser.add_argument("address", help="'$XXXX' CPU address or raw hex PRG offset")
+    read_parser.add_argument(
+        "address", help="'$XXXX' CPU address or raw hex PRG offset"
+    )
     read_parser.add_argument("--bank", type=int, help="Switchable bank number (0-14)")
-    read_parser.add_argument("--length", type=int, default=1, help="Number of bytes to read")
+    read_parser.add_argument(
+        "--length", type=int, default=1, help="Number of bytes to read"
+    )
     read_parser.add_argument(
         "--format",
         choices=["hex", "python", "ascii"],
@@ -403,16 +421,23 @@ def main():
     addr_parser = subparsers.add_parser(
         "addr", help="Convert between CPU address and PRG offset (no ROM read)"
     )
-    addr_parser.add_argument("address", help="'$XXXX' CPU address or raw hex PRG offset")
+    addr_parser.add_argument(
+        "address", help="'$XXXX' CPU address or raw hex PRG offset"
+    )
     addr_parser.add_argument("--bank", type=int, help="Switchable bank number (0-14)")
 
     disasm_parser = subparsers.add_parser(
         "disasm", help="Disassemble instructions starting at an address"
     )
-    disasm_parser.add_argument("address", help="'$XXXX' CPU address or raw hex PRG offset")
+    disasm_parser.add_argument(
+        "address", help="'$XXXX' CPU address or raw hex PRG offset"
+    )
     disasm_parser.add_argument("--bank", type=int, help="Switchable bank number (0-14)")
     disasm_parser.add_argument(
-        "--count", type=int, default=10, help="Number of instructions to decode (default: 10)"
+        "--count",
+        type=int,
+        default=10,
+        help="Number of instructions to decode (default: 10)",
     )
     disasm_parser.add_argument(
         "--routine",
@@ -441,8 +466,12 @@ def main():
         "find-refs",
         help="Find references to an address across every encoding (JSR/JMP/branch/far call/dispatch)",
     )
-    refs_parser.add_argument("address", help="'$XXXX' CPU address or raw hex PRG offset")
-    refs_parser.add_argument("--bank", type=int, help="Bank the target lives in, for type=prg")
+    refs_parser.add_argument(
+        "address", help="'$XXXX' CPU address or raw hex PRG offset"
+    )
+    refs_parser.add_argument(
+        "--bank", type=int, help="Bank the target lives in, for type=prg"
+    )
     refs_parser.add_argument(
         "--type",
         choices=list(TYPE_ALIASES),
@@ -459,7 +488,9 @@ def main():
     label_parser = subparsers.add_parser(
         "label", help="Look up the label at an address (requires --labels)"
     )
-    label_parser.add_argument("address", help="'$XXXX' CPU address or raw hex address/offset")
+    label_parser.add_argument(
+        "address", help="'$XXXX' CPU address or raw hex address/offset"
+    )
     label_parser.add_argument(
         "--type",
         choices=list(TYPE_ALIASES),
@@ -473,7 +504,9 @@ def main():
     find_label_parser = subparsers.add_parser(
         "find-label", help="Search labels by name substring (requires --labels)"
     )
-    find_label_parser.add_argument("name", help="Substring to search for (case-insensitive)")
+    find_label_parser.add_argument(
+        "name", help="Substring to search for (case-insensitive)"
+    )
 
     args = parser.parse_args()
     reader = RomReader(args.rom_file)

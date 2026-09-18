@@ -23,11 +23,17 @@ class PositionTool:
 
     def __init__(self):
         self.selected_position_index: int = 0
-        self.undo_position_tracker: str | None = None  # Track which position has undo state
-        self.last_validated_mode: str | None = None  # Track last mode for detecting mode changes
+        self.undo_position_tracker: str | None = (
+            None  # Track which position has undo state
+        )
+        self.last_validated_mode: str | None = (
+            None  # Track last mode for detecting mode changes
+        )
 
         # Key repeat state
-        self.held_key: int | None = None  # Which arrow key is currently held (pygame.K_*)
+        self.held_key: int | None = (
+            None  # Which arrow key is currently held (pygame.K_*)
+        )
         self.key_held_since: float | None = None  # Timestamp when key was first pressed
         self.last_repeat_time: float | None = None  # Timestamp of last repeat action
         self.repeat_active: bool = False  # Whether we've started repeating yet
@@ -182,7 +188,9 @@ class PositionTool:
         # Handle position cycling (Tab or brackets)
         if key == pygame.K_TAB and not (modifiers & pygame.KMOD_SHIFT):
             # Tab: next position
-            self.selected_position_index = (self.selected_position_index + 1) % len(available_positions)
+            self.selected_position_index = (self.selected_position_index + 1) % len(
+                available_positions
+            )
             current_position = available_positions[self.selected_position_index]
             context.highlight_state.position_tool_selected = current_position
 
@@ -194,9 +202,13 @@ class PositionTool:
             message = self._get_status_message(current_position, context.hole_data)
             return ToolResult(handled=True, message=message)
 
-        elif key == pygame.K_LEFTBRACKET or (key == pygame.K_TAB and (modifiers & pygame.KMOD_SHIFT)):
+        elif key == pygame.K_LEFTBRACKET or (
+            key == pygame.K_TAB and (modifiers & pygame.KMOD_SHIFT)
+        ):
             # [ or Shift+Tab: previous position
-            self.selected_position_index = (self.selected_position_index - 1) % len(available_positions)
+            self.selected_position_index = (self.selected_position_index - 1) % len(
+                available_positions
+            )
             current_position = available_positions[self.selected_position_index]
             context.highlight_state.position_tool_selected = current_position
 
@@ -210,7 +222,9 @@ class PositionTool:
 
         elif key == pygame.K_RIGHTBRACKET:
             # ]: next position
-            self.selected_position_index = (self.selected_position_index + 1) % len(available_positions)
+            self.selected_position_index = (self.selected_position_index + 1) % len(
+                available_positions
+            )
             current_position = available_positions[self.selected_position_index]
             context.highlight_state.position_tool_selected = current_position
 
@@ -296,7 +310,10 @@ class PositionTool:
                 return self._perform_repeat_move(context)
         else:
             # Check if repeat interval has passed
-            if self.last_repeat_time is not None and current_time - self.last_repeat_time >= self.REPEAT_INTERVAL:
+            if (
+                self.last_repeat_time is not None
+                and current_time - self.last_repeat_time >= self.REPEAT_INTERVAL
+            ):
                 self.last_repeat_time = current_time
                 # Perform repeat move
                 return self._perform_repeat_move(context)

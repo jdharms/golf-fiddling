@@ -45,7 +45,6 @@ TILE_EXERTIONS = {
     0xA7: ((0,), (0,), (1, 0), (1,)),
     0xA8: ((0,), (1,), (1, 1), (1,)),
     0xA9: ((0,), (1,), (0, 1), (0,)),
-
     # A1 family - up is 2-bit
     0xA1: ((1, 1), (1,), (1,), (1,)),
     0xAA: ((1, 1), (1,), (0,), (0,)),
@@ -54,7 +53,6 @@ TILE_EXERTIONS = {
     0xAD: ((0, 0), (0,), (1,), (1,)),
     0xAE: ((0, 1), (1,), (1,), (1,)),
     0xAF: ((0, 1), (1,), (0,), (0,)),
-
     # A2 family - up is 2-bit
     0xA2: ((1, 1), (1,), (1,), (1,)),
     0xB0: ((0, 1), (1,), (1,), (0,)),
@@ -63,7 +61,6 @@ TILE_EXERTIONS = {
     0xB3: ((1, 0), (0,), (0,), (1,)),
     0xB4: ((1, 1), (1,), (0,), (1,)),
     0xB5: ((0, 1), (1,), (0,), (0,)),
-
     # A3 family - down is 2-bit
     0xA3: ((1,), (1,), (1, 1), (1,)),
     0xB6: ((0,), (1,), (1, 1), (0,)),
@@ -76,14 +73,34 @@ TILE_EXERTIONS = {
 
 # Map each tile to its family's fill tile
 TILE_FAMILY = {
-    0xA0: 0xA0, 0xA4: 0xA0, 0xA5: 0xA0, 0xA6: 0xA0,
-    0xA7: 0xA0, 0xA8: 0xA0, 0xA9: 0xA0,
-    0xA1: 0xA1, 0xAA: 0xA1, 0xAB: 0xA1, 0xAC: 0xA1,
-    0xAD: 0xA1, 0xAE: 0xA1, 0xAF: 0xA1,
-    0xA2: 0xA2, 0xB0: 0xA2, 0xB1: 0xA2, 0xB2: 0xA2,
-    0xB3: 0xA2, 0xB4: 0xA2, 0xB5: 0xA2,
-    0xA3: 0xA3, 0xB6: 0xA3, 0xB7: 0xA3, 0xB8: 0xA3,
-    0xB9: 0xA3, 0xBA: 0xA3, 0xBB: 0xA3,
+    0xA0: 0xA0,
+    0xA4: 0xA0,
+    0xA5: 0xA0,
+    0xA6: 0xA0,
+    0xA7: 0xA0,
+    0xA8: 0xA0,
+    0xA9: 0xA0,
+    0xA1: 0xA1,
+    0xAA: 0xA1,
+    0xAB: 0xA1,
+    0xAC: 0xA1,
+    0xAD: 0xA1,
+    0xAE: 0xA1,
+    0xAF: 0xA1,
+    0xA2: 0xA2,
+    0xB0: 0xA2,
+    0xB1: 0xA2,
+    0xB2: 0xA2,
+    0xB3: 0xA2,
+    0xB4: 0xA2,
+    0xB5: 0xA2,
+    0xA3: 0xA3,
+    0xB6: 0xA3,
+    0xB7: 0xA3,
+    0xB8: 0xA3,
+    0xB9: 0xA3,
+    0xBA: 0xA3,
+    0xBB: 0xA3,
 }
 
 # Group tiles by family (fill tile first for preference during selection)
@@ -169,7 +186,9 @@ class CellConstraints:
         # Cache valid tiles (tiles consistent with current achievable sets)
         self._valid_tiles: set[int] | None = None
 
-    def constrain_direction(self, direction: int, allowed: set[tuple[int, ...]]) -> bool:
+    def constrain_direction(
+        self, direction: int, allowed: set[tuple[int, ...]]
+    ) -> bool:
         """
         Restrict achievable exertions in a direction to intersection with allowed.
 
@@ -296,7 +315,10 @@ class BetterForestFiller:
                             continue
                         if 0 <= nr < height and 0 <= nc < width:
                             neighbor_tile = terrain[nr][nc]
-                            if neighbor_tile == PLACEHOLDER_TILE or neighbor_tile in ALL_FOREST_TILES:
+                            if (
+                                neighbor_tile == PLACEHOLDER_TILE
+                                or neighbor_tile in ALL_FOREST_TILES
+                            ):
                                 visited.add((nr, nc))
                                 queue.append((nr, nc))
 
@@ -348,7 +370,13 @@ class BetterForestFiller:
                     if nr < 0 or nr >= terrain_height or nc < 0 or nc >= terrain_width:
                         screen_edges[cell].add(direction)
 
-        return external_edges, screen_edges, pre_assigned_edges, inner_border_edges, internal_edges
+        return (
+            external_edges,
+            screen_edges,
+            pre_assigned_edges,
+            inner_border_edges,
+            internal_edges,
+        )
 
     def _initialize_constraints(
         self,
@@ -409,7 +437,8 @@ class BetterForestFiller:
             for direction in inner_border_edges[cell]:
                 # Find all zero-exerting values this cell can achieve in this direction
                 zero_exertions = {
-                    ex for ex in constraints[cell].achievable[direction]
+                    ex
+                    for ex in constraints[cell].achievable[direction]
                     if is_all_zeros(ex)
                 }
                 if zero_exertions:
@@ -478,7 +507,9 @@ class BetterForestFiller:
 
             # Narrow both sides to common values
             cell_changed = cell_constraints.constrain_direction(direction, common)
-            neighbor_changed = neighbor_constraints.constrain_direction(opposite, common)
+            neighbor_changed = neighbor_constraints.constrain_direction(
+                opposite, common
+            )
 
             # If a cell's achievable set changed, recompute valid tiles and
             # potentially narrow other edges, then add ALL edges (including
@@ -505,7 +536,9 @@ class BetterForestFiller:
                             in_worklist.add(item)
 
             if neighbor_changed:
-                other_changed = neighbor_constraints.recompute_achievable_from_valid_tiles()
+                other_changed = (
+                    neighbor_constraints.recompute_achievable_from_valid_tiles()
+                )
                 nr, nc = neighbor
                 for d in other_changed:
                     if d in internal_edges.get(neighbor, set()):
@@ -565,8 +598,10 @@ class BetterForestFiller:
 
         # Count pre-assigned tiles in wrong family (orientation mismatch)
         family_mismatches = sum(
-            1 for cell, tile in pre_assigned.items()
-            if TILE_FAMILY[tile] != get_family_for_position(cell[0], cell[1], orientation)
+            1
+            for cell, tile in pre_assigned.items()
+            if TILE_FAMILY[tile]
+            != get_family_for_position(cell[0], cell[1], orientation)
         )
 
         # Iteratively solve with INNER_BORDER fallback
@@ -794,8 +829,8 @@ class BetterForestFiller:
     ) -> int:
         """Try all orientations, pick best by: fewest failures, fewest INNER_BORDERs, most fills."""
         best_orientation = 0xA0
-        best_failures = float('inf')
-        best_inner_count = float('inf')
+        best_failures = float("inf")
+        best_inner_count = float("inf")
         best_fill_count = -1
 
         for orientation in [0xA0, 0xA1, 0xA2, 0xA3]:

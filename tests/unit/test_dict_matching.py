@@ -1,7 +1,6 @@
 """Unit tests for dictionary sequence matching in compression."""
 
 
-
 def test_exact_longest_match(mock_minimal_terrain_tables):
     """Stream contains exact dictionary sequence - greedy longest match wins."""
     from golf.core.compressor import match_dict_sequence

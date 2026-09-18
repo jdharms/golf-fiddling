@@ -22,7 +22,9 @@ class MeasureTool:
     def __init__(self):
         """Initialize measure tool with empty points list."""
         self.points: list[tuple[int, int]] = []  # Game pixel coordinates
-        self.preview_point: tuple[int, int] | None = None  # Preview endpoint in game pixels
+        self.preview_point: tuple[int, int] | None = (
+            None  # Preview endpoint in game pixels
+        )
 
     def _calculate_cumulative_distance(self) -> float:
         """Calculate cumulative distance in yards between all consecutive points."""

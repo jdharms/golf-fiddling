@@ -14,7 +14,10 @@ class TestPackAttributes:
     def test_roundtrip_simple(self):
         """Test pack/unpack roundtrip with simple data."""
         # Create simple 2x11 attribute array
-        original = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]]
+        original = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+        ]
 
         packed = pack_attributes(original)
         unpacked = unpack_attributes(packed, len(original))
@@ -89,7 +92,10 @@ class TestPackAttributes:
 
     def test_hud_column_is_zero(self):
         """Test that HUD column (first column) is always palette 0."""
-        original = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]]
+        original = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+        ]
 
         packed = pack_attributes(original)
 

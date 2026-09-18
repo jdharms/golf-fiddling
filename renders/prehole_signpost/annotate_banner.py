@@ -13,7 +13,9 @@ import sys
 
 from PIL import Image, ImageDraw
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from golf.core.palettes import NES_SYSTEM_PALETTE
@@ -64,7 +66,9 @@ def main():
                     nes = pal[0] if value == 0 else pal[palette_index * 4 + value]
                     color = NES_SYSTEM_PALETTE[nes & 0x3F]
                     ox, oy = tx * ZOOM + x * (ZOOM // 8), ty * ZOOM + y * (ZOOM // 8)
-                    draw.rectangle([ox, oy, ox + ZOOM // 8 - 1, oy + ZOOM // 8 - 1], fill=color)
+                    draw.rectangle(
+                        [ox, oy, ox + ZOOM // 8 - 1, oy + ZOOM // 8 - 1], fill=color
+                    )
 
             if tile in FRAME:
                 border = (128, 128, 128)
@@ -73,7 +77,9 @@ def main():
             else:
                 border = (255, 40, 40)
             x0, y0 = tx * ZOOM, ty * ZOOM
-            draw.rectangle([x0, y0, x0 + ZOOM - 1, y0 + ZOOM - 1], outline=border, width=2)
+            draw.rectangle(
+                [x0, y0, x0 + ZOOM - 1, y0 + ZOOM - 1], outline=border, width=2
+            )
             draw.text((x0 + 2, y0 + 1), f"{tile:02X}", fill=(255, 255, 0))
 
     out = os.path.join(HERE, "banner_annotated_japan.png")

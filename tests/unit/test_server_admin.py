@@ -37,7 +37,9 @@ LISTS = (
 
 @pytest.fixture
 def fake_builder(tmp_path):
-    return FakeBuilder(Catalog.load(), CurationSnapshot.load(), HoleStore(), tmp_path / "unused.nes")
+    return FakeBuilder(
+        Catalog.load(), CurationSnapshot.load(), HoleStore(), tmp_path / "unused.nes"
+    )
 
 
 def admin_client(builder, admins=("dev:admin",), **kwargs) -> TestClient:
@@ -72,18 +74,28 @@ def test_admin_pages_are_not_found_for_anyone_else(fake_builder, who):
         client.post("/auth/logout", data={"next": "/"})
         if who:
             sign_in(client, who)
-        for path in (*LISTS, f"/admin/seeds/{seed_id}", f"/admin/rounds/{round_id}", "/admin/users/1"):
+        for path in (
+            *LISTS,
+            f"/admin/seeds/{seed_id}",
+            f"/admin/rounds/{round_id}",
+            "/admin/users/1",
+        ):
             response = client.get(path)
             assert response.status_code == 404, path
             assert "not_found.heading" in response.text, path
-        for path in (f"/admin/seeds/{seed_id}/rebuild", f"/admin/rounds/{round_id}/void"):
+        for path in (
+            f"/admin/seeds/{seed_id}/rebuild",
+            f"/admin/rounds/{round_id}/void",
+        ):
             assert post(client, path).status_code == 404, path
         sign_in(client, "admin")
         assert client.get(f"/admin/rounds/{round_id}").status_code == 200
 
 
 def test_no_admins_are_configured_by_default(fake_builder):
-    with TestClient(create_app(Config(database=":memory:", dev_login=True), builder=fake_builder)) as client:
+    with TestClient(
+        create_app(Config(database=":memory:", dev_login=True), builder=fake_builder)
+    ) as client:
         sign_in(client, "admin")
         assert client.get("/admin").status_code == 404
 
@@ -99,7 +111,10 @@ def test_every_list_renders_empty_and_full(fake_builder):
             page = client.get(path)
             assert page.status_code == 200, path
         assert f'href="/admin/seeds/{seed_id}"' in client.get("/admin/seeds").text
-        assert f'href="/admin/rounds/{round_id}"' in client.get("/admin/rounds?flagged=true").text
+        assert (
+            f'href="/admin/rounds/{round_id}"'
+            in client.get("/admin/rounds?flagged=true").text
+        )
         assert "alice" in client.get("/admin/users").text
 
 
@@ -128,7 +143,9 @@ def test_detail_pages_show_the_seed_the_round_and_the_player(fake_builder):
     assert f'href="/admin/rounds/{round_id}"' in user_page
 
 
-@pytest.mark.parametrize("path", ["/admin/seeds/0000000001", "/admin/rounds/0000000000", "/admin/users/99"])
+@pytest.mark.parametrize(
+    "path", ["/admin/seeds/0000000001", "/admin/rounds/0000000000", "/admin/users/99"]
+)
 def test_missing_details_are_not_found(fake_builder, path):
     with admin_client(fake_builder) as client:
         sign_in(client, "admin")
@@ -165,7 +182,10 @@ def test_a_restored_rounds_history_reaches_back_past_the_void(fake_builder):
         seed_id, round_id = played_seed(client)
         post(client, f"/admin/rounds/{round_id}/flag", note="five on every hole?")
         post(client, f"/admin/rounds/{round_id}/void", note="warm-up")
-        [restore_path] = re.findall(r'action="(/admin/rounds/[0-9A-Za-z]{10}/restore)"', client.get("/admin/voided").text)
+        [restore_path] = re.findall(
+            r'action="(/admin/rounds/[0-9A-Za-z]{10}/restore)"',
+            client.get("/admin/voided").text,
+        )
         restored = post(client, restore_path).headers["location"]
         page = client.get(restored).text
     for phrase in ("flagged", "voided", "restored", "five on every hole?", "warm-up"):
@@ -187,9 +207,13 @@ def test_a_voided_rounds_page_names_the_admin_who_voided_it(fake_builder):
 def test_flagging_marks_the_round_publicly_and_keeps_the_note_private(fake_builder):
     with admin_client(fake_builder, strings=UNWRITTEN) as client:
         seed_id, round_id = played_seed(client)
-        response = post(client, f"/admin/rounds/{round_id}/flag", note="five on every hole?")
+        response = post(
+            client, f"/admin/rounds/{round_id}/flag", note="five on every hole?"
+        )
         assert response.status_code == 303
-        assert response.headers["location"] == f"/admin/rounds/{round_id}?result=flagged"
+        assert (
+            response.headers["location"] == f"/admin/rounds/{round_id}?result=flagged"
+        )
         assert "five on every hole?" in client.get(f"/admin/rounds/{round_id}").text
         seed_page = client.get(f"/h/{seed_id}").text
         sign_in(client, "alice")
@@ -211,16 +235,23 @@ def test_voiding_removes_the_round_and_refuses_its_scan_until_restored(fake_buil
         assert client.get(f"/admin/rounds/{round_id}").status_code == 404
         voided = client.get("/admin/voided").text
         assert "warm-up" in voided
-        [restore_path] = re.findall(r'action="(/admin/rounds/[0-9A-Za-z]{10}/restore)"', voided)
+        [restore_path] = re.findall(
+            r'action="(/admin/rounds/[0-9A-Za-z]{10}/restore)"', voided
+        )
 
         rescan = client.get(scan_path(client, seed_id, "alice", strokes=5))
         assert rescan.status_code == 404
         assert "scan_rejected.unrecognized" in rescan.text
 
         restored = post(client, restore_path)
-        assert restored.headers["location"] == f"/admin/rounds/{round_id}?result=restored"
+        assert (
+            restored.headers["location"] == f"/admin/rounds/{round_id}?result=restored"
+        )
         assert client.get(restored.headers["location"]).status_code == 200
-        assert "round.heading" in client.get(scan_path(client, seed_id, "alice", strokes=5)).text
+        assert (
+            "round.heading"
+            in client.get(scan_path(client, seed_id, "alice", strokes=5)).text
+        )
         assert post(client, restore_path).status_code == 404
 
 
@@ -231,7 +262,10 @@ def test_a_voided_rounds_permalink_is_gone_and_comes_back_with_it(fake_builder):
 
         post(client, f"/admin/rounds/{round_id}/void", note="warm-up")
         gone = client.get(permalink)
-        [restore_path] = re.findall(r'action="(/admin/rounds/[0-9A-Za-z]{10}/restore)"', client.get("/admin/voided").text)
+        [restore_path] = re.findall(
+            r'action="(/admin/rounds/[0-9A-Za-z]{10}/restore)"',
+            client.get("/admin/voided").text,
+        )
 
         post(client, restore_path)
         back = client.get(permalink)
@@ -255,7 +289,9 @@ def test_a_round_replacing_a_voided_one_gets_its_own_permalink(fake_builder):
         voided_permalink = f"/r/{round_id}"
         post(client, f"/admin/rounds/{round_id}/void")
 
-        replacement = client.get(scan_path(client, seed_id, "alice", strokes=3), follow_redirects=False)
+        replacement = client.get(
+            scan_path(client, seed_id, "alice", strokes=3), follow_redirects=False
+        )
 
     assert replacement.status_code == 303
     assert replacement.headers["location"].removesuffix("?recorded") != voided_permalink
@@ -265,13 +301,18 @@ def test_restoring_into_a_slot_with_a_round_is_refused(fake_builder):
     with admin_client(fake_builder, strings=UNWRITTEN) as client:
         seed_id, round_id = played_seed(client)
         post(client, f"/admin/rounds/{round_id}/void")
-        assert client.get(scan_path(client, seed_id, "alice", strokes=3)).status_code == 200
+        assert (
+            client.get(scan_path(client, seed_id, "alice", strokes=3)).status_code
+            == 200
+        )
         voided = client.get("/admin/voided").text
         assert "slot has a round" in voided
         assert "/restore" not in voided
         response = post(client, f"/admin/rounds/{round_id}/restore")
         assert response.headers["location"] == "/admin/voided?result=slot_taken"
-        assert "slot already has a round" in client.get(response.headers["location"]).text
+        assert (
+            "slot already has a round" in client.get(response.headers["location"]).text
+        )
 
 
 @pytest.mark.parametrize("action", ["flag", "unflag", "void", "restore"])
@@ -301,7 +342,9 @@ class Rebuilds(FakeBuilder):
 
 @pytest.fixture
 def rebuilds(tmp_path):
-    return Rebuilds(Catalog.load(), CurationSnapshot.load(), HoleStore(), tmp_path / "unused.nes")
+    return Rebuilds(
+        Catalog.load(), CurationSnapshot.load(), HoleStore(), tmp_path / "unused.nes"
+    )
 
 
 def test_a_rebuild_to_the_same_ips_changes_nothing(rebuilds):
@@ -309,7 +352,9 @@ def test_a_rebuild_to_the_same_ips_changes_nothing(rebuilds):
         sign_in(client, "admin")
         seed_id = generate_seed(client)
         response = post(client, f"/admin/seeds/{seed_id}/rebuild")
-        assert response.headers["location"] == f"/admin/seeds/{seed_id}?result=unchanged"
+        assert (
+            response.headers["location"] == f"/admin/seeds/{seed_id}?result=unchanged"
+        )
         assert "seed.rebuilt" not in client.get(f"/h/{seed_id}").text
 
 
@@ -329,16 +374,24 @@ def test_a_rebuild_that_changes_the_ips_stores_it_and_shows_the_date(rebuilds):
 
 @pytest.mark.parametrize(
     "problem, status_code",
-    [(CatalogError("nes_us/01 is withdrawn"), 409), (BuilderUnavailableError("no ROM"), 503)],
+    [
+        (CatalogError("nes_us/01 is withdrawn"), 409),
+        (BuilderUnavailableError("no ROM"), 503),
+    ],
 )
-def test_a_failed_rebuild_keeps_the_ips_and_logs_nothing(rebuilds, problem, status_code):
+def test_a_failed_rebuild_keeps_the_ips_and_logs_nothing(
+    rebuilds, problem, status_code
+):
     rebuilds.problem = problem
     with admin_client(rebuilds) as client:
         sign_in(client, "admin")
         seed_id = generate_seed(client)
         response = post(client, f"/admin/seeds/{seed_id}/rebuild")
         assert load_unfinished_ips(client.app.state.db, seed_id) == IPS
-        assert "No admin action on this seed." in client.get(f"/admin/seeds/{seed_id}").text
+        assert (
+            "No admin action on this seed."
+            in client.get(f"/admin/seeds/{seed_id}").text
+        )
     assert response.status_code == status_code
     assert str(problem) in response.text
 

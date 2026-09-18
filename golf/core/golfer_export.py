@@ -252,7 +252,9 @@ def export_golfer(rom, sprites, golfer, putt, bounds, out_dir, visible_club=0):
     ase.layers = [Layer("body - draw here", LAYER_VISIBLE | LAYER_EDITABLE)]
     club_layer_index = {}
     for club in club_list:
-        low, high = SWING_CLUB_GROUPS[sprites.club_group(club)] if not putt else (15, 15)
+        low, high = (
+            SWING_CLUB_GROUPS[sprites.club_group(club)] if not putt else (15, 15)
+        )
         cls = sprites.nudge_class(club)
         span = f"club {low}" if low == high else f"clubs {low}-{high}"  # layer name
         suffix = "putter, no nudge" if cls is None else f"nudge class {cls}"
@@ -329,7 +331,9 @@ def export_golfer(rom, sprites, golfer, putt, bounds, out_dir, visible_club=0):
                 cels.append(LinkedCel(layer, source, sx, sy))
                 pos = {"x": sx, "y": sy, "linked_to": source}
             else:
-                buf = render_metasprite(c, vrams[club], club_indices, ox, oy, w, h, ndx, ndy)
+                buf = render_metasprite(
+                    c, vrams[club], club_indices, ox, oy, w, h, ndx, ndy
+                )
                 cx, cy, cw, chh, pixels = _tight(buf, w, h)
                 seen_club[key] = (frame, (cx, cy))
                 cels.append(Cel(layer, cx, cy, cw, chh, pixels))
@@ -345,9 +349,17 @@ def export_golfer(rom, sprites, golfer, putt, bounds, out_dir, visible_club=0):
 
         cels.append(
             Cel(
-                guides_layer, 0, 0, w, h,
+                guides_layer,
+                0,
+                0,
+                w,
+                h,
                 build_guides(
-                    w, h, ox, oy, (bx0, by0, bx1, by1),
+                    w,
+                    h,
+                    ox,
+                    oy,
+                    (bx0, by0, bx1, by1),
                     not putt and frame in BODY_IN_FRONT_FRAMES,
                 ),
             )

@@ -35,12 +35,12 @@ def dump_course(
     course_dir.mkdir(parents=True, exist_ok=True)
 
     # Read course-level data
-    hole_offset = rom.annotate(
-        f"course {course_idx} hole offset"
-    ).read_fixed_byte(rom_utils.TABLE_COURSE_HOLE_OFFSET + course_idx)
-    terrain_bank = rom.annotate(
-        f"course {course_idx} terrain bank"
-    ).read_fixed_byte(rom_utils.TABLE_COURSE_BANK_TERRAIN + course_idx)
+    hole_offset = rom.annotate(f"course {course_idx} hole offset").read_fixed_byte(
+        rom_utils.TABLE_COURSE_HOLE_OFFSET + course_idx
+    )
+    terrain_bank = rom.annotate(f"course {course_idx} terrain bank").read_fixed_byte(
+        rom_utils.TABLE_COURSE_BANK_TERRAIN + course_idx
+    )
 
     # Greens use bank 3 based on the code analysis
     greens_bank = 3
@@ -78,25 +78,27 @@ def dump_course(
         print(f"  Hole {hole_num}...", end=" ")
 
         # Read metadata from fixed bank tables
-        par = rom.annotate(f"global hole {hole_idx} par").read_fixed_byte(rom_utils.TABLE_PAR + hole_idx)
+        par = rom.annotate(f"global hole {hole_idx} par").read_fixed_byte(
+            rom_utils.TABLE_PAR + hole_idx
+        )
         handicap = rom.annotate(f"global hole {hole_idx} handicap").read_fixed_byte(
             rom_utils.TABLE_HANDICAP + hole_idx
         )
 
-        dist_100 = rom.annotate(f"global hole {hole_idx} distance (100s)").read_fixed_byte(
-            rom_utils.TABLE_DISTANCE_100 + hole_idx
-        )
-        dist_10 = rom.annotate(f"global hole {hole_idx} distance (10s)").read_fixed_byte(
-            rom_utils.TABLE_DISTANCE_10 + hole_idx
-        )
+        dist_100 = rom.annotate(
+            f"global hole {hole_idx} distance (100s)"
+        ).read_fixed_byte(rom_utils.TABLE_DISTANCE_100 + hole_idx)
+        dist_10 = rom.annotate(
+            f"global hole {hole_idx} distance (10s)"
+        ).read_fixed_byte(rom_utils.TABLE_DISTANCE_10 + hole_idx)
         dist_1 = rom.annotate(f"global hole {hole_idx} distance (1s)").read_fixed_byte(
             rom_utils.TABLE_DISTANCE_1 + hole_idx
         )
         distance = bcd_to_int(dist_100, dist_10, dist_1)
 
-        scroll_limit = rom.annotate(f"global hole {hole_idx} scroll limit").read_fixed_byte(
-            rom_utils.TABLE_SCROLL_LIMIT + hole_idx
-        )
+        scroll_limit = rom.annotate(
+            f"global hole {hole_idx} scroll limit"
+        ).read_fixed_byte(rom_utils.TABLE_SCROLL_LIMIT + hole_idx)
         green_x = rom.annotate(f"global hole {hole_idx} green X").read_fixed_byte(
             rom_utils.TABLE_GREEN_X + hole_idx
         )
@@ -157,7 +159,9 @@ def dump_course(
         attr_height = (terrain_height + 1) // 2  # Supertile rows
         attr_rows = unpack_attributes(attr_bytes, attr_height)
 
-        print(f"hole: {hole_num}, terrain_height: {terrain_height}, attr_height: {attr_height}, attr_rows: {len(attr_rows)}")
+        print(
+            f"hole: {hole_num}, terrain_height: {terrain_height}, attr_height: {attr_height}, attr_rows: {len(attr_rows)}"
+        )
 
         # Read and decompress greens
         # In the game itself this routine runs until the *output* buffer is filled.

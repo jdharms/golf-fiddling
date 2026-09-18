@@ -62,7 +62,9 @@ class Database:
                 try:
                     # executescript runs statements as given, so BEGIN and COMMIT wrap the
                     # script and its version bump in one transaction
-                    self._conn.executescript(f"BEGIN IMMEDIATE;\n{script}\n;PRAGMA user_version = {number};\nCOMMIT;")
+                    self._conn.executescript(
+                        f"BEGIN IMMEDIATE;\n{script}\n;PRAGMA user_version = {number};\nCOMMIT;"
+                    )
                 except BaseException:
                     if self._conn.in_transaction:
                         self._conn.execute("ROLLBACK")

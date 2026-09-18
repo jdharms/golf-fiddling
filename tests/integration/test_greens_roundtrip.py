@@ -1,7 +1,6 @@
 """Integration tests for greens compression round-trip validation."""
 
 
-
 def test_simple_greens_roundtrip(simple_greens_fixture, greens_decompressor):
     """Compress and decompress simple greens fixture (24x24)."""
     from golf.core.compressor import GreensCompressor

@@ -12,7 +12,9 @@ export class OverlayRenderer {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (state.points.length === 0) return;
 
-    const points = state.points.map((point) => this.toDisplay(point, imageWidth, imageHeight));
+    const points = state.points.map((point) =>
+      this.toDisplay(point, imageWidth, imageHeight),
+    );
     const segments = state.getSegmentDistances();
     for (let index = 0; index < points.length - 1; index += 1) {
       const start = points[index];

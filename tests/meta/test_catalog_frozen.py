@@ -16,7 +16,9 @@ INDEX = "data/catalog/holes.json"
 
 
 def _git(*args: str) -> str:
-    return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    return subprocess.run(
+        ["git", *args], cwd=ROOT, capture_output=True, text=True, check=True
+    ).stdout
 
 
 def _committed_indexes() -> list[tuple[str, dict]]:
@@ -24,7 +26,10 @@ def _committed_indexes() -> list[tuple[str, dict]]:
         commits = _git("log", "--format=%H", "--", INDEX).split()
     except (OSError, subprocess.CalledProcessError):
         pytest.skip("git history unavailable")
-    return [(commit[:10], json.loads(_git("show", f"{commit}:{INDEX}"))) for commit in commits]
+    return [
+        (commit[:10], json.loads(_git("show", f"{commit}:{INDEX}")))
+        for commit in commits
+    ]
 
 
 def test_no_committed_entry_was_removed_or_changed():
@@ -32,7 +37,9 @@ def test_no_committed_entry_was_removed_or_changed():
     problems = []
     for commit, past in _committed_indexes():
         if current["version"] < past["version"]:
-            problems.append(f"{commit}: version went from {past['version']} to {current['version']}")
+            problems.append(
+                f"{commit}: version went from {past['version']} to {current['version']}"
+            )
         for hole_id, fields in past["holes"].items():
             now = current["holes"].get(hole_id)
             if now is None:
@@ -43,5 +50,7 @@ def test_no_committed_entry_was_removed_or_changed():
             if {k: v for k, v in now.items() if k != "withdrawn"} != {
                 k: v for k, v in fields.items() if k != "withdrawn"
             }:
-                problems.append(f"{commit}: {hole_id} changed; publish a new version instead")
+                problems.append(
+                    f"{commit}: {hole_id} changed; publish a new version instead"
+                )
     assert not problems, "\n".join(problems)

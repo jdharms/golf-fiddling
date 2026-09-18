@@ -58,17 +58,24 @@ CLUB_GROUPS = [(0, 3), (4, 7), (8, 11), (12, 14), (15, 15)]
 SWING_CLUB_GROUPS = CLUB_GROUPS[:-1]
 
 # bank 5 $BEEC..$BF0F: one LoadCompressedGraphics stub per golfer
-GOLFER_CHR_TABLES = [(1, 0xA1E0), (0, 0xA238), (1, 0xA9A6), (1, 0xB1DF), (0, 0xAA89), (2, 0xA54E)]
+GOLFER_CHR_TABLES = [
+    (1, 0xA1E0),
+    (0, 0xA238),
+    (1, 0xA9A6),
+    (1, 0xB1DF),
+    (0, 0xAA89),
+    (2, 0xA54E),
+]
 # bank 4 $A8AB..$A8DC: 5 club groups x 2 body types
 CLUB_CHR_TABLES = {
     0: [(4, 0xA8AB), (4, 0xA8B0), (4, 0xA8B5), (4, 0xA8BA), (4, 0xA8BF)],
     1: [(4, 0xA8C4), (4, 0xA8C9), (4, 0xA8CE), (4, 0xA8D3), (4, 0xA8D8)],
 }
 # bank 5: per-golfer palette and build
-SHOT_SPRITE_PALETTES = (5, 0xBEA0)   # 16 bytes -> $0486
+SHOT_SPRITE_PALETTES = (5, 0xBEA0)  # 16 bytes -> $0486
 SHIRT_COLOUR_TABLE = (5, 0xBF1B)
 BODY_TYPE_TABLE = (5, 0xBF21)
-BILLY_COLOUR3 = 0x27                 # bank 5 $BF0F overrides it in his stub
+BILLY_COLOUR3 = 0x27  # bank 5 $BF0F overrides it in his stub
 
 
 def _signed(value: int) -> int:
@@ -154,7 +161,9 @@ class GolferSprites:
 
     # -- club ---------------------------------------------------------------
 
-    def club_frames(self, golfer: int, club: int, putt: bool = False) -> list[Metasprite]:
+    def club_frames(
+        self, golfer: int, club: int, putt: bool = False
+    ) -> list[Metasprite]:
         """Club metasprites for one animation.
 
         Each club set is 58 entries: four club groups of 13 swing frames, then

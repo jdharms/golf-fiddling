@@ -127,7 +127,9 @@ def _action(row: sqlite3.Row) -> AdminAction:
     )
 
 
-def _history(conn: sqlite3.Connection, target_type: str, target_id: str) -> list[AdminAction]:
+def _history(
+    conn: sqlite3.Connection, target_type: str, target_id: str
+) -> list[AdminAction]:
     """Every action on one target, oldest first."""
     rows = conn.execute(
         f"{_ACTION_SELECT} WHERE admin_actions.target_type = ? AND admin_actions.target_id = ? ORDER BY admin_actions.id",
@@ -142,12 +144,19 @@ def _latest(history: list[AdminAction], action: str) -> AdminAction | None:
 
 def _resolve(conn: sqlite3.Connection, entry: AdminAction) -> ActionTarget:
     if entry.target_type == audit.SEED:
-        row = conn.execute("SELECT manifest FROM seeds WHERE id = ?", (entry.target_id,)).fetchone()
+        row = conn.execute(
+            "SELECT manifest FROM seeds WHERE id = ?", (entry.target_id,)
+        ).fetchone()
         if row is None:  # pragma: no cover - seeds are never deleted
             return ActionTarget(None, entry.target_id)
-        return ActionTarget(f"/admin/seeds/{entry.target_id}", " ".join(_magic_words(row["manifest"])))
+        return ActionTarget(
+            f"/admin/seeds/{entry.target_id}", " ".join(_magic_words(row["manifest"]))
+        )
     if entry.target_type == audit.ROUND:
-        for table, path in (("rounds", f"/admin/rounds/{entry.target_id}"), ("voided_rounds", "/admin/voided")):
+        for table, path in (
+            ("rounds", f"/admin/rounds/{entry.target_id}"),
+            ("voided_rounds", "/admin/voided"),
+        ):
             row = conn.execute(
                 f"""
                 SELECT {_USER_NAME} AS user_name, {table}.slot, seeds.manifest
@@ -165,13 +174,20 @@ def _resolve(conn: sqlite3.Connection, entry: AdminAction) -> ActionTarget:
                 if table == "voided_rounds":
                     label += ", voided"
                 return ActionTarget(path, label)
-    return ActionTarget(None, entry.target_id)  # pragma: no cover - rounds are never deleted outright
+    return ActionTarget(
+        None, entry.target_id
+    )  # pragma: no cover - rounds are never deleted outright
 
 
 def actions_page(db: Database, number: int = 1) -> Page[ActionListing]:
     with db.transaction() as conn:
-        rows = conn.execute(f"{_ACTION_SELECT} ORDER BY admin_actions.id DESC LIMIT ? OFFSET ?", _limit(number)).fetchall()
-        listings = [ActionListing(entry, _resolve(conn, entry)) for entry in map(_action, rows)]
+        rows = conn.execute(
+            f"{_ACTION_SELECT} ORDER BY admin_actions.id DESC LIMIT ? OFFSET ?",
+            _limit(number),
+        ).fetchall()
+        listings = [
+            ActionListing(entry, _resolve(conn, entry)) for entry in map(_action, rows)
+        ]
     return _page(listings, number)
 
 
@@ -219,7 +235,8 @@ def _seed_listing(row: sqlite3.Row) -> SeedListing:
 def seeds_page(db: Database, number: int = 1) -> Page[SeedListing]:
     with db.transaction() as conn:
         rows = conn.execute(
-            f"{_SEED_SELECT} ORDER BY seeds.created_at DESC, seeds.rowid DESC LIMIT ? OFFSET ?", _limit(number)
+            f"{_SEED_SELECT} ORDER BY seeds.created_at DESC, seeds.rowid DESC LIMIT ? OFFSET ?",
+            _limit(number),
         ).fetchall()
     return _page([_seed_listing(row) for row in rows], number)
 
@@ -325,7 +342,14 @@ class SeedDetail:
     @property
     def rebuilt_by(self) -> AdminAction | None:
         """The rebuild that last changed the IPS."""
-        return next((entry for entry in reversed(self.history) if entry.action == audit.REBUILD and entry.detail.get("changed")), None)
+        return next(
+            (
+                entry
+                for entry in reversed(self.history)
+                if entry.action == audit.REBUILD and entry.detail.get("changed")
+            ),
+            None,
+        )
 
     @property
     def withdrawn(self) -> tuple[HoleSlot, ...]:
@@ -338,10 +362,14 @@ def seed_detail(db: Database, seed_id: str, catalog: Catalog) -> SeedDetail | No
     if seed is None:
         return None
     with db.transaction() as conn:
-        row = conn.execute("SELECT length(unfinished_ips) AS ips_size FROM seeds WHERE id = ?", (seed_id,)).fetchone()
+        row = conn.execute(
+            "SELECT length(unfinished_ips) AS ips_size FROM seeds WHERE id = ?",
+            (seed_id,),
+        ).fetchone()
         history = _history(conn, audit.SEED, seed_id)
         entries = conn.execute(
-            f"{_ENTRY_SELECT} WHERE entries.seed_id = ? ORDER BY entries.created_at, entries.id", (seed_id,)
+            f"{_ENTRY_SELECT} WHERE entries.seed_id = ? ORDER BY entries.created_at, entries.id",
+            (seed_id,),
         ).fetchall()
         rounds = conn.execute(
             f"{_ROUND_SELECT} WHERE entries.seed_id = ? ORDER BY rounds.received_at, rounds.id",
@@ -371,7 +399,9 @@ def seed_detail(db: Database, seed_id: str, catalog: Catalog) -> SeedDetail | No
 # -- Rounds -------------------------------------------------------------------------------
 
 
-def rounds_page(db: Database, number: int = 1, flagged_only: bool = False) -> Page[RoundListing]:
+def rounds_page(
+    db: Database, number: int = 1, flagged_only: bool = False
+) -> Page[RoundListing]:
     where = "WHERE rounds.flagged" if flagged_only else ""
     with db.transaction() as conn:
         rows = conn.execute(
@@ -417,7 +447,9 @@ def round_detail(db: Database, public_id: str) -> RoundDetail | None:
     player = load_user(db, recorded.user_id)
     with db.transaction() as conn:
         history = _history(conn, audit.ROUND, public_id)
-    if seed is None or player is None:  # pragma: no cover - seeds and users are never deleted
+    if (
+        seed is None or player is None
+    ):  # pragma: no cover - seeds and users are never deleted
         return None
     holes = tuple(
         HoleScore(hole.position, slot.par, hole.strokes, hole.putts)
@@ -490,19 +522,24 @@ def user_detail(db: Database, user_id: int) -> UserDetail | None:
         return None
     with db.transaction() as conn:
         entries = conn.execute(
-            f"{_ENTRY_SELECT} WHERE entries.user_id = ? ORDER BY entries.created_at DESC, entries.id DESC", (user_id,)
+            f"{_ENTRY_SELECT} WHERE entries.user_id = ? ORDER BY entries.created_at DESC, entries.id DESC",
+            (user_id,),
         ).fetchall()
         rounds = conn.execute(
             f"{_ROUND_SELECT} WHERE entries.user_id = ? ORDER BY rounds.received_at DESC, rounds.id DESC",
             (user_id,),
         ).fetchall()
         seeds = conn.execute(
-            f"{_SEED_SELECT} WHERE seeds.creator_id = ? ORDER BY seeds.created_at DESC, seeds.rowid DESC", (user_id,)
+            f"{_SEED_SELECT} WHERE seeds.creator_id = ? ORDER BY seeds.created_at DESC, seeds.rowid DESC",
+            (user_id,),
         ).fetchall()
         taken = conn.execute(
-            f"{_ACTION_SELECT} WHERE admin_actions.admin_id = ? ORDER BY admin_actions.id DESC", (user_id,)
+            f"{_ACTION_SELECT} WHERE admin_actions.admin_id = ? ORDER BY admin_actions.id DESC",
+            (user_id,),
         ).fetchall()
-        actions = [ActionListing(entry, _resolve(conn, entry)) for entry in map(_action, taken)]
+        actions = [
+            ActionListing(entry, _resolve(conn, entry)) for entry in map(_action, taken)
+        ]
     return UserDetail(
         user=user,
         entries=[_entry_listing(row) for row in entries],
@@ -552,7 +589,12 @@ def voided_page(db: Database, number: int = 1) -> Page[VoidedListing]:
             """,
             _limit(number),
         ).fetchall()
-        voids = {row["public_id"]: _latest(_history(conn, audit.ROUND, row["public_id"]), audit.VOID) for row in rows}
+        voids = {
+            row["public_id"]: _latest(
+                _history(conn, audit.ROUND, row["public_id"]), audit.VOID
+            )
+            for row in rows
+        }
     listings = []
     for row in rows:
         round_payload, _mac = payload.RoundPayload.from_bytes(bytes(row["payload"]))

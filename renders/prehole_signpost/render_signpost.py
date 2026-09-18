@@ -12,7 +12,9 @@ import sys
 
 from PIL import Image
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 from golf.core.palettes import NES_SYSTEM_PALETTE
 from golf.core.rom_reader import RomReader
@@ -45,7 +47,9 @@ def main():
     # numbers since the banner itself doesn't depend on course.
     vram, pal = build_screen(rom, 0, 5, hole_match_status=1, contest_palette_patch=True)
     render(vram, pal, os.path.join(HERE, "signpost_longdrive_contest.png"))
-    vram, pal = build_screen(rom, 1, 12, hole_match_status=2, contest_palette_patch=True)
+    vram, pal = build_screen(
+        rom, 1, 12, hole_match_status=2, contest_palette_patch=True
+    )
     render(vram, pal, os.path.join(HERE, "signpost_nearestpin_contest.png"))
 
 

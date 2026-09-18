@@ -35,7 +35,10 @@ def _chromium_launches() -> bool:
 
 
 pytestmark = [
-    pytest.mark.skipif(not US_ROM_PATH.exists() or not JP_ROM_PATH.exists(), reason="the vanilla ROMs are not present"),
+    pytest.mark.skipif(
+        not US_ROM_PATH.exists() or not JP_ROM_PATH.exists(),
+        reason="the vanilla ROMs are not present",
+    ),
     pytest.mark.skipif(not _chromium_launches(), reason="no Playwright Chromium"),
 ]
 
@@ -43,7 +46,9 @@ pytestmark = [
 def test_the_downloaded_rom_is_the_finished_rom(tmp_path):
     from playwright.sync_api import sync_playwright
 
-    app = create_app(Config(database=":memory:", rom_dir=ROOT), rate_limiter=RateLimiter(100, 1))
+    app = create_app(
+        Config(database=":memory:", rom_dir=ROOT), rate_limiter=RateLimiter(100, 1)
+    )
     errors: list[str] = []
     with LiveServer(app) as base, sync_playwright() as playwright:
         browser = playwright.chromium.launch()
@@ -53,9 +58,16 @@ def test_the_downloaded_rom_is_the_finished_rom(tmp_path):
             page.on("pageerror", lambda error: errors.append(str(error)))
 
             page.goto(base + "/rom")
-            for rom_id, path in (("nes_open_us", US_ROM_PATH), ("mario_open_jp", JP_ROM_PATH)):
-                page.set_input_files(f'article.rom[data-rom-id="{rom_id}"] input[type=file]', str(path))
-                page.wait_for_selector(f'article.rom[data-rom-id="{rom_id}"][data-state="stored"]')
+            for rom_id, path in (
+                ("nes_open_us", US_ROM_PATH),
+                ("mario_open_jp", JP_ROM_PATH),
+            ):
+                page.set_input_files(
+                    f'article.rom[data-rom-id="{rom_id}"] input[type=file]', str(path)
+                )
+                page.wait_for_selector(
+                    f'article.rom[data-rom-id="{rom_id}"][data-state="stored"]'
+                )
 
             page.goto(base + "/generate")
             with page.expect_navigation():
@@ -75,11 +87,15 @@ def test_the_downloaded_rom_is_the_finished_rom(tmp_path):
             browser.close()
 
         with app.state.db.transaction() as conn:
-            row = conn.execute("SELECT manifest, unfinished_ips FROM seeds WHERE id = ?", (seed_id,)).fetchone()
+            row = conn.execute(
+                "SELECT manifest, unfinished_ips FROM seeds WHERE id = ?", (seed_id,)
+            ).fetchone()
 
     assert not errors
     manifest = Manifest.from_json(json.loads(row["manifest"]))
     assert suggested == f"notgr_par{manifest.course.par}_{seed_id}.nes"
     options = PlayerOptions("YOSHI", frozenset(VANILLA_CLUBS) - {Club.W2})
-    expected = finish(manifest, US_ROM_PATH.read_bytes(), row["unfinished_ips"], options)
+    expected = finish(
+        manifest, US_ROM_PATH.read_bytes(), row["unfinished_ips"], options
+    )
     assert saved.read_bytes() == expected.rom

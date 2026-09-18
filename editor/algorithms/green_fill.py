@@ -28,26 +28,35 @@ class GreenFill:
     FLAT_TILE = 0xB0
 
     # Fringe edge tiles - these indicate which direction the rough goes
-    FRINGE_LEFT = 0x66    # rough goes to LEFT of this tile
-    FRINGE_UP = 0x64      # rough goes ABOVE this tile
-    FRINGE_RIGHT = 0x67   # rough goes to RIGHT of this tile
-    FRINGE_DOWN = 0x65    # rough goes BELOW this tile
+    FRINGE_LEFT = 0x66  # rough goes to LEFT of this tile
+    FRINGE_UP = 0x64  # rough goes ABOVE this tile
+    FRINGE_RIGHT = 0x67  # rough goes to RIGHT of this tile
+    FRINGE_DOWN = 0x65  # rough goes BELOW this tile
 
     # Edge rough tiles (even parity, odd parity)
-    EDGE_LEFT = (0x70, 0x84)    # used LEFT of FRINGE_LEFT
-    EDGE_UP = (0x71, 0x85)      # used ABOVE FRINGE_UP
-    EDGE_RIGHT = (0x73, 0x87)   # used RIGHT of FRINGE_RIGHT
-    EDGE_DOWN = (0x72, 0x86)    # used BELOW FRINGE_DOWN
+    EDGE_LEFT = (0x70, 0x84)  # used LEFT of FRINGE_LEFT
+    EDGE_UP = (0x71, 0x85)  # used ABOVE FRINGE_UP
+    EDGE_RIGHT = (0x73, 0x87)  # used RIGHT of FRINGE_RIGHT
+    EDGE_DOWN = (0x72, 0x86)  # used BELOW FRINGE_DOWN
 
     # Base rough tiles (even parity, odd parity)
-    BASE_ROUGH = (0x29, 0x2C)   # checkerboard pattern
+    BASE_ROUGH = (0x29, 0x2C)  # checkerboard pattern
 
     # All rough tiles (for detection/replacement)
-    ROUGH_TILES = frozenset([
-        0x29, 0x2C,           # base rough
-        0x70, 0x71, 0x72, 0x73,  # edge rough (even)
-        0x84, 0x85, 0x86, 0x87,  # edge rough (odd)
-    ])
+    ROUGH_TILES = frozenset(
+        [
+            0x29,
+            0x2C,  # base rough
+            0x70,
+            0x71,
+            0x72,
+            0x73,  # edge rough (even)
+            0x84,
+            0x85,
+            0x86,
+            0x87,  # edge rough (odd)
+        ]
+    )
 
     def fill(self, greens: list[list[int]]) -> list[list[int]]:
         """
@@ -84,10 +93,7 @@ class GreenFill:
         return result
 
     def _find_active_set(
-        self,
-        greens: list[list[int]],
-        width: int,
-        height: int
+        self, greens: list[list[int]], width: int, height: int
     ) -> set[tuple[int, int]]:
         """
         Find all placeholder tiles connected to (0,0) via BFS.
@@ -156,7 +162,7 @@ class GreenFill:
         col: int,
         parity: int,
         width: int,
-        height: int
+        height: int,
     ) -> int:
         """
         Determine the appropriate rough tile for a position.

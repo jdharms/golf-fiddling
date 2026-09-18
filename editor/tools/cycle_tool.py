@@ -100,7 +100,7 @@ class CycleTool:
         if new_tile is None:
             return ToolResult(
                 handled=True,
-                message=f"Cycle: Tile 0x{current_tile:02X} not found in any bank"
+                message=f"Cycle: Tile 0x{current_tile:02X} not found in any bank",
             )
 
         # Check if tile actually changed (could wrap to same tile in single-tile bank)
@@ -138,7 +138,7 @@ class CycleTool:
         if new_tile is None:
             return ToolResult(
                 handled=True,
-                message=f"Cycle: Tile 0x{current_tile:02X} not found in any bank"
+                message=f"Cycle: Tile 0x{current_tile:02X} not found in any bank",
             )
 
         # Check if tile actually changed

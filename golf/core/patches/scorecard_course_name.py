@@ -77,15 +77,60 @@ _VANILLA_DISPATCH_POINTERS = bytes([0xD8, 0xAF, 0x02, 0xEB, 0xAF])
 # $AFC8-$AFFD: the Japan descriptor, then the US and UK handlers and descriptors.
 _VANILLA_UNREACHABLE_REGION = bytes(
     [
-        0x6A, 0x20, 0x0C, 0x01,  # PPU $206A, width 12, 1 row
-        0x13, 0x0A, 0x19, 0x0A, 0x17, 0x24,  # JAPAN_
-        0x0C, 0x18, 0x1E, 0x1B, 0x1C, 0x0E,  # COURSE
-        0x20, 0x84, 0xCE, 0xDE, 0xAF, 0x60,  # $AFD8: JSR $CE84 / .dw $AFDE / RTS
-        0x6B, 0x20, 0x09, 0x01,  # PPU $206B, width 9, 1 row
-        0x1E, 0x1C, 0x24, 0x0C, 0x18, 0x1E, 0x1B, 0x1C, 0x0E,  # US COURSE
-        0x20, 0x84, 0xCE, 0xF1, 0xAF, 0x60,  # $AFEB: JSR $CE84 / .dw $AFF1 / RTS
-        0x6B, 0x20, 0x09, 0x01,  # PPU $206B, width 9, 1 row
-        0x1E, 0x14, 0x24, 0x0C, 0x18, 0x1E, 0x1B, 0x1C, 0x0E,  # UK COURSE
+        0x6A,
+        0x20,
+        0x0C,
+        0x01,  # PPU $206A, width 12, 1 row
+        0x13,
+        0x0A,
+        0x19,
+        0x0A,
+        0x17,
+        0x24,  # JAPAN_
+        0x0C,
+        0x18,
+        0x1E,
+        0x1B,
+        0x1C,
+        0x0E,  # COURSE
+        0x20,
+        0x84,
+        0xCE,
+        0xDE,
+        0xAF,
+        0x60,  # $AFD8: JSR $CE84 / .dw $AFDE / RTS
+        0x6B,
+        0x20,
+        0x09,
+        0x01,  # PPU $206B, width 9, 1 row
+        0x1E,
+        0x1C,
+        0x24,
+        0x0C,
+        0x18,
+        0x1E,
+        0x1B,
+        0x1C,
+        0x0E,  # US COURSE
+        0x20,
+        0x84,
+        0xCE,
+        0xF1,
+        0xAF,
+        0x60,  # $AFEB: JSR $CE84 / .dw $AFF1 / RTS
+        0x6B,
+        0x20,
+        0x09,
+        0x01,  # PPU $206B, width 9, 1 row
+        0x1E,
+        0x14,
+        0x24,
+        0x0C,
+        0x18,
+        0x1E,
+        0x1B,
+        0x1C,
+        0x0E,  # UK COURSE
     ]
 )
 assert DESCRIPTOR_ADDR + len(_VANILLA_UNREACHABLE_REGION) == UNREACHABLE_END
@@ -133,7 +178,9 @@ def title_text(title: str) -> str:
     text = title.upper()
     _check_title_font(text, "title")
     if not 1 <= len(text) <= MAX_TITLE_TILES:
-        raise ValueError(f"title must be 1-{MAX_TITLE_TILES} characters, got {len(text)}")
+        raise ValueError(
+            f"title must be 1-{MAX_TITLE_TILES} characters, got {len(text)}"
+        )
     return text
 
 
@@ -198,7 +245,9 @@ def attribute_bytes(text: str) -> bytes:
     return bytes(attributes)
 
 
-def scorecard_course_name_patches(name: str = DEFAULT_NAME, title: str | None = None) -> list[BytePatch]:
+def scorecard_course_name_patches(
+    name: str = DEFAULT_NAME, title: str | None = None
+) -> list[BytePatch]:
     """The patches that draw "<name> COURSE" for every course slot, and the title if given."""
     text = course_name_text(name)
     descriptor = descriptor_bytes(text)
@@ -242,14 +291,20 @@ def scorecard_course_name_patches(name: str = DEFAULT_NAME, title: str | None = 
                 description="Point the stroke play title at the new descriptor",
                 prg_offset=_prg(TITLE_POINTER_ADDR),
                 original=_VANILLA_TITLE_POINTER,
-                patched=bytes([TITLE_DESCRIPTOR_ADDR & 0xFF, TITLE_DESCRIPTOR_ADDR >> 8]),
+                patched=bytes(
+                    [TITLE_DESCRIPTOR_ADDR & 0xFF, TITLE_DESCRIPTOR_ADDR >> 8]
+                ),
             ),
         ]
     return patches
 
 
-def scorecard_course_name_patch(name: str = DEFAULT_NAME, title: str | None = None) -> CompositePatch:
-    description = f"Show {course_name_text(name)!r} on the scorecard for every course slot"
+def scorecard_course_name_patch(
+    name: str = DEFAULT_NAME, title: str | None = None
+) -> CompositePatch:
+    description = (
+        f"Show {course_name_text(name)!r} on the scorecard for every course slot"
+    )
     if title is not None:
         description += f", titled {title_text(title)!r} in stroke play"
     return CompositePatch(

@@ -74,7 +74,9 @@ def client(fake_builder):
 
 def _catalog_with_text(text_for) -> Strings:
     real = Strings.load()
-    return Strings({key: Entry(real.entry(key).note, text_for(key)) for key in real.keys()})  # noqa: SIM118 (Strings, not a dict)
+    return Strings(
+        {key: Entry(real.entry(key).note, text_for(key)) for key in real.keys()}
+    )  # noqa: SIM118 (Strings, not a dict)
 
 
 #: nothing written, so every string renders as the placeholder naming its key and values
@@ -96,7 +98,9 @@ def form_data(form: FormState | None = None) -> dict[str, list[str]]:
 
 
 def post_generate(client: TestClient, form: FormState | None = None, **headers):
-    return client.post("/generate", data=form_data(form), headers=headers, follow_redirects=False)
+    return client.post(
+        "/generate", data=form_data(form), headers=headers, follow_redirects=False
+    )
 
 
 def generate_seed(client: TestClient, form: FormState | None = None) -> str:
@@ -121,7 +125,9 @@ def test_startup_migrates_the_database(client):
 
 
 def test_startup_makes_a_builder_from_the_config_when_given_none(tmp_path):
-    with TestClient(create_app(Config(database=":memory:", rom_dir=tmp_path))) as test_client:
+    with TestClient(
+        create_app(Config(database=":memory:", rom_dir=tmp_path))
+    ) as test_client:
         assert test_client.app.state.builder.rom_path == tmp_path / "nes_open_us.nes"
 
 
@@ -139,7 +145,7 @@ def test_rangefinder_page_embeds_its_assets_and_script_strings(unwritten_client)
     response = unwritten_client.get("/rangefinder")
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/html")
-    assert 'href="/rangefinder"  aria-current="page"' in response.text
+    assert re.search(r'href="/rangefinder"\s+aria-current="page"', response.text)
     assert 'data-metadata-url="/static/rangefinder/metadata.json"' in response.text
     assert 'src="/static/rangefinder/app.js"' in response.text
     assert '"rangefinder.script.distance": null' in response.text
@@ -154,7 +160,9 @@ def test_rangefinder_generated_assets_are_served(client):
     assert image.headers["content-type"] == "image/png"
 
 
-def write_content_page(tmp_path, slug: str, metadata: str, body: str = "Page body.") -> None:
+def write_content_page(
+    tmp_path, slug: str, metadata: str, body: str = "Page body."
+) -> None:
     (tmp_path / f"{slug}.md").write_text(f"+++\n{metadata}\n+++\n\n{body}\n")
 
 
@@ -163,17 +171,29 @@ def page_catalog(tmp_path, metadata: str, body: str = "Page body.") -> PageCatal
     return PageCatalog.load(tmp_path)
 
 
-def test_navigation_lists_only_enabled_listed_pages_in_display_order(fake_builder, tmp_path):
-    write_content_page(tmp_path, "later", 'title = "Later"\nnav_title = "Zed"\norder = 20')
-    write_content_page(tmp_path, "first", 'title = "First"\nnav_title = "A & B"\norder = 10')
+def test_navigation_lists_only_enabled_listed_pages_in_display_order(
+    fake_builder, tmp_path
+):
+    write_content_page(
+        tmp_path, "later", 'title = "Later"\nnav_title = "Zed"\norder = 20'
+    )
+    write_content_page(
+        tmp_path, "first", 'title = "First"\nnav_title = "A & B"\norder = 10'
+    )
     write_content_page(tmp_path, "review", 'title = "Review"\nlisted = false')
-    write_content_page(tmp_path, "disabled", 'title = "Disabled"\nenabled = false\nlisted = false')
+    write_content_page(
+        tmp_path, "disabled", 'title = "Disabled"\nenabled = false\nlisted = false'
+    )
     pages = PageCatalog.load(tmp_path)
-    with app_client(builder=fake_builder, pages=pages, strings=UNWRITTEN) as test_client:
+    with app_client(
+        builder=fake_builder, pages=pages, strings=UNWRITTEN
+    ) as test_client:
         response = test_client.get("/")
     assert response.status_code == 200
     assert "⟦nav.pages⟧" in response.text
-    assert response.text.index('href="/pages/first"') < response.text.index('href="/pages/later"')
+    assert response.text.index('href="/pages/first"') < response.text.index(
+        'href="/pages/later"'
+    )
     assert ">A &amp; B</a>" in response.text
     assert 'href="/pages/review"' not in response.text
     assert 'href="/pages/disabled"' not in response.text
@@ -185,11 +205,15 @@ def test_content_page_marks_its_dropdown_and_link_current(fake_builder, tmp_path
         response = test_client.get("/pages/review-page")
     assert response.status_code == 200
     assert '<summary aria-current="page">' in response.text
-    assert '<a href="/pages/review-page" aria-current="page">Review</a>' in response.text
+    assert re.search(
+        r'<a href="/pages/review-page"\s+aria-current="page">Review</a>', response.text
+    )
 
 
 def test_markdown_page_is_served_with_its_title_and_body(fake_builder, tmp_path):
-    pages = page_catalog(tmp_path, 'title = "Review & Notes"', "A **rendered** paragraph.")
+    pages = page_catalog(
+        tmp_path, 'title = "Review & Notes"', "A **rendered** paragraph."
+    )
     with app_client(builder=fake_builder, pages=pages) as test_client:
         response = test_client.get("/pages/review-page")
     assert response.status_code == 200
@@ -209,7 +233,9 @@ def test_unlisted_markdown_page_is_served_with_noindex(fake_builder, tmp_path):
 
 
 def test_disabled_and_unknown_markdown_pages_are_not_found(fake_builder, tmp_path):
-    pages = page_catalog(tmp_path, 'title = "Disabled"\nenabled = false\nlisted = false')
+    pages = page_catalog(
+        tmp_path, 'title = "Disabled"\nenabled = false\nlisted = false'
+    )
     with app_client(builder=fake_builder, pages=pages) as test_client:
         disabled = test_client.get("/pages/review-page")
         unknown = test_client.get("/pages/missing")
@@ -227,12 +253,20 @@ def test_rom_setup_lists_every_vanilla_rom_with_its_hash(client):
         assert rom.title in response.text
     assert response.text.count('data-state="checking"') == len(VANILLA_ROMS)
     assert 'id="rom-strings"' in response.text
-    assert response.text.index('src="/static/romstore.js"') < response.text.index('src="/static/rom.js"')
+    assert response.text.index('src="/static/romstore.js"') < response.text.index(
+        'src="/static/rom.js"'
+    )
 
 
 @pytest.mark.parametrize(
     "path",
-    ["/static/pico.green.min.css", "/static/site.css", "/static/romstore.js", "/static/rom.js", "/static/download.js"],
+    [
+        "/static/pico.green.min.css",
+        "/static/site.css",
+        "/static/romstore.js",
+        "/static/rom.js",
+        "/static/download.js",
+    ],
 )
 def test_static_files_are_served(client, path):
     response = client.get(path)
@@ -258,11 +292,11 @@ def test_the_generate_form_offers_every_setting_with_its_default(client):
     response = client.get("/generate")
     assert response.status_code == 200
     page = response.text
-    assert 'aria-current="page"' in page and 'href="/generate" ' in page
+    assert re.search(r'href="/generate"\s+aria-current="page"', page)
     assert len(re.findall(r'name="par"', page)) == 3
-    assert re.search(r'name="par" value="72"\s+checked', page)
+    assert re.search(r'name="par"\s+value="72"\s+checked', page)
     for rom in VANILLA_ROMS:
-        assert re.search(rf'name="sources" value="{rom.id}"\s+checked', page)
+        assert re.search(rf'name="sources"\s+value="{rom.id}"\s+checked', page)
     assert 'name="allow_family_repeats"' in page
     assert re.search(r'<option value="random"\s+selected', page)
     assert page.count("<option ") == 9
@@ -277,14 +311,20 @@ def test_club_rules_are_a_section_of_their_own_after_the_everyday_settings(clien
     page = client.get("/generate").text
     rules = page.index('<article class="club-rules">')
     assert page.index('name="music"') < rules < page.index('name="clubs_max"')
-    assert page.index('name="required_bag"') < page.index("</article>", rules) < page.index('type="submit"')
+    assert (
+        page.index('name="required_bag"')
+        < page.index("</article>", rules)
+        < page.index('type="submit"')
+    )
 
 
 def test_generating_stores_the_seed_and_redirects_to_its_page(client, fake_builder):
     seed_id = generate_seed(client)
     with client.app.state.db.transaction() as conn:
         seed = conn.execute("SELECT * FROM seeds WHERE id = ?", (seed_id,)).fetchone()
-        holes = conn.execute("SELECT count(*) FROM seed_holes WHERE seed_id = ?", (seed_id,)).fetchone()[0]
+        holes = conn.execute(
+            "SELECT count(*) FROM seed_holes WHERE seed_id = ?", (seed_id,)
+        ).fetchone()[0]
     assert seed["unfinished_ips"] == IPS
     assert holes == 18
     stored = Manifest.from_json(__import__("json").loads(seed["manifest"]))
@@ -318,7 +358,9 @@ def test_the_manifest_json_is_the_stored_manifest(client, fake_builder):
         assert response.text == conn.execute("SELECT manifest FROM seeds").fetchone()[0]
 
 
-@pytest.mark.parametrize("path", ["/h/0000000001", "/h/not-a-seed", "/h/0000000000", "/no-such-page"])
+@pytest.mark.parametrize(
+    "path", ["/h/0000000001", "/h/not-a-seed", "/h/0000000000", "/no-such-page"]
+)
 def test_unknown_pages_render_not_found(client, path):
     response = client.get(path)
     assert response.status_code == 404
@@ -342,8 +384,8 @@ def test_a_refused_form_comes_back_with_its_values_and_a_notice(unwritten_client
     assert response.status_code == 400
     page = response.text
     assert 'role="alert"' in page and "generate.error.no_sources" in page
-    assert re.search(r'name="par" value="70"\s+checked', page)
-    assert re.search(r'name="banned" value="2W"\s+checked', page)
+    assert re.search(r'name="par"\s+value="70"\s+checked', page)
+    assert re.search(r'name="banned"\s+value="2W"\s+checked', page)
     assert seed_count(unwritten_client) == 0
 
 
@@ -357,7 +399,10 @@ def test_a_club_rule_refusal_names_its_values(unwritten_client):
 
 
 def test_a_pool_that_cannot_fill_the_course_is_refused(catalog, curation, tmp_path):
-    with app_client(strings=UNWRITTEN, builder=PoolTooSmall(catalog, curation, HoleStore(), tmp_path / "x.nes")) as test_client:
+    with app_client(
+        strings=UNWRITTEN,
+        builder=PoolTooSmall(catalog, curation, HoleStore(), tmp_path / "x.nes"),
+    ) as test_client:
         response = post_generate(test_client)
         assert response.status_code == 400
         assert "generate.error.pool" in response.text
@@ -365,19 +410,29 @@ def test_a_pool_that_cannot_fill_the_course_is_refused(catalog, curation, tmp_pa
 
 
 def test_generating_is_rate_limited_per_client(fake_builder):
-    with app_client(strings=UNWRITTEN, builder=fake_builder, rate_limiter=RateLimiter(1, 3600)) as test_client:
-        assert post_generate(test_client, **{"X-Forwarded-For": "192.0.2.1"}).status_code == 303
+    with app_client(
+        strings=UNWRITTEN, builder=fake_builder, rate_limiter=RateLimiter(1, 3600)
+    ) as test_client:
+        assert (
+            post_generate(test_client, **{"X-Forwarded-For": "192.0.2.1"}).status_code
+            == 303
+        )
         refused = post_generate(test_client, **{"X-Forwarded-For": "192.0.2.1"})
         assert refused.status_code == 429
         assert "generate.error.rate_limited" in refused.text
-        assert post_generate(test_client, **{"X-Forwarded-For": "192.0.2.2"}).status_code == 303
+        assert (
+            post_generate(test_client, **{"X-Forwarded-For": "192.0.2.2"}).status_code
+            == 303
+        )
         assert seed_count(test_client) == 2
 
 
 def test_a_refused_form_spends_no_token(fake_builder):
     invalid = FormState.default()
     invalid.sources = set()
-    with app_client(builder=fake_builder, rate_limiter=RateLimiter(1, 3600)) as test_client:
+    with app_client(
+        builder=fake_builder, rate_limiter=RateLimiter(1, 3600)
+    ) as test_client:
         assert post_generate(test_client, invalid).status_code == 400
         assert post_generate(test_client).status_code == 303
 
@@ -408,31 +463,50 @@ def seed_form(**changes) -> FormState:
 US_ONLY = {"sources": {US_ROM}, "music": "nes_us"}
 
 
-def post_download(client: TestClient, seed_id: str, name: str = "luigi", clubs=("1W", "PW"), hashes=None):
-    data = {"player_name": name, "clubs": list(clubs), **(ALL_HASHES if hashes is None else hashes)}
+def post_download(
+    client: TestClient,
+    seed_id: str,
+    name: str = "luigi",
+    clubs=("1W", "PW"),
+    hashes=None,
+):
+    data = {
+        "player_name": name,
+        "clubs": list(clubs),
+        **(ALL_HASHES if hashes is None else hashes),
+    }
     return client.post(f"/h/{seed_id}/patch.ips", data=data)
 
 
 def test_the_seed_page_offers_the_download_form(client):
     seed_id = generate_seed(client, seed_form(**US_ONLY, banned={"1W", "SW"}))
     page = client.get(f"/h/{seed_id}").text
-    article = page[page.index('<article class="download"') : page.index("</article>", page.index('<article class="download"'))]
+    article = page[
+        page.index('<article class="download"') : page.index(
+            "</article>", page.index('<article class="download"')
+        )
+    ]
     assert 'data-state="checking"' in article
     assert f'data-required-roms="{US_ROM}"' in article
     assert f'data-filename="notgr_par72_{seed_id}.nes"' in article
     assert f'action="/h/{seed_id}/patch.ips"' in article
-    assert re.search(r'name="player_name" value="MARIO"\s+maxlength="10"', article)
+    assert re.search(r'name="player_name"\s+value="MARIO"\s+maxlength="10"', article)
     assert article.count('name="clubs"') == 15
     assert 'value="PT"' not in article
-    assert re.search(r'name="clubs" value="1W" disabled', article)
-    assert re.search(r'name="clubs" value="SW" disabled', article)
-    assert re.search(r'name="clubs" value="3W" checked', article)
-    assert not re.search(r'name="clubs" value="4W" checked', article)
+    assert re.search(r'name="clubs"\s+value="1W"\s+disabled', article)
+    assert re.search(r'name="clubs"\s+value="SW"\s+disabled', article)
+    assert re.search(r'name="clubs"\s+value="3W"\s+checked', article)
+    assert not re.search(r'name="clubs"\s+value="4W"\s+checked', article)
     assert re.search(r'<button type="submit" disabled>', article)
     assert 'href="/rom"' in article
     assert 'id="download-strings"' in page
-    assert f'id="download-roms">{{"{US_ROM}": {{"sha1": "{vanilla_rom(US_ROM).sha1}"' in page
-    assert page.index('src="/static/romstore.js"') < page.index('src="/static/download.js"')
+    assert (
+        f'id="download-roms">{{"{US_ROM}": {{"sha1": "{vanilla_rom(US_ROM).sha1}"'
+        in page
+    )
+    assert page.index('src="/static/romstore.js"') < page.index(
+        'src="/static/download.js"'
+    )
 
 
 def test_a_locked_bag_seed_lists_no_clubs(unwritten_client):
@@ -449,7 +523,10 @@ def test_downloading_finishes_the_stored_seed_as_a_guest(client, fake_builder):
     assert response.content == FINISHED
     assert response.headers["content-type"] == "application/octet-stream"
     par = fake_builder.built.course.par
-    assert response.headers["content-disposition"] == f'attachment; filename="notgr_par{par}_{seed_id}.ips"'
+    assert (
+        response.headers["content-disposition"]
+        == f'attachment; filename="notgr_par{par}_{seed_id}.ips"'
+    )
     manifest, unfinished_ips, options = fake_builder.finished
     assert manifest == fake_builder.built
     assert unfinished_ips == IPS
@@ -467,7 +544,10 @@ def test_a_seed_with_mario_open_content_is_refused_without_the_jp_hash(client):
     seed_id = generate_seed(client, seed_form(music="jp_france"))
     response = post_download(client, seed_id, hashes=US_HASHES)
     assert response.status_code == 403
-    assert response.json() == {"error": "roms_missing", "values": {"roms": vanilla_rom(JP_ROM).title}}
+    assert response.json() == {
+        "error": "roms_missing",
+        "values": {"roms": vanilla_rom(JP_ROM).title},
+    }
 
 
 def test_a_download_without_hashes_is_refused(client):
@@ -483,8 +563,18 @@ def test_a_download_without_hashes_is_refused(client):
         ({}, "LU1GI", ("1W",), {"error": "invalid_name", "values": {"chars": "1"}}),
         ({}, "", ("1W",), {"error": "invalid_name", "values": {"chars": ""}}),
         ({}, "LUIGI", ("9W",), {"error": "invalid", "values": {"field": "clubs"}}),
-        ({"banned": {"SW"}}, "LUIGI", ("SW", "PW"), {"error": "clubs_banned", "values": {"clubs": "SW"}}),
-        ({"clubs_max": "2"}, "LUIGI", ("1W", "PW"), {"error": "clubs_over_max", "values": {"count": 3, "max": 2}}),
+        (
+            {"banned": {"SW"}},
+            "LUIGI",
+            ("SW", "PW"),
+            {"error": "clubs_banned", "values": {"clubs": "SW"}},
+        ),
+        (
+            {"clubs_max": "2"},
+            "LUIGI",
+            ("1W", "PW"),
+            {"error": "clubs_over_max", "values": {"count": 3, "max": 2}},
+        ),
     ],
 )
 def test_a_download_the_seed_forbids_is_refused(client, form, name, clubs, error):
@@ -501,12 +591,16 @@ def test_downloading_an_unknown_seed_is_a_json_404(client):
         assert response.json() == {"detail": "Not Found"}
 
 
-def test_downloading_without_the_servers_rom_is_unavailable(catalog, curation, tmp_path):
+def test_downloading_without_the_servers_rom_is_unavailable(
+    catalog, curation, tmp_path
+):
     class NoRom(SeedBuilder):
         def build(self, manifest):
             return IPS
 
-    with app_client(builder=NoRom(catalog, curation, HoleStore(), tmp_path / "missing.nes")) as test_client:
+    with app_client(
+        builder=NoRom(catalog, curation, HoleStore(), tmp_path / "missing.nes")
+    ) as test_client:
         seed_id = generate_seed(test_client)
         response = post_download(test_client, seed_id)
         assert response.status_code == 503
@@ -521,7 +615,10 @@ def test_written_strings_render_without_placeholders(fake_builder):
     with app_client(strings=written, builder=fake_builder) as test_client:
         seed_id = generate_seed(test_client)
         scan = "/s/" + "A" * 48
-        pages = {path: test_client.get(path).text for path in ("/", "/rom", "/generate", f"/h/{seed_id}", "/nope", scan)}
+        pages = {
+            path: test_client.get(path).text
+            for path in ("/", "/rom", "/generate", f"/h/{seed_id}", "/nope", scan)
+        }
     for page in pages.values():
         assert "⟦" not in page
         assert 'class="unwritten"' not in page
@@ -541,7 +638,9 @@ def test_unwritten_strings_render_as_placeholders_with_their_notes(fake_builder)
     with app_client(strings=unwritten, builder=fake_builder) as test_client:
         rom = test_client.get("/rom").text
     assert "<title>⟦rom.page_title⟧</title>" in rom
-    assert '<span class="unwritten" title="ROM setup page h1">⟦rom.heading⟧</span>' in rom
+    assert (
+        '<span class="unwritten" title="ROM setup page h1">⟦rom.heading⟧</span>' in rom
+    )
     assert f"⟦rom.expected_hash sha1={VANILLA_ROMS[0].sha1}⟧" in rom
     assert '"rom.status.stored": null' in rom
 
@@ -549,7 +648,10 @@ def test_unwritten_strings_render_as_placeholders_with_their_notes(fake_builder)
 # -- Sign-in -----------------------------------------------------------------------------
 
 DISCORD_CONFIG = Config(
-    database=":memory:", discord_client_id="client-id", discord_client_secret="client-secret", session_secret="s"
+    database=":memory:",
+    discord_client_id="client-id",
+    discord_client_secret="client-secret",
+    session_secret="s",
 )
 NELLY = DiscordIdentity("80351110224678912", "nelly", "Nelly", "abc123")
 
@@ -575,12 +677,18 @@ def users(client: TestClient) -> list[dict]:
 
 
 def dev_client(fake_builder, **kwargs) -> TestClient:
-    return TestClient(create_app(Config(database=":memory:", dev_login=True), builder=fake_builder, **kwargs))
+    return TestClient(
+        create_app(
+            Config(database=":memory:", dev_login=True), builder=fake_builder, **kwargs
+        )
+    )
 
 
 def start_discord_sign_in(client: TestClient, next_path: str = "/generate") -> str:
     """Begin a Discord sign-in and return the state it sent Discord."""
-    response = client.get("/auth/login", params={"next": next_path}, follow_redirects=False)
+    response = client.get(
+        "/auth/login", params={"next": next_path}, follow_redirects=False
+    )
     assert response.status_code == 303
     query = parse_qs(urlsplit(response.headers["location"]).query)
     return query["state"][0]
@@ -589,26 +697,42 @@ def start_discord_sign_in(client: TestClient, next_path: str = "/generate") -> s
 def test_sign_in_is_hidden_and_missing_when_not_configured(unwritten_client):
     assert "nav.sign_in" not in unwritten_client.get("/").text
     assert unwritten_client.get("/auth/login").status_code == 404
-    assert unwritten_client.get("/auth/callback", params={"state": "x", "code": "y"}).status_code == 404
+    assert (
+        unwritten_client.get(
+            "/auth/callback", params={"state": "x", "code": "y"}
+        ).status_code
+        == 404
+    )
 
 
 def test_the_bypass_signs_in_as_the_named_user(fake_builder):
     with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
         assert "⟦nav.sign_in⟧" in test_client.get("/generate").text
-        response = test_client.get("/auth/login", params={"as": "alice", "next": "/generate"}, follow_redirects=False)
+        response = test_client.get(
+            "/auth/login",
+            params={"as": "alice", "next": "/generate"},
+            follow_redirects=False,
+        )
         assert response.status_code == 303
         assert response.headers["location"] == "/generate"
         page = test_client.get("/generate").text
         assert "⟦nav.signed_in_as name=alice⟧" in page
         assert "nav.sign_in⟧" not in page
         [alice] = users(test_client)
-        assert (alice["discord_id"], alice["username"], alice["global_name"]) == ("dev:alice", "alice", None)
+        assert (alice["discord_id"], alice["username"], alice["global_name"]) == (
+            "dev:alice",
+            "alice",
+            None,
+        )
         assert 1 <= alice["player_id"] <= 4294967295
 
 
 def test_the_bypass_without_a_name_signs_in_as_dev(fake_builder):
     with dev_client(fake_builder) as test_client:
-        assert test_client.get("/auth/login", follow_redirects=False).headers["location"] == "/"
+        assert (
+            test_client.get("/auth/login", follow_redirects=False).headers["location"]
+            == "/"
+        )
         assert [user["discord_id"] for user in users(test_client)] == ["dev:dev"]
 
 
@@ -621,7 +745,12 @@ def test_the_bypass_refuses_odd_names(fake_builder, name):
 
 def test_the_bypass_is_refused_off_localhost(fake_builder):
     with pytest.raises(ConfigError):
-        create_app(Config(database=":memory:", dev_login=True, base_url="https://golf.example"), builder=fake_builder)
+        create_app(
+            Config(
+                database=":memory:", dev_login=True, base_url="https://golf.example"
+            ),
+            builder=fake_builder,
+        )
 
 
 def test_signing_out_clears_the_session_and_returns(fake_builder):
@@ -629,7 +758,9 @@ def test_signing_out_clears_the_session_and_returns(fake_builder):
         test_client.get("/auth/login", params={"as": "alice"})
         page = test_client.get("/rom").text
         assert '<input type="hidden" name="next" value="/rom">' in page
-        response = test_client.post("/auth/logout", data={"next": "/rom"}, follow_redirects=False)
+        response = test_client.post(
+            "/auth/logout", data={"next": "/rom"}, follow_redirects=False
+        )
         assert response.status_code == 303
         assert response.headers["location"] == "/rom"
         assert "⟦nav.sign_in⟧" in test_client.get("/rom").text
@@ -637,15 +768,24 @@ def test_signing_out_clears_the_session_and_returns(fake_builder):
 
 def test_the_sign_in_link_returns_to_the_current_page(fake_builder):
     with dev_client(fake_builder) as test_client:
-        assert 'href="/auth/login?next=/generate%3Fpar%3D71"' in test_client.get("/generate?par=71").text
+        assert (
+            'href="/auth/login?next=/generate%3Fpar%3D71"'
+            in test_client.get("/generate?par=71").text
+        )
 
 
 @pytest.mark.parametrize("next_path", ["https://evil.example/", "//evil.example/"])
 def test_sign_in_never_returns_off_site(fake_builder, next_path):
     with dev_client(fake_builder) as test_client:
-        response = test_client.get("/auth/login", params={"as": "alice", "next": next_path}, follow_redirects=False)
+        response = test_client.get(
+            "/auth/login",
+            params={"as": "alice", "next": next_path},
+            follow_redirects=False,
+        )
         assert response.headers["location"] == "/"
-        response = test_client.post("/auth/logout", data={"next": next_path}, follow_redirects=False)
+        response = test_client.post(
+            "/auth/logout", data={"next": next_path}, follow_redirects=False
+        )
         assert response.headers["location"] == "/"
 
 
@@ -659,13 +799,20 @@ def test_a_session_for_a_missing_user_is_signed_out(fake_builder):
 
 def test_the_session_cookie_is_lax_and_secure_only_on_https(fake_builder):
     with dev_client(fake_builder) as test_client:
-        cookie = test_client.get("/auth/login", params={"as": "alice"}, follow_redirects=False).headers["set-cookie"]
+        cookie = test_client.get(
+            "/auth/login", params={"as": "alice"}, follow_redirects=False
+        ).headers["set-cookie"]
     assert cookie.startswith(f"{SESSION_COOKIE}=")
     assert "samesite=lax" in cookie.lower()
     assert "secure" not in cookie.lower()
     https = replace(DISCORD_CONFIG, base_url="https://golf.example")
-    with TestClient(create_app(https, builder=fake_builder, discord=FakeDiscord()), base_url="https://golf.example") as test_client:
-        cookie = test_client.get("/auth/login", follow_redirects=False).headers["set-cookie"]
+    with TestClient(
+        create_app(https, builder=fake_builder, discord=FakeDiscord()),
+        base_url="https://golf.example",
+    ) as test_client:
+        cookie = test_client.get("/auth/login", follow_redirects=False).headers[
+            "set-cookie"
+        ]
     assert "secure" in cookie.lower()
 
 
@@ -673,7 +820,10 @@ def test_discord_sign_in_redirects_to_discord_with_a_state(fake_builder):
     with TestClient(create_app(DISCORD_CONFIG, builder=fake_builder)) as test_client:
         response = test_client.get("/auth/login", follow_redirects=False)
     location = urlsplit(response.headers["location"])
-    assert f"{location.scheme}://{location.netloc}{location.path}" == "https://discord.com/oauth2/authorize"
+    assert (
+        f"{location.scheme}://{location.netloc}{location.path}"
+        == "https://discord.com/oauth2/authorize"
+    )
     query = parse_qs(location.query)
     assert query["client_id"] == ["client-id"]
     assert query["redirect_uri"] == ["http://127.0.0.1:8000/auth/callback"]
@@ -682,22 +832,37 @@ def test_discord_sign_in_redirects_to_discord_with_a_state(fake_builder):
 
 def test_discord_sign_in_records_the_user_and_returns(fake_builder):
     discord = FakeDiscord()
-    with TestClient(create_app(DISCORD_CONFIG, strings=UNWRITTEN, builder=fake_builder, discord=discord)) as test_client:
+    with TestClient(
+        create_app(
+            DISCORD_CONFIG, strings=UNWRITTEN, builder=fake_builder, discord=discord
+        )
+    ) as test_client:
         state = start_discord_sign_in(test_client)
-        response = test_client.get("/auth/callback", params={"code": "abc", "state": state}, follow_redirects=False)
+        response = test_client.get(
+            "/auth/callback",
+            params={"code": "abc", "state": state},
+            follow_redirects=False,
+        )
         assert response.status_code == 303
         assert response.headers["location"] == "/generate"
         assert discord.codes == [("abc", "http://127.0.0.1:8000/auth/callback")]
         assert "⟦nav.signed_in_as name=Nelly⟧" in test_client.get("/").text
         [nelly] = users(test_client)
-        assert (nelly["discord_id"], nelly["username"], nelly["global_name"], nelly["avatar"]) == (
+        assert (
+            nelly["discord_id"],
+            nelly["username"],
+            nelly["global_name"],
+            nelly["avatar"],
+        ) == (
             "80351110224678912",
             "nelly",
             "Nelly",
             "abc123",
         )
         # The state is spent: replaying the callback does not sign in again.
-        replay = test_client.get("/auth/callback", params={"code": "abc", "state": state})
+        replay = test_client.get(
+            "/auth/callback", params={"code": "abc", "state": state}
+        )
         assert replay.status_code == 400
         assert "⟦sign_in_failed.expired⟧" in replay.text
 
@@ -705,7 +870,11 @@ def test_discord_sign_in_records_the_user_and_returns(fake_builder):
 @pytest.mark.parametrize("params", [{"code": "abc", "state": "wrong"}, {"code": "abc"}])
 def test_a_callback_whose_state_does_not_match_is_refused(fake_builder, params):
     discord = FakeDiscord()
-    with TestClient(create_app(DISCORD_CONFIG, strings=UNWRITTEN, builder=fake_builder, discord=discord)) as test_client:
+    with TestClient(
+        create_app(
+            DISCORD_CONFIG, strings=UNWRITTEN, builder=fake_builder, discord=discord
+        )
+    ) as test_client:
         start_discord_sign_in(test_client)
         response = test_client.get("/auth/callback", params=params)
         assert response.status_code == 400
@@ -717,10 +886,16 @@ def test_a_callback_whose_state_does_not_match_is_refused(fake_builder, params):
 
 def test_turning_discord_down_returns_signed_out(fake_builder):
     discord = FakeDiscord()
-    with TestClient(create_app(DISCORD_CONFIG, strings=UNWRITTEN, builder=fake_builder, discord=discord)) as test_client:
+    with TestClient(
+        create_app(
+            DISCORD_CONFIG, strings=UNWRITTEN, builder=fake_builder, discord=discord
+        )
+    ) as test_client:
         state = start_discord_sign_in(test_client, "/rom")
         response = test_client.get(
-            "/auth/callback", params={"error": "access_denied", "state": state}, follow_redirects=False
+            "/auth/callback",
+            params={"error": "access_denied", "state": state},
+            follow_redirects=False,
         )
         assert response.headers["location"] == "/rom"
         assert discord.codes == []
@@ -729,10 +904,17 @@ def test_turning_discord_down_returns_signed_out(fake_builder):
 
 def test_discord_failing_shows_unavailable(fake_builder):
     with TestClient(
-        create_app(DISCORD_CONFIG, strings=UNWRITTEN, builder=fake_builder, discord=FakeDiscord(None))
+        create_app(
+            DISCORD_CONFIG,
+            strings=UNWRITTEN,
+            builder=fake_builder,
+            discord=FakeDiscord(None),
+        )
     ) as test_client:
         state = start_discord_sign_in(test_client)
-        response = test_client.get("/auth/callback", params={"code": "abc", "state": state})
+        response = test_client.get(
+            "/auth/callback", params={"code": "abc", "state": state}
+        )
         assert response.status_code == 502
         assert "⟦sign_in_failed.unavailable⟧" in response.text
         assert 'href="/auth/login?next=/"' in response.text
@@ -763,7 +945,6 @@ def test_signed_in_players_are_rate_limited_per_user(fake_builder):
         assert seed_count(test_client) == 3
 
 
-
 # -- Entries -----------------------------------------------------------------------------
 
 
@@ -774,7 +955,9 @@ def entries(client: TestClient) -> list[dict]:
 
 def qr_seed_id(client: TestClient, seed_id: str) -> int:
     with client.app.state.db.transaction() as conn:
-        return conn.execute("SELECT qr_seed_id FROM seeds WHERE id = ?", (seed_id,)).fetchone()[0]
+        return conn.execute(
+            "SELECT qr_seed_id FROM seeds WHERE id = ?", (seed_id,)
+        ).fetchone()[0]
 
 
 def test_a_signed_out_download_records_no_entry(fake_builder):
@@ -785,7 +968,9 @@ def test_a_signed_out_download_records_no_entry(fake_builder):
         assert entries(test_client) == []
 
 
-def test_a_signed_in_download_enters_the_seed_and_finishes_with_credentials(fake_builder):
+def test_a_signed_in_download_enters_the_seed_and_finishes_with_credentials(
+    fake_builder,
+):
     with dev_client(fake_builder) as test_client:
         seed_id = generate_seed(test_client)
         test_client.get("/auth/login", params={"as": "alice"})
@@ -842,7 +1027,9 @@ def test_a_refused_download_records_no_entry(fake_builder, change):
         assert entries(test_client) == []
 
 
-def test_the_seed_page_tells_only_signed_out_players_the_rom_is_a_guest_rom(fake_builder):
+def test_the_seed_page_tells_only_signed_out_players_the_rom_is_a_guest_rom(
+    fake_builder,
+):
     with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
         seed_id = generate_seed(test_client)
         signed_out = test_client.get(f"/h/{seed_id}").text
@@ -855,7 +1042,9 @@ def test_the_seed_page_tells_only_signed_out_players_the_rom_is_a_guest_rom(fake
 
 def test_the_seed_page_has_no_guest_notice_without_sign_in(unwritten_client):
     seed_id = generate_seed(unwritten_client)
-    assert "seed.download.guest_notice" not in unwritten_client.get(f"/h/{seed_id}").text
+    assert (
+        "seed.download.guest_notice" not in unwritten_client.get(f"/h/{seed_id}").text
+    )
 
 
 def test_my_page_needs_sign_in(fake_builder, client):
@@ -879,11 +1068,16 @@ def test_my_page_lists_only_my_entries_newest_first(fake_builder):
         test_client.get("/auth/login", params={"as": "alice"})
         post_download(test_client, second, name="peach")
         with test_client.app.state.db.transaction() as conn:
-            conn.execute("UPDATE entries SET created_at = '2026-01-01T00:00:00Z' WHERE seed_id = ?", (first,))
+            conn.execute(
+                "UPDATE entries SET created_at = '2026-01-01T00:00:00Z' WHERE seed_id = ?",
+                (first,),
+            )
         alice_page = test_client.get("/me").text
     assert 'aria-current="page"' in alice_page[: alice_page.index("</nav>")]
     assert "me.entries.none" not in alice_page
-    assert alice_page.index(f'href="/h/{second}"') < alice_page.index(f'href="/h/{first}"')
+    assert alice_page.index(f'href="/h/{second}"') < alice_page.index(
+        f'href="/h/{first}"'
+    )
     assert "<td>LUIGI</td>" in alice_page
     assert "<td>1W PW PT</td>" in alice_page
     assert "<td>PEACH</td>" in alice_page
@@ -894,7 +1088,14 @@ def test_my_page_lists_only_my_entries_newest_first(fake_builder):
 # -- Submissions -------------------------------------------------------------------------
 
 
-def scan_path(client: TestClient, seed_id: str, username: str, slot: int = 0, strokes: int = 4, key=None) -> str:
+def scan_path(
+    client: TestClient,
+    seed_id: str,
+    username: str,
+    slot: int = 0,
+    strokes: int = 4,
+    key=None,
+) -> str:
     """The path a ROM's QR code opens: username's entry in the seed, every hole `strokes` with 2 putts."""
     with client.app.state.db.transaction() as conn:
         row = conn.execute(
@@ -911,7 +1112,11 @@ def scan_path(client: TestClient, seed_id: str, username: str, slot: int = 0, st
         holes=(HoleRecord(strokes, 2),) * 18,
         player_slot=slot,
     )
-    signing_key = key if key is not None else bytes(row["key_slot1"] if slot else row["key_slot0"])
+    signing_key = (
+        key
+        if key is not None
+        else bytes(row["key_slot1"] if slot else row["key_slot0"])
+    )
     return "/s/" + round_payload.to_url(signing_key).removeprefix(URL_PREFIX)
 
 
@@ -940,7 +1145,9 @@ def test_scanning_records_the_round_and_redirects_to_its_permalink(fake_builder)
         page = test_client.get(response.headers["location"])
     assert response.status_code == 303
     assert response.headers["cache-control"] == "no-store"
-    assert [(row["slot"], row["total_strokes"], row["total_putts"]) for row in recorded] == [(0, 90, 36)]
+    assert [
+        (row["slot"], row["total_strokes"], row["total_putts"]) for row in recorded
+    ] == [(0, 90, 36)]
     assert response.headers["location"] == f"/r/{recorded[0]['public_id']}?recorded"
     assert page.status_code == 200
     assert "round.heading_recorded" in page.text
@@ -950,7 +1157,9 @@ def test_scanning_records_the_round_and_redirects_to_its_permalink(fake_builder)
     assert '<td class="num over-par">90</td>' in page.text
 
 
-def test_the_permalink_confirms_the_round_only_for_the_scan_that_recorded_it(fake_builder):
+def test_the_permalink_confirms_the_round_only_for_the_scan_that_recorded_it(
+    fake_builder,
+):
     with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
         seed_id = entered_seed(test_client, "alice")
         test_client.get(scan_path(test_client, seed_id, "alice", strokes=5))
@@ -985,7 +1194,10 @@ def test_scanning_again_reaches_the_first_round_and_records_nothing(fake_builder
             scan_path(test_client, seed_id, "alice", strokes=3), follow_redirects=False
         )
         recorded = recorded_rounds(test_client)
-        pages = [test_client.get(response.headers["location"]) for response in (again, different)]
+        pages = [
+            test_client.get(response.headers["location"])
+            for response in (again, different)
+        ]
     permalink = f"/r/{recorded[0]['public_id']}"
     assert first.headers["location"] == f"{permalink}?recorded"
     # a rescan lands on the same round, without the confirmation the first scan earned
@@ -1039,7 +1251,9 @@ def test_scans_that_are_not_rounds_are_refused(fake_builder, path, status, notic
 def test_a_scan_signed_with_the_wrong_key_is_not_recognized(fake_builder):
     with dev_client(fake_builder, strings=UNWRITTEN) as test_client:
         seed_id = entered_seed(test_client, "alice")
-        response = test_client.get(scan_path(test_client, seed_id, "alice", key=bytes(8)))
+        response = test_client.get(
+            scan_path(test_client, seed_id, "alice", key=bytes(8))
+        )
         assert recorded_rounds(test_client) == []
     assert response.status_code == 404
     assert "scan_rejected.unrecognized" in response.text
@@ -1055,7 +1269,11 @@ def test_the_seed_page_lists_recorded_rounds(fake_builder):
         page = test_client.get(f"/h/{seed_id}").text
     assert "seed.rounds.none" not in page
     rounds = page[page.index('class="rounds') :]
-    assert rounds.index(">bob</a>") < rounds.index(">alice</a>") < rounds.index("seed.rounds.player_two name=alice")
+    assert (
+        rounds.index(">bob</a>")
+        < rounds.index(">alice</a>")
+        < rounds.index("seed.rounds.player_two name=alice")
+    )
     # every listed round links to its own permalink
     assert len(set(re.findall(r'href="(/r/\w{10})"', rounds))) == 3
 
@@ -1080,7 +1298,9 @@ def test_my_page_lists_my_rounds(fake_builder):
     assert ">54</a>" not in rounds
 
 
-def test_downloading_after_a_round_finishes_with_the_new_choices_and_leaves_the_entry(fake_builder):
+def test_downloading_after_a_round_finishes_with_the_new_choices_and_leaves_the_entry(
+    fake_builder,
+):
     with dev_client(fake_builder) as test_client:
         seed_id = entered_seed(test_client, "alice")
         first_keys = fake_builder.credentials.keys

@@ -135,7 +135,9 @@ class PatchStack:
                 "pass base_sha1=None to build on a different base"
             )
 
-    def _check_requirements(self, index: int, step: ROMPatch, writer: RomWriter) -> None:
+    def _check_requirements(
+        self, index: int, step: ROMPatch, writer: RomWriter
+    ) -> None:
         missing = step.missing_requirements(writer)
         if not missing:
             return

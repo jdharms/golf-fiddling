@@ -38,6 +38,7 @@ def _contiguous_runs(values: set[int]) -> list[tuple[int, int]]:
             runs.append((v, v + 1))
     return runs
 
+
 # --- Splice site -------------------------------------------------------
 
 # bank 13 $8173, inside the per-player init loop at $8155-$8190. The
@@ -45,14 +46,28 @@ def _contiguous_runs(values: set[int]) -> list[tuple[int, int]]:
 # The $80 fractions written at $816B-$8172 are left alone: they put the
 # ball at the centre of whatever tile we pick.
 _SPLICE_PRG = 0x34173
-_SPLICE_ORIGINAL = bytes([
-    0xAD, 0x0E, 0x01,        # LDA TeeBlocksX
-    0x9D, 0x15, 0x01,        # STA $0115,X
-    0xAD, 0x0F, 0x01,        # LDA TeeBlocksY
-    0x9D, 0x19, 0x01,        # STA $0119,X
-    0xAD, 0x10, 0x01,        # LDA TeeBlocksYHigh
-    0x9D, 0x1B, 0x01,        # STA $011B,X
-])
+_SPLICE_ORIGINAL = bytes(
+    [
+        0xAD,
+        0x0E,
+        0x01,  # LDA TeeBlocksX
+        0x9D,
+        0x15,
+        0x01,  # STA $0115,X
+        0xAD,
+        0x0F,
+        0x01,  # LDA TeeBlocksY
+        0x9D,
+        0x19,
+        0x01,  # STA $0119,X
+        0xAD,
+        0x10,
+        0x01,  # LDA TeeBlocksYHigh
+        0x9D,
+        0x1B,
+        0x01,  # STA $011B,X
+    ]
+)
 
 # --- New code ----------------------------------------------------------
 
@@ -62,7 +77,7 @@ ROUTINE_PRG = ROUTINE_BANK * 0x4000 + (ROUTINE_ADDR - 0x8000)
 
 _EXECUTE_FAR_CALL = 0xD372
 _LSFR_RNG_ALGO = 0xD29C
-_GREEN_TILE_BUFFER = 0x75A6   # WRAM, 24x24 row-major, filled by DecompressGreen
+_GREEN_TILE_BUFFER = 0x75A6  # WRAM, 24x24 row-major, filled by DecompressGreen
 
 # The putting surface is defined once, in golf/formats/putting_surface.py
 # (shared with the editor's carpet paint tool): $30-$47 dark slopes,
@@ -77,7 +92,7 @@ _GREEN_TILE_BUFFER = 0x75A6   # WRAM, 24x24 row-major, filled by DecompressGreen
 _SURFACE_RUNS = _contiguous_runs(PUTTING_SURFACE_TILES)
 
 _ATTEMPTS = 0xFF
-_DEFAULT_TILE = 0x0C          # centre of the 24x24 grid
+_DEFAULT_TILE = 0x0C  # centre of the 24x24 grid
 
 # Zero page scratch. $2A is Tmp_2A in the label file; $26-$29 are
 # unlabelled general scratch. Nothing is live across the splice site -
@@ -176,84 +191,84 @@ def _build_routine() -> bytes:
     def here() -> int:
         return ROUTINE_ADDR + len(code)
 
-    emit(0xA9, _DEFAULT_TILE)              # LDA #$0C
-    emit(0x85, _TILE_X)                    # STA $26
-    emit(0x85, _TILE_Y)                    # STA $27
-    emit(0xA9, _ATTEMPTS)                  # LDA #$FF
-    emit(0x85, _ATTEMPT_COUNTER)           # STA $2A
+    emit(0xA9, _DEFAULT_TILE)  # LDA #$0C
+    emit(0x85, _TILE_X)  # STA $26
+    emit(0x85, _TILE_Y)  # STA $27
+    emit(0xA9, _ATTEMPTS)  # LDA #$FF
+    emit(0x85, _ATTEMPT_COUNTER)  # STA $2A
 
     retry = here()
-    emit(0x20, lo, hi)                     # JSR LSFR_RNG_ALGO
-    emit(0x29, 0x1F)                       # AND #$1F
-    emit(0xC9, 0x18)                       # CMP #$18
+    emit(0x20, lo, hi)  # JSR LSFR_RNG_ALGO
+    emit(0x29, 0x1F)  # AND #$1F
+    emit(0xC9, 0x18)  # CMP #$18
     branch_x = len(code)
-    emit(0xB0, 0x00)                       # BCS Next   (patched below)
-    emit(0x85, _TILE_X)                    # STA $26
+    emit(0xB0, 0x00)  # BCS Next   (patched below)
+    emit(0x85, _TILE_X)  # STA $26
 
-    emit(0x20, lo, hi)                     # JSR LSFR_RNG_ALGO
-    emit(0x29, 0x1F)                       # AND #$1F
-    emit(0xC9, 0x18)                       # CMP #$18
+    emit(0x20, lo, hi)  # JSR LSFR_RNG_ALGO
+    emit(0x29, 0x1F)  # AND #$1F
+    emit(0xC9, 0x18)  # CMP #$18
     branch_y = len(code)
-    emit(0xB0, 0x00)                       # BCS Next   (patched below)
-    emit(0x85, _TILE_Y)                    # STA $27
+    emit(0xB0, 0x00)  # BCS Next   (patched below)
+    emit(0x85, _TILE_Y)  # STA $27
 
     # A = tileY. Build the 16-bit pointer $75A6 + 24*tileY + tileX.
-    emit(0x0A)                             # ASL A
-    emit(0x0A)                             # ASL A
-    emit(0x0A)                             # ASL A        -> 8Y
-    emit(0x85, _PTR_LO)                    # STA $28
-    emit(0xA9, _GREEN_TILE_BUFFER >> 8)    # LDA #$75
-    emit(0x85, _PTR_HI)                    # STA $29
-    emit(0xA5, _PTR_LO)                    # LDA $28
-    emit(0x0A)                             # ASL A        -> 16Y
-    emit(0x90, 0x02)                       # BCC +2
-    emit(0xE6, _PTR_HI)                    # INC $29
-    emit(0x18)                             # CLC
-    emit(0x65, _PTR_LO)                    # ADC $28      -> 24Y
-    emit(0x90, 0x02)                       # BCC +2
-    emit(0xE6, _PTR_HI)                    # INC $29
-    emit(0x18)                             # CLC
-    emit(0x65, _TILE_X)                    # ADC $26
-    emit(0x90, 0x02)                       # BCC +2
-    emit(0xE6, _PTR_HI)                    # INC $29
-    emit(0x18)                             # CLC
+    emit(0x0A)  # ASL A
+    emit(0x0A)  # ASL A
+    emit(0x0A)  # ASL A        -> 8Y
+    emit(0x85, _PTR_LO)  # STA $28
+    emit(0xA9, _GREEN_TILE_BUFFER >> 8)  # LDA #$75
+    emit(0x85, _PTR_HI)  # STA $29
+    emit(0xA5, _PTR_LO)  # LDA $28
+    emit(0x0A)  # ASL A        -> 16Y
+    emit(0x90, 0x02)  # BCC +2
+    emit(0xE6, _PTR_HI)  # INC $29
+    emit(0x18)  # CLC
+    emit(0x65, _PTR_LO)  # ADC $28      -> 24Y
+    emit(0x90, 0x02)  # BCC +2
+    emit(0xE6, _PTR_HI)  # INC $29
+    emit(0x18)  # CLC
+    emit(0x65, _TILE_X)  # ADC $26
+    emit(0x90, 0x02)  # BCC +2
+    emit(0xE6, _PTR_HI)  # INC $29
+    emit(0x18)  # CLC
     emit(0x69, _GREEN_TILE_BUFFER & 0xFF)  # ADC #$A6
-    emit(0x90, 0x02)                       # BCC +2
-    emit(0xE6, _PTR_HI)                    # INC $29
-    emit(0x85, _PTR_LO)                    # STA $28
+    emit(0x90, 0x02)  # BCC +2
+    emit(0xE6, _PTR_HI)  # INC $29
+    emit(0x85, _PTR_LO)  # STA $28
 
-    emit(0xA0, 0x00)                       # LDY #$00
-    emit(0xB1, _PTR_LO)                    # LDA ($28),Y
+    emit(0xA0, 0x00)  # LDY #$00
+    emit(0xB1, _PTR_LO)  # LDA ($28),Y
     accept_branches: list[int] = []
     reject_branches: list[int] = []
 
     # Ascending disjoint runs, so "below this run's start" means rejected:
     # everything lower has already been tested.
     for lo, end in _SURFACE_RUNS:
-        emit(0xC9, lo)                     # CMP #lo
+        emit(0xC9, lo)  # CMP #lo
         reject_branches.append(len(code))
-        emit(0x90, 0x00)                   # BCC Next
-        emit(0xC9, end)                    # CMP #end
+        emit(0x90, 0x00)  # BCC Next
+        emit(0xC9, end)  # CMP #end
         accept_branches.append(len(code))
-        emit(0x90, 0x00)                   # BCC Found
+        emit(0x90, 0x00)  # BCC Found
 
     nxt = here()
-    emit(0xC6, _ATTEMPT_COUNTER)           # DEC $2A
-    emit(0xD0, (retry - (here() + 2)) & 0xFF)   # BNE Retry
+    emit(0xC6, _ATTEMPT_COUNTER)  # DEC $2A
+    emit(0xD0, (retry - (here() + 2)) & 0xFF)  # BNE Retry
 
     found = here()
-    emit(0xA5, 0xA3)                       # LDA GreenX
-    emit(0x18)                             # CLC
-    emit(0x65, _TILE_X)                    # ADC $26
-    emit(0x9D, 0x15, 0x01)                 # STA $0115,X
-    emit(0xA5, 0xA4)                       # LDA GreenY
-    emit(0x18)                             # CLC
-    emit(0x65, _TILE_Y)                    # ADC $27
-    emit(0x9D, 0x19, 0x01)                 # STA $0119,X
-    emit(0xA9, 0x00)                       # LDA #$00
-    emit(0x69, 0x00)                       # ADC #$00
-    emit(0x9D, 0x1B, 0x01)                 # STA $011B,X
-    emit(0x60)                             # RTS
+    emit(0xA5, 0xA3)  # LDA GreenX
+    emit(0x18)  # CLC
+    emit(0x65, _TILE_X)  # ADC $26
+    emit(0x9D, 0x15, 0x01)  # STA $0115,X
+    emit(0xA5, 0xA4)  # LDA GreenY
+    emit(0x18)  # CLC
+    emit(0x65, _TILE_Y)  # ADC $27
+    emit(0x9D, 0x19, 0x01)  # STA $0119,X
+    emit(0xA9, 0x00)  # LDA #$00
+    emit(0x69, 0x00)  # ADC #$00
+    emit(0x9D, 0x1B, 0x01)  # STA $011B,X
+    emit(0x60)  # RTS
 
     # Resolve forward branches.
     for at in (branch_x, branch_y, *reject_branches):
@@ -273,10 +288,16 @@ assert ROUTINE_ADDR + len(ROUTINE) - 1 <= 0xBFF2, "routine overruns bank 10 padd
 
 def putting_practice_patches() -> list[BytePatch]:
     """The two byte patches that make up the spike."""
-    splice = bytes([
-        0x20, _EXECUTE_FAR_CALL & 0xFF, _EXECUTE_FAR_CALL >> 8,
-        ROUTINE_BANK, ROUTINE_ADDR & 0xFF, ROUTINE_ADDR >> 8,
-    ])
+    splice = bytes(
+        [
+            0x20,
+            _EXECUTE_FAR_CALL & 0xFF,
+            _EXECUTE_FAR_CALL >> 8,
+            ROUTINE_BANK,
+            ROUTINE_ADDR & 0xFF,
+            ROUTINE_ADDR >> 8,
+        ]
+    )
     splice += bytes([0xEA] * (len(_SPLICE_ORIGINAL) - len(splice)))
 
     return [

@@ -29,11 +29,15 @@ def test_nothing_imports_from_tools():
         if _imports_tools(path)
     ]
     assert not offenders, (
-        "logic that other code imports belongs in golf/, not tools/: " f"{offenders}"
+        f"logic that other code imports belongs in golf/, not tools/: {offenders}"
     )
 
 
 def test_archived_tools_have_no_entry_points():
     scripts = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["scripts"]
-    archived = [name for name, target in scripts.items() if target.startswith("tools.archive")]
-    assert not archived, f"tools/archive/ scripts should not have entry points: {archived}"
+    archived = [
+        name for name, target in scripts.items() if target.startswith("tools.archive")
+    ]
+    assert not archived, (
+        f"tools/archive/ scripts should not have entry points: {archived}"
+    )

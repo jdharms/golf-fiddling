@@ -51,10 +51,16 @@ def track(slug: str) -> Track:
     try:
         return TRACKS[slug]
     except KeyError:
-        raise MusicError(f"unknown music {slug!r}: expected one of {', '.join(TRACKS)}") from None
+        raise MusicError(
+            f"unknown music {slug!r}: expected one of {', '.join(TRACKS)}"
+        ) from None
 
 
 def choose_music(rng: random.Random, include_mario_open: bool) -> str:
     """A uniform draw of a slug, from the NES Open themes alone unless told otherwise."""
-    candidates = sorted(slug for slug, theme in TRACKS.items() if include_mario_open or theme.rom == US_ROM)
+    candidates = sorted(
+        slug
+        for slug, theme in TRACKS.items()
+        if include_mario_open or theme.rom == US_ROM
+    )
     return rng.choice(candidates)

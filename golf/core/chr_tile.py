@@ -5,7 +5,6 @@ Unified NES CHR format tile decoding functionality used by all tools.
 This eliminates duplication between the editor, visualizer, and other tools.
 """
 
-
 # CHR format constants
 TILE_SIZE = 8  # 8x8 pixels per tile
 BYTES_PER_TILE = 16  # 16 bytes per tile (8 bytes per bitplane)

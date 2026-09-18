@@ -8,11 +8,15 @@ export class GreenModal {
     this.currentHole = null;
     this.flagIndex = 0;
 
-    this.modal.querySelector(".modal-close").addEventListener("click", () => this.close());
+    this.modal
+      .querySelector(".modal-close")
+      .addEventListener("click", () => this.close());
     this.modal.addEventListener("click", (event) => {
       if (event.target === this.modal) this.close();
     });
-    this.modal.addEventListener("close", () => { this.currentHole = null; });
+    this.modal.addEventListener("close", () => {
+      this.currentHole = null;
+    });
   }
 
   get isOpen() {

@@ -58,9 +58,9 @@ SELECT_END = 0xAC84
 
 # The five banner bodies, and where new data may start once they are reclaimed.
 BODY_REGION_START = 0xADE4
-BODY_REGION_END = 0xB01C        # the digit pointer table
+BODY_REGION_END = 0xB01C  # the digit pointer table
 PATTERN_BASE = 0x1000
-ROW_WIDTH = 32                  # bytes per WriteNametableTiles row = 2 tiles
+ROW_WIDTH = 32  # bytes per WriteNametableTiles row = 2 tiles
 
 _BANK12_PRG_BASE = BANK * 0x4000
 
@@ -79,8 +79,7 @@ def _descriptor(dest: int, width: int, rows: int, pointer: int) -> bytes:
         raise ValueError(f"width {width} does not fit the header's six bits")
     if rows > width:
         raise ValueError(
-            f"{rows} rows at width {width}: $CEE8 abandons a transfer when "
-            "width < rows"
+            f"{rows} rows at width {width}: $CEE8 abandons a transfer when width < rows"
         )
     return bytes(
         [dest & 0xFF, dest >> 8, 0x80 | width, rows, pointer & 0xFF, pointer >> 8]
@@ -252,7 +251,9 @@ class SignpostBannerPatch(CompositePatch):
         self.notes = list(notes)
 
 
-def signpost_banner_patch(rom, art, banner: str = "us", hole: int = 1) -> SignpostBannerPatch:
+def signpost_banner_patch(
+    rom, art, banner: str = "us", hole: int = 1
+) -> SignpostBannerPatch:
     """The banner patch for an edited signpost screen export.
 
     `rom` is a `RomReader` on the base ROM. Reads the banner back off the

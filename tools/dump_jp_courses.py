@@ -34,8 +34,12 @@ def dump_jp_course(
     course_dir = output_dir / course["name"]
     course_dir.mkdir(parents=True, exist_ok=True)
 
-    hole_offset = rom.read_fixed_byte(jp_rom_utils.TABLE_COURSE_HOLE_OFFSET + course_idx)
-    terrain_bank = rom.read_fixed_byte(jp_rom_utils.TABLE_COURSE_BANK_TERRAIN + course_idx)
+    hole_offset = rom.read_fixed_byte(
+        jp_rom_utils.TABLE_COURSE_HOLE_OFFSET + course_idx
+    )
+    terrain_bank = rom.read_fixed_byte(
+        jp_rom_utils.TABLE_COURSE_BANK_TERRAIN + course_idx
+    )
 
     # JP stores greens in the same bank as terrain, not a shared bank like US
     greens_bank = terrain_bank
@@ -91,8 +95,12 @@ def dump_jp_course(
         scroll_limit = jp_rom_utils.read_metadata_byte(
             rom, jp_rom_utils.TABLE_SCROLL_LIMIT, hole_idx
         )
-        green_x = jp_rom_utils.read_metadata_byte(rom, jp_rom_utils.TABLE_GREEN_X, hole_idx)
-        green_y = jp_rom_utils.read_metadata_byte(rom, jp_rom_utils.TABLE_GREEN_Y, hole_idx)
+        green_x = jp_rom_utils.read_metadata_byte(
+            rom, jp_rom_utils.TABLE_GREEN_X, hole_idx
+        )
+        green_y = jp_rom_utils.read_metadata_byte(
+            rom, jp_rom_utils.TABLE_GREEN_Y, hole_idx
+        )
         tee_x = jp_rom_utils.read_metadata_byte(rom, jp_rom_utils.TABLE_TEE_X, hole_idx)
         tee_y = jp_rom_utils.read_metadata_word(rom, jp_rom_utils.TABLE_TEE_Y, hole_idx)
 
@@ -123,7 +131,9 @@ def dump_jp_course(
         attr_prg = rom_utils.cpu_to_prg_switched(terrain_end_ptr, terrain_bank)
         attr_bytes = rom.read_prg(attr_prg, jp_rom_utils.JP_ATTR_BYTES)
 
-        terrain_rows = terrain_decomp.decompress(terrain_compressed, stats=terrain_stats)
+        terrain_rows = terrain_decomp.decompress(
+            terrain_compressed, stats=terrain_stats
+        )
         terrain_height = len(terrain_rows)
 
         attr_height = (terrain_height + 1) // 2
@@ -135,7 +145,9 @@ def dump_jp_course(
         greens_compressed = rom.read_prg(greens_prg, GREENS_READ_SIZE)
 
         try:
-            greens_rows = greens_decomp.decompress(greens_compressed, stats=greens_stats)
+            greens_rows = greens_decomp.decompress(
+                greens_compressed, stats=greens_stats
+            )
         except Exception as e:
             print(f"(greens decompress error: {e})")
             greens_rows = []

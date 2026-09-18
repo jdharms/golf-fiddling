@@ -31,7 +31,7 @@ class ToolManager:
         import pygame
 
         # Check if tool has a hotkey
-        hotkey = tool.get_hotkey() if hasattr(tool, 'get_hotkey') else None
+        hotkey = tool.get_hotkey() if hasattr(tool, "get_hotkey") else None
         if hotkey:
             if hotkey in self.hotkey_map:
                 existing = self.hotkey_map[hotkey]
@@ -85,7 +85,11 @@ class ToolManager:
 
         # Check if this is an action tool (has an is_action_tool attribute)
         # We check for the method dynamically to avoid protocol changes
-        is_action = hasattr(tool, 'is_action_tool') and callable(tool.is_action_tool) and tool.is_action_tool()
+        is_action = (
+            hasattr(tool, "is_action_tool")
+            and callable(tool.is_action_tool)
+            and tool.is_action_tool()
+        )
 
         if is_action:
             # Execute action tool without changing active tool

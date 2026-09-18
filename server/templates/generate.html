@@ -1,98 +1,120 @@
 {% extends "base.html" %}
 {% block title %}{{ t_plain("generate.page_title") }}{% endblock %}
 {% block content %}
-<hgroup>
-  <h1>{{ t("generate.heading") }}</h1>
-  <p>{{ t("generate.tagline") }}</p>
-</hgroup>
+  <hgroup>
+    <h1>{{ t("generate.heading") }}</h1>
+    <p>{{ t("generate.tagline") }}</p>
+  </hgroup>
 
-{% if error %}
-<article class="form-error" role="alert">
-  {% if error == "no_sources" %}{{ t("generate.error.no_sources") }}
-  {% elif error == "required_bag_over_max" %}{{ t("generate.error.required_bag_over_max", count=error_values.count, max=error_values.max) }}
-  {% elif error == "required_bag_banned" %}{{ t("generate.error.required_bag_banned", clubs=error_values.clubs) }}
-  {% elif error == "pool" %}{{ t("generate.error.pool") }}
-  {% elif error == "rate_limited" %}{{ t("generate.error.rate_limited") }}
-  {% elif error == "unavailable" %}{{ t("generate.error.unavailable") }}
+  {% if error %}
+    <article class="form-error" role="alert">
+      {% if error == "no_sources" %}{{ t("generate.error.no_sources") }}
+      {% elif error == "required_bag_over_max" %}{{ t("generate.error.required_bag_over_max", count=error_values.count, max=error_values.max) }}
+      {% elif error == "required_bag_banned" %}{{ t("generate.error.required_bag_banned", clubs=error_values.clubs) }}
+      {% elif error == "pool" %}{{ t("generate.error.pool") }}
+      {% elif error == "rate_limited" %}{{ t("generate.error.rate_limited") }}
+      {% elif error == "unavailable" %}{{ t("generate.error.unavailable") }}
   {% else %}{{ t("generate.error.invalid", field=error_values.field) }}{% endif %}
-</article>
-{% endif %}
+    </article>
+  {% endif %}
 
-<form method="post" action="/generate" id="generate-form">
-  <fieldset>
-    <legend>{{ t("generate.par.legend") }}</legend>
-    {% for par in options.pars %}
-    <label>
-      <input type="radio" name="par" value="{{ par }}" {% if form.par == par|string %}checked{% endif %}>
-      {{ t("generate.par.option", par=par) }}
-    </label>
-    {% endfor %}
-  </fieldset>
-
-  <fieldset>
-    <legend>{{ t("generate.sources.legend") }}</legend>
-    {% for rom in options.sources %}
-    <label>
-      <input type="checkbox" name="sources" value="{{ rom.id }}" {% if rom.id in form.sources %}checked{% endif %}>
-      <cite>{{ rom.title }}</cite>
-    </label>
-    {% endfor %}
-  </fieldset>
-
-  <fieldset>
-    <label>
-      <input type="checkbox" role="switch" name="allow_family_repeats" {% if form.allow_family_repeats %}checked{% endif %}>
-      {{ t("generate.family_repeats.label") }}
-    </label>
-    <small>{{ t("generate.family_repeats.help") }}</small>
-  </fieldset>
-
-  <label for="generate-music">{{ t("generate.music.label") }}</label>
-  <select id="generate-music" name="music">
-    <option value="random" {% if form.music == "random" %}selected{% endif %}>{{ t_plain("generate.music.random") }}</option>
-    {% for option in options.music %}
-    <option value="{{ option.slug }}" {% if form.music == option.slug %}selected{% endif %}>
-      {{ t_plain("generate.music.option", course=option.course, rom=option.rom_title) }}
-    </option>
-    {% endfor %}
-  </select>
-
-  <article class="club-rules">
-    <header>
-      <strong>{{ t("generate.clubs.heading") }}</strong>
-    </header>
-    <p>{{ t("generate.clubs.lead") }}</p>
-
-    <label for="generate-clubs-max">{{ t("generate.clubs.max_label") }}</label>
-    <input type="number" id="generate-clubs-max" name="clubs_max" min="1" max="{{ options.clubs_max }}"
-      value="{{ form.clubs_max }}" required>
-
+  <form method="post" action="/generate" id="generate-form">
     <fieldset>
-      <legend>{{ t("generate.clubs.banned_legend") }}</legend>
-      <div class="club-grid">
-        {% for label in options.club_labels %}
+      <legend>{{ t("generate.par.legend") }}</legend>
+      {% for par in options.pars %}
         <label>
-          <input type="checkbox" name="banned" value="{{ label }}" {% if label in form.banned %}checked{% endif %}>
-          {{ label }}
+          <input type="radio"
+                 name="par"
+                 value="{{ par }}"
+                 {% if form.par == par|string %}checked{% endif %}>
+          {{ t("generate.par.option", par=par) }}
         </label>
-        {% endfor %}
-      </div>
+      {% endfor %}
     </fieldset>
 
     <fieldset>
-      <legend>{{ t("generate.clubs.required_legend") }}</legend>
-      <div class="club-grid">
-        {% for label in options.club_labels %}
+      <legend>{{ t("generate.sources.legend") }}</legend>
+      {% for rom in options.sources %}
         <label>
-          <input type="checkbox" name="required_bag" value="{{ label }}" {% if label in form.required_bag %}checked{% endif %}>
-          {{ label }}
+          <input type="checkbox"
+                 name="sources"
+                 value="{{ rom.id }}"
+                 {% if rom.id in form.sources %}checked{% endif %}>
+          <cite>{{ rom.title }}</cite>
         </label>
-        {% endfor %}
-      </div>
-      <small>{{ t("generate.clubs.required_help") }}</small>
+      {% endfor %}
     </fieldset>
-  </article>
 
-  <button type="submit">{{ t("generate.submit") }}</button>
-</form>
+    <fieldset>
+      <label>
+        <input type="checkbox"
+               role="switch"
+               name="allow_family_repeats"
+               {% if form.allow_family_repeats %}checked{% endif %}>
+        {{ t("generate.family_repeats.label") }}
+      </label>
+      <small>{{ t("generate.family_repeats.help") }}</small>
+    </fieldset>
+
+    <label for="generate-music">{{ t("generate.music.label") }}</label>
+    <select id="generate-music" name="music">
+      <option value="random"
+              {% if form.music == "random" %}selected{% endif %}>{{ t_plain("generate.music.random") }}</option>
+      {% for option in options.music %}
+        <option value="{{ option.slug }}"
+                {% if form.music == option.slug %}selected{% endif %}>
+          {{ t_plain("generate.music.option", course=option.course, rom=option.rom_title) }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <article class="club-rules">
+      <header>
+        <strong>{{ t("generate.clubs.heading") }}</strong>
+      </header>
+      <p>{{ t("generate.clubs.lead") }}</p>
+
+      <label for="generate-clubs-max">{{ t("generate.clubs.max_label") }}</label>
+      <input type="number"
+             id="generate-clubs-max"
+             name="clubs_max"
+             min="1"
+             max="{{ options.clubs_max }}"
+             value="{{ form.clubs_max }}"
+             required>
+
+      <fieldset>
+        <legend>{{ t("generate.clubs.banned_legend") }}</legend>
+        <div class="club-grid">
+          {% for label in options.club_labels %}
+            <label>
+              <input type="checkbox"
+                     name="banned"
+                     value="{{ label }}"
+                     {% if label in form.banned %}checked{% endif %}>
+              {{ label }}
+            </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>{{ t("generate.clubs.required_legend") }}</legend>
+        <div class="club-grid">
+          {% for label in options.club_labels %}
+            <label>
+              <input type="checkbox"
+                     name="required_bag"
+                     value="{{ label }}"
+                     {% if label in form.required_bag %}checked{% endif %}>
+              {{ label }}
+            </label>
+          {% endfor %}
+        </div>
+        <small>{{ t("generate.clubs.required_help") }}</small>
+      </fieldset>
+    </article>
+
+    <button type="submit">{{ t("generate.submit") }}</button>
+  </form>
 {% endblock %}

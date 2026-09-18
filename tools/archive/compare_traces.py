@@ -18,6 +18,7 @@ from dataclasses import dataclass
 @dataclass
 class AddressRange:
     """A range of PRG addresses with metadata."""
+
     start: int
     end: int  # exclusive
     annotation: str
@@ -36,7 +37,9 @@ def load_trace(path: str) -> list[dict]:
     return data.get("entries", [])
 
 
-def extract_ranges(entries: list[dict], op_type: str | None = None) -> list[AddressRange]:
+def extract_ranges(
+    entries: list[dict], op_type: str | None = None
+) -> list[AddressRange]:
     """Extract address ranges from trace entries."""
     ranges = []
     for entry in entries:
@@ -47,13 +50,15 @@ def extract_ranges(entries: list[dict], op_type: str | None = None) -> list[Addr
         length = entry.get("length", 1)
 
         if prg_offset is not None:
-            ranges.append(AddressRange(
-                start=prg_offset,
-                end=prg_offset + length,
-                annotation=entry.get("annotation", ""),
-                bank=entry.get("bank", -1),
-                cpu_addr=entry.get("cpu_addr", ""),
-            ))
+            ranges.append(
+                AddressRange(
+                    start=prg_offset,
+                    end=prg_offset + length,
+                    annotation=entry.get("annotation", ""),
+                    bank=entry.get("bank", -1),
+                    cpu_addr=entry.get("cpu_addr", ""),
+                )
+            )
 
     return ranges
 
@@ -132,12 +137,14 @@ def main():
     parser.add_argument("read_trace", help="Path to read_trace.json")
     parser.add_argument("write_trace", help="Path to write_trace.json")
     parser.add_argument(
-        "--merge", "-m",
+        "--merge",
+        "-m",
         action="store_true",
         help="Merge adjacent address ranges",
     )
     parser.add_argument(
-        "--summary", "-s",
+        "--summary",
+        "-s",
         action="store_true",
         help="Show summary statistics only",
     )
@@ -170,8 +177,12 @@ def main():
     total_unwritten_bytes = sum(r.length for r in unwritten_reads)
     total_read_bytes = sum(r.length for r in read_ranges)
 
-    print(f"Written but not read: {len(unread_writes)} ranges, {total_unread_bytes:,} / {total_written_bytes:,} bytes")
-    print(f"Read but not written: {len(unwritten_reads)} ranges, {total_unwritten_bytes:,} / {total_read_bytes:,} bytes")
+    print(
+        f"Written but not read: {len(unread_writes)} ranges, {total_unread_bytes:,} / {total_written_bytes:,} bytes"
+    )
+    print(
+        f"Read but not written: {len(unwritten_reads)} ranges, {total_unwritten_bytes:,} / {total_read_bytes:,} bytes"
+    )
     print()
 
     if args.summary:

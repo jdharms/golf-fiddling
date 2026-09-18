@@ -12,7 +12,13 @@ import argparse
 import sys
 from pathlib import Path
 
-from golf.randomizer.catalog import DEFAULT_COURSES, DEFAULT_INDEX, Catalog, HoleStore, sync_vanilla
+from golf.randomizer.catalog import (
+    DEFAULT_COURSES,
+    DEFAULT_INDEX,
+    Catalog,
+    HoleStore,
+    sync_vanilla,
+)
 
 
 def main() -> int:
@@ -24,9 +30,13 @@ def main() -> int:
         default=DEFAULT_COURSES,
         help="directory holding the dumped courses, with Mario Open under jp/ (default: courses/)",
     )
-    parser.add_argument("--index", type=Path, default=DEFAULT_INDEX, help="catalog index to update")
     parser.add_argument(
-        "--check", action="store_true", help="report without writing; exit 1 if anything would change"
+        "--index", type=Path, default=DEFAULT_INDEX, help="catalog index to update"
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="report without writing; exit 1 if anything would change",
     )
     args = parser.parse_args()
 

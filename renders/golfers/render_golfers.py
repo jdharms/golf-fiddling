@@ -9,7 +9,9 @@ import sys
 
 from PIL import Image, ImageDraw
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 from golf.core.golfer_sprites import BODY_IN_FRONT_FRAMES, GOLFER_NAMES, GolferSprites
 from golf.core.palettes import NES_SYSTEM_PALETTE
@@ -43,7 +45,10 @@ def sheet(sprites, out, putt=False, with_club=False, scale=3):
     xs, ys = [], []
     for g in range(6):
         for f in range(n):
-            for meta, nudge in ((rows[g][f], (0, 0)), (clubs[g][f], sprites.club_nudge(g, CLUB, f))):
+            for meta, nudge in (
+                (rows[g][f], (0, 0)),
+                (clubs[g][f], sprites.club_nudge(g, CLUB, f)),
+            ):
                 x0, y0, x1, y1 = meta.bounds()
                 xs += [x0 + nudge[0], x1 + nudge[0]]
                 ys += [y0 + nudge[1], y1 + nudge[1]]
@@ -62,21 +67,30 @@ def sheet(sprites, out, putt=False, with_club=False, scale=3):
         vram = sprites.load_chr(g, CLUB)
         body_pal = [c or 0 for c in sprites.body_palette(g)]
         club_pal = [c or 0 for c in sprites.club_palette()]
-        draw.text((6, header + g * ch + ch // 2 - 4), f"{g} {GOLFER_NAMES[g]}", fill=(210, 218, 205))
+        draw.text(
+            (6, header + g * ch + ch // 2 - 4),
+            f"{g} {GOLFER_NAMES[g]}",
+            fill=(210, 218, 205),
+        )
         for f in range(n):
             ox, oy = label + f * cw + 3 - x0, header + g * ch + 3 - y0
             if with_club:
                 ndx, ndy = sprites.club_nudge(g, CLUB, f)
                 # Lower OAM index wins, so paint the loser first: the body draws
                 # in front only on frames $05 and $0B ($8060).
-                order = [(clubs[g][f], club_pal, ndx, ndy), (rows[g][f], body_pal, 0, 0)]
+                order = [
+                    (clubs[g][f], club_pal, ndx, ndy),
+                    (rows[g][f], body_pal, 0, 0),
+                ]
                 if putt or f not in BODY_IN_FRONT_FRAMES:
                     order.reverse()
                 for meta, pal, dx, dy in order:
                     paint(px, vram, meta, pal, ox, oy, size, dx, dy)
             else:
                 paint(px, vram, rows[g][f], body_pal, ox, oy, size)
-            draw.line([(label + f * cw, header), (label + f * cw, size[1])], fill=(48, 52, 46))
+            draw.line(
+                [(label + f * cw, header), (label + f * cw, size[1])], fill=(48, 52, 46)
+            )
         draw.line([(0, header + g * ch), (size[0], header + g * ch)], fill=(48, 52, 46))
 
     img.resize((size[0] * scale, size[1] * scale), Image.NEAREST).save(out)

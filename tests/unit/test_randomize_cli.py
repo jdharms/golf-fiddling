@@ -31,7 +31,9 @@ def test_generate_writes_the_manifest_the_library_generates(tmp_path):
     path = tmp_path / "seed.json"
     completed = run("generate", "--seed", "cli-unit", "-o", path)
     assert completed.returncode == 0, completed.stderr
-    expected = generate(Catalog.load(), CurationSnapshot.load(), Settings(prng_seed="cli-unit"))
+    expected = generate(
+        Catalog.load(), CurationSnapshot.load(), Settings(prng_seed="cli-unit")
+    )
     assert load(path) == expected
     assert f"wrote {path}" in completed.stdout
 
@@ -45,16 +47,28 @@ def test_generate_draws_a_seed_when_none_is_given(tmp_path):
 def test_every_generate_flag_lands_in_the_settings(tmp_path):
     path = tmp_path / "seed.json"
     completed = run(
-        "generate", "-o", path, "--seed", "flags",
-        "--par", "70",
-        "--sources", US_ROM,
-        "--exclude-tags", "long,scenic",
+        "generate",
+        "-o",
+        path,
+        "--seed",
+        "flags",
+        "--par",
+        "70",
+        "--sources",
+        US_ROM,
+        "--exclude-tags",
+        "long,scenic",
         "--allow-family-repeats",
-        "--music", "nes_uk",
-        "--mercy-point", "none",
-        "--clubs-max", "10",
-        "--banned", "1W",
-        "--required-bag", "3W,PW",
+        "--music",
+        "nes_uk",
+        "--mercy-point",
+        "none",
+        "--clubs-max",
+        "10",
+        "--banned",
+        "1W",
+        "--required-bag",
+        "3W,PW",
     )
     assert completed.returncode == 0, completed.stderr
     settings = load(path).settings
@@ -93,7 +107,9 @@ def test_generate_refuses_settings_the_model_refuses(tmp_path):
     ]:
         completed = run("generate", "-o", path, *args)
         assert completed.returncode == 1, args
-        assert completed.stderr.startswith("error:") and message in completed.stderr, completed.stderr
+        assert completed.stderr.startswith("error:") and message in completed.stderr, (
+            completed.stderr
+        )
     assert not path.exists()
 
 

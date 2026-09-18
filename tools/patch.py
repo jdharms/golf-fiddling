@@ -57,13 +57,35 @@ def main() -> int:
         metavar="ID[:KEY=VALUE,...]",
         help="add a step; paths are relative to the current directory",
     )
-    parser.add_argument("-o", "--output", type=Path, help="write the ROM (default: <rom>.patched.nes unless --ips)")
-    parser.add_argument("--ips", type=Path, help="write an IPS patch from the base to the build")
-    parser.add_argument("--validate-only", action="store_true", help="build in memory; write nothing")
-    parser.add_argument("--any-base", action="store_true", help="build on a base other than the vanilla US ROM")
-    parser.add_argument("--save-recipe", type=Path, metavar="PATH", help="write the combined steps as a recipe")
-    parser.add_argument("-v", "--verbose", action="store_true", help="show each patch type's report")
-    parser.add_argument("--list", action="store_true", help="list every patch type and its parameters")
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        help="write the ROM (default: <rom>.patched.nes unless --ips)",
+    )
+    parser.add_argument(
+        "--ips", type=Path, help="write an IPS patch from the base to the build"
+    )
+    parser.add_argument(
+        "--validate-only", action="store_true", help="build in memory; write nothing"
+    )
+    parser.add_argument(
+        "--any-base",
+        action="store_true",
+        help="build on a base other than the vanilla US ROM",
+    )
+    parser.add_argument(
+        "--save-recipe",
+        type=Path,
+        metavar="PATH",
+        help="write the combined steps as a recipe",
+    )
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="show each patch type's report"
+    )
+    parser.add_argument(
+        "--list", action="store_true", help="list every patch type and its parameters"
+    )
     args = parser.parse_args()
 
     if args.list:
@@ -85,7 +107,9 @@ def main() -> int:
 
         base = Path(args.rom).read_bytes()
         built = recipe.build_steps(base)
-        result = PatchStack([step.patch for step in built], base_sha1=recipe.base_sha1).build(base)
+        result = PatchStack(
+            [step.patch for step in built], base_sha1=recipe.base_sha1
+        ).build(base)
     except (RecipeError, PatchError, OSError) as error:
         print(f"Error: {error}", file=sys.stderr)
         return 1
@@ -106,7 +130,9 @@ def main() -> int:
         args.ips.write_bytes(ips_diff(base, result.rom))
         print(f"wrote {args.ips}")
     if args.output or not args.ips:
-        output = args.output or Path(str(Path(args.rom).with_suffix("")) + ".patched.nes")
+        output = args.output or Path(
+            str(Path(args.rom).with_suffix("")) + ".patched.nes"
+        )
         output.write_bytes(result.rom)
         print(f"wrote {output}")
     return 0

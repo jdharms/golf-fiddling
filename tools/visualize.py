@@ -164,7 +164,9 @@ def render_course_flags(
     for hole_file in hole_files:
         hole_name = hole_file.stem
         output_base = str(output_path / hole_name)
-        render_hole_flags(str(hole_file), output_base, flag_sprite, cup_sprite, debug_background)
+        render_hole_flags(
+            str(hole_file), output_base, flag_sprite, cup_sprite, debug_background
+        )
 
 
 def main():
@@ -261,9 +263,7 @@ Examples:
     if args.greens_only:
         greens_tileset = TilesetData(args.greens_tileset)
         if input_p.is_file():
-            output_path = (
-                args.output if args.output else input_p.stem + "_greens.png"
-            )
+            output_path = args.output if args.output else input_p.stem + "_greens.png"
             render_hole_greens(args.input, greens_tileset, output_path)
         else:
             output_dir = (
@@ -285,12 +285,14 @@ Examples:
             # Strip .png suffix if provided
             if output_base.endswith(".png"):
                 output_base = output_base[:-4]
-            render_hole_flags(args.input, output_base, flag_sprite, cup_sprite, args.debug_bg)
-        else:
-            output_dir = (
-                args.output if args.output else f"renders/{input_p.name}_flags"
+            render_hole_flags(
+                args.input, output_base, flag_sprite, cup_sprite, args.debug_bg
             )
-            render_course_flags(args.input, output_dir, flag_sprite, cup_sprite, args.debug_bg)
+        else:
+            output_dir = args.output if args.output else f"renders/{input_p.name}_flags"
+            render_course_flags(
+                args.input, output_dir, flag_sprite, cup_sprite, args.debug_bg
+            )
         return
 
     # Default mode: full terrain rendering

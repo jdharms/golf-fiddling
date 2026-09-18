@@ -51,7 +51,9 @@ TERRAIN_ROW_OFFSETS_LO_GROW_PATCH = BytePatch(
 
 # Full 60-entry TerrainRowOffsetsHi (row * 22, high byte), relocated to
 # free space at $CA97.
-_HI_NEW_TABLE = bytes([0x00] * 12 + [0x01] * 12 + [0x02] * 11 + [0x03] * 12 + [0x04] * 12 + [0x05] * 1)
+_HI_NEW_TABLE = bytes(
+    [0x00] * 12 + [0x01] * 12 + [0x02] * 11 + [0x03] * 12 + [0x04] * 12 + [0x05] * 1
+)
 assert len(_HI_NEW_TABLE) == 60
 
 TERRAIN_ROW_OFFSETS_HI_FREE_SPACE_PATCH = BytePatch(

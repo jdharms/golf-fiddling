@@ -7,7 +7,14 @@ import pytest
 
 from golf.core.patches.seeded_wind import derive_hole_seeds
 from golf.core.patches.sram_defaults import Club
-from golf.randomizer.catalog import JP_ROM, US_ROM, Catalog, CatalogEntry, HoleId, RomSource
+from golf.randomizer.catalog import (
+    JP_ROM,
+    US_ROM,
+    Catalog,
+    CatalogEntry,
+    HoleId,
+    RomSource,
+)
 from golf.randomizer.curation import CurationSnapshot
 from golf.core.patches.sram_defaults import magic_bytes
 from golf.randomizer.generate import GENERATOR_VERSION, GenerationError, generate
@@ -26,7 +33,9 @@ def real_curation() -> CurationSnapshot:
 
 
 def entry(hole_id: str, par: int, rom: str = US_ROM) -> CatalogEntry:
-    return CatalogEntry(HoleId.parse(hole_id), RomSource(rom, "course", 1), "0" * 64, par, 400, "Test")
+    return CatalogEntry(
+        HoleId.parse(hole_id), RomSource(rom, "course", 1), "0" * 64, par, 400, "Test"
+    )
 
 
 def minimal_catalog(par3: int = 4, par4: int = 10, par5: int = 4, extra=()) -> Catalog:
@@ -43,7 +52,10 @@ def test_same_inputs_give_the_same_manifest(real_catalog, real_curation):
     settings = Settings(prng_seed="league-week-1")
     first = generate(real_catalog, real_curation, settings)
     assert generate(real_catalog, real_curation, settings) == first
-    assert generate(real_catalog, real_curation, Settings(prng_seed="league-week-2")) != first
+    assert (
+        generate(real_catalog, real_curation, Settings(prng_seed="league-week-2"))
+        != first
+    )
 
 
 def test_draws_a_prng_seed_when_the_settings_have_none(real_catalog, real_curation):
@@ -63,7 +75,9 @@ def test_records_versions_and_round_trips(real_catalog, real_curation):
 @pytest.mark.parametrize("par", sorted(COUNTS))
 def test_course_follows_a_valid_layout_of_real_holes(real_catalog, real_curation, par):
     for seed in range(10):
-        course = generate(real_catalog, real_curation, Settings(prng_seed=str(seed), par=par)).course
+        course = generate(
+            real_catalog, real_curation, Settings(prng_seed=str(seed), par=par)
+        ).course
         assert satisfies(course.layout, COUNTS[par])
         assert all(real_catalog[slot.id].par == slot.par for slot in course.holes)
 
@@ -82,16 +96,23 @@ def test_wind_seeds_come_from_the_prng_seed(real_catalog, real_curation):
 
 def test_each_draw_has_its_own_stream(real_catalog, real_curation):
     both = generate(real_catalog, real_curation, Settings(prng_seed="abc")).course
-    us_only = generate(real_catalog, real_curation, Settings(prng_seed="abc", sources={US_ROM})).course
+    us_only = generate(
+        real_catalog, real_curation, Settings(prng_seed="abc", sources={US_ROM})
+    ).course
     assert both.layout == us_only.layout
     assert both.magic_words == us_only.magic_words
     assert both.sram_magic == us_only.sram_magic
     assert [s.wind_seed for s in both.holes] == [s.wind_seed for s in us_only.holes]
 
 
-def test_sram_magic_is_drawn_per_seed_and_never_holds_a_blank_sram_byte(real_catalog, real_curation):
+def test_sram_magic_is_drawn_per_seed_and_never_holds_a_blank_sram_byte(
+    real_catalog, real_curation
+):
     magics = [
-        generate(real_catalog, real_curation, Settings(prng_seed=str(seed))).course.sram_magic for seed in range(40)
+        generate(
+            real_catalog, real_curation, Settings(prng_seed=str(seed))
+        ).course.sram_magic
+        for seed in range(40)
     ]
     for magic in magics:
         assert all(byte not in (0x00, 0xFF) for byte in magic_bytes(magic))
@@ -100,14 +121,19 @@ def test_sram_magic_is_drawn_per_seed_and_never_holds_a_blank_sram_byte(real_cat
 
 def test_nes_open_seeds_use_nes_open_music(real_catalog, real_curation):
     for seed in range(40):
-        manifest = generate(real_catalog, real_curation, Settings(prng_seed=str(seed), sources={US_ROM}))
+        manifest = generate(
+            real_catalog, real_curation, Settings(prng_seed=str(seed), sources={US_ROM})
+        )
         assert manifest.course.music.startswith("nes_")
         assert required_roms(manifest, real_catalog) == (US_ROM,)
 
 
 def test_mario_open_seeds_can_use_mario_open_music(real_catalog, real_curation):
     music = {
-        generate(real_catalog, real_curation, Settings(prng_seed=str(seed))).course.music for seed in range(60)
+        generate(
+            real_catalog, real_curation, Settings(prng_seed=str(seed))
+        ).course.music
+        for seed in range(60)
     }
     assert any(slug.startswith("jp_") for slug in music)
 
@@ -115,17 +141,28 @@ def test_mario_open_seeds_can_use_mario_open_music(real_catalog, real_curation):
 def test_never_repeats_a_family():
     twins = [entry("t/twin_a", 4), entry("t/twin_b", 4, JP_ROM)]
     holes = minimal_catalog(par4=9, extra=twins)
-    curation = CurationSnapshot.from_json({"t/twin_a": {"family": "twin"}, "t/twin_b": {"family": "twin"}})
+    curation = CurationSnapshot.from_json(
+        {"t/twin_a": {"family": "twin"}, "t/twin_b": {"family": "twin"}}
+    )
     for seed in range(30):
-        ids = {str(slot.id) for slot in generate(holes, curation, Settings(prng_seed=str(seed))).course.holes}
+        ids = {
+            str(slot.id)
+            for slot in generate(
+                holes, curation, Settings(prng_seed=str(seed))
+            ).course.holes
+        }
         assert len(ids & {"t/twin_a", "t/twin_b"}) == 1
 
 
 def test_allowing_repeats_can_use_both_twins():
     twins = [entry("t/twin_a", 4), entry("t/twin_b", 4, JP_ROM)]
     holes = minimal_catalog(par4=8, extra=twins)
-    curation = CurationSnapshot.from_json({"t/twin_a": {"family": "twin"}, "t/twin_b": {"family": "twin"}})
-    course = generate(holes, curation, Settings(prng_seed="abc", allow_family_repeats=True)).course
+    curation = CurationSnapshot.from_json(
+        {"t/twin_a": {"family": "twin"}, "t/twin_b": {"family": "twin"}}
+    )
+    course = generate(
+        holes, curation, Settings(prng_seed="abc", allow_family_repeats=True)
+    ).course
     assert {"t/twin_a", "t/twin_b"} <= {str(slot.id) for slot in course.holes}
 
 
@@ -134,16 +171,25 @@ def test_spends_a_mixed_family_where_it_is_the_only_fit():
     # par 5 member: the course is only fillable if that family takes a par 3 slot.
     mixed = [entry("t/mixed_short", 3), entry("t/mixed_long", 5)]
     holes = minimal_catalog(par3=3, extra=mixed)
-    curation = CurationSnapshot.from_json({"t/mixed_short": {"family": "m"}, "t/mixed_long": {"family": "m"}})
+    curation = CurationSnapshot.from_json(
+        {"t/mixed_short": {"family": "m"}, "t/mixed_long": {"family": "m"}}
+    )
     for seed in range(30):
-        ids = {str(slot.id) for slot in generate(holes, curation, Settings(prng_seed=str(seed))).course.holes}
+        ids = {
+            str(slot.id)
+            for slot in generate(
+                holes, curation, Settings(prng_seed=str(seed))
+            ).course.holes
+        }
         assert "t/mixed_short" in ids and "t/mixed_long" not in ids
 
 
 def test_reports_a_pool_the_family_rule_leaves_too_small():
     twins = [entry("t/twin_a", 3), entry("t/twin_b", 3)]
     holes = minimal_catalog(par3=2, extra=twins)
-    curation = CurationSnapshot.from_json({"t/twin_a": {"family": "twin"}, "t/twin_b": {"family": "twin"}})
+    curation = CurationSnapshot.from_json(
+        {"t/twin_a": {"family": "twin"}, "t/twin_b": {"family": "twin"}}
+    )
     with pytest.raises(GenerationError, match="4 par 3.*par 3: 3"):
         generate(holes, curation, Settings(prng_seed="abc"))
 

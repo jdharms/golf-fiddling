@@ -2,7 +2,6 @@
 Palette tool for painting attribute (palette) values on terrain.
 """
 
-
 import pygame
 from pygame import Rect
 
@@ -79,8 +78,7 @@ class PaletteTool:
         # Only works in terrain mode (greens have fixed palette)
         if context.state.mode != "terrain":
             return ToolResult(
-                handled=True,
-                message="Palette: Not available in greens mode"
+                handled=True, message="Palette: Not available in greens mode"
             )
 
         # Create view state for coordinate conversion
@@ -102,8 +100,10 @@ class PaletteTool:
             row, col = supertile
 
             # Validate bounds before accessing attributes array
-            if not (0 <= row < len(context.hole_data.attributes) and
-                    0 <= col < len(context.hole_data.attributes[row])):
+            if not (
+                0 <= row < len(context.hole_data.attributes)
+                and 0 <= col < len(context.hole_data.attributes[row])
+            ):
                 return ToolResult.handled()  # Outside valid area
 
             current_palette = context.hole_data.attributes[row][col]

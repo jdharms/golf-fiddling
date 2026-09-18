@@ -24,7 +24,9 @@ ROOT = Path(__file__).resolve().parents[2]
 ROM_PATH = ROOT / "nes_open_us.nes"
 HEADER = 0x10
 
-pytestmark = pytest.mark.skipif(not ROM_PATH.exists(), reason=f"{ROM_PATH.name} not present")
+pytestmark = pytest.mark.skipif(
+    not ROM_PATH.exists(), reason=f"{ROM_PATH.name} not present"
+)
 
 #: (strokes, putts) for holes 1-18, per player slot
 ROUNDS = {
@@ -35,7 +37,9 @@ ROUNDS = {
 
 def rom_url(rom: bytes, slot: int) -> str:
     """The URL the ROM's QR screen shows for `slot` after ROUNDS has been played."""
-    image = rom[HEADER + SCORECARD_QR_PATCH.image_offset :][: len(SCORECARD_QR_PATCH.image)]
+    image = rom[HEADER + SCORECARD_QR_PATCH.image_offset :][
+        : len(SCORECARD_QR_PATCH.image)
+    ]
     machine = Machine()
     machine.write(layout.TABLE_ORIGIN, image)
     for player, holes in ROUNDS.items():
@@ -46,7 +50,9 @@ def rom_url(rom: bytes, slot: int) -> str:
 
 
 def test_a_downloaded_roms_codes_record_both_players_rounds():
-    with TestClient(create_app(Config(database=":memory:", rom_dir=ROOT, dev_login=True))) as client:
+    with TestClient(
+        create_app(Config(database=":memory:", rom_dir=ROOT, dev_login=True))
+    ) as client:
         form = FormState.default()
         form.sources, form.music = {US_ROM}, "nes_us"
         data: dict[str, list[str]] = {}
@@ -59,7 +65,11 @@ def test_a_downloaded_roms_codes_record_both_players_rounds():
         client.get("/auth/login", params={"as": "alice"})
         download = client.post(
             f"{seed_path}/patch.ips",
-            data={"player_name": "toad", "clubs": ["1W", "PW"], f"rom_{US_ROM}": vanilla_rom(US_ROM).sha1},
+            data={
+                "player_name": "toad",
+                "clubs": ["1W", "PW"],
+                f"rom_{US_ROM}": vanilla_rom(US_ROM).sha1,
+            },
         )
         assert download.status_code == 200, download.text
         rom = ips.apply(ROM_PATH.read_bytes(), download.content)
@@ -69,7 +79,9 @@ def test_a_downloaded_roms_codes_record_both_players_rounds():
             url = rom_url(rom, slot)
             assert url.startswith(URL_PREFIX)
             # the ROM's own URL submits and hands the phone the round's permalink
-            submitted = client.get("/s/" + url.removeprefix(URL_PREFIX), follow_redirects=False)
+            submitted = client.get(
+                "/s/" + url.removeprefix(URL_PREFIX), follow_redirects=False
+            )
             assert submitted.status_code == 303, submitted.text
             permalink = submitted.headers["location"]
             assert permalink.endswith("?recorded")
@@ -77,7 +89,10 @@ def test_a_downloaded_roms_codes_record_both_players_rounds():
             assert response.status_code == 200, response.text
 
         with client.app.state.db.transaction() as conn:
-            recorded = conn.execute("SELECT slot, total_strokes, total_putts FROM rounds ORDER BY slot").fetchall()
+            recorded = conn.execute(
+                "SELECT slot, total_strokes, total_putts FROM rounds ORDER BY slot"
+            ).fetchall()
     assert [tuple(row) for row in recorded] == [
-        (slot, sum(s for s, _ in holes), sum(p for _, p in holes)) for slot, holes in ROUNDS.items()
+        (slot, sum(s for s, _ in holes), sum(p for _, p in holes))
+        for slot, holes in ROUNDS.items()
     ]

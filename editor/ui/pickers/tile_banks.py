@@ -5,7 +5,6 @@ This module provides reusable tile organization components that handle
 layout, rendering, and hit detection for groups of tiles.
 """
 
-
 import pygame
 from pygame import Rect, Surface
 

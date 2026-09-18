@@ -55,7 +55,7 @@ def make_art(result, palette_shift=1):
     """Invent new art by recolouring the banner, so the fixture needs no
     second .aseprite and the expected pixels are known exactly."""
     patterns = []
-    for tile in result.tiles[: 22]:
+    for tile in result.tiles[:22]:
         rotated = bytes(b ^ 0xFF for b in tile.chr_bytes[:8]) + tile.chr_bytes[8:]
         patterns.append(rotated)
     return patterns
@@ -116,7 +116,9 @@ def test_allocation_never_takes_a_digit_tile(prepared):
     digits = {tile for digit in range(DIGIT_COUNT) for tile in digit_tiles(rom, digit)}
     for first_tile, count in chunks:
         taken = digits & set(range(first_tile, first_tile + count))
-        assert not taken, f"chunk ${first_tile:02X} overwrites digit tiles {sorted(taken)}"
+        assert not taken, (
+            f"chunk ${first_tile:02X} overwrites digit tiles {sorted(taken)}"
+        )
 
 
 def test_layout_stays_inside_the_reclaimed_banner_bodies(prepared):
@@ -191,7 +193,9 @@ def test_the_patched_rom_really_draws_the_new_art(prepared, tmp_path):
 
     for tile in result.tiles:
         index = vram.data[0x2000 + tile.row * 32 + tile.col]
-        drawn = bytes(vram.data[PATTERN_BASE + index * 16: PATTERN_BASE + index * 16 + 16])
+        drawn = bytes(
+            vram.data[PATTERN_BASE + index * 16 : PATTERN_BASE + index * 16 + 16]
+        )
         assert drawn == tile.chr_bytes, (
             f"cell ({tile.col}, {tile.row}) draws tile ${index:02X}, whose pattern "
             "is not the art that was imported"

@@ -26,7 +26,9 @@ class VanillaRom:
 
 
 VANILLA_ROMS: tuple[VanillaRom, ...] = (
-    VanillaRom(US_ROM, "NES Open Tournament Golf (USA)", "nes_open_us.nes", US_ROM_SHA1),
+    VanillaRom(
+        US_ROM, "NES Open Tournament Golf (USA)", "nes_open_us.nes", US_ROM_SHA1
+    ),
     VanillaRom(JP_ROM, "Mario Open Golf (Japan)", "mario_open_jp.nes", JP_ROM_SHA1),
 )
 

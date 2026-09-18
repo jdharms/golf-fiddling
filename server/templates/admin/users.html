@@ -2,38 +2,38 @@
 {% import "admin/_admin.html" as admin %}
 {% block title %}Users - Admin{% endblock %}
 {% block content %}
-{{ admin.nav() }}
-<h1>Users</h1>
-{% if listing.items %}
-<div class="overflow-auto">
-  <table class="striped">
-    <thead>
-      <tr>
-        <th scope="col">Name</th>
-        <th scope="col">Discord</th>
-        <th scope="col">Player id</th>
-        <th scope="col" class="num">Entries</th>
-        <th scope="col" class="num">Rounds</th>
-        <th scope="col">Last sign-in</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for listing_user in listing.items %}
-      {% set account = listing_user.user %}
-      <tr>
-        <td><a href="/admin/users/{{ account.id }}">{{ account.display_name }}</a></td>
-        <td>{{ account.username }} <code>{{ account.discord_id }}</code></td>
-        <td><code>{{ '%08x' % account.player_id }}</code></td>
-        <td class="num">{{ listing_user.entries }}</td>
-        <td class="num">{{ listing_user.rounds }}</td>
-        <td>{{ account.last_login }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-{% else %}
-<p>No users{% if listing.number > 1 %} on this page{% endif %}.</p>
-{% endif %}
-{{ admin.pager(listing, "/admin/users") }}
+  {{ admin.nav() }}
+  <h1>Users</h1>
+  {% if listing.items %}
+    <div class="overflow-auto">
+      <table class="striped">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Discord</th>
+            <th scope="col">Player id</th>
+            <th scope="col" class="num">Entries</th>
+            <th scope="col" class="num">Rounds</th>
+            <th scope="col">Last sign-in</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for listing_user in listing.items %}
+            {% set account = listing_user.user %}
+            <tr>
+              <td><a href="/admin/users/{{ account.id }}">{{ account.display_name }}</a></td>
+              <td>{{ account.username }} <code>{{ account.discord_id }}</code></td>
+              <td><code>{{ '%08x' % account.player_id }}</code></td>
+              <td class="num">{{ listing_user.entries }}</td>
+              <td class="num">{{ listing_user.rounds }}</td>
+              <td>{{ account.last_login }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p>No users{% if listing.number > 1 %} on this page{% endif %}.</p>
+  {% endif %}
+  {{ admin.pager(listing, "/admin/users") }}
 {% endblock %}

@@ -51,7 +51,9 @@ def test_rejects_bad_banks(tmp_path, lines, message):
         load_word_bank(path)
 
 
-@pytest.mark.parametrize("words", [("BALL", "GOLF"), ("BALL", "BALL", "GOLF"), ("BALL", "GOLF", "PUTTERS")])
+@pytest.mark.parametrize(
+    "words", [("BALL", "GOLF"), ("BALL", "BALL", "GOLF"), ("BALL", "GOLF", "PUTTERS")]
+)
 def test_rejects_bad_magic_words(words):
     with pytest.raises(MagicWordsError):
         check_magic_words(words)

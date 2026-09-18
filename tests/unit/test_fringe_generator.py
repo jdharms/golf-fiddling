@@ -22,6 +22,7 @@ from editor.algorithms.fringe_generator import (
 # Direction Utilities
 # =============================================================================
 
+
 class TestDirectionFrom:
     """Tests for direction_from function."""
 
@@ -77,6 +78,7 @@ class TestOpposite:
 # Geometry
 # =============================================================================
 
+
 class TestSignedArea:
     """Tests for compute_signed_area function."""
 
@@ -128,6 +130,7 @@ class TestMakeShapeKey:
 # FringeGenerator - Data Loading
 # =============================================================================
 
+
 class TestFringeGeneratorLoading:
     """Tests for FringeGenerator data loading."""
 
@@ -157,15 +160,13 @@ class TestFringeGeneratorLoading:
             pass  # Expected if mock data doesn't support this path
 
     def _minimal_valid_data(self):
-        return {
-            "neighbors": {},
-            "classification_index": {}
-        }
+        return {"neighbors": {}, "classification_index": {}}
 
 
 # =============================================================================
 # FringeGenerator - Path Validation
 # =============================================================================
+
 
 class TestFringeGeneratorPathValidation:
     """Tests for path validation in FringeGenerator."""
@@ -180,7 +181,7 @@ class TestFringeGeneratorPathValidation:
                 "path=(down,left) interior=(down,left)": ["0x4B"],
                 "path=(left,up) interior=(left,up)": ["0x4F"],
                 "path=(right,up) interior=(right,up)": ["0x4C"],
-            }
+            },
         }
         data_file = tmp_path / "data.json"
         with open(data_file, "w") as f:
@@ -219,6 +220,7 @@ class TestFringeGeneratorPathValidation:
 # Test Data Builder
 # =============================================================================
 
+
 def build_rectangle_test_data():
     """
     Build test data supporting 4-tile and 8-tile rectangle paths.
@@ -236,21 +238,20 @@ def build_rectangle_test_data():
             # Convex corners - each needs connections for both CW and CCW traversal
             "0x48": {  # (down,right) interior=(down,right)
                 "right": {"0x49": 50, "0x4B": 50},  # to horizontal or corner
-                "down": {"0x52": 50, "0x5F": 50},   # to vertical straight or corner
+                "down": {"0x52": 50, "0x5F": 50},  # to vertical straight or corner
             },
             "0x4B": {  # (down,left) interior=(down,left)
-                "down": {"0x53": 50, "0x4F": 50},   # to vertical or corner
-                "left": {"0x49": 50, "0x48": 50},   # to horizontal straight or corner
+                "down": {"0x53": 50, "0x4F": 50},  # to vertical or corner
+                "left": {"0x49": 50, "0x48": 50},  # to horizontal straight or corner
             },
             "0x4F": {  # (left,up) interior=(left,up)
-                "left": {"0x4E": 50, "0x4C": 50},   # to horizontal or corner
-                "up": {"0x53": 50, "0x4B": 50},                 # to vertical straight
+                "left": {"0x4E": 50, "0x4C": 50},  # to horizontal or corner
+                "up": {"0x53": 50, "0x4B": 50},  # to vertical straight
             },
             "0x4C": {  # (right,up) interior=(right,up)
-                "up": {"0x52": 50, "0x48": 50},     # to vertical or corner
-                "right": {"0x4E": 50, "0x4F": 50},              # to horizontal straight
+                "up": {"0x52": 50, "0x48": 50},  # to vertical or corner
+                "right": {"0x4E": 50, "0x4F": 50},  # to horizontal straight
             },
-
             # Horizontal straights
             "0x49": {  # (left,right) interior=down
                 "right": {"0x4B": 50, "0x49": 50},  # to corner or another straight
@@ -260,7 +261,6 @@ def build_rectangle_test_data():
                 "right": {"0x4C": 50, "0x4E": 50, "0x4F": 50},
                 "left": {"0x4F": 50, "0x4E": 50, "0x4C": 50},
             },
-
             # Vertical straights
             "0x52": {  # (down,up) interior=right
                 "down": {"0x4C": 50, "0x52": 50},
@@ -282,13 +282,14 @@ def build_rectangle_test_data():
             "path=(left,right) interior=up": ["0x4E"],
             "path=(down,up) interior=right": ["0x52"],
             "path=(down,up) interior=left": ["0x53"],
-        }
+        },
     }
 
 
 # =============================================================================
 # FringeGenerator - Generation Output
 # =============================================================================
+
 
 class TestFringeGeneratorOutput:
     """Tests for FringeGenerator output structure and validity."""
@@ -350,10 +351,14 @@ class TestFringeGeneratorOutput:
     def test_clockwise_rectangle_8_tiles(self, generator):
         """8-tile clockwise rectangle with straights and corners."""
         path = [
-            (0, 0), (0, 1), (0, 2),  # top edge, going right
-            (1, 2), (2, 2),          # right edge, going down
-            (2, 1), (2, 0),          # bottom edge, going left
-            (1, 0),                  # left edge, going up
+            (0, 0),
+            (0, 1),
+            (0, 2),  # top edge, going right
+            (1, 2),
+            (2, 2),  # right edge, going down
+            (2, 1),
+            (2, 0),  # bottom edge, going left
+            (1, 0),  # left edge, going up
         ]
         result = generator.generate(path)
         assert len(result) == 8
@@ -361,10 +366,14 @@ class TestFringeGeneratorOutput:
     def test_counterclockwise_rectangle_8_tiles(self, generator):
         """8-tile counter-clockwise rectangle."""
         path = [
-            (0, 0), (1, 0), (2, 0),  # left edge, going down
-            (2, 1), (2, 2),          # bottom edge, going right
-            (1, 2), (0, 2),          # right edge, going up
-            (0, 1),                   # top edge, going left
+            (0, 0),
+            (1, 0),
+            (2, 0),  # left edge, going down
+            (2, 1),
+            (2, 2),  # bottom edge, going right
+            (1, 2),
+            (0, 2),  # right edge, going up
+            (0, 1),  # top edge, going left
         ]
         result = generator.generate(path)
         assert len(result) == 8
@@ -373,6 +382,7 @@ class TestFringeGeneratorOutput:
 # =============================================================================
 # FringeGenerator - Neighbor Compatibility
 # =============================================================================
+
 
 class TestFringeGeneratorCompatibility:
     """Tests verifying neighbor compatibility in generated output."""
@@ -418,6 +428,7 @@ class TestFringeGeneratorCompatibility:
 # =============================================================================
 # FringeGenerator - Determinism
 # =============================================================================
+
 
 class TestFringeGeneratorDeterminism:
     """Tests for random seed behavior."""
@@ -476,6 +487,7 @@ class TestFringeGeneratorDeterminism:
 # FringeGenerator - Edge Cases
 # =============================================================================
 
+
 class TestFringeGeneratorEdgeCases:
     """Tests for edge cases and error conditions."""
 
@@ -507,7 +519,7 @@ class TestFringeGeneratorEdgeCases:
                 "path=(left,up) interior=(left,up)": ["0x4F"],
                 "path=(right,up) interior=(right,up)": ["0x4C"],
                 # Missing: straight segments
-            }
+            },
         }
 
         data_file = tmp_path / "data.json"
@@ -538,7 +550,7 @@ class TestFringeGeneratorEdgeCases:
                 "path=(down,left) interior=(down,left)": ["0x4B"],
                 "path=(left,up) interior=(left,up)": ["0x4F"],
                 "path=(right,up) interior=(right,up)": ["0x4C"],
-            }
+            },
         }
 
         data_file = tmp_path / "data.json"
@@ -557,10 +569,16 @@ class TestFringeGeneratorEdgeCases:
         """Test a larger rectangle path."""
         # 4x3 rectangle = 12 tiles
         path = [
-            (0, 0), (0, 1), (0, 2), (0, 3),  # top
-            (1, 3), (2, 3),                   # right
-            (2, 2), (2, 1), (2, 0),           # bottom
-            (1, 0),                            # left
+            (0, 0),
+            (0, 1),
+            (0, 2),
+            (0, 3),  # top
+            (1, 3),
+            (2, 3),  # right
+            (2, 2),
+            (2, 1),
+            (2, 0),  # bottom
+            (1, 0),  # left
         ]
         result = generator.generate(path)
         assert len(result) == 10

@@ -1,7 +1,6 @@
 """Unit tests for vertical fill detection in compression."""
 
 
-
 def test_first_row_unchanged(mock_minimal_terrain_tables):
     """First row should never be modified (no row above to compare)."""
     from golf.core.compressor import detect_vertical_fills

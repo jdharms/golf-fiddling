@@ -10,7 +10,9 @@ class CategoryNode:
     name: str  # Display name (e.g., "water")
     path: str  # Full path (e.g., "terrain/water")
     children: dict[str, "CategoryNode"] = field(default_factory=dict)
-    stamp_ids: list[str] = field(default_factory=list)  # Stamps directly in this category
+    stamp_ids: list[str] = field(
+        default_factory=list
+    )  # Stamps directly in this category
     is_expanded: bool = False  # UI state: is folder expanded?
 
     def get_all_stamp_ids(self) -> list[str]:

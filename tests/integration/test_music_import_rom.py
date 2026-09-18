@@ -84,6 +84,7 @@ def jp():
 
 # ------------------------------------------------------------------ applying
 
+
 def test_vanilla_rom_is_applicable(tmp_path, dump):
     writer = RomWriter(US_ROM, str(tmp_path / "out.nes"))
     patch = music_import_patch(dump)
@@ -120,13 +121,14 @@ def test_only_bank_14_is_touched(patched, vanilla):
 
 # ------------------------------------------------------------------ allocation
 
+
 def test_header_slots_are_reachable_from_each_track_s_base(dump):
     """A header offset is one byte added to a base picked by music ID."""
     from golf.core.patches.music_import import _HEADER_BASES
 
     tracks = [t for t in dump["tracks"] if t["music_id"] in COURSE_TRACKS]
     placed = _place_headers(tracks)
-    assert len(set(placed.values())) == len(placed)          # no slot reused
+    assert len(set(placed.values())) == len(placed)  # no slot reused
     for (mid, _), addr in placed.items():
         assert 3 <= addr - _HEADER_BASES[mid] <= 0xFF
         assert FREE_HEADERS[0] <= addr < FREE_HEADERS[1]
@@ -136,24 +138,27 @@ def test_header_slots_are_reachable_from_each_track_s_base(dump):
 def test_envelope_table_keeps_the_us_rows_and_appends_the_rest(dump):
     tracks = [t for t in dump["tracks"] if t["music_id"] in COURSE_TRACKS]
     table, remap = _build_envelope_table(tracks)
-    assert table[:len(US_ENVELOPE_ROWS)] == US_ENVELOPE_ROWS
+    assert table[: len(US_ENVELOPE_ROWS)] == US_ENVELOPE_ROWS
     for track in tracks:
         rows = track["envelope_rows"]
         for base, new_base in remap[track["music_id"]].items():
             want = bytes(int(v, 16) for v in rows[f"{base:02X}"].split())
-            assert table[new_base:new_base + 16] == want
+            assert table[new_base : new_base + 16] == want
 
 
 # ------------------------------------------------------------------ the result
+
 
 @pytest.mark.parametrize("music_id", COURSE_TRACKS)
 def test_imported_track_round_trips_out_of_the_patched_rom(patched, jp, music_id):
     got = md.extract_track(patched, music_id)
     want = md.extract_track(jp, music_id)
-    assert [p["stream"] for p in got["patterns"]] == [p["stream"] for p in want["patterns"]]
+    assert [p["stream"] for p in got["patterns"]] == [
+        p["stream"] for p in want["patterns"]
+    ]
     assert got["order"] == want["order"]
     assert got["loop_position"] == want["loop_position"]
-    assert got["transpose"] == want["transpose"] + 2      # JP plays two semitones sharp
+    assert got["transpose"] == want["transpose"] + 2  # JP plays two semitones sharp
 
 
 @pytest.mark.parametrize("music_id", COURSE_TRACKS)
@@ -175,6 +180,7 @@ def test_the_relocated_envelope_table_is_still_discoverable(patched):
 
 
 # ------------------------------------------------------------------ one track
+
 
 @pytest.mark.parametrize("music_id", JP_COURSE_THEMES)
 def test_every_jp_course_theme_fits_as_the_one_track(dump, music_id):
@@ -205,18 +211,30 @@ def test_one_track_touches_bank_14_and_the_two_redirects(single, vanilla):
     changed = [i - 16 for i in range(len(vanilla)) if vanilla[i] != single[i]]
     outside = {i for i in changed if not 0x38000 <= i < 0x3C000}
     # CourseBgmTable's first entry is already $03
-    assert outside == {COURSE_BGM_TABLE_PRG + 1, COURSE_BGM_TABLE_PRG + 2, SCENE_MUSIC_OPERAND_PRG}
+    assert outside == {
+        COURSE_BGM_TABLE_PRG + 1,
+        COURSE_BGM_TABLE_PRG + 2,
+        SCENE_MUSIC_OPERAND_PRG,
+    }
 
 
 def test_every_course_and_the_scene_request_play_the_one_track(single):
-    assert single[16 + COURSE_BGM_TABLE_PRG:16 + COURSE_BGM_TABLE_PRG + 3] == b"\x03\x03\x03"
-    assert single[16 + SCENE_MUSIC_OPERAND_PRG - 1:16 + SCENE_MUSIC_OPERAND_PRG + 1] == b"\xa9\x03"
+    assert (
+        single[16 + COURSE_BGM_TABLE_PRG : 16 + COURSE_BGM_TABLE_PRG + 3]
+        == b"\x03\x03\x03"
+    )
+    assert (
+        single[16 + SCENE_MUSIC_OPERAND_PRG - 1 : 16 + SCENE_MUSIC_OPERAND_PRG + 1]
+        == b"\xa9\x03"
+    )
 
 
 def test_the_one_track_round_trips_out_of_the_patched_rom(single, jp):
     got = md.extract_track(single, SINGLE_TRACK_ID)
     want = md.extract_track(jp, SINGLE)
-    assert [p["stream"] for p in got["patterns"]] == [p["stream"] for p in want["patterns"]]
+    assert [p["stream"] for p in got["patterns"]] == [
+        p["stream"] for p in want["patterns"]
+    ]
     assert got["order"] == want["order"]
     assert got["loop_position"] == want["loop_position"]
     assert got["transpose"] == want["transpose"] + 2

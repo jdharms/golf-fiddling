@@ -179,9 +179,9 @@ class AsepriteFile:
             len(self.frames),
             self.width,
             self.height,
-            8,                       # indexed
-            1,                       # layer opacity is valid
-            100,                     # deprecated speed
+            8,  # indexed
+            1,  # layer opacity is valid
+            100,  # deprecated speed
             0,
             0,
             self.transparent_index,
@@ -234,7 +234,7 @@ class AsepriteFile:
             pos = offset + 16
             for _ in range(new_count or old_count):
                 chunk_size, chunk_type = struct.unpack_from("<IH", raw, pos)
-                body = raw[pos + 6: pos + chunk_size]
+                body = raw[pos + 6 : pos + chunk_size]
                 if chunk_type == CHUNK_PALETTE:
                     ase.palette = _parse_palette(body, ase.palette)
                 elif chunk_type == CHUNK_LAYER:
@@ -272,7 +272,7 @@ class AsepriteFile:
                 y = source.y + row
                 if not 0 <= y < self.height:
                     continue
-                line = source.pixels[row * source.width: (row + 1) * source.width]
+                line = source.pixels[row * source.width : (row + 1) * source.width]
                 for column, value in enumerate(line):
                     x = source.x + column
                     if value != self.transparent_index and 0 <= x < self.width:
@@ -298,7 +298,7 @@ def _parse_palette(body: bytes, existing: list) -> list:
         name = None
         if flags & 1:
             length = struct.unpack_from("<H", body, pos)[0]
-            name = body[pos + 2: pos + 2 + length].decode("utf-8")
+            name = body[pos + 2 : pos + 2 + length].decode("utf-8")
             pos += 2 + length
         palette[index] = (r, g, b, a, name) if name else (r, g, b, a)
     return palette
@@ -308,7 +308,7 @@ def _parse_layer(body: bytes) -> Layer:
     flags, layer_type = struct.unpack_from("<HH", body, 0)
     opacity = body[12]
     length = struct.unpack_from("<H", body, 16)[0]
-    name = body[18: 18 + length].decode("utf-8")
+    name = body[18 : 18 + length].decode("utf-8")
     return Layer(name=name, flags=flags, opacity=opacity, layer_type=layer_type)
 
 

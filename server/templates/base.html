@@ -1,61 +1,80 @@
-<!doctype html>
+<!DOCTYPE html>
+{# aria-current="page" on the nav item for the page being shown #}
+{% macro current(active) %}{% if active %} aria-current="page"{% endif %}{% endmacro %}
 <html lang="en">
 
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{{ t_plain("site.title") }}{% endblock %}</title>
-  {% block metadata %}{% endblock %}
-  <link rel="stylesheet" href="/static/pico.green.min.css">
-  <link rel="stylesheet" href="/static/site.css">
-  {% block styles %}{% endblock %}
-</head>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ t_plain("site.title") }}{% endblock %}</title>
+    {% block metadata %}{% endblock %}
+    <link rel="stylesheet" href="/static/pico.green.min.css">
+    <link rel="stylesheet" href="/static/site.css">
+    {% block styles %}{% endblock %}
+  </head>
 
-<body>
-  <header class="container">
-    <nav>
-      <ul>
-        <li><strong>{{ t("nav.brand") }}</strong></li>
-      </ul>
-      <ul>
-        <li><a href="/" {% if page=="home" %} aria-current="page" {% endif %}>{{ t("nav.home") }}</a></li>
-        <li><a href="/rom" {% if page=="rom" %} aria-current="page" {% endif %}>{{ t("nav.rom") }}</a></li>
-        <li><a href="/generate" {% if page=="generate" %} aria-current="page" {% endif %}>{{ t("nav.generate") }}</a></li>
-        <li><a href="/rangefinder" {% if page=="rangefinder" %} aria-current="page" {% endif %}>{{ t("nav.rangefinder") }}</a></li>
-        {% if content_pages %}
-        <li>
-          <details class="dropdown">
-            <summary{% if page=="content" %} aria-current="page"{% endif %}>{{ t("nav.pages") }}</summary>
-            <ul>
-              {% for item in content_pages %}
-              <li><a href="/pages/{{ item.slug }}"{% if page=="content" and content_page.slug==item.slug %} aria-current="page"{% endif %}>{{ item.nav_title }}</a></li>
-              {% endfor %}
-            </ul>
-          </details>
-        </li>
+  <body>
+    <header class="container">
+      <nav>
+        <ul>
+          <li><strong>{{ t("nav.brand") }}</strong></li>
+        </ul>
+        <ul>
+          <li>
+            <a href="/"{{ current(page=="home") }}>{{ t("nav.home") }}</a>
+          </li>
+          <li>
+            <a href="/rom"{{ current(page=="rom") }}>{{ t("nav.rom") }}</a>
+          </li>
+          <li>
+            <a href="/generate"
+               {{ current(page=="generate") }}>{{ t("nav.generate") }}</a>
+          </li>
+          <li>
+            <a href="/rangefinder"
+               {{ current(page=="rangefinder") }}>{{ t("nav.rangefinder") }}</a>
+          </li>
+          {% if content_pages %}
+            <li>
+              <details class="dropdown">
+                <summary{{ current(page=="content") }}>{{ t("nav.pages") }}</summary>
+                <ul>
+                  {% for item in content_pages %}
+                    <li>
+                      <a href="/pages/{{ item.slug }}"
+                         {{ current(page=="content" and content_page.slug==item.slug) }}>{{ item.nav_title }}</a>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </details>
+            </li>
+          {% endif %}
+        </ul>
+        {% if user %}
+          <ul class="account">
+            <li>
+              <a href="/me"
+                 {{ current(page=="me") }}>{{ t("nav.signed_in_as", name=user.display_name) }}</a>
+            </li>
+            <li>
+              <form method="post" action="/auth/logout">
+                <input type="hidden" name="next" value="{{ return_path }}">
+                <button type="submit"
+                        class="secondary outline">{{ t("nav.sign_out") }}</button>
+              </form>
+            </li>
+          </ul>
+        {% elif sign_in_enabled %}
+          <ul class="account">
+            <li><a href="/auth/login?next={{ return_path | urlencode }}">{{ t("nav.sign_in") }}</a></li>
+          </ul>
         {% endif %}
-      </ul>
-      {% if user %}
-      <ul class="account">
-        <li><a href="/me" {% if page=="me" %} aria-current="page" {% endif %}>{{ t("nav.signed_in_as", name=user.display_name) }}</a></li>
-        <li>
-          <form method="post" action="/auth/logout">
-            <input type="hidden" name="next" value="{{ return_path }}">
-            <button type="submit" class="secondary outline">{{ t("nav.sign_out") }}</button>
-          </form>
-        </li>
-      </ul>
-      {% elif sign_in_enabled %}
-      <ul class="account">
-        <li><a href="/auth/login?next={{ return_path | urlencode }}">{{ t("nav.sign_in") }}</a></li>
-      </ul>
-      {% endif %}
-    </nav>
-  </header>
-  <main class="container">
-    {% block content %}{% endblock %}
-  </main>
-  {% block scripts %}{% endblock %}
-</body>
+      </nav>
+    </header>
+    <main class="container">
+      {% block content %}{% endblock %}
+    </main>
+    {% block scripts %}{% endblock %}
+  </body>
 
 </html>

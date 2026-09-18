@@ -58,11 +58,13 @@ def analyze_courses(courses_dir: Path) -> dict:
             # Count putting surface tiles
             size = count_putting_surface_tiles(greens)
 
-            holes.append({
-                "course": course_name,
-                "hole": hole_num,
-                "size": size,
-            })
+            holes.append(
+                {
+                    "course": course_name,
+                    "hole": hole_num,
+                    "size": size,
+                }
+            )
             sizes.append(size)
 
             print(f"{course_name.capitalize()} Hole {hole_num:2d}: {size} tiles")

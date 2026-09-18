@@ -43,7 +43,9 @@ class MenuTables:
             while self.byte(j) != 0xFF:
                 chars.append(self.byte(j))
                 j += 1
-            entries.append((self.byte(entry), self.byte(entry + 1), chars.decode("ascii")))
+            entries.append(
+                (self.byte(entry), self.byte(entry + 1), chars.decode("ascii"))
+            )
         return entries
 
     def static_text(self, menu_id: int) -> list[tuple[int, int, str]]:
@@ -137,10 +139,14 @@ def test_main_player_and_course_menus_share_the_header(patched):
 
 def test_header_occupies_exactly_vanilla_course_select_span(patched, vanilla):
     """Same positions and widths, so the same attribute cells are coloured."""
+
     def span(entries):
         return [(x, y, len(text)) for x, y, text in entries]
 
-    assert vanilla.static_text(0x02) == [(0x04, 0x0A, "PLEASE SELECT"), (0x04, 0x0C, "COURSE")]
+    assert vanilla.static_text(0x02) == [
+        (0x04, 0x0A, "PLEASE SELECT"),
+        (0x04, 0x0C, "COURSE"),
+    ]
     assert span(patched.static_text(0x02)) == span(vanilla.static_text(0x02))
 
 

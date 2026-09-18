@@ -142,9 +142,10 @@ def test_the_patched_rom_carries_the_image_and_the_hook(tmp_path) -> None:
 def test_the_unfinished_rom_holds_the_fill_in_the_placeholders(tmp_path) -> None:
     writer = unfinished_writer(tmp_path / "unfinished.nes")
     for _, symbol, length in PLACEHOLDERS:
-        assert writer.read_prg(placeholder_offset(symbol), length) == bytes(
-            [port.PATCH_FILL]
-        ) * length
+        assert (
+            writer.read_prg(placeholder_offset(symbol), length)
+            == bytes([port.PATCH_FILL]) * length
+        )
 
 
 def test_coexists_with_the_bank_13_tail_patches(tmp_path) -> None:
@@ -196,7 +197,9 @@ def test_credentials_change_only_the_placeholders(tmp_path) -> None:
     allowed = set()
     for _, symbol, length in PLACEHOLDERS:
         allowed.update(file_range(placeholder_offset(symbol), length))
-    changed = changed_bytes(unfinished.read_bytes(), (tmp_path / "finished.nes").read_bytes())
+    changed = changed_bytes(
+        unfinished.read_bytes(), (tmp_path / "finished.nes").read_bytes()
+    )
     assert changed <= allowed
     assert len(changed) > len(allowed) // 2
     assert PATCH.is_applied(writer)
@@ -242,10 +245,15 @@ def test_disable_restores_the_vanilla_wait_and_nothing_else(tmp_path) -> None:
     writer.save()
 
     assert writer.read_prg(PATCH.splice_offset, 2) == PATCH.vanilla_splice_bytes
-    changed = changed_bytes(unfinished.read_bytes(), (tmp_path / "guest.nes").read_bytes())
+    changed = changed_bytes(
+        unfinished.read_bytes(), (tmp_path / "guest.nes").read_bytes()
+    )
     assert changed and changed <= set(file_range(PATCH.splice_offset, 2))
     assert writer.read_prg(PATCH.image_offset, len(PATCH.image)) == PATCH.image
-    assert writer.read_prg(PATCH.trampoline_offset, len(PATCH.trampoline)) == PATCH.trampoline
+    assert (
+        writer.read_prg(PATCH.trampoline_offset, len(PATCH.trampoline))
+        == PATCH.trampoline
+    )
 
     # Neither applied nor applicable: a guest ROM cannot have the screen put back.
     assert not PATCH.is_applied(writer)

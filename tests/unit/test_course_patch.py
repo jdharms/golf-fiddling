@@ -149,9 +149,15 @@ class TestBankTable:
     def test_uses_doubled_indexing(self):
         table = bank_table_bytes(
             [
-                BankAllocation(hole_index=0, bank=0, terrain_start=0x8000, terrain_end=0x8100),
-                BankAllocation(hole_index=2, bank=1, terrain_start=0x8000, terrain_end=0x8100),
-                BankAllocation(hole_index=17, bank=1, terrain_start=0x8100, terrain_end=0x8200),
+                BankAllocation(
+                    hole_index=0, bank=0, terrain_start=0x8000, terrain_end=0x8100
+                ),
+                BankAllocation(
+                    hole_index=2, bank=1, terrain_start=0x8000, terrain_end=0x8100
+                ),
+                BankAllocation(
+                    hole_index=17, bank=1, terrain_start=0x8100, terrain_end=0x8200
+                ),
             ]
         )
         assert len(table) == BANK_TABLE_SIZE
@@ -183,12 +189,21 @@ class TestScorecardTotals:
         writes = self.by_name(scorecard_total_writes(japan))
         bank2 = lambda addr: rom_utils.cpu_to_prg_switched(addr, 2)  # noqa: E731
         assert writes == {
-            "scorecard total yardage 7037 (thousands tile)": (bank2(0xAF33), bytes([0x47])),
-            "scorecard total yardage 7037 (hundreds)": (bank2(0xAF71), bytes([0, 0, 0])),
+            "scorecard total yardage 7037 (thousands tile)": (
+                bank2(0xAF33),
+                bytes([0x47]),
+            ),
+            "scorecard total yardage 7037 (hundreds)": (
+                bank2(0xAF71),
+                bytes([0, 0, 0]),
+            ),
             "scorecard total yardage 7037 (tens)": (bank2(0xAF74), bytes([3, 3, 3])),
             "scorecard total yardage 7037 (ones)": (bank2(0xAF77), bytes([7, 7, 7])),
             "scorecard total par 72 (main card)": (bank2(0xB9BF), bytes([0x47, 0x42])),
-            "scorecard total par 72 (36-hole match play card)": (bank2(0xBAD5), bytes([0x47, 0x42])),
+            "scorecard total par 72 (36-hole match play card)": (
+                bank2(0xBAD5),
+                bytes([0x47, 0x42]),
+            ),
         }
 
     def test_follows_edited_holes(self):
@@ -256,7 +271,9 @@ class TestCoursePatch:
         required = set()
         for patch in CoursePatch.requires:
             for leaf in leaf_patches(patch):
-                required |= set(range(leaf.prg_offset, leaf.prg_offset + len(leaf.patched)))
+                required |= set(
+                    range(leaf.prg_offset, leaf.prg_offset + len(leaf.patched))
+                )
         for write in course.writes:
             span = set(range(write.prg_offset, write.prg_offset + len(write.data)))
             assert not (span & required), write.name

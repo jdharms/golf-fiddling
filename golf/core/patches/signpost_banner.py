@@ -57,9 +57,13 @@ _OBJECT_COUNT_PRG_OFFSET = 0x32C51  # CPU $AC51, bank 12 (LDA #$04's operand)
 _OBJECT_COUNT_ORIGINAL = bytes([0x04])
 _OBJECT_COUNT_PATCHED = bytes([0x03])
 
-_OBJECT_PTR_PRG_OFFSET = 0x32C55  # CPU $AC55-56, bank 12 (AllocateObjectRecords' inline pointer)
+_OBJECT_PTR_PRG_OFFSET = (
+    0x32C55  # CPU $AC55-56, bank 12 (AllocateObjectRecords' inline pointer)
+)
 _OBJECT_PTR_ORIGINAL = bytes([0x70, 0xB0])  # $B070 (record 0, the banner-to-HOLE link)
-_OBJECT_PTR_PATCHED = bytes([0x79, 0xB0])  # $B079 (record 1: HOLE-to-PAR link, now first)
+_OBJECT_PTR_PATCHED = bytes(
+    [0x79, 0xB0]
+)  # $B079 (record 1: HOLE-to-PAR link, now first)
 
 
 def remove_course_banner_patches() -> CompositePatch:

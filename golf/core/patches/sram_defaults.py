@@ -97,7 +97,9 @@ def parse_club(label: str) -> Club:
     try:
         return clubs[label.strip().upper()]
     except KeyError:
-        raise ValueError(f"unknown club {label!r}; clubs are {', '.join(clubs)}") from None
+        raise ValueError(
+            f"unknown club {label!r}; clubs are {', '.join(clubs)}"
+        ) from None
 
 
 def club_bag_bytes(clubs: Iterable[Club | str]) -> bytes:
@@ -110,11 +112,15 @@ def club_bag_bytes(clubs: Iterable[Club | str]) -> bytes:
     bag = [club if isinstance(club, Club) else parse_club(club) for club in clubs]
     repeated = sorted({club for club in bag if bag.count(club) > 1})
     if repeated:
-        raise ValueError(f"clubs listed more than once: {', '.join(club.label for club in repeated)}")
+        raise ValueError(
+            f"clubs listed more than once: {', '.join(club.label for club in repeated)}"
+        )
     if Club.PT not in bag:
         bag.append(Club.PT)
     if len(bag) > BAG_SIZE:
-        raise ValueError(f"a bag holds at most {BAG_SIZE} clubs including the putter, got {len(bag)}")
+        raise ValueError(
+            f"a bag holds at most {BAG_SIZE} clubs including the putter, got {len(bag)}"
+        )
     return bytes(sorted(bag)) + bytes([EMPTY_SLOT] * (BAG_SIZE - len(bag)))
 
 
