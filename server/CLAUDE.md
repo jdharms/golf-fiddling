@@ -103,6 +103,8 @@ in this package.
   contents as `?v=`, and serves a versioned URL as immutable. What carries no version,
   such as the rangefinder's module imports and its renders at `/rangefinder-data/`
   (`Config.rangefinder_dir`), is served `no-cache`, so a browser revalidates it.
+- Pico's file is minified onto one line; to read it, pretty-print it into the scratchpad
+  with `uv run golf-biome format --stdin-file-path=pico.css < server/static/pico.green.min.css`.
 - `server/static/site.css` holds only rules Pico has no class for, and takes its colors
   from Pico's variables (`--pico-ins-color`, `--pico-del-color` and the like) so dark mode
   follows. Components that change look with script state carry a `data-state` attribute

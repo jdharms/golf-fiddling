@@ -37,6 +37,8 @@ main() {
     git -c advice.detachedHead=false checkout --quiet "refs/tags/$tag"
     uv sync --frozen --no-dev
 
+    # A unit that gave up after failed starts refuses to start until this clears it.
+    sudo systemctl reset-failed golf-site 2>/dev/null || true
     sudo systemctl restart golf-site
     for _ in $(seq 30); do
         if curl -fsS "$HEALTH_URL" >/dev/null 2>&1; then

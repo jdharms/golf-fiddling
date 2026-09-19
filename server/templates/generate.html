@@ -45,7 +45,8 @@
       {% endfor %}
     </fieldset>
 
-    <fieldset>
+    {# Hidden until the hole families are mapped out. #}
+    <fieldset hidden>
       <label>
         <input type="checkbox"
                role="switch"
@@ -69,50 +70,53 @@
     </select>
 
     <article class="club-rules">
-      <header>
-        <strong>{{ t("generate.clubs.heading") }}</strong>
-      </header>
-      <p>{{ t("generate.clubs.lead") }}</p>
+      {# Collapsed unless the rules differ from the defaults, so a returned form shows them. #}
+      <details {% if form.has_club_rules() %}open{% endif %}>
+        <summary>
+          <strong>{{ t("generate.clubs.heading") }}</strong>
+        </summary>
+        <p>{{ t("generate.clubs.lead") }}</p>
 
-      <label for="generate-clubs-max">{{ t("generate.clubs.max_label") }}</label>
-      <input type="number"
-             id="generate-clubs-max"
-             name="clubs_max"
-             min="1"
-             max="{{ options.clubs_max }}"
-             value="{{ form.clubs_max }}"
-             required>
+        <label for="generate-clubs-max">{{ t("generate.clubs.max_label") }}</label>
+        <input type="number"
+               id="generate-clubs-max"
+               name="clubs_max"
+               min="1"
+               max="{{ options.clubs_max }}"
+               value="{{ form.clubs_max }}"
+               required>
 
-      <fieldset>
-        <legend>{{ t("generate.clubs.banned_legend") }}</legend>
-        <div class="club-grid">
-          {% for label in options.club_labels %}
-            <label>
-              <input type="checkbox"
-                     name="banned"
-                     value="{{ label }}"
-                     {% if label in form.banned %}checked{% endif %}>
-              {{ label }}
-            </label>
-          {% endfor %}
-        </div>
-      </fieldset>
+        <fieldset>
+          <legend>{{ t("generate.clubs.banned_legend") }}</legend>
+          <div class="club-grid">
+            {% for label in options.club_labels %}
+              <label>
+                <input type="checkbox"
+                       name="banned"
+                       value="{{ label }}"
+                       {% if label in form.banned %}checked{% endif %}>
+                {{ label }}
+              </label>
+            {% endfor %}
+          </div>
+        </fieldset>
 
-      <fieldset>
-        <legend>{{ t("generate.clubs.required_legend") }}</legend>
-        <div class="club-grid">
-          {% for label in options.club_labels %}
-            <label>
-              <input type="checkbox"
-                     name="required_bag"
-                     value="{{ label }}"
-                     {% if label in form.required_bag %}checked{% endif %}>
-              {{ label }}
-            </label>
-          {% endfor %}
-        </div>
-        <small>{{ t("generate.clubs.required_help") }}</small>
-      </fieldset>
+        <fieldset>
+          <legend>{{ t("generate.clubs.required_legend") }}</legend>
+          <div class="club-grid">
+            {% for label in options.club_labels %}
+              <label>
+                <input type="checkbox"
+                       name="required_bag"
+                       value="{{ label }}"
+                       {% if label in form.required_bag %}checked{% endif %}>
+                {{ label }}
+              </label>
+            {% endfor %}
+          </div>
+          <small>{{ t("generate.clubs.required_help") }}</small>
+        </fieldset>
+      </details>
     </article>
 
     <button type="submit">{{ t("generate.submit") }}</button>

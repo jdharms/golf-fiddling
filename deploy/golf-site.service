@@ -8,6 +8,10 @@
 Description=NES Open Golf randomizer site
 After=network-online.target
 Wants=network-online.target
+# A start that keeps failing, such as on a configuration mistake, gives up after five
+# tries rather than retrying forever; `systemctl reset-failed golf-site` clears it.
+StartLimitIntervalSec=300
+StartLimitBurst=5
 
 [Service]
 Type=simple

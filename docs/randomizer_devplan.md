@@ -208,7 +208,7 @@ qr_seed_id INTEGER NOT NULL UNIQUE CHECK (qr_seed_id BETWEEN 1 AND 8392993658683
 | `GET /` | What this is, links to ROM setup and generate |
 | `GET /pages/<slug>` | A checked-in Markdown page; enabled unlisted pages remain available by direct URL, while disabled pages answer 404 |
 | `GET /rom` | ROM setup, pure client-side: pick files, hash, store in IndexedDB, show verified status |
-| `GET /generate`, `POST /generate` | Settings form: par target, source ROMs, family repeats, music or random, and club rules in a section of their own. The mercy point and tag filters take their defaults. POST redirects to the seed page |
+| `GET /generate`, `POST /generate` | Settings form: par target, source ROMs, music or random, and club rules in a collapsed section of their own, open when a returned form has them set. The family repeats toggle is in the form but hidden until the families are mapped. The mercy point and tag filters take their defaults. POST redirects to the seed page |
 | `GET /h/<id>` | Seed page: the magic words, hole list with source, par and yards, totals, music, settings, required ROMs, the download form, the signed-in user's entry if any, recorded rounds |
 | `GET /h/<id>.json` | The manifest |
 | `POST /h/<id>/patch.ips` | Name, clubs, ROM hashes in; the finished IPS out. Signed in, upserts the entry and finishes with credentials; signed out, finishes as a guest. The page's script intercepts the form submit, fetches this, patches the ROM from IndexedDB and triggers the download |
@@ -391,7 +391,7 @@ says so, a ROM playtested. Items 1 to 6 build the library; 7 onward build the si
     the site serves at `/rangefinder-data/`, apart from the checked-in static files. Its
     `ExecStartPre=` runs `golf-rehydrate --check` and a full `golf-rehydrate` only when
     that fails, so every start serves verified data. Litestream (`deploy/litestream.yml`)
-    replicates the database with a daily snapshot kept a week, its storage credentials in
+    replicates the database with a daily snapshot kept three weeks, its storage credentials in
     a file of their own. A release is a git tag: `deploy/deploy.sh <tag>` checks it out in
     `/opt/golf-site`, runs `uv sync --frozen --no-dev`, restarts and waits for
     `/healthz`, and rolling back is deploying the previous tag. Templates link static files

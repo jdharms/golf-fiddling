@@ -84,8 +84,9 @@ sudo install -o golf -g golf -m 0400 nes_open_us.nes mario_open_jp.nes /var/lib/
 rm nes_open_us.nes mario_open_jp.nes
 ```
 
-Configuration: fill in the Discord client id and secret, a new session secret and the
-admins' Discord ids.
+Configuration: start from the example, keep its paths and base URL as they are, and
+replace each `replace-me` with the Discord client id and secret, a new session secret and
+the admins' Discord ids. Every line is needed.
 
 ```bash
 sudo install -d -m 0755 /etc/golf-site
@@ -122,7 +123,13 @@ curl -fsS https://nesopengolf.com/healthz
 
 ### Litestream
 
-Create a bucket and an access key limited to it. Fill in the bucket, endpoint and region:
+Create a bucket and an access key limited to it. On Backblaze B2, set the bucket's
+lifecycle rule to "Keep only the last version of the file": B2 keeps every version by
+default, so the snapshots Litestream deletes past its retention would only be hidden and
+would go on taking space. The bucket's details page shows its S3 endpoint, whose second
+part is the region (`s3.us-west-004.backblazeb2.com` is in `us-west-004`).
+
+Fill in the bucket, endpoint and region:
 
 ```bash
 sudo cp /opt/golf-site/deploy/litestream.yml /etc/litestream.yml
@@ -189,6 +196,7 @@ it knows. Rolling back past a migration is restoring the database from before it
 |---|---|
 | Follow the site's log | `journalctl -u golf-site -f` |
 | Restart after changing `/etc/golf-site/env` | `sudo systemctl restart golf-site` |
+| Start again after five failed starts in five minutes, when the unit gives up | `sudo systemctl reset-failed golf-site`, then `sudo systemctl start golf-site` |
 | Re-dump the holes and renders | `sudo systemctl restart golf-site` after deleting `/var/lib/golf-site/courses`, or any start whose check fails |
 | Caddy's log | `journalctl -u caddy` |
 | Litestream's log | `journalctl -u litestream` |
@@ -199,8 +207,9 @@ Restoring to a scratch path checks the backups without touching the live databas
 
 ```bash
 sudo sh -c 'set -a; . /etc/litestream.env; litestream restore -o /tmp/restore-check.db /var/lib/golf-site/golf_site.db'
+sqlite3 /tmp/restore-check.db 'PRAGMA integrity_check; SELECT count(*) FROM users;'
 sqlite3 /tmp/restore-check.db 'PRAGMA integrity_check; SELECT count(*) FROM seeds;'
-rm /tmp/restore-check.db
+sudo rm /tmp/restore-check.db
 ```
 
 Replacing the live database:
@@ -216,3 +225,49 @@ sudo systemctl start litestream golf-site
 
 `litestream restore -timestamp <RFC 3339 time>` restores the database as it was at that
 time, within the snapshot retention in `deploy/litestream.yml`.
+
+## Rebuilding a lost server
+
+The bucket, its access key and what is kept elsewhere (the ROMs and the secrets in
+`/etc/golf-site/env`) are enough to rebuild the site on a new server. A new
+`GOLF_SESSION_SECRET` works, but signs everyone out.
+
+The database must be restored before `golf-site` or Litestream first starts. `golf-site`
+creates an empty database when it finds none, and Litestream would replicate that empty
+database into the same bucket path as the backups.
+
+1. Follow "Setting up a server" through "The site", up to but not including the block that
+   installs the service and runs the first deploy. Point DNS at the new server.
+2. Install Litestream's configuration, keys and drop-in as in "Litestream", with the same
+   bucket and `path: golf-site` as before, but do not enable or start it yet:
+
+   ```bash
+   sudo cp /opt/golf-site/deploy/litestream.yml /etc/litestream.yml
+   sudoedit /etc/litestream.yml
+   sudo install -m 0600 /dev/null /etc/litestream.env
+   sudoedit /etc/litestream.env
+   sudo install -D -m 0644 /opt/golf-site/deploy/litestream-credentials.conf \
+       /etc/systemd/system/litestream.service.d/credentials.conf
+   sudo systemctl daemon-reload
+   ```
+
+3. Restore the database and check it:
+
+   ```bash
+   sudo sh -c 'set -a; . /etc/litestream.env; litestream restore -o /var/lib/golf-site/golf_site.db /var/lib/golf-site/golf_site.db'
+   sudo chown golf:golf /var/lib/golf-site/golf_site.db
+   sudo sqlite3 /var/lib/golf-site/golf_site.db 'PRAGMA integrity_check; SELECT count(*) FROM seeds;'
+   ```
+
+4. Start Litestream, then install the service and deploy the release the old server ran,
+   or a newer one: an older release refuses a database newer than it knows.
+
+   ```bash
+   sudo systemctl enable --now litestream
+   sudo cp /opt/golf-site/deploy/golf-site.service /etc/systemd/system/
+   sudo systemctl daemon-reload
+   sudo systemctl enable golf-site
+   /opt/golf-site/deploy/deploy.sh <tag>
+   ```
+
+5. Finish with "Caddy" and "Checking it".

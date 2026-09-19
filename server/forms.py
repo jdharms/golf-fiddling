@@ -102,6 +102,14 @@ class FormState:
             required_bag=chosen("required_bag"),
         )
 
+    def has_club_rules(self) -> bool:
+        """Whether the club rules differ from the defaults."""
+        return bool(
+            self.banned
+            or self.required_bag
+            or self.clubs_max != str(Settings().clubs.max)
+        )
+
     def to_pairs(self) -> list[tuple[str, str]]:
         """The state as the fields a browser would submit for it."""
         pairs = [("par", self.par)]

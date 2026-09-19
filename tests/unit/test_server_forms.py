@@ -279,3 +279,16 @@ def test_a_missing_or_wrong_rom_hash_is_refused_naming_the_roms(hashes, roms):
         check_rom_hashes(download(**hashes), (US_ROM, JP_ROM))
     assert caught.value.reason == ROMS_MISSING
     assert caught.value.values == {"roms": roms}
+
+
+@pytest.mark.parametrize(
+    ("changes", "expected"),
+    [
+        ({}, False),
+        ({"clubs_max": "13"}, True),
+        ({"banned": {"1W"}}, True),
+        ({"required_bag": {"PW"}}, True),
+    ],
+)
+def test_club_rules_count_as_set_only_away_from_the_defaults(changes, expected):
+    assert state(**changes).has_club_rules() is expected

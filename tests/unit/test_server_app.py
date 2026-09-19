@@ -404,6 +404,16 @@ def test_a_club_rule_refusal_names_its_values(unwritten_client):
     response = post_generate(unwritten_client, form)
     assert response.status_code == 400
     assert "generate.error.required_bag_over_max count=3 max=2" in response.text
+    assert re.search(r"<details\s+open>", response.text)
+
+
+def test_club_rules_start_collapsed_and_the_family_toggle_hidden(client):
+    page = client.get("/generate").text
+    assert re.search(r"<details\s*>", page)
+    toggle = page.index('name="allow_family_repeats"')
+    assert page.rindex("<fieldset hidden>", 0, toggle) > page.rindex(
+        "</fieldset>", 0, toggle
+    )
 
 
 def test_a_pool_that_cannot_fill_the_course_is_refused(catalog, curation, tmp_path):

@@ -4,8 +4,8 @@ NES Open Tournament Golf - Randomizer site
 
 Runs the randomizer website (the server package) under uvicorn. Configuration comes from
 GOLF_-prefixed environment variables; see docs/randomizer_devplan.md. Refuses to start
-until golf-rehydrate has dumped the holes of every ROM in the ROM directory and rendered
-the rangefinder from them.
+with settings Config.validate rejects, and until golf-rehydrate has dumped the holes of
+every ROM in the ROM directory and rendered the rangefinder from them.
 """
 
 import argparse
@@ -13,7 +13,7 @@ import sys
 
 from golf.randomizer.catalog import Catalog
 from golf.randomizer.rehydrate import RehydrateError, check_site_data
-from server.config import Config
+from server.config import Config, ConfigError
 
 
 def main() -> int:
@@ -32,6 +32,11 @@ def main() -> int:
     args = parser.parse_args()
 
     config = Config.from_env()
+    try:
+        config.validate()
+    except ConfigError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
     try:
         check_site_data(
             Catalog.load(), config.rom_dir, config.holes_dir, config.rangefinder_dir

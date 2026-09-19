@@ -178,6 +178,10 @@ form article.club-rules {
   margin-block: calc(var(--pico-spacing) * 2);
 }
 
+form article.club-rules > details {
+  margin-bottom: 0;
+}
+
 .club-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
